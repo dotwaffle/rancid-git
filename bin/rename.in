@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#!@PERLV_PATH@
 'di';
 'ig00';
 #

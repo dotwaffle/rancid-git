@@ -36,7 +36,7 @@ do
 			if [ "X$LOCKTIME" = "X" ] ; then
 				LOCKTIME=4
 			fi
-			perl -e "\$t = (stat(\"$LOCKFILE\"))[9]; print \"OLD\\n\" if (time() - \$t >= $LOCKTIME*60*60);" > $TMPDIR/.$GROUP.old
+			@PERLV_PATH@ -e "\$t = (stat(\"$LOCKFILE\"))[9]; print \"OLD\\n\" if (time() - \$t >= $LOCKTIME*60*60);" > $TMPDIR/.$GROUP.old
 			if [ -s $TMPDIR/.$GROUP.old ]
 			then
 				(

@@ -1,0 +1,21 @@
+dnl Process this file with autoconf to produce a configure script.
+AC_INIT()
+
+dnl default install location
+AC_PREFIX_DEFAULT(/usr/local/rancid)
+
+dnl install program(s)
+AC_PROG_INSTALL
+
+RD_UTIL_PROGS=$rd_cv_rd_util_progs
+AC_SUBST(RD_UTIL_PROGS)
+
+PERLV_PATH=$ac_cv_path_PERLV_PATH
+AC_SUBST(PERLV_PATH)
+EXPECT_PATH=$ac_cv_path_EXPECT_PATH
+AC_SUBST(EXPECT_PATH)
+
+AC_OUTPUT(Makefile $RD_UTIL_PROGS)
+
+# fix permissions on scripts.
+for file in $RD_UTIL_PROGS; do chmod a+x $file; done

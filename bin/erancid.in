@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#!@PERLV_PATH@
 ##
 ## Hacked version of rancid for ADC EZT3 series muxes. Only tested
 ## with switch software 1.50 so far - terry@tmk.com

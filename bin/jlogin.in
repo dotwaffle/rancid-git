@@ -1,4 +1,4 @@
-#!/usr/local/bin/expect --
+#!@EXPECT_PATH@ --
 ##
 ##
 ## Copyright (C) 1997 by Henry Kilmer, Erik Sherk and Pete Whiting.
@@ -225,96 +225,119 @@ proc source_password_file { } {
 }
 
 # Log into the router.
-proc login { router user passwd prompt cyphertype identfile} {
+proc login { router user passwd prompt cmethod cyphertype identfile} {
     global spawn_id in_proc do_command do_script passphrase
     set in_proc 1
 
-    # ssh to the router & try to login with or without an identfile.
-    # We use two calls to spawn since spawn does not seem to parse
-    # spaces correctly.
-    if {$identfile != ""} {
-	if [ catch {spawn ssh -c $cyphertype -x -l $user -i $identfile $router} reason ] {
-	    send_user "Error: failed to ssh: $reason\n"
-	    exit 1
-	}
-    } else {
-	if [ catch {spawn ssh -c $cyphertype -x -l $user $router} reason ] {
-	    send_user "Error: failed to ssh: $reason\n"
-	    exit 1
-	}
-    }
-    sleep 0.3
-
-    # This helps cleanup each expect clause.
-    expect_after {
-	timeout {
-	    send_user "\nError: TIMEOUT reached\n"
-	    catch {close}; wait
-	    if { $in_proc} {
-	        return 1
+    # try each of the connection methods in $cmethod until one is successful
+    set progs [llength $cmethod]
+    foreach prog [lrange $cmethod 0 end] {
+	if ![string compare $prog "telnet"] {
+	    if [ catch {spawn telnet $router} reason ] {
+		send_user "Error: telnet failed: $reason\n"
+		exit 1
+	    }
+	} elseif ![string compare $prog "ssh"] {
+	    # ssh to the router & try to login with or without an identfile.
+	    # We use two calls to spawn since spawn does not seem to parse
+	    # spaces correctly.
+	    if {$identfile != ""} {
+		if [ catch {spawn ssh -c $cyphertype -x -l $user -i $identfile $router} reason ] {
+		    send_user "Error: failed to ssh: $reason\n"
+		    exit 1
+		}
 	    } else {
-	        continue
+		if [ catch {spawn ssh -c $cyphertype -x -l $user $router} reason ] {
+		    send_user "Error: failed to ssh: $reason\n"
+		    exit 1
+		}
 	    }
-        } eof {
-	    send_user "\nError: EOF received\n"
-	    catch {close}; wait
-	    if { $in_proc} {
-	        return 1
-	    } else {
-	        continue
+	} elseif ![string compare $prog "rsh"] {
+	    if [ catch {spawn rsh -l $user $router} reason ] {
+		send_user "Error: rsh failed: $reason\n"
+		exit 1
 	    }
-        }
-    }
+	} else {
+	    puts "ERROR: unknown connection method: $prog"
+	    return 1
+	}
+	incr progs -1
+	sleep 0.3
 
-    # Here we get a little tricky.  There are several possibilities:
-    # the router can ask for a username and passwd and then
-    # talk to the TACACS server to authenticate you, or if the
-    # TACACS server is not working, then it will use the enable
-    # passwd.  Or, the router might not have TACACS turned on,
-    # then it will just send the passwd.
-    expect {
-        eof { send_user "Error: Couldn't login\n"; wait; return 1 }
-	"Connection refused" {
-	    expect eof
-	    send_user "Error: Connection Refused\n"; wait; return 1
-	} "Unknown host\r\n" {
-	    expect eof
-	    send_user "Error: Unknown host\n"; wait; return 1
-	} "Host is unreachable" {
-	    expect eof
-	    send_user "Error: Host Unreachable!\n"; wait; return 1
-	} "No address associated with name" {
-	    expect eof
-	    send_user "Error: Unknown host\n"; wait; return 1
+	# This helps cleanup each expect clause.
+	expect_after {
+	    timeout {
+		send_user "\nError: TIMEOUT reached\n"
+		catch {close}; wait
+		if { $in_proc} {
+	            return 1
+		} else {
+	            continue
+		}
+            } eof {
+		send_user "\nError: EOF received\n"
+		catch {close}; wait
+		if { $in_proc} {
+	            return 1
+		} else {
+	            continue
+		}
+            }
 	}
-	-re "Enter passphrase for RSA key '\[^'\]*': " {
-	    send_user "\nKey has passphrase!\n"
-	    send "$passphrase\r"
-	    exp_continue }
-	-re "Host key not found .* \(yes\/no\)\?"	{
-	    send "yes\r"
-	    send_user "Host $router added to the list of known hosts.\n"
-	    exp_continue }
-	-re "HOST IDENTIFICATION HAS CHANGED.* \(yes\/no\)\?"	{
-	    send "no\r"
-	    send_user "Error: The host key for $router has changed.  update the known_hosts file accordingly.\n"
-	    return 1 }
-	-re "(Username|^login):"	{ send "$user\r"
-	    expect {
-		eof             	{ send_user "Error: Couldn't login\n"; wait; return 1 }
-		-re "\[Pp]assword:"	{ send "$passwd\r" }
-		"$prompt"		{ set in_proc 0; return 0 }
+
+	# Here we get a little tricky.  There are several possibilities:
+	# the router can ask for a username and passwd and then
+	# talk to the TACACS server to authenticate you, or if the
+	# TACACS server is not working, then it will use the enable
+	# passwd.  Or, the router might not have TACACS turned on,
+	# then it will just send the passwd.
+	expect {
+	    -re "(Connection refused|Secure connection \[^\n\r]+ refused|Connectionclosed by)" {
+		catch {close}; wait
+		if !$progs {
+		   send_user "\nError: Connection Refused ($prog)\n"; return 1
+		}
 	    }
-	    exp_continue
-	}
-	"\[Pp]assword:"	{ send "$passwd\r"
-	    expect {
+            eof { send_user "Error: Couldn't login\n"; wait; return 1
+	    } -nocase "unknown host\r\n" {
+		catch {close};
+		send_user "Error: Unknown host\n"; wait; return 1
+	    } "Host is unreachable" {
+		catch {close};
+		send_user "Error: Host Unreachable!\n"; wait; return 1
+	    } "No address associated with name" {
+		catch {close};
+		send_user "Error: Unknown host\n"; wait; return 1
+	    }
+	    -re "Enter passphrase for RSA key '\[^'\]*': " {
+		send_user "\nKey has passphrase!\n"
+		send "$passphrase\r"
+		exp_continue }
+	    -re "Host key not found .* \(yes\/no\)\?"	{
+		send "yes\r"
+		send_user "Host $router added to the list of known hosts.\n"
+		exp_continue }
+	    -re "HOST IDENTIFICATION HAS CHANGED.* \(yes\/no\)\?"	{
+		send "no\r"
+		send_user "Error: The host key for $router has changed.  update the known_hosts file accordingly.\n"
+		return 1 }
+	    -re "(Username|\[\r\n]login):"	{ send "$user\r"
+		expect {
+		    eof             	{ send_user "Error: Couldn't login\n";
+					  wait; return 1 }
+		    -re "\[Pp]assword:"	{ send "$passwd\r" }
+		    "$prompt"		{ set in_proc 0; return 0 }
+		}
+		exp_continue
+	    }
+	    "\[Pp]assword:"	{ send "$passwd\r"
+		expect {
 		eof             { send_user "Error: Couldn't login\n"; wait; return 1 }
 		"$prompt"       { set in_proc 0; return 0 }
 	    }
 	    exp_continue
 	}
-	"$prompt"       { }
+	"$prompt"       { break; }
 	denied		{ send_user "Error: Check your passwd for $router\n"
 	                  if { $do_command || $do_script } {
 			      send "quit"
@@ -326,6 +349,7 @@ proc login { router user passwd prompt cyphertype identfile} {
 	                }
 	"% Bad passwords" {send_user "Error: Check your passwd for $router\n"; return 1 }
     }
+  }
     set in_proc 0
     return 0
 }
@@ -380,20 +404,6 @@ foreach router [lrange $argv $i end] {
 
     set prompt ">"
 
-    # Figure out passwords
-#    if { $do_passwd } {
-#      set pswd [find password $router]
-#      if { [llength $pswd] == 0 } {
-#        send_user "Error - no password for $router in $password_file.\n"
-#        continue
-#      }
-#      if { $do_enapasswd && !$autoenable && [llength $pswd] < 2 } {
-#	send_user "Error - no enable password for $router in $password_file."
-#        continue
-#      }
-#	set passwd [lindex $pswd 0]
-#    }
-
     # Figure out username
     if {[info exists username]} {
       # command line username
@@ -427,8 +437,12 @@ foreach router [lrange $argv $i end] {
       if { "$cyphertype" == "" } { set cyphertype "3des" }
     }
 
+    # Figure out connection method
+    set cmethod [find method $router]
+    if { "$cmethod" == "" } { set cmethod {{telnet} {ssh}} }
+
     # Login to the router
-    if {[login $router $loginname $passwd $prompt $cyphertype $identfile]} {
+    if {[login $router $loginname $passwd $prompt $cmethod $cyphertype $identfile]} {
 	continue
     }
 

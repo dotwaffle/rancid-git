@@ -1,0 +1,37 @@
+PREFIX = @prefix@
+
+INSTALL = @INSTALL@
+INSTALL_DATA = @INSTALL_DATA@
+
+BIN_PROGS = @RD_BIN_PROGS@
+BIN_DATAS = @RD_BIN_DATAS@
+
+all:
+
+install: all
+	for prog in $(BIN_PROGS) ; do \
+	    $(INSTALL) $$prog $(PREFIX)/bin; \
+	done; \
+	if test -f $(PREFIX)/bin/env ; then \
+	    echo "WARNING: *** $(PREFIX)/bin/env exists: not installing."; \
+	else \
+	    $(INSTALL_DATA) env $(PREFIX)/bin; \
+	fi  
+# BIN_DATAS are empty at the moment.
+#	for prog in $(BIN_DATAS) ; do \
+#	    $(INSTALL_DATA) $$prog $(PREFIX)/bin; \
+#	done; \
+
+clean:
+	rm -f Makefile env $(BIN_DATAS) $(BIN_PROGS)
+
+distclean: clean
+	rm -f config.log config.status
+
+distdir:
+	for file in Makefile.in configure.in env.in $(BIN_DATAS:=.in) ; do \
+	    $(INSTALL_DATA) $$file $(distdir); \
+	done
+	for file in configure $(BIN_PROGS:=.in) ; do \
+	    $(INSTALL) $$file $(distdir); \
+	done

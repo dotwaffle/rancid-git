@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#!@PERLV_PATH@
 ##
 ##
 ## Copyright (C) 1997 by Henry Kilmer and Peter Whiting.

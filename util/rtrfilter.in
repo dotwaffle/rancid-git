@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#!@PERLV_PATH@
 ##
 # rtrtfilter - "| rtrfilter -x <perl regex> -i <perl regex> -f <regex file> \
 #	-u <From address> -s <subject> <rcpts>"

@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#!@PERLV_PATH@
 ##
 ##
 ## Copyright (C) 1997 by Henry Kilmer.
@@ -142,6 +142,8 @@ sub ShowVersion {
 	    $slave = " Slave:";
 	    next;
 	}
+	/^Cisco Secure PIX /i &&
+	    ProcessHistory("COMMENTS","keysort","F1", "!Image: $_") && next;
 	/^IOS .* Software \(([A-Za-z-0-9]*)\), .*Version\s+(.*)$/ &&
 	    ProcessHistory("COMMENTS","keysort","F1",
 		"!Image:$slave Software: $1, $2\n") && next;
@@ -154,6 +156,17 @@ sub ShowVersion {
 	/^ROM: (System )?Bootstrap.*(Version.*)$/ &&
 	    ProcessHistory("COMMENTS","keysort","G1",
 		"!ROM Bootstrap: $2\n") && next;
+	if (/^Hardware:\s+(.*), (.* RAM), CPU (.*)$/) {
+	    ProcessHistory("COMMENTS","keysort","A1",
+		"!Chassis type: $1 - a PIX\n");
+	    ProcessHistory("COMMENTS","keysort","A2",
+		"!CPU: $3\n");
+	    ProcessHistory("COMMENTS","keysort","B1", "!Memory: $2\n");
+	}
+	/^Serial Number:\s+(.*)$/ &&
+	    ProcessHistory("COMMENTS","keysort","C1", "!$_") && next;
+	/^Activation Key:\s+(.*)$/ &&
+	    ProcessHistory("COMMENTS","keysort","C2", "!$_") && next;
 	/^ROM: \d+ Bootstrap .*(Version.*)$/ &&
 	    ProcessHistory("COMMENTS","keysort","G2",
 		"!ROM Image: Bootstrap $1\n!\n") && next;
@@ -173,6 +186,7 @@ sub ShowVersion {
 	    my($proc) = $1;
 	    my($cpu) = $2;
 	    my($mem) = $3;
+	    my($device) = "router";
 	    if ( $1 eq "CSC") {
 		$type = "AGS";
 	    } elsif ( $1 eq "CSC4") {
@@ -191,14 +205,17 @@ sub ShowVersion {
 		$type = "7000";
 	    } elsif ( $1 =~ /720[246]/) {
 		$type = "7200";
-	    } elsif ($1 =~ /1200[48]\/GRP/ || $1 =~ /1201[26]\/GRP/) {
+	    } elsif ( $1 =~ /1200[48]\/GRP/ || $1 =~ /1201[26]\/GRP/) {
 		$type = "12000";
+	    } elsif ( $1 =~ /WS-C29/) {
+		$type = "2900XL";
+		$device = "switch";
 	    } else {
 		$type = $1;
 	    }
 	    print STDERR "TYPE = $type\n" if ($debug);
 	    ProcessHistory("COMMENTS","keysort","A1",
-		"!Chassis type:$slave $proc - a $type router\n");
+		"!Chassis type:$slave $proc - a $type $device\n");
 	    ProcessHistory("COMMENTS","keysort","B1",
 		"!Memory:$slave main $mem\n");
 	    ProcessHistory("COMMENTS","keysort","A3","!CPU:$slave $cpu\n");
@@ -260,8 +277,7 @@ sub ShowInstallActive {
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if /^\s*\^\s*$/;
-	return(1) if /Invalid input detected/;
-	return(1) if /Unknown command/;
+	return(1) if /(Invalid input detected|Type help or )/;
 	ProcessHistory("COMMENTS","keysort","F5","!Image: $_") && next;
     }
     return(0);
@@ -336,7 +352,7 @@ sub ShowGSR {
 
 # This routine parses "show boot"
 sub ShowBoot {
-    # Pick up boot variables if 7000/7200/7500/12000;
+    # Pick up boot variables if 7000/7200/7500/12000/2900;
     # otherwise pick up bootflash.
     print STDERR "    In ShowBoot: $_" if ($debug);
 
@@ -346,15 +362,18 @@ sub ShowBoot {
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if /^\s*\^\s*$/;
 	return(1) if /Ambiguous command/i;
-	return(1) if /Invalid input detected/;
-	return(1) if /Unknown command/;
+	return(1) if /(Invalid input detected|Type help or )/;
 	return(1) if /(Open device \S+ failed|Error opening \S+:)/;
 	next if /CONFGEN variable/;
 	if (!defined($H0)) {
 	    $H0=1; ProcessHistory("COMMENTS","keysort","H0","!\n");
 	}
 	if ($type !~ /^(120|7)/) {
-	    ProcessHistory("COMMENTS","keysort","H2","!BootFlash: $_");
+	    if ($type !~ /^2900/) {
+	        ProcessHistory("COMMENTS","keysort","H2","!BootFlash: $_");
+	    } else {
+	        ProcessHistory("COMMENTS","keysort","H1","!Variable: $_");
+	    }
 	} elsif (/variable/) {
 	    ProcessHistory("COMMENTS","keysort","H1","!Variable: $_");
 	}
@@ -374,14 +393,14 @@ sub ShowFlash {
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if ($type =~ /^(120|7)/);
 	return(1) if /^\s*\^\s*$/;
-	return(1) if /Invalid input detected/;
+	return(1) if /(Invalid input detected|Type help or )/;
 	ProcessHistory("FLASH","","","!Flash: $_");
     }
     ProcessHistory("","","","!\n");
     return;
 }
 
-# This routine parses "dir /all ((disk|slot)N|bootflash):"
+# This routine parses "dir /all ((disk|slot)N|bootflash|nvram):"
 sub DirSlotN {
     # Skip if this is not a 3600, 7000, 7200, 7500, or 12000.
     print STDERR "    In DirSlotN: $_" if ($debug);
@@ -394,7 +413,7 @@ sub DirSlotN {
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if ($type !~ /^(120|7|36)/);
 	return(1) if /^\s*\^\s*$/;
-	return(1) if /Invalid input detected/;
+	return(1) if /(Invalid input detected|Type help or )/;
 	return(1) if /\%Error: No such file or directory/;
 	return(1) if /No space information available/;
 	return(-1) if /\%Error calling/;
@@ -605,14 +624,20 @@ sub ShowDiag {
 	/^$/ && next;
 	if (!defined($showdiags)) {$showdiags=1; ProcessHistory("SLOT","","","!\n");}
 	s/Port Packet Over SONET/POS/;
-	if (/^\s*SLOT (\d+)\s+\(.*\): (.*)/) {
+	if (/^\s*SLOT\s+(\d+)\s+\((.*)\): (.*)/) {
 	    $slot = $1;
-	    ProcessHistory("SLOT","","","!Slot $slot: $2\n");
+	    ProcessHistory("SLOT","","","!Slot $slot: $3\n");
+	    # Here we look for boards that don't have DRAM.
+	    $board = "Other";
 	    $board = "RP" if (/Route Processor/);
 	    $board = "CLK" if (/Clock Scheduler Card/);
+	    $board = "SFC" if (/Switch Fabric Card/);
 	    next;
 	}
-	if (/^\s+PCA:\s+(.*)/){
+	if (/^\s+MAIN:\s+ type \d+,\s+(.*)/) {
+	    ProcessHistory("SLOT","","","!Slot $slot/MAIN: part $1\n") && next;
+	}
+	if (/^\s+PCA:\s+(.*)/) {
 	    local($part) = $1;
 	    $_ = <INPUT>;
 	    /^\s+HW version (\S+)\s+S\/N (\S+)/ &&
@@ -620,7 +645,6 @@ sub ShowDiag {
 		ProcessHistory("SLOT","","","!Slot $slot/PCA: hvers $1\n");
 	    next;
 	}
-
 	if (/^\s+MBUS: .*\)\s+(.*)/) {
 	    local($tmp) = "!Slot $slot/MBUS: part $1";
 	    $_ = <INPUT>;
@@ -631,7 +655,7 @@ sub ShowDiag {
 	}
 	if (/^\s+MBUS Agent Software version (.*)/) {
 	    local($sw) = $1;
-	    local($tail) = "!\n" if ($board =~ /(CLK|RP)/);
+	    local($tail) = "!\n" if ($board ne "Other");
 	    ProcessHistory("SLOT","","","!Slot $slot/MBUS: software $sw\n$tail");
 	    next;
 	}
@@ -644,7 +668,7 @@ sub ShowDiag {
 	    next;
 	}
 	# 7200 and 3600 stuff
-	if (/^(Slot)\s+(\d+):/ || /^\s+(WIC|VIC) Slot (\d):/) {
+	if (/^(Slot)\s+(\d+(\/\d+)?):/ || /^\s+(WIC|VIC) Slot (\d):/) {
 	    if ($1 eq "WIC") {
 		$WIC = "/$2";
 	    } elsif ($1 eq "VIC") {
@@ -677,42 +701,43 @@ sub ShowDiag {
 	/number\s+(\S+)\s+Part number\s+(\S+)/ &&
 	    ProcessHistory("SLOT","","","!Slot $slot$WIC: part $2, serial $1\n!\n") &&
 	    next;
-}
+    }
     return(0);
 }
 
-# This routine parses "show module"
+# This routine parses "show module".
 sub ShowModule {
     print STDERR "    In ShowModule: $_" if ($debug);
 
-#    # eat the header lines
-#    $junk = <INPUT>;
-#    $junk = <INPUT>;
-    
+    my(@lines);
+    my($slot);
+
     while (<INPUT>) {
-        tr/\015//d;
-        last if(/^$prompt/);
-#        last if(/^$/);
-#        $junk = $_;
-#        $slot = substr($junk, 0, 2) + 0;
-#        $port = substr($junk, 24, 3) + 0;
-#        $plu = "";
-#        $plu = "s" if $port > 1; 
-#        $type = substr($junk, 30, 21);
-#        $type =~ s/^\s+//;
-#        $type =~ s/\s+$//; 
-#        $board = substr($junk, 52, 9);
-#        $board =~ s/ //;
-#        $serial = substr($junk, 62,9) + 0;
-#        ProcessHistory("SLOT","","","!Slot $slot/$board: $type, $port port$plu, serial $serial\n");
-        ProcessHistory("SLOT","","","! $_");
+	tr/\015//d;
+	return if (/^\s*\^$/);
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+
+	# match slot info line, slot info then the rev info (the two are split)
+	if (/^ ?(\d+)\s+(\d+)\s+(.*)\s+(\S+)\s+(\S+)\s*$/) {
+	    $lines[$1] .= "!Slot $1: type $3, $2 ports\n!Slot $1: part $4, serial $5\n";
+	    $lines[$1] =~ s/\s+,/,/g;
+	}
+	if (/^ ?(\d+)\s+\S+\s+to\s+\S+\s+(\S+)\s+(.*)\s+(\S+)\s*$/) {
+	    $lines[$1] .= "!Slot $1: hvers $2, firmware $3, sw $4\n";
+	    $lines[$1] =~ s/\s+,/,/g;
+	}
     }
-    # The "write term" code gives us one of these, so skip it here
-    # ProcessHistory("SLOT","","","!\n");
-}   
+    foreach $slot (@lines) {
+	next if ($slot =~ /^\s*$/);
+	ProcessHistory("Module","","","$slot!\n");
+    }
+
+    return(0);
+}
 
 # This routine parses "show c7200" for the 7200
-# This will create arrarys for hw info.
+# This will create arrays for hw info.
 sub ShowC7200 {
     # Skip if this is not a 7200.
     print STDERR "    In ShowC7200: $_" if ($debug);
@@ -745,25 +770,46 @@ sub ShowC7200 {
     return(0);
 }
 
+# This routine parses "show vtp status"
+sub ShowVTP {
+    print STDERR "    In ShowVTP: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /^\s*\^\s*$/;
+	return(1) if /(Invalid input detected|Type help or )/;
+	return(1) if ($type !~ /^2900XL$/);
+	next if (/^Configuration last modified by/);
+	ProcessHistory("COMMENTS","keysort","I0","!VTP: $_");
+    }
+    ProcessHistory("COMMENTS","keysort","I0","!\n");
+    return(0);
+}
+
 # This routine processes a "write term"
 sub WriteTerm {
     print STDERR "    In WriteTerm: $_" if ($debug);
 
     while (<INPUT>) {
 	tr/\015//d;
-	last if (/^$prompt/);
-#heas	next if (/^\.+$/);
+	last if(/^$prompt/);
+	# the pager can not be disabled per-session on the PIX
+	s/^<-+ More -+>\s*//;
 	/Non-Volatile memory is in use/  && return(-1); # NvRAM is locked
 	# skip the crap
-	if (/^(\.\.+$|##+$|Building configuration...)/i) {
+	if (/^(##+$|Building configuration...)/i) {
 	    while (<INPUT>) {
-		tr/\015//d;
-		next if (/^Current configuration:/i);
-		next if (/^(\.+|[%!].*|\s*)$/);
+		next if (/^Current configuration\s*:/i);
+		next if (/^:/);
+		next if (/^([%!].*|\s*)$/);
 		next if (/^ip add.*ipv4:/);	# band-aid for 3620 12.0S
 		last;
 	    }
-	    ProcessHistory("","","","!\n");
+	    if (defined($config_register)) {
+		ProcessHistory("","","","!\nconfig-register $config_register\n");
+	    }
 	    tr/\015//d;
 	}
 	# some versions have other crap mixed in with the bits in the
@@ -771,16 +817,16 @@ sub WriteTerm {
 	/^! (Last configuration|NVRAM config last)/ && next;
 
 	# Dog gone Cool matches to process the rest of the config
-	/^#time: /              && next; # kill time:
 	/^tftp-server flash /   && next; # kill any tftp remains
 	/^ntp clock-period /    && next; # kill ntp clock-period
 	/^ length /		&& next; # kill length on serial lines
 	/^ width /		&& next; # kill width on serial lines
-	/^enable password / &&
-	    ProcessHistory("ENABLE","","","!enable password <removed>\n") &&
+	/^ clockrate /		&& next; # kill clockrate on serial interfaces
+	/^(enable )?(password|passwd) / &&
+	    ProcessHistory("ENABLE","","","!$1$2 <removed>\n") &&
 	    next;
-	/^(username .*) password /&&
-	    ProcessHistory("USER","","","!$1 password <removed>\n") && next;
+	/^username (\S+) password /&&
+	    ProcessHistory("USER","keysort","$1","!username $1 password <removed>\n") && next;
 	/^\s*password / &&
 	    ProcessHistory("LINE-PASS","","","! password <removed>\n") && next;
 	/^\s*neighbor (\S*) password / &&
@@ -841,41 +887,52 @@ sub WriteTerm {
 	/^access-list\s+(\d\d\d)\s+(\S+)\s+ip\s+any/ &&
 	    ProcessHistory("EACL $1 $2","ipsort","0.0.0.0","$_") && next;
 	# order arp lists
-	/^set arp\s+(\d+\.\d+\.\d+\.\d+)\s+/ &&
+	/^arp\s+(\d+\.\d+\.\d+\.\d+)\s+/ &&
 	    ProcessHistory("ARP","ipsort","$1","$_") && next;
 	/^ip prefix-list\s+(\S+)\s+seq\s+(\d+)\s+(permit|deny)\s+(\d\S+)(\/.*)$/ &&
 	    ProcessHistory("PACL $1 $3","ipsort","$4","ip prefix-list $1 $3 $4$5\n")
 	    && next;
 	# order logging statements
-	/^set logging server (\d+\.\d+\.\d+\.\d+)/ &&
+	/^logging (\d+\.\d+\.\d+\.\d+)/ &&
 	    ProcessHistory("LOGGING","ipsort","$1","$_") && next;
 	# order name-server statements
-	/^set ip dns server (\d+\.\d+\.\d+\.\d+)/ &&
+	/^ip name-server (\d+\.\d+\.\d+\.\d+)/ &&
 	    ProcessHistory("NAMESERVER","ipsort","$1","$_") && next;
-        # order/prune snmp-server host statements
-        # we only prune lines of the form
-        # snmp-server host a.b.c.d <community>
-	if (/^set snmp trap (\d+\.\d+\.\d+\.\d+) /) {
+	# order/prune snmp-server host statements
+	# we only prune lines of the form
+	# snmp-server host a.b.c.d <community>
+	if (/^snmp-server host (\d+\.\d+\.\d+\.\d+) /) {
 	    if (defined($ENV{'NOCOMMSTR'})) {
-		ProcessHistory("SNMPSERVERHOST","ipsort","$1","# set snmp trap $1 <removed>\n");
+		my($ip) = $1;
+		my($line) = "snmp-server host $ip";
+		my(@tokens) = split(' ', $');
+		my($token);
+		while ($token = shift(@tokens)) {
+		    if ($token eq 'version') {
+			$line .= " " . join(' ', ($token, shift(@tokens)));
+		    } elsif ($token =~ /^(informs?|traps?|(no)?auth)$/) {
+			$line .= " " . $token;
+		    } else {
+			$line = "!$line " . join(' ', ("<removed>", join(' ',@tokens)));
+			last;
+		    }
+		}
+		ProcessHistory("SNMPSERVERHOST","ipsort","$ip","$line\n");
 	    } else {
 		ProcessHistory("SNMPSERVERHOST","ipsort","$1","$_");
-	    } 
-	    next;
-	}
-	if (/^(set snmp community) (\S+) (\S+)/) {
-	    if (defined($ENV{'NOCOMMSTR'})) {
-		ProcessHistory("SNMPSERVERCOMM","keysort","$_","#$1 $2 <removed>\n");
-	    } else {
-		ProcessHistory("SNMPSERVERCOMM","keysort","$_","$_")
 	    }
 	    next;
 	}
-	# order tacacs server statements
-	/^set (tacacs) key / &&
-	    ProcessHistory("","","","! set $1 key <removed>\n") && next;
-	/^set tacacs server (\d+\.\d+\.\d+\.\d+)/ &&
-	    ProcessHistory("TAC","ipsort","$1","$_") && next;
+	if (/^(snmp-server community) (\S+)/) {
+	    if (defined($ENV{'NOCOMMSTR'})) {
+		ProcessHistory("SNMPSERVERCOMM","keysort","$_","!$1 <removed>$'") && next;
+	    } else {
+		ProcessHistory("SNMPSERVERCOMM","keysort","$_","$_") && next;
+	    }
+	}
+	# order/prune tacacs/radius server statements
+	/^(tacacs-server|radius-server) key / &&
+	    ProcessHistory("","","","!$1 key <removed>\n") && next;
 	# order clns host statements
 	/^clns host \S+ (\S+)/ &&
 	    ProcessHistory("CLNS","keysort","$1","$_") && next;
@@ -902,9 +959,19 @@ sub WriteTerm {
 	# order ip rcmd lines
 	/^ip rcmd/ && ProcessHistory("RCMD","keysort","$_","$_") && next;
 
+	# system controller
+	/^syscon address (\S*) (\S*)/ &&
+	    ProcessHistory("","","","!syscon address $1 <removed>\n") &&
+	    next;
+	/^syscon password (\S*)/ &&
+	    ProcessHistory("","","","!syscon password <removed>\n") &&
+	    next;
+
+	# catch anything that wasnt match above.
 	ProcessHistory("","","","$_");
 	# end of config
-	if (/^end$/) {
+	#if (/^end(\n\[OK])?$/) {
+	if (/^(: )?end$/) {
 	    $found_end = 1;
 	    return(1);
 	}
@@ -918,46 +985,50 @@ sub DoNothing {print STDOUT;}
 # Main
 %commands=(
 	'show version'		=> "ShowVersion",
-#	'show install active'	=> "ShowInstallActive",
-#	'show env all'		=> "ShowEnv",
-#	'show gsr chassis'	=> "ShowGSR",
+	'show install active'	=> "ShowInstallActive",
+	'show env all'		=> "ShowEnv",
+	'show gsr chassis'	=> "ShowGSR",
 	'show boot'		=> "ShowBoot",
-#	'show bootvar'		=> "ShowBoot",
+	'show bootvar'		=> "ShowBoot",
 	'show flash'		=> "ShowFlash",
-	'dir bootflash:'	=> "DirSlotN",
-	'dir slot0:'		=> "DirSlotN",
-#	'dir  /all disk0:'	=> "DirSlotN",
-	'dir slot1:'		=> "DirSlotN",
-#	'dir /all disk1:'	=> "DirSlotN",
-#	'show controllers'	=> "ShowContAll",
-#	'show controllers cbus'	=> "ShowContCbus",
-#	'show diagbus'		=> "ShowDiagbus",
-#	'show diag'		=> "ShowDiag",
-	'show module'		=> "ShowModule",
-#	'show c7200'		=> "ShowC7200",
+	'dir /all nvram:'	=> "DirSlotN",
+	'dir /all bootflash:'	=> "DirSlotN",
+	'dir /all slot0:'	=> "DirSlotN",
+	'dir /all disk0:'	=> "DirSlotN",
+	'dir /all slot1:'	=> "DirSlotN",
+	'dir /all disk1:'	=> "DirSlotN",
+	'show controllers'	=> "ShowContAll",
+	'show controllers cbus'	=> "ShowContCbus",
+	'show diagbus'		=> "ShowDiagbus",
+	'show diag'		=> "ShowDiag",
+	'show module'		=> "ShowModule",	# cat 6500-ios
+	'show c7200'		=> "ShowC7200",
+	'show vtp status'	=> "ShowVTP",
 	'write term'		=> "WriteTerm"
 );
 # keys() doesnt return things in the order entered and the order of the
 # cmds is important (show version first and write term last). pita
 @commands=(
 	"show version",
-#	"show install active",
-#	"show env all",
-#	"show gsr chassis",
+	"show install active",
+	"show env all",
+	"show gsr chassis",
 	"show boot",
-#	"show bootvar",
+	"show bootvar",
 	"show flash",
-	"dir bootflash:",
-	"dir slot0:",
-#	"dir /all disk0:",
-	"dir slot1:",
-#	"dir /all disk1:",
-#	"show controllers",
-#	"show controllers cbus",
-#	"show diagbus",
-#	"show diag",
+	"dir /all nvram:",
+	"dir /all bootflash:",
+	"dir /all slot0:",
+	"dir /all disk0:",
+	"dir /all slot1:",
+	"dir /all disk1:",
+	"show controllers",
+	"show controllers cbus",
+	"show diagbus",
+	"show diag",
 	"show module",
-#	"show c7200",
+	"show c7200",
+	"show vtp status",
 	"write term"
 );
 $cisco_cmds=join(";",@commands);
@@ -988,7 +1059,7 @@ ProcessHistory("COMMENTS","keysort","F0","!\n");
 ProcessHistory("COMMENTS","keysort","G0","!\n");
 TOP: while(<INPUT>) {
     tr/\015//d;
-    if (/> \(enable\) exit$/) {
+    if (/\#\s?exit$/) {
 	$clean_run=1;
 	last;
     }
@@ -999,10 +1070,9 @@ TOP: while(<INPUT>) {
 	$clean_run=0;
 	last;
     }
-    while (/> \(enable\)\s*($cmds_regexp)\s*$/) {
+    while (/#\s*($cmds_regexp)\s*$/) {
 	$cmd = $1;
-#	if (!defined($prompt)) {$prompt = ($_ =~ /^([^>]+> .enable.)/)[0]; }
-	if (!defined($prompt)) {$prompt = ($_ =~ /^([^>]+>)/)[0]; }
+	if (!defined($prompt)) {$prompt = ($_ =~ /^([^#]+#)/)[0]; }
 	print STDERR ("HIT COMMAND:$_") if ($debug);
 	if (! defined($commands{$cmd})) {
 	    print STDERR "found unexpected command - \"$cmd\"\n";

@@ -1,0 +1,121 @@
+dnl Process this file with autoconf to produce a configure script.
+AC_INIT()
+
+AM_INIT_AUTOMAKE(PACKAGE, VERSION)
+
+AC_CONFIG_SUBDIRS(bin util)
+
+dnl default install location
+AC_PREFIX_DEFAULT(/usr/local/rancid)
+
+AC_SUBST(PACKAGE)
+PACKAGE=rancid
+
+# VERSION needs to be updated such that 'make dist' uses the correct
+# filename for the directory name and tarball.
+AC_SUBST(VERSION)
+VERSION=2.0
+
+AM_MAINTAINER_MODE()
+
+AC_PATH_PROG(CVS,cvs,no)
+AC_PATH_PROG(COMM,comm,no)
+AC_PATH_PROG(MKDIR,mkdir,no)
+AC_PATH_PROG(DIRNAME,dirname,no)
+# locate GNU diff (-u option)
+AC_PATH_PROG(DIFF,diff,no, /usr/local/bin:/usr/gnu/bin:/usr/bin:/usr/contrib/bin)
+if test $DIFF = no; then
+    unset ac_cv_path_DIFF
+    AC_MSG_ERROR([can't locate a GNU diff.])
+else
+    $DIFF -u /dev/null /dev/null > /dev/null 2>&1
+    if test $? -ne 0; then
+        AC_MSG_ERROR([can't locate a GNU diff (one which accepts the -u option).])
+	exit 1
+    fi
+fi
+AC_PATH_PROG(TOUCH,touch,no)
+AC_PATH_PROG(SENDMAIL,sendmail,no, /usr/sbin:/usr/bin:/usr/lib)
+# find UCB mail.
+AC_ARG_WITH(ucbmail, [  --with-ucbmail=[FQPN]   path to UCB mail], UCBMAIL=$withval; unset ac_cv_path_UCBMAIL)
+AC_PATH_PROG(UCBMAIL,Mail,no)
+if test $UCBMAIL = no; then
+    unset ac_cv_path_UCBMAIL
+    AC_PATH_PROG(UCBMAIL,mailx,no)
+    if test $UCBMAIL = no; then
+        AC_MSG_ERROR([can't locate a UCB Mail (one which accepts the -s option for subject).])
+        AC_MSG_ERROR([UCB mail is normally Mail or mailx.  use --with-ucbmail to specify the path.])
+	exit 1
+    fi
+fi
+AC_PATH_PROG(SORT,sort,no)
+
+AC_PATH_PROG(MAKE,gmake,no)
+if test $MAKE = no; then
+    unset ac_cv_path_MAKE
+    AC_PATH_PROG(MAKE,make,no)
+    if test $MAKE = no; then
+        AC_MSG_ERROR([can't locate a make.])
+	exit 1
+    fi
+fi
+AC_PROG_MAKE_SET()
+
+# Find an appropriate tar for use in "dist" targets.  A "best guess"
+# is good enough -- if we can't find GNU tar, we don't really care.
+AC_CHECK_PROGS(TAR, gnutar gtar tar)
+
+AC_CHECK_PROGS(AUTOMAKE, automake)
+
+dnl locate perl 5 and expect.
+AC_PROG_INSTALL
+AC_PATH_PROG(PERLV_PATH,perl5,no)
+if test $PERLV_PATH = no; then
+    unset ac_cv_path_PERLV_PATH
+    AC_PATH_PROG(PERLV_PATH,perl,no)
+    if test $PERLV_PATH = no; then
+        AC_MSG_ERROR([can't locate a suitable perl5.])
+	exit 1
+    else
+	$PERLV_PATH -e 'require 5;'
+	if test $? -ne 0 ; then
+           AC_MSG_ERROR([can't locate a suitable perl5.])
+	   exit 1
+	fi
+    fi
+fi
+AC_SUBST(PERLV_PATH)
+
+AC_PATH_PROG(EXPECT_PATH,expect,no)
+if test $EXPECT_PATH = no; then
+    AC_MSG_ERROR([can't locate expect.])
+fi
+AC_SUBST(EXPECT_PATH)
+
+# RD_BIN_DATAS are bin/ .in's that need to be installed without execute
+# perms.
+RD_BIN_DATAS=""
+AC_SUBST(RD_BIN_DATAS)
+rd_cv_rd_bin_datas=$RD_BIN_DATAS
+
+# RD_BIN_PROGS are bin/ .in's that need to be installed with execute perms.
+RD_BIN_PROGS="cat5rancid control_rancid \
+clogin create_cvs do-diffs elogin erancid \
+flogin francid jlogin jrancid par rancid-fe \
+rancid rename rrancid"
+AC_SUBST(RD_BIN_PROGS)
+rd_cv_rd_bin_progs=$RD_BIN_PROGS
+
+# RD_BIN_PROGS are util/ .in's that need to be installed with execute perms.
+RD_UTIL_PROGS="rtrfilter"
+AC_SUBST(RD_UTIL_PROGS)
+rd_cv_rd_util_progs=$RD_UTIL_PROGS
+
+AC_SUBST(INST_PROGS)
+INST_PROGS=$progs
+
+
+AC_OUTPUT(Makefile)
+
+# fix permissions on scripts.
+for file in $progs; do chmod a+x $file; done

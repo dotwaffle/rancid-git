@@ -1,4 +1,4 @@
-#!/usr/local/bin/expect --
+#!@EXPECT_PATH@ --
 ##
 ##
 ## Copyright (C) 1997 by Henry Kilmer, Erik Sherk and Pete Whiting.

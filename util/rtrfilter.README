@@ -1,4 +1,4 @@
-rtrfilter can be user to filter rancid diffs to avoid sending unwanted
+rtrfilter can be used to filter rancid diffs to avoid sending unwanted
 diffs to certain recipient(s) or diffs which those recipient(s) should
 not see without the need to create a separate group(s).
 

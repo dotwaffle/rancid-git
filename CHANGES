@@ -1,4 +1,29 @@
-1.7
+2.0
+	Better formatting for cisco catalyst [non-ios] switches.
+
+	Better support the cisco 3500 switches.
+
+	Get some info out of "show version" for the cat5ks.
+	cat5k "show boot" does variables, not bootflash.
+	Skip more goo from 'write term' on some cat5ks.
+
+	Collect 'show module' for 6500-ios.
+
+	Revamp *login's use of .cloginrc's method directive. see
+	cloginrc.sample.
+
+	Add bits for Cisco PIX.  Thanks to joe rizzo@EA for access to a PIX.
+
+	Sort usernames on ciscos.
+	Get more info out of "show diag" on the GSR.
+
+	Add "show chassis sfm detail" for the M160.
+
+	Leave router type in place when telling about changes to
+	router.db.
+
+	Add autoconf (configure) and makefile bits to automate install
+	and perl/expect replacement
 
 1.6
 	Add "dir nvram:" to rancid.
@@ -15,9 +40,9 @@
 
 1.5
 	sync command-line option between clogin / jlogin.  jlogin modified:
-		-x passphrase   ->      -r passphrase
-				->      -x command-file
-		-e encrypt type ->      -y ssh_chyper_type
+		-x passphrase   ->	-r passphrase
+				->	-x command-file
+		-e encrypt type ->	-y ssh_chyper_type
 
 	add .cloginrc noenable directive to set the cmd-line -noenable
 	option.

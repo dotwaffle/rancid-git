@@ -5,6 +5,7 @@
 #	userprompt
 #	userpassword
 #	passprompt
+#	method
 #	noenable
 #	enauser
 #	enableprompt
@@ -30,6 +31,14 @@
 # add passprompt <router name regexp> <password prompt>
 #	What the router prints to prompt for the password.
 #	Default: "\[Pp]assword:"
+#
+# add method <router name regexp> {ssh} [...]
+#	Defines, in order, which connection method(s) to use for a device
+#	from the set {ssh,telnet,rsh}.  eg: add method * {ssh} {telnet} {rsh}
+#	will attempt ssh connection first.  if ssh fails with connection
+#	refused (ie: not due to authentication failure), then try telnet,
+#	then rsh.
+#	Default: {telnet} {ssh}
 #
 # add noenable <router name regexp>
 #	equivalent of -noenable on the cmd line to not enable at login.
@@ -63,7 +72,7 @@
 #add password *		anything
 #
 #add user sl-gw*-dc	twit
-#add user sdn* 		sdn_auto
+#add user sdn*		sdn_auto
 #add user sdn-bb*	ops_eng
 #add user *		$env(USER)
 
@@ -76,13 +85,17 @@ add autoenable *.custx.net	1
 
 # customer y
 # this is the normal cisco login.  a password followed by and enable password.
+# try ssh first, then rlogin.
 add password *.custy.net	{vector}	{victor}
+add method *.custy.net		ssh rlogin
 
-# customer z
+# customer z; they use ssh only.
 add user *.custz.net		shirley
 add password *.custz.net	{jive}		{surely}
+add method *.custz.net		ssh
 
-# the route-server's do provide enable access.  cmdline -noenable equivalent.
+# the route-server's do not provide enable access.  cmdline -noenable
+# equivalent.
 add noenable route-server*	1
 
 # all our routers, ie: everything else

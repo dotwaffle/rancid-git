@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#!@PERLV_PATH@
 ##
 ## Amazingly hacked version of Hank's rancid - this one tries to
 ## deal with Junipers.
@@ -30,6 +30,7 @@ $file = $opt_f;
 $host = $ARGV[0];
 
 $clean_run = 0;
+$found_end = 0;
 
 # This routine is used to print out the router configuration
 sub ProcessHistory {
@@ -278,8 +279,8 @@ sub ShowChassisRoutingEngine {
     return;
 }
 
-# This routine parses "show chassis scb", "show chassis ssb", and
-# "show chassis feb".
+# This routine parses "show chassis feb" "show chassis scb", "show
+# chassis sfm detail", and "show chassis ssb".
 # Only do this routine once.
 sub ShowChassisSCB {
     print STDERR "    In ShowChassisSCB: $_" if ($debug);
@@ -355,8 +356,13 @@ sub ShowConfiguration {
     ProcessHistory("","","","# $_");
     while (<INPUT>) {
 	tr/\015//d;
-	last if(/^$prompt/);
 	next if (/^\s*$/);
+        # end of config - hopefully.  juniper does not have a reliable
+	# end-of-config tag.  appears to end with "\nPROMPT>", but not sure.
+	if(/^$prompt/) {
+	    $found_end++;
+	    last;
+	}
 
 	/^database header mismatch: / && return(-1);
 	/^version .*;\d+$/ && return(-1);
@@ -389,6 +395,7 @@ sub DoNothing {print STDOUT;}
 	"show chassis hardware"		=> "ShowChassisHardware",
 	"show chassis routing-engine"	=> "ShowChassisRoutingEngine",
 	"show chassis scb"		=> "ShowChassisSCB",
+	"show chassis sfm detail"	=> "ShowChassisSCB",
 	"show chassis ssb"		=> "ShowChassisSCB",
 	"show chassis feb"		=> "ShowChassisSCB",
 	"show system boot-messages"	=> "ShowSystemBootMessages",
@@ -403,6 +410,7 @@ sub DoNothing {print STDOUT;}
 	"show chassis hardware",
 	"show chassis routing-engine",
 	"show chassis scb",
+	"show chassis sfm detail",
 	"show chassis ssb",
 	"show chassis feb",
 	"show system boot-messages",
@@ -484,12 +492,12 @@ if (defined($ENV{NOPIPE})) {
 
 # check for completeness
 $commands = join(", ", keys(%commands));
-if (scalar(%commands) || !$clean_run) {
+if (scalar(%commands) || !$clean_run || !$found_end) {
     if (scalar(%commands)) {
 	printf(STDOUT "missed cmd(s): %s\n", join(',', keys(%commands)));
 	printf(STDERR "missed cmd(s): %s\n", join(',', keys(%commands))) if ($debug);
     }
-    if (!$clean_run) {
+    if (!$clean_run || !$found_end) {
 	print STDOUT "End of run not found\n";
 	print STDERR "End of run not found\n" if ($debug);
 	system("/usr/bin/tail -1 $host.new");

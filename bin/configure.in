@@ -1,0 +1,49 @@
+dnl Process this file with autoconf to produce a configure script.
+AC_INIT()
+
+dnl default install location
+AC_PREFIX_DEFAULT(/usr/local/rancid)
+
+dnl install program(s)
+AC_PROG_INSTALL
+
+RD_BIN_DATAS=$rd_cv_rd_bin_datas
+AC_SUBST(RD_BIN_DATAS)
+RD_BIN_PROGS=$rd_cv_rd_bin_progs
+AC_SUBST(RD_BIN_PROGS)
+
+PERLV_PATH=$ac_cv_path_PERLV_PATH
+AC_SUBST(PERLV_PATH)
+EXPECT_PATH=$ac_cv_path_EXPECT_PATH
+AC_SUBST(EXPECT_PATH)
+
+# locate tools to build $PATH for env.  order is significant.  want to be
+# sure that we pick up the the proper diff and ucbmail in bin/env.
+unset ENV_PATH
+AC_PATH_PROG(DIFF,diff,no)
+ENV_PATH=`dirname $ac_cv_path_DIFF`
+AC_PATH_PROG(UCBMAIL,Mail,no)
+ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_UCBMAIL`"
+AC_PATH_PROG(CVS,cvs,no)
+ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_CVS`"
+AC_PATH_PROG(COMM,comm,no)
+ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_COMM`"
+AC_PATH_PROG(MKDIR,mkdir,no)
+ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_MKDIR`"
+AC_PATH_PROG(DIRNAME,dirname,no)
+ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_DIRNAME`"
+AC_PATH_PROG(TOUCH,touch,no)
+ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_TOUCH`"
+AC_PATH_PROG(SENDMAIL,sendmail,no)
+ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_SENDMAIL`"
+AC_PATH_PROG(SORT,sort,no)  
+ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_SORT`"
+ENV_PATH="$ENV_PATH:/usr/local/bin:/usr/bin"
+
+ENV_PATH=`echo $ENV_PATH | $PERLV_PATH -e 'foreach $x(split(":",<>)){next unless (length($x));push(@F, $x),$seen{$x}=1 unless (defined $seen{$x});}print join(":",@F);'`
+AC_SUBST(ENV_PATH)
+
+AC_OUTPUT(Makefile env $RD_BIN_DATAS $RD_BIN_PROGS)
+
+# fix permissions on scripts.
+for file in $RD_BIN_PROGS; do chmod a+x $file; done

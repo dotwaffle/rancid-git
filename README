@@ -1,37 +1,45 @@
 Rancid is a "Really Awesome New Cisco confIg Differ" developed to
 maintain CVS controlled copies of router configs.
 
-The following is the packing list for Rancid:
+The following is the packing list for Rancid.  .in is stripped from
+the files below by configure with substitutions completed:
 
 README -    This file.
 CHANGES -   List of changes to Rancid.
 Todo -      partial Todo list of what needs to be done.
-env -       Enviromental settings needed.
-do-diffs -  Script designed to be run from cron calling control_rancid.
-control_rancid -    Builds router list, calls rancid on each router and
+env.in -    Enviromental settings needed.
+do-diffs.in - Script designed to be run from cron calling control_rancid.
+control_rancid.in - Builds router list, calls rancid on each router and
 		    handles cvs routines.
-rancid-fe - chooses between rancid/francid/jrancid/rrancid/cat5rancid.
-rancid -    Runs commands on cisco routers and processes the output - the meat.
-erancid -   Runs commands on ADC EZ-T3 muxes and processes the output.
-francid -   Runs commands on foundry switches and processes the output.
-jrancid -   Runs commands on juniper routers and processes the output.
-rrancid -   Runs commands on redback routers and processes the output.
-cat5rancid -Runs commands on cisco cat5 switches and processes the output.
-clogin -    Expect script that logs into routers either interactively,
-	    runs a set of commands or runs another expect script.
-elogin -    Expect script that logs into ADC EZ-T3 muxes either interactively,
-	    runs a set of commands or runs another expect script.
-flogin -    Expect script that logs into foundry switches.  once foundry
+rancid-fe.in - chooses between rancid/[efjr]rancid/cat5rancid.
+rancid.in - Runs commands on cisco routers and processes the output - the meat.
+erancid.in -   Runs commands on ADC EZ-T3 muxes and processes the output.
+francid.in -   Runs commands on foundry switches and processes the output.
+jrancid.in -   Runs commands on juniper routers and processes the output.
+rrancid.in -   Runs commands on redback routers and processes the output.
+cat5rancid.in -Runs commands on cisco cat5 switches and processes the output.
+clogin.in - Expect script that logs into routers either interactively,
+	    runs a set of commands, or runs another expect script.
+elogin.in - Expect script that logs into ADC EZ-T3 muxes either interactively,
+	    runs a set of commands, or runs another expect script.
+flogin.in - Expect script that logs into foundry switches.  Once foundry
 	    cleans up their bloody UI, clogin should do the job.
-jlogin -    Expect script that logs into juniper routers similarly to
-	    clogin.  it is not terribly robust, but mainly used for it's
+jlogin.in - Expect script that logs into juniper routers similarly to
+	    clogin.  It is not terribly robust, but mainly used for it's
 	    -c and -s options.
 .cloginrc - TCL commands to set passwords, usernames etc. used by clogin and
 	    jlogin.
-par -       Parallel processing of commands - any commands.
-rename -    Perl script to rename files.
-create_cvs -Creates all of the CVS and config directories.
-util -      utilities / contribs
+par.in -    Parallel processing of commands - any commands.
+rename.in - Perl script to rename files.
+create_cvs.in - Creates all of the CVS and config directories.
+util/ -   utilities / contribs
+
+The following are included as part of the installation tools:
+
+Makefile.in - processed by configure to produce Makefiles
+configure -   gnu autoconf script
+install-sh -  shell script to simulate BSD style install
+mkinstalldirs - shell script to make installation directories
 
 rancid will also need to have the following packages:
 cvs	- code revision system available from prep.ai.mit.edu:/pub/gnu
@@ -51,32 +59,29 @@ not included, but can be found here:
 
 Quick Installation Guide (an example):
 
-1) mkdir <basedir>
-   All rancid crud will be under this directory.  we chose /home/rancid.
+1) ./configure [--prefix=<basedir>]
+   By default, All rancid crud will be installed under /usr/local/rancid.
+   This can be overridden with the --prefix option.  E.g.:
+	./configure --prefix=/home/rancid
+   The user who will run rancid must have write permission in this
+   directory.
 
-2) mkdir <basedir>/bin
+2) make install
 
-3) Put the contents of rancid/bin in <basedir>/bin.
+3) Modify <basedir>/bin/env.  The variable LIST_OF_GROUPS is a
+   space delimited list of router "groups".  E.g.:
+	LIST_OF_GROUPS="backbone aggregation switches"
 
-   Modify the location of perl and expect in each of cat5rancid,
-   clogin, elogin, erancid, flogin, francid, jlogin, jrancid, par,
-   rancid, rancid-fe, rename, and rrancid if necessary.  There are
-   also 3 calls to perl in control_rancid and one in do-diffs.
+4) Put .cloginrc in the home directory of the user who will run rancid.
 
-   Make sure that you are using perl version 5 and not perl version 4.
-
-4) Modify <basedir>/bin/env.
-
-5) Put .cloginrc in your home directory.
-
-6) Modify .cloginrc.
+5) Modify .cloginrc.
 
    Test to make sure that you can log into every router.
 
    Note: the juniper user you use *must* log into a cli shell (which
    is the default on a juniper).
 
-7) Modify /etc/aliases
+6) Modify /etc/aliases
    Rancid sends the diffs and other controlling emails to rancid-<GROUP>
    and problems to rancid-admin-<GROUP>, where <GROUP> is the "GROUP" of
    routers.  This way you can seperate your backbone routers from your
@@ -93,11 +98,11 @@ Quick Installation Guide (an example):
    The Precedence header set to bulk or junk *hopefully* avoids replies from
    auto-responders and vacation type mail filters.
 
-8) Run create_cvs.
+7) Run create_cvs.
    This creates all of the CVS necessary directories and all of the
    config directories.
 
-9) For each "group", modify the router.db file in the group directory.
+8) For each "group", modify the router.db file in the group directory.
    The file is of the form "router:mfg:state" where "router" is
    the name (we use FQDN) of the router, mfg is the manufacturer
    from the set of (cisco|ezt3|foundry|juniper|redback|cat5), and "state"
@@ -112,14 +117,21 @@ Quick Installation Guide (an example):
 	juniper-router.domain.com:juniper:up
 	redback-dsl-router.domain.com:redback:down
 
-10) Put do-diffs in cron to be called however often you want it to run
-    for each group (do-diffs [<GROUP>]).  eg:
-
+9) Put do-diffs in cron to be called however often you want it to
+   run for each group (do-diffs [<GROUP>]).  If you run it less
+   often than once/hour, check the setting of OLDTIME in bin/env.
+   E.g.:
 	# run config differ hourly
 	1 * * * * <BASEDIR>/bin/do-diffs
-	# clean out hourly differ logs
+	# clean out config differ logs
 	50 23 * * * /usr/bin/find <BASEDIR>/logs -mtime +2 -exec rm {} \;
 
-11) Send any bugs, suggestions or updates to rancid@shrubbery.net.
+10) Send any bugs, suggestions or updates to rancid@shrubbery.net.
+    See the web page at http://www.shrubbery.net/rancid.  We have
+    created the standard mailing lists for those interested;
+    rancid-announce@shrubbery.net and rancid-discuss@shrubbery.net.
+    Subscribe by sending an email whose body contains "subscribe
+    rancid-<announce or discuss>" to majordomo@shrubbery.net.
+
 
 -Hank
