@@ -21,6 +21,9 @@ CVSROOT=$BASEDIR/CVS; export CVSROOT
 # collection from the router(s).
 #NOPIPE=YES; export NOPIPE
 #
+# if NOCOMMSTR is set, snmp community strings will be stripped from the configs
+#NOCOMMSTR=YES; export NOCOMMSTR
+#
 # How many hours to go by before complaining about routers that
 # can not be reached.
 OLDTIME=4; export OLDTIME

@@ -1,3 +1,4 @@
+- need to strip community strings from foundry, redback
 - detect 'same' vty configs
 	- ignoring length/width/passwd is a start, but need more
 - add .cloginrc var to say to use ssh or telnet

@@ -12,11 +12,14 @@ control_rancid -    Builds router list, calls rancid on each router and
 		    handles cvs routines.
 rancid-fe - chooses between rancid/francid/jrancid/rrancid/cat5rancid.
 rancid -    Runs commands on cisco routers and processes the output - the meat.
+erancid -   Runs commands on ADC EZ-T3 muxes and processes the output.
 francid -   Runs commands on foundry switches and processes the output.
 jrancid -   Runs commands on juniper routers and processes the output.
 rrancid -   Runs commands on redback routers and processes the output.
 cat5rancid -Runs commands on cisco cat5 switches and processes the output.
 clogin -    Expect script that logs into routers either interactively,
+	    runs a set of commands or runs another expect script.
+elogin -    Expect script that logs into ADC EZ-T3 muxes either interactively,
 	    runs a set of commands or runs another expect script.
 flogin -    Expect script that logs into foundry switches.  once foundry
 	    cleans up their bloody UI, clogin should do the job.
@@ -42,7 +45,7 @@ tcl	- required by expect.
 Bill Fenner has a cgi script for interacting with CVS repositories via
 a web interface.  This provides a great way to view rancid diffs and
 full configs, especially for those unfamiliar with cvs.  The package is
-not included here, but can be found here:
+not included, but can be found here:
 
 	http://www.freebsd.org/~fenner/cvsweb/cvsweb-1.0.tar.gz
 
@@ -56,9 +59,9 @@ Quick Installation Guide (an example):
 3) Put the contents of rancid/bin in <basedir>/bin.
 
    Modify the location of perl and expect in each of cat5rancid,
-   clogin, flogin, francid, jlogin, jrancid, par, rancid, rancid-fe,
-   rename, and rrancid if necessary.  There are also 3 calls to
-   perl in control_rancid and one in do-diffs.
+   clogin, elogin, erancid, flogin, francid, jlogin, jrancid, par,
+   rancid, rancid-fe, rename, and rrancid if necessary.  There are
+   also 3 calls to perl in control_rancid and one in do-diffs.
 
    Make sure that you are using perl version 5 and not perl version 4.
 
@@ -97,9 +100,17 @@ Quick Installation Guide (an example):
 9) For each "group", modify the router.db file in the group directory.
    The file is of the form "router:mfg:state" where "router" is
    the name (we use FQDN) of the router, mfg is the manufacturer
-   from the set of (cisco|foundry|juniper|redback|cat5), and "state"
+   from the set of (cisco|ezt3|foundry|juniper|redback|cat5), and "state"
    is either up or down.  Each router listed as "up" will have the
-   configuration grabbed.
+   configuration grabbed.  Note: manufacturer cat5 is intended only for
+   catalyst switches running catalyst (not IOS) code.
+
+   eg <basedir>/<group>/router.db:
+	cisco-router.domain.com:cisco:up
+	adc-mux.domain.com:ezt3:up
+	foundry-switch-router.domain.com:foundry:up
+	juniper-router.domain.com:juniper:up
+	redback-dsl-router.domain.com:redback:down
 
 10) Put do-diffs in cron to be called however often you want it to run
     for each group (do-diffs [<GROUP>]).  eg:

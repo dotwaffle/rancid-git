@@ -173,6 +173,7 @@ sub ShowVersion {
 	    my($proc) = $1;
 	    my($cpu) = $2;
 	    my($mem) = $3;
+	    my($deivce) = "router";
 	    if ( $1 eq "CSC") {
 		$type = "AGS";
 	    } elsif ( $1 eq "CSC4") {
@@ -191,14 +192,17 @@ sub ShowVersion {
 		$type = "7000";
 	    } elsif ( $1 =~ /720[246]/) {
 		$type = "7200";
-	    } elsif ($1 =~ /1200[48]\/GRP/ || $1 =~ /1201[26]\/GRP/) {
+	    } elsif ( $1 =~ /1200[48]\/GRP/ || $1 =~ /1201[26]\/GRP/) {
 		$type = "12000";
+	    } elsif ( $1 =~ /WS-C29/) {
+		$type = "2900XL";
+		$device = "switch";
 	    } else {
 		$type = $1;
 	    }
 	    print STDERR "TYPE = $type\n" if ($debug);
 	    ProcessHistory("COMMENTS","keysort","A1",
-		"!Chassis type:$slave $proc - a $type router\n");
+		"!Chassis type:$slave $proc - a $type $device\n");
 	    ProcessHistory("COMMENTS","keysort","B1",
 		"!Memory:$slave main $mem\n");
 	    ProcessHistory("COMMENTS","keysort","A3","!CPU:$slave $cpu\n");
@@ -379,7 +383,7 @@ sub ShowFlash {
     return;
 }
 
-# This routine parses "dir /all ((disk|slot)N|bootflash):"
+# This routine parses "dir /all ((disk|slot)N|bootflash|nvram):"
 sub DirSlotN {
     # Skip if this is not a 3600, 7000, 7200, 7500, or 12000.
     print STDERR "    In DirSlotN: $_" if ($debug);
@@ -713,6 +717,20 @@ sub ShowC7200 {
     return(0);
 }
 
+# This routine parses "show vtp status"
+sub ShowVTP {
+    print STDERR "    In ShowVTP: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(1) if ($type !~ /^2900XL$/);
+	ProcessHistory("COMMENTS","keysort","I0","!VTP: $_");
+    }
+    ProcessHistory("COMMENTS","keysort","I0","!\n");
+}
+
 # This routine processes a "write term"
 sub WriteTerm {
     print STDERR "    In WriteTerm: $_" if ($debug);
@@ -743,17 +761,17 @@ sub WriteTerm {
 	/^ width /		&& next; # kill width on serial lines
 	/^ clockrate /		&& next; # kill clockrate on serial interfaces
 	/^enable password / &&
-	    ProcessHistory("ENABLE","","","!enable password <removed>\n") &&
+	    ProcessHistory("ENABLE","","","! enable password <removed>\n") &&
 	    next;
-	/^(username .*) password /&&
-	    ProcessHistory("USER","","","!$1 password <removed>\n") && next;
+	/^username (\S+) password /&&
+	    ProcessHistory("USER","keysort","$1","! username $1 password <removed>\n") && next;
 	/^\s*password / &&
 	    ProcessHistory("LINE-PASS","","","! password <removed>\n") && next;
 	/^\s*neighbor (\S*) password / &&
 	    ProcessHistory("","","","! neighbor $1 password <removed>\n") &&
 	    next;
 	/^(ip ftp password) / &&
-	    ProcessHistory("","","","!$1 <removed>\n") && next;
+	    ProcessHistory("","","","! $1 <removed>\n") && next;
 	/^( ip ospf authentication-key) / &&
 	    ProcessHistory("","","","!$1 <removed>\n") && next;
 	/^( ip ospf message-digest-key \d+ md5) / &&
@@ -818,16 +836,41 @@ sub WriteTerm {
 	# order name-server statements
 	/^ip name-server (\d+\.\d+\.\d+\.\d+)/ &&
 	    ProcessHistory("NAMESERVER","ipsort","$1","$_") && next;
-	# order snmp-server host statements
-	/^snmp-server host (\d+\.\d+\.\d+\.\d+)/  &&
-	    ProcessHistory("SNMPSERVERHOST","ipsort","$1","$_") && next;
-	/^snmp-server community /  &&
-	    ProcessHistory("SNMPSERVERCOMM","keysort","$_","$_") && next;
-	# order tacacs server statements
-	/^(tacacs-server key )/ &&
-	    ProcessHistory("","","","!$1<removed>\n") && next;
-	/^tacacs-server host (\d+\.\d+\.\d+\.\d+)/ &&
-	    ProcessHistory("TAC","ipsort","$1","$_") && next;
+	# order/prune snmp-server host statements
+	# we only prune lines of the form
+	# snmp-server host a.b.c.d <community>
+	if (/^snmp-server host (\d+\.\d+\.\d+\.\d+) /) {
+	    if (defined($ENV{'NOCOMMSTR'})) {
+		my($ip) = $1;
+		my($line) = "snmp-server host $ip";
+		my(@tokens) = split(' ', $');
+		my($token);
+		while ($token = shift(@tokens)) {
+		    if ($token eq 'version') {
+			$line .= " " . join(' ', ($token, shift(@tokens)));
+		    } elsif ($token =~ /^(informs?|traps?|(no)?auth)$/) {
+			$line .= " " . $token;
+		    } else {
+			$line = "! $line " . join(' ', ("<removed>", join(' ',@tokens)));
+			last;
+		    }
+		}
+		ProcessHistory("SNMPSERVERHOST","ipsort","$ip","$line\n");
+	    } else {
+		ProcessHistory("SNMPSERVERHOST","ipsort","$1","$_");
+	    }
+	    next;
+	}
+	if (/^(snmp-server community) (\S+)/) {
+	    if (defined($ENV{'NOCOMMSTR'})) {
+		ProcessHistory("SNMPSERVERCOMM","keysort","$_","! $1 <removed>$'") && next;
+	    } else {
+		ProcessHistory("SNMPSERVERCOMM","keysort","$_","$_") && next;
+	    }
+	}
+	# order/prune tacacs/radius server statements
+	/^(tacacs-server|radius-server) key / &&
+	    ProcessHistory("","","","! $1 key <removed>\n") && next;
 	# order clns host statements
 	/^clns host \S+ (\S+)/ &&
 	    ProcessHistory("CLNS","keysort","$1","$_") && next;
@@ -835,7 +878,7 @@ sub WriteTerm {
 	/^alias / && ProcessHistory("ALIAS","keysort","$_","$_") && next;
 	# delete ntp auth password
 	/^(ntp authentication-key \d+ md5) / &&
-	    ProcessHistory("","","","!$1 <removed>\n") && next;
+	    ProcessHistory("","","","! $1 <removed>\n") && next;
 	# order ntp peers/servers
 	if (/^ntp (server|peer) (\d+)\.(\d+)\.(\d+)\.(\d+)/) {
 	    $sortkey = sprintf("$1 %03d%03d%03d%03d",$2,$3,$4,$5);
@@ -854,6 +897,15 @@ sub WriteTerm {
 	# order ip rcmd lines
 	/^ip rcmd/ && ProcessHistory("RCMD","keysort","$_","$_") && next;
 
+	# system controller
+	/^syscon address (\S*) (\S*)/ &&
+	    ProcessHistory("","","","! syscon address $1 <removed>\n") &&
+	    next;
+	/^syscon password (\S*)/ &&
+	    ProcessHistory("","","","! syscon password <removed>\n") &&
+	    next;
+
+	# catch anything that wasnt match above.
 	ProcessHistory("","","","$_");
 	# end of config
 	if (/^end$/) {
@@ -876,6 +928,7 @@ sub DoNothing {print STDOUT;}
 	'show boot'		=> "ShowBoot",
 	'show bootvar'		=> "ShowBoot",
 	'show flash'		=> "ShowFlash",
+	'dir /all nvram:'	=> "DirSlotN",
 	'dir /all bootflash:'	=> "DirSlotN",
 	'dir /all slot0:'	=> "DirSlotN",
 	'dir /all disk0:'	=> "DirSlotN",
@@ -886,6 +939,7 @@ sub DoNothing {print STDOUT;}
 	'show diagbus'		=> "ShowDiagbus",
 	'show diag'		=> "ShowDiag",
 	'show c7200'		=> "ShowC7200",
+	'show vtp status'	=> "ShowVTP",
 	'write term'		=> "WriteTerm"
 );
 # keys() doesnt return things in the order entered and the order of the
@@ -898,6 +952,7 @@ sub DoNothing {print STDOUT;}
 	"show boot",
 	"show bootvar",
 	"show flash",
+	"dir /all nvram:",
 	"dir /all bootflash:",
 	"dir /all slot0:",
 	"dir /all disk0:",
@@ -908,6 +963,7 @@ sub DoNothing {print STDOUT;}
 	"show diagbus",
 	"show diag",
 	"show c7200",
+	"show vtp status",
 	"write term"
 );
 $cisco_cmds=join(";",@commands);
