@@ -1,3 +1,4 @@
+- lg.conf(5) needs the query stuff documented.
 - could the cloginrc match function do a longest-match search instead of
   first match?
 - look at Andreas Dahl's Brocade switch collection scripts
@@ -30,7 +31,9 @@
 - should par's -c override an input files' : cmd?
 - should *login emmit "clogin error:" or "*login error:" to make matches for
   login failures definitive?
-- would like hpfilter to be more friendly to interactive logins
+- would like hpuifilter to be more friendly to interactive logins
+- hpuifilter needs to allocate a pseudo terminal to work with ssh
+	Pseudo-terminal will not be allocated because stdin is not a terminal.
 - rancid with zebra via vtysh?
 - rancid for unix?
 - would be nice if it were possible to add additional commands to be run
@@ -91,3 +94,5 @@
 	Model number: WS-C2950-24
 	System serial number: FHK0619X2RN
 	Configuration register is 0xF
+- Why does nlogin use a gratuitiously different variable name for the device(s)
+  in the main loop?

@@ -1,3 +1,25 @@
+2.3.1
+	jerancid: fail/retry if the RP is syncing to the backup - Dave Mack
+
+	clogin:	cat 19k lacks a space in front of pager prompt - darren @ adam
+
+	nlogin: correct find(sshcmd) argument - from Samuele Giovanni Tonon
+
+	lg.cgi: allow :s in arguments for sub-interface from Richard Doty
+
+	jrancid: filter some more secrets
+
+	rancid: filter some more secrets
+
+	francid: bits for Mucho Grande - from Niels Bakker
+
+	add -- before (telnet|ssh) in call to hpuifilter so that any options
+	for telnet/ssh are not interpretted by hpuifilter
+
+	look for diff -U if diff -u fails in configure.
+
+	fix typo in nlogin that made cloginrc password lookups fail.
+
 2.3
 	The following files have been moved to make rancid more
 	install/pkg/port/rpm friendly.

@@ -846,8 +846,8 @@ if test -n "$ac_init_help"; then
 Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-  --disable-dependency-tracking Speeds up one-time builds
-  --enable-dependency-tracking  Do not reject slow dependency extractors
+  --disable-dependency-tracking  speeds up one-time build
+  --enable-dependency-tracking   do not reject slow dependency extractors
   --enable-mk-localstatedir
                           enable creation of the local state directory at
                           install time (default: yes)
@@ -1486,22 +1486,28 @@ else
 echo "$as_me: WARNING: \`missing' script is too old or missing" >&2;}
 fi
 
-if mkdir -m 0755 -p -- . 2>/dev/null; then
-  mkdir_p='mkdir -m 0755 -p --'
+if mkdir -p --version . >/dev/null 2>&1 && test ! -d ./--version; then
+  # Keeping the `.' argument allows $(mkdir_p) to be used without
+  # argument.  Indeed, we sometimes output rules like
+  #   $(mkdir_p) $(somedir)
+  # where $(somedir) is conditionally defined.
+  # (`test -n '$(somedir)' && $(mkdir_p) $(somedir)' is a more
+  # expensive solution, as it forces Make to start a sub-shell.)
+  mkdir_p='mkdir -p -- .'
 else
   # On NextStep and OpenStep, the `mkdir' command does not
   # recognize any option.  It will interpret all options as
   # directories to create, and then abort because `.' already
   # exists.
-  for d in ./-m ./0755 ./-p ./--;
+  for d in ./-p ./--version;
   do
     test -d $d && rmdir $d
   done
   # $(mkinstalldirs) is defined by Automake if mkinstalldirs exists.
   if test -f "$ac_aux_dir/mkinstalldirs"; then
-    mkdir_p='$(mkinstalldirs) -m 0755'
+    mkdir_p='$(mkinstalldirs)'
   else
-    mkdir_p='$(install_sh) -m 0755 -d'
+    mkdir_p='$(install_sh) -d'
   fi
 fi
 
@@ -2882,7 +2888,9 @@ else
     : > sub/conftest.c
     for i in 1 2 3 4 5 6; do
       echo '#include "conftst'$i'.h"' >> sub/conftest.c
-      : > sub/conftst$i.h
+      # Using `: > sub/conftst$i.h' creates only sub/conftst1.h with
+      # Solaris 8's {/usr,}/bin/sh.
+      touch sub/conftst$i.h
     done
     echo "${am__include} ${am__quote}sub/conftest.Po${am__quote}" > confmf
 
@@ -2910,9 +2918,14 @@ else
        grep sub/conftest.${OBJEXT-o} sub/conftest.Po > /dev/null 2>&1 &&
        ${MAKE-make} -s -f confmf > /dev/null 2>&1; then
       # icc doesn't choke on unknown options, it will just issue warnings
-      # (even with -Werror).  So we grep stderr for any message
-      # that says an option was ignored.
-      if grep 'ignoring option' conftest.err >/dev/null 2>&1; then :; else
+      # or remarks (even with -Werror).  So we grep stderr for any message
+      # that says an option was ignored or not supported.
+      # When given -MP, icc 7.0 and 7.1 complain thusly:
+      #   icc: Command line warning: ignoring option '-M'; no argument required
+      # The diagnosis changed in icc 8.0:
+      #   icc: Command line remark: option '-MP' not supported
+      if (grep 'ignoring option' conftest.err ||
+          grep 'not supported' conftest.err) >/dev/null 2>&1; then :; else
         am_cv_CC_dependencies_compiler_type=$depmode
         break
       fi
@@ -5105,11 +5118,20 @@ _DIFF_PATH=`echo $PATH:${prefix}/bin:/usr/bin:/usr/pkg/bin:/usr/local/bin:/usr/g
 for _diff in ${_DIFF_PATH} ;
 do
     if test -e ${_diff}/diff ; then
-	${_diff}/diff -u /dev/null /dev/null > /dev/null 2>&1
+	${_diff}/diff -u -4 /dev/null /dev/null > /dev/null 2>&1
 	if test $? -ne 0; then
-	    if test "${ADIFF}" == "" ; then
-		ADIFF="${_diff}/diff"
-		ADIFF_CMD="diff -c -4"
+	    # linux/gnu shit has to change options that have been around
+	    # since organized religion; see if -U 4 works.
+	    ${_diff}/diff -U 4 /dev/null /dev/null > /dev/null 2>&1
+	    if test $? -ne 0; then
+		if test "${ADIFF}" == "" ; then
+		    ADIFF="${_diff}/diff"
+		    ADIFF_CMD="diff -c -4"
+		fi
+	    else
+		DIFF="${_diff}/diff"
+		DIFF_CMD="diff -U 4"
+		break
 	    fi
 	else
 	    DIFF="${_diff}/diff"
@@ -7514,14 +7536,14 @@ echo X"$mf" |
   grep '^DEP_FILES *= *[^ #]' < "$mf" > /dev/null || continue
   # Extract the definition of DEP_FILES from the Makefile without
   # running `make'.
-  DEPDIR=`sed -n -e '/^DEPDIR = / s///p' < "$mf"`
+  DEPDIR=`sed -n 's/^DEPDIR = //p' < "$mf"`
   test -z "$DEPDIR" && continue
   # When using ansi2knr, U may be empty or an underscore; expand it
-  U=`sed -n -e '/^U = / s///p' < "$mf"`
+  U=`sed -n 's/^U = //p' < "$mf"`
   test -d "$dirpart/$DEPDIR" || mkdir "$dirpart/$DEPDIR"
   # We invoke sed twice because it is the simplest approach to
   # changing $(DEPDIR) to its actual value in the expansion.
-  for file in `sed -n -e '
+  for file in `sed -n '
     /^DEP_FILES = .*\\\\$/ {
       s/^DEP_FILES = //
       :loop

@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: rancid.in,v 1.172 2004/03/14 16:57:05 heas Exp $
+## $Id: rancid.in,v 1.174 2004/05/27 22:08:28 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -354,6 +354,7 @@ sub ShowRedundancy {
 	tr/\015//d;
 	last if(/^$prompt/);
 	next if(/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /(Invalid input detected|Type help or )/;
 	# the pager can not be disabled per-session on the PIX
 	s/^<-+ More -+>\s*//;
 
@@ -377,6 +378,7 @@ sub ShowIDprom {
 	tr/\015//d;
 	last if(/^$prompt/);
 	next if(/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /(Invalid input detected|Type help or )/;
 	# the pager can not be disabled per-session on the PIX
 	s/^<-+ More -+>\s*//;
 
@@ -1129,6 +1131,7 @@ sub WriteTerm {
 	tr/\015//d;
 	last if(/^$prompt/);
 	return(-1) if (/command authorization failed/i);
+	return(1) if /(Invalid input detected|Type help or )/;
 	# the pager can not be disabled per-session on the PIX
 	s/^<-+ More -+>\s*//;
 	/Non-Volatile memory is in use/  && return(-1); # NvRAM is locked
@@ -1188,9 +1191,9 @@ sub WriteTerm {
 	    next;
 	}
 	if (/^username (\S+)(\s.*)? password ((\d) \S+|\S+)/) {
-	    if ($filter_pwds == 2) {
+	    if ($filter_pwds >= 2) {
 		ProcessHistory("USER","keysort","$1","!username $1$2 password <removed>\n");
-	    } elsif ($filter_pwds == 1 && $4 ne "5"){
+	    } elsif ($filter_pwds >= 1 && $4 ne "5"){
 		ProcessHistory("USER","keysort","$1","!username $1$2 password <removed>\n");
 	    } else {
 		ProcessHistory("USER","keysort","$1","$_");
@@ -1207,6 +1210,10 @@ sub WriteTerm {
 	}
 	if (/^(\s*)password / && $filter_pwds >= 1) {
 	    ProcessHistory("LINE-PASS","","","!$1password <removed>\n");
+	    next;
+	}
+	if (/^(\s*)secret / && $filter_pwds >= 2) {
+	    ProcessHistory("LINE-PASS","","","!$1secret <removed>\n");
 	    next;
 	}
 	if (/^\s*neighbor (\S*) password / && $filter_pwds >= 1) {
@@ -1432,6 +1439,9 @@ sub DoNothing {print STDOUT;}
 	'dir /all disk1:'	=> "DirSlotN",
 	'dir /all slot2:'	=> "DirSlotN",
 	'dir /all disk2:'	=> "DirSlotN",
+	'dir /all harddisk:'	=> "DirSlotN",
+	'dir /all harddiska:'	=> "DirSlotN",
+	'dir /all harddiskb:'	=> "DirSlotN",
 	"dir /all sup-bootflash:"=> "DirSlotN",		# cat 6500-ios
 	"dir /all sup-microcode:"=> "DirSlotN",		# cat 6500-ios
 	'dir /all slavenvram:'	=> "DirSlotN",
@@ -1485,6 +1495,9 @@ sub DoNothing {print STDOUT;}
 	"dir /all disk1:",
 	"dir /all slot2:",
 	"dir /all disk2:",
+	"dir /all harddisk:",
+	"dir /all harddiska:",
+	"dir /all harddiskb:",
 	"dir /all sup-bootflash:",
 	"dir /all sup-microcode:",
 	"dir /all slavenvram:",

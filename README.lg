@@ -54,6 +54,7 @@ directory options, such as --prefix, the default install prefix is
    directory index like this:
 
 	% cat /usr/local/htdocs/lg/.htaccess
+	Options ExecCGI
 	DirectoryIndex lgform.cgi
 
 2) The looking glass scripts need to be able to find and read lg.conf.  By
@@ -65,6 +66,17 @@ directory options, such as --prefix, the default install prefix is
    To get LG_CONF into the CGI enviroment, you can use SetEnvIf in apache's
    httpd.conf.  For example:
 	SetEnvIf Request_URI "\/lg/.*.cgi" LG_CONF=/usr/local/htdocs/lg/lg.conf
+
+   Note: if you have chosen to locate your router.db (or other possibly
+   sensitive files in the http docs heirarchy, you may wish to restrict
+   download permission for these files.  Something like:
+
+	% cat /usr/local/htdocs/lg/.htaccess
+	<Files ~ "^router.db">
+	  Order allow,deny
+	  Deny from all
+	  Satisfy All
+	</Files>
 
 3) Edit <SYSCONFIGDIR>/lg.conf (usually <PREFIX>/etc/lg.conf).  See lg.conf(5)
    for additional information.

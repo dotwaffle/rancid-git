@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: nlogin.in,v 1.15 2004/02/02 17:38:36 heas Exp $
+## $Id: nlogin.in,v 1.17 2004/05/21 19:28:49 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -433,7 +433,7 @@ foreach firewall [lrange $argv $i end] {
         send_user "\nError: no password for $firewall in $password_file.\n"
         continue
       } 
-     set passwd [join [lindex $pswd 0]""]
+     set passwd [join [lindex $pswd 0] ""]
      set enapasswd [join [lindex $pswd 1]  ""]
     }
 
@@ -478,7 +478,7 @@ foreach firewall [lrange $argv $i end] {
     if { "$cmethod" == "" } { set cmethod {{telnet} {ssh}} }
 
     # Figure out the SSH executable name  
-    set sshcmd [find sshcmd $router]  
+    set sshcmd [find sshcmd $firewall]  
     if { "$sshcmd" == "" } { set sshcmd {ssh} }  
 
     # Login to the firewall

@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: lg.cgi.in,v 1.50 2004/03/10 23:01:28 heas Exp $
+## $Id: lg.cgi.in,v 1.51 2004/05/19 22:59:18 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -453,7 +453,7 @@ if (!defined($type) || !defined($router) || $router eq "") {
 								"a clue.\n");
 }
 
-if ($arg !~ /^[-A-Za-z0-9|_\/ \.^\$]*$/) {
+if ($arg !~ /^[-A-Za-z0-9|_\/: \.^\$]*$/) {
     &Error("Funny characters in argument; ignoring.\n");
 }
 if (length($arg) >= 50) {

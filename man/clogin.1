@@ -229,6 +229,11 @@ configuration file.
 .BR expect (1)
 .\"
 .SH CAVEATS
+.B clogin
+expects CatOS devices to have a prompt which includes a '>',
+such as "router> (enable)".  It uses this to determine, for example,
+whether the command to disable the pager is "set length 0" or "term length 0".
+.PP
 The HP Procurve switches that are Foundry OEMs use flogin, not hlogin.
 .PP
 The Extreme is supported by

@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: jerancid.in,v 1.25 2004/01/11 03:49:13 heas Exp $
+## $Id: jerancid.in,v 1.26 2004/06/04 18:07:37 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -203,6 +203,8 @@ sub ShowEnv {
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	next if (/^Please wait/i);
 	return(-1) if (/command authorization failed/i);
+	# fail if the RP is amid the auto-sync process
+	return(-1) if (/auto-sync enabled/ && !/in sync/);
 
 	# skip the temperature goop
 	if (/processor\s+processor/) {
@@ -260,6 +262,8 @@ sub DirSlotN {
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	next if (/^Please wait/i);
 	next if (/^system\.log/);
+	# fail if the RP is amid the auto-sync process
+	return(-1) if (/active\/standby/ && !/not sync/);
 
 	ProcessHistory("FLASH","","","!Flash: $_");
     }

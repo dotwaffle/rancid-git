@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: clogin.in,v 1.77 2004/03/12 05:44:06 asp Exp $
+## $Id: clogin.in,v 1.79 2004/05/27 21:57:52 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -499,7 +499,7 @@ proc run_commands { prompt command } {
 	    send "set length 0\r"
 	    # This is ugly, but reduces code duplication, allowing the
 	    # subsequent expects to handle everything as normal.
-	    set command "set logging session disable\r;$command"
+	    set command "set logging session disable;$command"
 	} else {
 	    send "term length 0\r"
 	}
@@ -543,7 +543,7 @@ proc run_commands { prompt command } {
 							}
 						  exp_continue
 						}
-		-re "^ --More--\[^\n\r]*"	{
+		-re "^ *--More--\[^\n\r]*"	{
 						  send " "
 						  exp_continue }
 		-re "^<-+ More -+>\[^\n\r]*"	{
@@ -573,7 +573,7 @@ proc run_commands { prompt command } {
 							}
 						  exp_continue
 						}
-		-re "^ --More--\[^\n\r]*"	{
+		-re "^ *--More--\[^\n\r]*"	{
 						  send " "
 						  exp_continue }
 		-re "^<-+ More -+>\[^\n\r]*"	{

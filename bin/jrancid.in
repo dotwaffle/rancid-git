@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: jrancid.in,v 1.59 2004/03/11 23:58:59 heas Exp $
+## $Id: jrancid.in,v 1.61 2004/06/05 04:02:08 asp Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -322,6 +322,7 @@ sub ShowChassisSCB {
 	/^\s+\^/ && return;
 	/syntax error/ && return;
 	/ Temperature/ && next;
+	/ temperature/ && next;
 	/ utilization/ && next;
 	/ Start time/ && next;
 	/ Uptime/ && next;
@@ -424,6 +425,7 @@ sub ShowConfiguration {
 	/^version .*;\d+$/ && return(-1);
 
 	s/ # SECRET-DATA$//;
+	s/ ## SECRET-DATA$//;
 	# filter snmp community, when in snmp { stanza }
 	/^snmp/ && $snmp++;
 	/^}/ && ($snmp = 0);
@@ -433,6 +435,10 @@ sub ShowConfiguration {
 		}
 	}
 	if (/(\s*authentication-key )[^ ;]+/ && $filter_pwds >= 1) {
+	    ProcessHistory("","","","#$1<removed>$'");
+	    next;
+	}
+	if (/(\s*md5 \d+ key )[^ ;]+/ && $filter_pwds >= 1) {
 	    ProcessHistory("","","","#$1<removed>$'");
 	    next;
 	}

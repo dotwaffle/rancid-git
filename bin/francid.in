@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: francid.in,v 1.28 2004/03/03 00:33:48 heas Exp $
+## $Id: francid.in,v 1.29 2004/04/14 21:38:12 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -150,9 +150,12 @@ sub ShowVersion {
 	last if(/^$prompt/);
 
 	next if (/^(The system |Crash time)/);
+	next if (/^((Active|Standby) Management|LP Slot \d+) uptime is/);
 
 	s/^\s*(HW|SW)/$1/;
 	s/^\s*(Compiled on)/SW: $1/;
+	s/^\s*(\(\d+ bytes\) from )/SW: $1/;
+
 	#s/^(HW.*)/$1\n/;
 	if (/^SL (\d+)/) {
 	    $slot = "Slot $1";
@@ -172,6 +175,8 @@ sub ShowVersion {
 
 # This routine parses "show chassis"
 sub ShowChassis {
+    my($skip) = 0;
+
     print STDERR "    In ShowChassis: $_" if ($debug);
 
     while (<INPUT>) {
@@ -179,6 +184,15 @@ sub ShowChassis {
 	last if (/^$prompt/);
 	next if (/ from /);
 	next if (/current temperature/i);
+
+	if (/^---/) { # next section reached
+	    $skip = 0;
+	}
+	if (/(POWERS|TEMPERATURE READINGS)/) {
+	    $skip = 1;
+	}
+	next if $skip;
+
 	ProcessHistory("CHASSIS","","","! $_");
     }
     ProcessHistory("CHASSIS","","","!\n");

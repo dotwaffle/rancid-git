@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 ## A Makefile.in is supplied, in case you do not have automake.
 
-## $Id: Makefile.am,v 1.44 2004/01/11 06:12:35 hank Exp $
+## $Id: Makefile.am,v 1.45 2004/05/18 15:54:22 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -53,7 +53,7 @@ auto_edit = sed \
 	-e 's,@bindir\@,$(bindir),g' \
 	-e 's,@localstatedir\@,$(localstatedir),g' \
 	-e 's,@sysconfdir\@,$(sysconfdir),g' \
-	-e 's,@pkgdatadir\@,$(sysconfdir),g' \
+	-e 's,@pkgdatadir\@,$(pkgdatadir),g' \
 	-e 's,@ADMINMAILPLUS\@,$(ADMINMAILPLUS),g' \
 	-e 's,@MAILPLUS\@,$(MAILPLUS),g'
 
