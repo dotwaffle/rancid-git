@@ -5,14 +5,18 @@ The following is the packing list for Rancid:
 
 README -    This file.
 env    -    Enviromental settings needed.
-run-me -    Script designed to be run from cron calling control_rancid.
+do-diffs -  Script designed to be run from cron calling control_rancid.
 control_rancid -    Builds router list, calls rancid on each router and
                     handles cvs routines.
-rancid-fe - chooses between rancid an jrancid
-rancid -    Runs commands on router and processes the output - the meat.
-jrancid -   Runs commands on juniper routers and processes the output
+rancid-fe - chooses between rancid/francid/jrancid/rrancid.
+rancid -    Runs commands on cisco routers and processes the output - the meat.
+francid -   Runs commands on foundry switches and processes the output.
+jrancid -   Runs commands on juniper routers and processes the output.
+rrancid -   Runs commands on redback routers and processes the output.
 clogin -    Expect script that logs into routers either interactively,
             runs a set of commands or runs another expect script.
+flogin -    Expect script that logs into foundry switches.  once foundry
+	    cleans up their bloody UI, clogin should do the job.
 jlogin -    Expect script that logs into juniper routers similarly to
 	    clogin.  it is not terribly robust, but mainly used for it's
 	    -c and -s options.
@@ -22,14 +26,12 @@ par    -    Parallel processing of commands - any commands.
 
 rancid will also need to have the following packages:
 cvs	- code revision system available from prep.ai.mit.edu:/pub/gnu
-rcs	- code revision system which cvs built on top of.  available from
-	  prep.ai.mit.edu:/pub/gnu
-gnudiff - gnudiff provides the -u option.  if you do not have gnu's diff,
+gnudiff - gnudiff provides the -u option.  if you do not have gnudiff,
           you will have to modify control_rancid to use 'diff -c' or some
           such.  see examples.
 perl5	- perl version 5 or greater available from www.cpan.org
-expect	- 
-tcl	- required by expect
+expect	- http://expect.nist.gov/
+tcl	- required by expect.
 
 Quick Installation Guide (an example):
 
@@ -40,7 +42,9 @@ Quick Installation Guide (an example):
 
 3) Put the contents of rancid/bin in <basedir>/bin.  modify the location of
    perl and expect in each of clogin, par, rancid, rancid-fe, jlogin,
-   jrancid and rename if necessary.
+   jrancid, and rename if necessary.  Make sure that you are using perl
+   version 5 and not perl version 4.  There are also 3 calls to perl in
+   control_rancid.
 
 4) Modify <basedir>/bin/env.
 
@@ -48,13 +52,18 @@ Quick Installation Guide (an example):
 
 6) Modify .cloginrc.
 
+   Test to make sure that you can log into every router.
+
+   Note: the juniper user you use *must* log into a cli shell (which
+   is the default on a juniper).
+
 7) Modify /etc/aliases
    Rancid sends the diffs and other controlling emails to rancid-<GROUP>
    and problems to rancid-admin-<GROUP>, where <GROUP> is the "GROUP" of
    routers.  This way you can seperate your backbone routers from your
    access routers or seperate based upon network etc...  Different router
    uses forced different people being interested in router "groups" -
-   thus is setup.  Make sure email to rancid-<GROUP> works.  /etc/aliases
+   thus this setup.  Make sure email to rancid-<GROUP> works.  /etc/aliases
    can be maintainable by Majordomo stuff.
 				- OR -
    Modify your home directory's .mailrc.  Control_rancid uses sendmail
@@ -62,33 +71,28 @@ Quick Installation Guide (an example):
    be modified to use ucbmail or, better yet, something else which allow
    the Precedence header to be set.  Pick your poison.
 
-   The Precedence header set to bulk or junk *hopefully* avoids
+   The Precedence header set to bulk or junk *hopefully* avoids replies from
    auto-responders and vacation type mail filters.
 
-8) Modify run-me &/ do-diffs.
-   Set path to env.
+8) Run create_cvs.
+   This creates all of the CVS necessary directories and all of the
+   config directories.
 
-9) Modify create_cvs.
-    Set path to env.
+9) For each "group", modify the router.db file in the group directory.
+   The file is of the form "router:mfg:state" where "router" is
+   the name (we use FQDN) of the router, mfg is the manufacturer from the
+   set of (cisco|foundry|juniper|redback), and "state" is either up or
+   down.  Each router listed as "up" will have the configuration
+   grabbed.
 
-10) Run create_cvs.
-    This creates all of the CVS necessary directories and all of the
-    config directories.
-
-11) For each "group", create the router.db file in the group directory.
-    The file is of the form "router:mfg:state" where "router" is the name
-    of the router, mfg is the manufacturer (cisco|juniper), and "state"
-    is either up or down.  Each router listed as "up" will have the
-    configuration grabbed.
-
-12) Put run-me/do-diffs in cron to be called however often you want it to run
-    for each group (run-me <GROUP>).  eg:
+10) Put do-diffs in cron to be called however often you want it to run
+    for each group (do-diffs [<GROUP>]).  eg:
 
 	# run config differ hourly
 	1 * * * * <BASEDIR>/bin/do-diffs
 	# clean out hourly differ logs
 	50 23 * * * /usr/bin/find <BASEDIR>/logs -mtime +2 -exec rm {} \;
 
-13) Send me any bugs, suggestions or updates (rancid@shrubbery.net).
+11) Send any bugs, suggestions or updates to rancid@shrubbery.net.
 
 -Hank

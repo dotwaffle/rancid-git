@@ -26,14 +26,21 @@ ENVFILE="`dirname $0`/env"
 
 . $ENVFILE
 
+# Base dir
+if [ ! -d $BASEDIR ]; then
+    mkdir -p $BASEDIR
+fi
+
+cd $BASEDIR
+
 # Top level CVS stuff
 if [ ! -d $CVSROOT ]; then
     cvs init
 fi
 
 # Log dir
-if [ ! -d $BASEDIR/logs ]; then
-    mkdir $BASEDIR/logs
+if [ ! -d logs ]; then
+    mkdir logs
 fi
 
 # Which groups to do
@@ -57,25 +64,26 @@ do
 	cd $BASEDIR
 	cvs co $GROUP
     fi
-    if [ -d $DIR -a ! -d $DIR/configs ]; then
-	cd $DIR
+    cd $DIR
+    if [ ! -d configs ]; then
 	mkdir configs
 	cvs add configs
 	cvs commit -m 'new' configs
-	cd $BASEDIR
     fi
 
     # main files
-    if [ ! -f $DIR/allrouters ]; then
-	cd $DIR
-	touch $DIR/allrouters
-	cd $BASEDIR
+    if [ ! -f routers.all ]; then
+	touch routers.all
     fi
-    if [ ! -f $DIR/router.db ]; then
-	cd $DIR
+    if [ ! -f routers.down ]; then
+	touch routers.down
+    fi
+    if [ ! -f routers.up ]; then
+	touch routers.up
+    fi
+    if [ ! -f router.db ]; then
 	touch router.db
 	cvs add router.db
 	cvs commit -m 'new' router.db
-	cd $BASEDIR
     fi
 done

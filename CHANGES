@@ -1,3 +1,28 @@
+1.4
+	sort cisco route-maps
+
+	added (crude) foundry switch bits
+
+	reworked code to reduce jumps. improvement in speed/cpu util.
+
+	add bits to cvs delete configs which have been removed from
+	a group's router.db.
+
+	add support for redback.  modified from contrib by scao@verio.net.
+
+	add support for ssh in clogin
+
+	modify format of the admin up/down/delete'd msgs.
+
+	add NOPIPE bin/env var
+
+	order ARP lists in cisco configs
+
+1.3
+	update comments re: mail aliases in bin/env
+
+	add more info/clarification to README for install.
+
 1.2
 	add more info/clarification to README for install.
 

@@ -21,12 +21,18 @@
 # usage: rancid-fe <router>:<vendor>
 #
 
+require 5;
+
 ($router, $vendor) = split('\:', $ARGV[0]);
 
 if ($vendor =~ /^cisco$/i) {
     exec('rancid', $router);
 } elsif ($vendor =~ /^juniper$/i) {
     exec('jrancid', $router);
+} elsif ($vendor =~ /^foundry$/i) {
+    exec('francid', $router);
+} elsif ($vendor =~ /^redback$/i) {
+    exec('rrancid', $router);
 }
 
 printf(STDERR "unknown router manufacturer for $router: $vendor\n");

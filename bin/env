@@ -9,13 +9,25 @@ TERM=network;export TERM
 # a log directory for the logs from rancid and a directory for each group
 # of routers.  In addition to these directories, there will be the CVS
 # repositories as well.
+# use a full path (no sym-links) for BASEDIR.  some versions of CVS seemingly
+# don't take kindly to sym-links.
 #
 BASEDIR=$HOME/rancid; export BASEDIR
 PATH=$BASEDIR/bin:/usr/local/bin:/usr/ucb:/usr/bin:/bin:/usr/lib:/usr/sbin;export PATH
 CVSROOT=$BASEDIR/CVS; export CVSROOT
+#
+# if NOPIPE is set, temp files will be used instead of a cmd pipe during
+# collection from the router(s).
+#NOPIPE=YES; export NOPIPE
+#
 LIST_OF_GROUPS="sl joebobisp"
-# For each group, define a list of people to receive the diffs
+#
+# For each group, define a list of people to receive the diffs.
 # in a .mailrc file in the following format:
 #   alias rancid-$GROUP  hank@rem.com pwhiting@sprint.net
+# or sendmail's /etc/aliases.
+#   rancid-group:	joe,moe@foo
+#   rancid-group-admin:	hostmaster
+# be sure to read ../README regarding aliases.
 #
 umask 007

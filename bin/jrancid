@@ -138,86 +138,162 @@ sub sortbyipaddr {
 # This routine parses "show chassis clocks"
 sub ShowChassisClocks {
     print STDERR "    In ShowChassisClocks: $_" if ($debug);
-    /error: the chassis subsystem is not running/ && return;
-    ProcessHistory("","","","# $_") && return;
+
+    s/^[a-z]+@//;
+    ProcessHistory("","","","# $_");
+    while (<INPUT>) {
+	tr/\015//d;
+	last if(/^$prompt/);
+
+	/error: the chassis subsystem is not running/ && return;
+	ProcessHistory("","","","# $_");
+    }
     return;
 }
 
 # This routine parses "show chassis environment"
 sub ShowChassisEnvironment {
     print STDERR "    In ShowChassisEnvironment: $_" if ($debug);
-    /error: the chassis subsystem is not running/ && return;
-    /Couldn\'t initiate connection/ && return;
-    / backplane temperature/ && return;
-    /(\s*Power supply.*), temperature/ && ProcessHistory("","","","# $1\n") && return;
-    /(\s*.+) +\d+ degrees C.*$/ && ProcessHistory("","","","# $1\n") && return;
-    ProcessHistory("","","","# $_") && return;
+
+    s/^[a-z]+@//;
+    ProcessHistory("","","","# $_");
+    while (<INPUT>) {
+	tr/\015//d;
+	last if(/^$prompt/);
+
+	/error: the chassis subsystem is not running/ && return;
+	/Couldn\'t initiate connection/ && return;
+	/ backplane temperature/ && return;
+	/(\s*Power supply.*), temperature/ &&
+		ProcessHistory("","","","# $1\n") && next;
+	/(\s*.+) +\d+ degrees C.*$/ &&
+		ProcessHistory("","","","# $1\n") && next;
+	ProcessHistory("","","","# $_");
+    }
     return;
 }
 
 # This routine parses "show chassis firmware"
 sub ShowChassisFirmware {
     print STDERR "    In ShowChassisFirmware: $_" if ($debug);
-    /error: the chassis subsystem is not running/ && return;
-    ProcessHistory("","","","# $_") && return;
+
+    s/^[a-z]+@//;
+    ProcessHistory("","","","# $_");
+    while (<INPUT>) {
+	tr/\015//d;
+	last if(/^$prompt/);
+
+	/error: the chassis subsystem is not running/ && return;
+	ProcessHistory("","","","# $_");
+    }
     return;
 }
 
 # This routine parses "show chassis fpc detail"
 sub ShowChassisFpcDetail {
     print STDERR "    In ShowChassisFpcDetail: $_" if ($debug);
-    /error: the chassis subsystem is not running/ && return;
-    / Temperature:/ && return;
-    / Start time:/ && return;
-    / Uptime:/ && return;
-    ProcessHistory("","","","# $_") && return;
+
+    s/^[a-z]+@//;
+    ProcessHistory("","","","# $_");
+    while (<INPUT>) {
+	tr/\015//d;
+	last if(/^$prompt/);
+
+	/error: the chassis subsystem is not running/ && return;
+	/ Temperature:/ && next;
+	/ Start time:/ && next;
+	/ Uptime:/ && next;
+	ProcessHistory("","","","# $_");
+    }
     return;
 }
 
 # This routine parses "show chassis hardware"
 sub ShowChassisHardware {
     print STDERR "    In ShowChassisHardware: $_" if ($debug);
-    /error: the chassis subsystem is not running/ && return;
-    ProcessHistory("","","","# $_") && return;
+
+    s/^[a-z]+@//;
+    ProcessHistory("","","","# $_");
+    while (<INPUT>) {
+	tr/\015//d;
+	last if(/^$prompt/);
+
+	/error: the chassis subsystem is not running/ && return;
+	ProcessHistory("","","","# $_");
+    }
     return;
 }
 
 # This routine parses "show chassis routing-engine"
 sub ShowChassisRoutingEngine {
     print STDERR "    In ShowChassisRoutingEngine: $_" if ($debug);
-    /^Routing Engine status:/ && ProcessHistory("","","","# $_") && return;
-    / DRAM:/ && ProcessHistory("","","","# $_") && return;
-    /^\s*$/ && ProcessHistory("","","","# $_") && return;
+
+    s/^[a-z]+@//;
+    ProcessHistory("","","","# $_");
+    while (<INPUT>) {
+	tr/\015//d;
+	last if(/^$prompt/);
+
+	/^Routing Engine status:/ && ProcessHistory("","","","# $_") && next;
+	/ DRAM:/ && ProcessHistory("","","","# $_") && next;
+	/^\s*$/ && ProcessHistory("","","","# $_") && next;
+    }
     return;
 }
 
 # This routine parses "show chassis scb"
 sub ShowChassisSCB {
     print STDERR "    In ShowChassisSCB: $_" if ($debug);
-    /error: the chassis subsystem is not running/ && return;
-    / Temperature:/ && return;
-    / utilization:/ && return;
-    /time:/ && return;
-    / (IP|MLPS) routes:/ && return;
-    / used:/ && return;
-    ProcessHistory("","","","# $_") && return;
+
+    s/^[a-z]+@//;
+    ProcessHistory("","","","# $_");
+    while (<INPUT>) {
+	tr/\015//d;
+	last if(/^$prompt/);
+
+	/error: the chassis subsystem is not running/ && return;
+	/ Temperature:/ && next;
+	/ utilization:/ && next;
+	/time:/ && next;
+	/ (IP|MLPS) routes:/ && next;
+	/ used:/ && next;
+	ProcessHistory("","","","# $_");
+    }
     return;
 }
 
 # This routine parses "show version"
 sub ShowVersion {
     print STDERR "    In ShowVersionAndBlame: $_" if ($debug);
-    /^Juniper Networks is:/ && ProcessHistory("","","","\n$_") && return;
-    ProcessHistory("","","","# $_") && return;
+
+    s/^[a-z]+@//;
+    ProcessHistory("","","","# $_");
+    while (<INPUT>) {
+	tr/\015//d;
+	last if(/^$prompt/);
+
+	/^Juniper Networks is:/ && ProcessHistory("","","","\n$_") && return;
+	ProcessHistory("","","","# $_");
+    }
     return;
 }
 
 # This routine parses "show configuration"
 sub ShowConfiguration {
     print STDERR "    In ShowConfiguration: $_" if ($debug);
-    /^database header mismatch: / && return(-1);
-    s/(\s*authentication-key ).*$/#$1<removed>;/;
-    ProcessHistory("","","","$_") && return;
+
+    s/^[a-z]+@//;
+    ProcessHistory("","","","# $_");
+    while (<INPUT>) {
+	tr/\015//d;
+	last if(/^$prompt/);
+	next if (/^\s*$/);
+
+	/^database header mismatch: / && return(-1);
+	s/(\s*authentication-key ).*$/#$1<removed>;/;
+	s/^(.*\ssecret \")\$9\$.*(\".*)$/#$1<removed>$2/;
+	ProcessHistory("","","","$_");
+    }
     return;
 }
 
@@ -228,39 +304,37 @@ sub ShowConfiguration {
 # dummy function
 sub DoNothing {print STDOUT;}
 
-# Main subroutine that splits up the work
-# All Subs return the name of the next function to use.
-# If the sub returns a new funtion name, that name will be used
-# else the main loop keeps using the current function
-sub FlailHelplessly {
-    print STDERR "Flailing: $_" if ($debug);
-    print STDOUT "Flailing: $_" if ($log);
-    /(show chassis clocks)/ && delete($commands{$1}) && return("ShowChassisClocks");
-    /(show chassis environment)/ && delete($commands{$1}) && return("ShowChassisEnvironment");
-    /(show chassis firmware)/ && delete($commands{$1}) && return("ShowChassisFirmware");
-    /(show chassis fpc detail)/ && delete($commands{$1}) && return("ShowChassisFpcDetail");
-    /(show chassis hardware)/ && delete($commands{$1}) && return("ShowChassisHardware");
-    /(show chassis routing-engine)/ && delete($commands{$1}) && return("ShowChassisRoutingEngine");
-    /(show chassis scb)/ && delete($commands{$1}) && return("ShowChassisSCB");
-    /(show version)/ && delete($commands{$1}) && return("ShowVersion");
-    /(show configuration)/ && delete($commands{$1}) && return("ShowConfiguration");
-    return "FlailHelplessly";
-}
-
 # Main
-@commands=("show chassis clocks", "show chassis environment",
-	   "show chassis firmware", "show chassis fpc detail",
-	   "show chassis hardware", "show chassis routing-engine",
-	   "show chassis scb", "show version", "show configuration");
+%commands=(
+	"show chassis clocks"		=> "ShowChassisClocks",
+	"show chassis environment"	=> "ShowChassisEnvironment",
+	"show chassis firmware"		=> "ShowChassisFirmware",
+	"show chassis fpc detail"	=> "ShowChassisFpcDetail",
+	"show chassis hardware"		=> "ShowChassisHardware",
+	"show chassis routing-engine"	=> "ShowChassisRoutingEngine",
+	"show chassis scb"		=> "ShowChassisSCB",
+	"show version"			=> "ShowVersion",
+	"show configuration"		=> "ShowConfiguration"
+);
+@commands=(
+	"show chassis clocks",
+	"show chassis environment",
+	"show chassis firmware",
+	"show chassis fpc detail",
+	"show chassis hardware",
+	"show chassis routing-engine",
+	"show chassis scb",
+	"show version",
+	"show configuration"
+);
 
-foreach $c (@commands) { $commands{$c} = 1; }
 $jnx_commands=join(";",@commands);
 $cmds_regexp=join("|",@commands);
-$func = FlailHelplessly;
 
 open(OUTPUT,">$host.new") || die "Can't open $host.new for writing: $!\n";
+select(OUTPUT);
 # make OUTPUT unbuffered
-select(OUTPUT); $| = 1;
+if ($debug) { $| = 1; }
 
 if ($file) {
     print STDERR "opening file $host\n" if ($debug);
@@ -269,17 +343,19 @@ if ($file) {
 } else {
     print(STDERR "executing echo jlogin -c\"$jnx_commands\" $host\n") if ($debug);
     print(STDOUT "executing echo jlogin -c\"$jnx_commands\" $host\n") if ($debug);
-    open(INPUT,"jlogin -c\"$jnx_commands\" $host </dev/null |") ||
-					die "jlogin failed for $host: $!\n";
+
+    if (defined($ENV{NOPIPE})) {
+	system "jlogin -c \"$jnx_commands\" $host </dev/null > $host.raw" || die "jlogin failed for $host: $!\n";
+	open(INPUT, "< $host.raw") || die "jlogin failed for $host: $!\n";
+    } else {
+	open(INPUT,"jlogin -c \"$jnx_commands\" $host </dev/null |") || die "jlogin failed for $host: $!\n";
+    }
+
 }
 while(<INPUT>) {
     tr/\015//d;
-    if (/quit/) {
-	delete($commands{"quit"});
-	$clean_run=1;
-	last;
-    }
     if (/^Error:/) {
+	s/^.*Error:/Error:/;
 	print STDOUT ("$host jlogin error: $_");
 	print STDERR ("$host jlogin error: $_") if ($debug);
 	$clean_run=0;
@@ -291,17 +367,25 @@ while(<INPUT>) {
 	$clean_run = 0;
 	last;
     }
-    if (/($cmds_regexp)/) {
-	ProcessHistory("","","","# $host> $1\n");
-	$func = FlailHelplessly;
+    while (/>\s*($cmds_regexp)\s*$/) {
+	$cmd = $1;
+	if (!defined($prompt)) {$prompt = ($_ =~ /^([^>]+>)/)[0]; }
 	print STDERR ("HIT COMMAND:$_") if ($debug);
-    } else {
-        $rval=eval $func;
+	if (! defined($commands{$cmd})) {
+	    print STDERR "found unexpected command - \"$cmd\"\n";
+	    $clean_run = 0;
+	    last;
+	}
+	$rval = &{$commands{$cmd}};
+	delete($commands{$cmd});
 	if ($rval == -1) {
 	    $clean_run = 0;
 	    last;
-	} 
-	$func=$rval if ($rval);
+	}
+    }
+    if (/>\s*quit/) {
+	$clean_run=1;
+	last;
     }
 }
 print STDOUT "Done jlogin: $_\n" if ($log);
@@ -311,17 +395,21 @@ ProcessHistory("","","","");
 close(INPUT);
 close(OUTPUT);
 
+if (defined($ENV{NOPIPE})) {
+    unlink("$host.raw") if (! $debug);
+}
+
 # check for completeness
 $commands = join(", ", keys(%commands));
 if (scalar(%commands) || !$clean_run) {
     if (scalar(%commands)) {
-	print STDOUT "missed cmd(s): $commands\n";
-	print STDERR "missed cmd(s): $commands[0]\n" if ($debug);
+	printf(STDOUT "missed cmd(s): %s\n", join(',', keys(%commands)));
+	printf(STDERR "missed cmd(s): %s\n", join(',', keys(%commands))) if ($debug);
     }
     if (!$clean_run) {
-	print STDOUT "End of run not found - removing $host.new\n";
-	print STDERR "End of run not found - removing $host.new\n" if ($debug);
+	print STDOUT "End of run not found\n";
+	print STDERR "End of run not found\n" if ($debug);
 	system("/usr/bin/tail -1 $host.new");
     }
-    unlink "$host.new";
+    unlink "$host.new" if (! $debug);
 }

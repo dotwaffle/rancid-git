@@ -1,8 +1,34 @@
 # comments are cool, as is whitespace
-# currently clogin supports three add directives; password, user, and
-# autoenable.
-# eventually, others may be added to allow other features.
-##
+# currently clogin supports a number of add directives:
+#	password
+#	user
+#	userpassword
+#	enauser
+#	autoenable
+#	cyphertype
+#
+# Details on each of these follows.
+#
+# add password <router name regexp> <vty passwd> <enable passwd>
+#
+# add user <router name regexp> <username>
+#	The default user is $USER (i.e.: the user running clogin).
+#
+# add userpassword <router name regexp> <user password>
+#	The password for user if different than the password set
+#	using 'add password'.
+#
+# add enauser <router name regexp> <username>
+#	This is only needed if enable asks for a username and this
+#	username is different from what user is set to.
+#
+# add autoenable <router name regexp> <1/0>
+#	This is used if you are automatically enabled by the login process.
+#
+# add cyphertype <router name regexp> <ssh encryption type>
+#	Default is 3des.
+#
+
 #add password sl-bb*-dc	cow24
 #add password sl-gw*-dc	geeks
 #add password sl*	hank	dog
@@ -33,3 +59,6 @@ add password *.custz.net	{jive}		{surely}
 
 # all our routers, ie: everything else
 add password *			{clearance}	{clarence}
+
+# set ssh encryption type, dflt: 3des
+add cyphertype *		{3des}
