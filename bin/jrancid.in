@@ -3,7 +3,7 @@
 ## Amazingly hacked version of Hank's rancid - this one tries to
 ## deal with Junipers.
 ##
-## Original Rancid: Copyright (C) 1997 by Henry Kilmer.
+## Original Rancid: Copyright (C) 1997-2001 by Henry Kilmer.
 ## All rights reserved.
 ##
 ## This software may be freely copied, modified and redistributed without
@@ -350,6 +350,7 @@ sub ShowVersion {
 
 # This routine parses "show configuration"
 sub ShowConfiguration {
+    my($lines) = 0;
     print STDERR "    In ShowConfiguration: $_" if ($debug);
 
     s/^[a-z]+@//;
@@ -363,6 +364,7 @@ sub ShowConfiguration {
 	    $found_end++;
 	    last;
 	}
+	$lines++;
 
 	/^database header mismatch: / && return(-1);
 	/^version .*;\d+$/ && return(-1);
@@ -376,6 +378,13 @@ sub ShowConfiguration {
 	s/ # SECRET-DATA$//;
 	ProcessHistory("","","","$_");
     }
+
+    if ($lines < 3) {
+	printf(STDERR "ERROR: configuration appears truncated.\n");
+	$found_end = 0;
+	return(-1);
+    }
+
     return;
 }
 
@@ -455,6 +464,12 @@ TOP: while(<INPUT>) {
     if (/System shutdown message/) {
 	print STDOUT ("$host shutdown msg: $_");
 	print STDERR ("$host shutdown msg: $_") if ($debug);
+	$clean_run = 0;
+	last;
+    }
+    if (/error: cli version does not match Managment Daemon/i) {
+	print STDOUT ("$host mgd version mismatch: $_");
+	print STDERR ("$host mgd version mismatch: $_") if ($debug);
 	$clean_run = 0;
 	last;
     }

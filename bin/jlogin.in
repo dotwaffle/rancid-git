@@ -1,7 +1,7 @@
 #!@EXPECT_PATH@ --
 ##
 ##
-## Copyright (C) 1997 by Henry Kilmer, Erik Sherk and Pete Whiting.
+## Copyright (C) 1997-2001 by Henry Kilmer, Erik Sherk and Pete Whiting.
 ## All rights reserved.
 ##
 ## This software may be freely copied, modified and redistributed without
@@ -23,7 +23,7 @@
 #
 
 # Usage line
-set usage "Usage: $argv0 \[-c command\] \[-f cloginrc-file\] \
+set usage "Usage: $argv0 \[-c command\] \[-Evar=x\] \[-f cloginrc-file\] \
 \[-p user-password\] \[-r passphrase\] \[-s script-file\] \
 \[-u username\] \[-t timeout\] \[-x command-file\] \[-y ssh_cypher_type\] \
 router \[router...\]\n"
@@ -76,6 +76,15 @@ for {set i 0} {$i < $argc} {incr i} {
 		set command [ lindex $argv $i ]
 	    }
 	    set do_command 1
+	# Environment variable to pass to -s scripts
+	} -E*
+	{
+	    if {[ regexp .\[E\](.+)=(.+) $arg ignore varname varvalue]} {
+		set E$varname $varvalue
+	    } else {
+		send_user "Error: invalid format for -E in $arg\n"
+		exit 1
+	    }
 	# alternate cloginrc file
 	} -f* -
 	-F* {
@@ -131,7 +140,10 @@ for {set i 0} {$i < $argc} {incr i} {
 		incr i
 		set cmd_file [ lindex $argv $i ]
 	    }
-            set cmd_fd [open $cmd_file r]
+	    if [ catch {set cmd_fd [open $cmd_file r]} reason ] {
+		send_user "\nError: $reason\n"
+		exit 1
+	    }
             set cmd_text [read $cmd_fd]
             close $cmd_fd
             set command [join [split $cmd_text \n] \;]
@@ -235,8 +247,8 @@ proc source_password_file { password_file } {
 }
 
 # Log into the router.
-proc login { router user passwd prompt cmethod cyphertype identfile} {
-    global spawn_id in_proc do_command do_script passphrase
+proc login { router user passwd cmethod cyphertype identfile} {
+    global spawn_id in_proc do_command do_script passphrase prompt
     set in_proc 1
 
     # try each of the connection methods in $cmethod until one is successful
@@ -302,7 +314,7 @@ proc login { router user passwd prompt cmethod cyphertype identfile} {
 	# passwd.  Or, the router might not have TACACS turned on,
 	# then it will just send the passwd.
 	expect {
-	    -re "(Connection refused|Secure connection \[^\n\r]+ refused|Connectionclosed by)" {
+	    -re "(Connection refused|Secure connection \[^\n\r]+ refused|Connection closed by)" {
 		catch {close}; wait
 		if !$progs {
 		   send_user "\nError: Connection Refused ($prog)\n"; return 1
@@ -336,18 +348,18 @@ proc login { router user passwd prompt cmethod cyphertype identfile} {
 		    eof             	{ send_user "\nError: Couldn't login\n";
 					  wait; return 1 }
 		    -re "\[Pp]assword:"	{ send "$passwd\r" }
-		    "$prompt"		{ set in_proc 0; return 0 }
+		    -re "$prompt"	{ break; }
 		}
 		exp_continue
 	    }
 	    "\[Pp]assword:"	{ send "$passwd\r"
 		expect {
 		eof             { send_user "\nError: Couldn't login\n"; wait; return 1 }
-		"$prompt"       { set in_proc 0; return 0 }
+		-re "$prompt"   { break; }
 	    }
 	    exp_continue
 	}
-	"$prompt"       { break; }
+	-re "$prompt"	{ break; }
 	denied		{ send_user "\nError: Check your passwd for $router\n"
 	                  if { $do_command || $do_script } {
 			      send "quit"
@@ -360,6 +372,16 @@ proc login { router user passwd prompt cmethod cyphertype identfile} {
 	"% Bad passwords" {send_user "\nError: Check your passwd for $router\n"; return 1 }
     }
   }
+
+    # we are logged in, now figure out the full prompt
+    send "\r"
+    expect {
+	-re "(\r\n|\n)"		{ exp_continue; }
+	-re "^\[^ ]+$prompt"	{ set prompt $expect_out(0,string);
+				  regsub ">" $prompt "\[#>]" prompt;
+				}
+    }
+
     set in_proc 0
     return 0
 }
@@ -370,9 +392,9 @@ proc run_commands { prompt command } {
     set in_proc 1
 
     send "set cli complete-on-space off\r"
-    expect $prompt	{}
+    expect -re $prompt	{}
     send "set cli screen-length 0\r"
-    expect $prompt {}
+    expect -re $prompt	{}
 
     # Is this a multi-command?
     if [ string match "*\;*" "$command" ] {
@@ -429,8 +451,18 @@ foreach router [lrange $argv $i end] {
       # command line passwd
       set passwd $userpswd
     } else {
-      set passwd [lindex [find password $loginname@$router] 0]
-      if { "$passwd" == "" } { set passwd [lindex [find password $router] 0] }
+      set userpswd [lindex [find userpassword $loginname@$router] 0]
+      if { "$userpswd" == "" } {
+        set userpswd [lindex [find userpassword $router] 0]
+      }
+      if { "$userpswd" == "" } {
+        set passwd [lindex [find password $loginname@$router] 0]
+        if { "$passwd" == "" } {
+          set passwd [lindex [find password $router] 0]
+        }
+      } else {
+        set passwd $userpswd
+      }
     }
 
     # figure out identity file to use
@@ -453,7 +485,7 @@ foreach router [lrange $argv $i end] {
     if { "$cmethod" == "" } { set cmethod {{telnet} {ssh}} }
 
     # Login to the router
-    if {[login $router $loginname $passwd $prompt $cmethod $cyphertype $identfile]} {
+    if {[login $router $loginname $passwd $cmethod $cyphertype $identfile]} {
 	continue
     }
 
@@ -463,9 +495,9 @@ foreach router [lrange $argv $i end] {
 	}
     } elseif { $do_script } {
 	send "set cli complete-on-space off\r"
-	expect $prompt	{}
+	expect -re $prompt	{}
 	send "set cli screen-length 0\r"
-	expect $prompt	{}
+	expect -re $prompt	{}
 	source $sfile
 	close
     } else {

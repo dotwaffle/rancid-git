@@ -14,7 +14,7 @@ PACKAGE=rancid
 # VERSION needs to be updated such that 'make dist' uses the correct
 # filename for the directory name and tarball.
 AC_SUBST(VERSION)
-VERSION=2.2b
+VERSION=2.2b5
 
 AM_MAINTAINER_MODE()
 
@@ -67,18 +67,6 @@ rd_cv_DIFF_CMD=$DIFF_CMD
 AC_SUBST(DIFF_CMD)
 
 AC_PATH_PROG(SENDMAIL,sendmail,no, /usr/sbin:/usr/bin:/usr/lib)
-# find UCB mail.
-AC_ARG_WITH(ucbmail, [  --with-ucbmail=[FQPN]   path to UCB mail], UCBMAIL=$withval; unset ac_cv_path_UCBMAIL)
-AC_PATH_PROG(UCBMAIL,Mail,no)
-if test $UCBMAIL = no; then
-    unset ac_cv_path_UCBMAIL
-    AC_PATH_PROG(UCBMAIL,mailx,no)
-    if test $UCBMAIL = no; then
-        AC_MSG_ERROR([can't locate a UCB Mail (one which accepts the -s option for subject).])
-        AC_MSG_ERROR([UCB mail is normally Mail or mailx.  use --with-ucbmail to specify the path.])
-	exit 1
-    fi
-fi
 
 AC_PATH_PROG(MAKE,gmake,no)
 if test $MAKE = no; then
@@ -159,7 +147,7 @@ rd_cv_rd_bin_datas=$RD_BIN_DATAS
 RD_BIN_PROGS="cat5rancid control_rancid \
 alogin arancid clogin create_cvs do-diffs elogin erancid \
 flogin francid jlogin jrancid par rancid-fe \
-rancid rename rrancid"
+rancid rename rrancid xrancid"
 AC_SUBST(RD_BIN_PROGS)
 rd_cv_rd_bin_progs=$RD_BIN_PROGS
 
@@ -180,7 +168,7 @@ INST_PROGS=$progs
 # locate tools to build $PATH for env.  order is significant.  want to be
 # sure that we pick up the the proper diff and ucbmail in bin/env.
 ENV_PATH="`dirname $PERLV_PATH`:`dirname $EXPECT_PATH`:`dirname $SENDMAIL`"
-ENV_PATH="$ENV_PATH:`dirname $DIRNAME`:`dirname $DIFF`:`dirname $UCBMAIL`"
+ENV_PATH="$ENV_PATH:`dirname $DIRNAME`:`dirname $DIFF`"
 
 AC_PATH_PROG(CVS,cvs,no)
 ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_CVS`"

@@ -14,13 +14,13 @@ size=+3><strong>&nbsp;&nbsp;&nbsp;Looking Glass Notes
 <p>
 <ul>
 Just a few straight forward notes on our implementation of
-Ed Kern's looking glass.  See the "real thing" at
+Ed Kern's looking glass.  See the original at
 <a href=http://nitrous.digex.net>http://nitrous.digex.net</a>.
 </ul>
 </p>
 <p>
 <UL>
-<li>Some items are not implemented for the junipers yet (so, as i get
+<li>Some items are not implemented for the junipers/foundrys yet (so, as i get
     to it) or no equivalent command exists.
 <li>If there is something which you feel is missing, feel free to ask
     and/or send comments to <a href=mailto:rancid@shrubbery.net>
@@ -46,5 +46,16 @@ Ed Kern's looking glass.  See the "real thing" at
     and produce lots of output, such as 'sh ip bgp' or 'sh ip bgp reg '^3561'.
     The looking glass attempts to deny such commands.</li>
 </ul>
+<p>
+Some useful hints:
+<UL>
+<li>Show interfaces can take arguments other than an interface name, assuming
+    the router is running an O/S version with the capability.  For example; a
+    cisco can take 'descriptions' or 'brief' and 'terse' for the juniper. </li>
+<li>Show ip bgp neighbor can take additional arguments (if configured to allow
+    it), such as 'advertised routes', 'flap-statistics', 'received-routes',
+    and 'routes'.  The argument will be converted for the platform.</li>
+</ul>
+
 </body>
 </html>

@@ -6,15 +6,15 @@ rancid_intro \- introduction to the Really Awesome New Cisco confIg Differ
 .SH INTRODUCTION
 .B rancid
 is really more than just a Cisco configuration differ.  It handles several
-different device's configurations; currently including Alteon, Cisco, Foundry,
-Juniper, Redback, and the ADC-Kentrox EZ-T3 mux.
+different device's configurations; currently including Alteon, Cisco, Extreme,
+Foundry, Juniper, Redback, and the ADC-Kentrox EZ-T3 mux.
 .PP
 .B rancid
 uses an expect script to login to a list of devices and run a set of
 commands for that device-type and collects the output.  The output
 is run through some filtering to summarize, reformat, and/or snip
-unwanted or security related data such as temperature and easily reverse-able
-passwords.
+unwanted or security related data such as chassis temperature and easily
+reverse-able passwords.
 .PP
 Named after the device's name in the group's configuration file, the
 resulting files are saved in the directory <group>/configs.  Except for the

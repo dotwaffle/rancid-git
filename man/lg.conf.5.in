@@ -20,6 +20,13 @@ The following variables are used (alphabetically):
 *** not implemented.
 .\"
 .TP
+.B LG_BGP_RT
+Allows show ip bgp neighbor commands that can produce heavy output, such as
+sh ip bgp neighbor <ip> advertised-routes for a transit customer when the
+neighbor address is followed by 'advertised-routes' for the sh ip bgp neighbor
+query.
+.\"
+.TP
 .B LG_CACHE_DIR
 Sets the location of the cache directory.  The looking glass uses this
 to hold lock files, log files, and output from cached commands.
@@ -40,7 +47,7 @@ Default: 600
 .\"
 .TP
 .B LG_CLOGINRC
-Defines the
+Defines the location of the
 .BR cloginrc (5)
 that the looking glass should use.  The path may be relative to the directory
 where the CGI scripts run in the server's document root.
@@ -93,12 +100,15 @@ default umask is 027 (see
 .BR env (5)).
 .\"
 .TP
-.B LG_SINGLE
-*** not implemented.
+.B LG_STRIP
+Causes the LG to strip login information from the looking glass results.
+Since Expect often munges disabling echo when passwords are entered,
+this is a SECURITY CONCERN!  However, this output can be very useful for
+debugging clogin problems.
 .\"
 .TP
 .B PATH
-Is a colon separate list of directory pathnames in the the file system
+Is a colon separated list of directory pathnames in the the file system
 where rancid's login scripts,
 .IR clogin (1)
 etc. )

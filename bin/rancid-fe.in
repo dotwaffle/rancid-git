@@ -1,7 +1,7 @@
 #!@PERLV_PATH@
 ##
 ##
-## Copyright (C) 1997 by Henry Kilmer.
+## Copyright (C) 1997-2001 by Henry Kilmer.
 ## All rights reserved.
 ##
 ## This software may be freely copied, modified and redistributed without
@@ -39,6 +39,8 @@ if ($vendor =~ /^cisco$/i) {
     exec('rrancid', $router);
 } elsif ($vendor =~ /^alteon$/i) {
     exec('arancid', $router);
+} elsif ($vendor =~ /^extreme$/i) {
+    exec('xrancid', $router);
 }
 
 printf(STDERR "unknown router manufacturer for $router: $vendor\n");

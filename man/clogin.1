@@ -11,6 +11,9 @@ clogin \- Cisco/Foundry login script
 .BI \-c\ 
 command]
 [\c
+.BI \-E\ 
+var=x]
+[\c
 .BI \-e\ 
 enable-password]
 [\c
@@ -47,8 +50,8 @@ router
 is an
 .BR expect (1)
 script to automate the process of logging into a Cisco router, catalyst
-switch, or Redback router.  There are complementary scripts for Alteon,
-Juniper, Foundry, and ADC-kentrox EZ-T3 mux named 
+switch, Extreme switch, or Redback router.  There are complementary scripts
+for Alteon, Juniper, Foundry, and ADC-kentrox EZ-T3 mux named 
 .B alogin,
 .B jlogin,
 .B flogin,
@@ -72,6 +75,12 @@ The command-line options are as follows:
 Command to be run on each router list on the command-line.  Multiple
 commands maybe listed by separating them with semi-colons (;).  The argument
 should be quoted to avoid shell expansion.
+.\"
+.TP
+.B \-E
+Specifies a variable to pass through to scripts (\-s).  For example, the
+command-line option \-Efoo=bar will produce a global variable by the name
+Efoo with the initial value "foo".
 .\"
 .TP
 .B \-e
@@ -100,7 +109,8 @@ The filename of an
 script which will be sourced after the login is successful and is expected
 to return control to
 .B clogin,
-with the connection to the router intact, when it is done.
+with the connection to the router intact, when it is done.  Example script(s)
+can be found in util/*.exp.
 .\"
 .TP
 .B \-t

@@ -1,0 +1,103 @@
+Frequently Asked Questions about rancid - last updated 20010730
+
+1) Platform specific
+
+Q. I have a Cisco Catalyst 6500 series switch running the IOS (NOT catOS)
+   software, is the router.db device type cisco or cat5?
+A. A catalyst running IOS is type "cisco".  see the router.db(5) manual page.
+
+Q. I have a Cisco ??? on which collection stopped working, but clogin works
+   as expected.
+A. Check if 'write term' produces output.  Some IOS combinated with large
+   configs and low free memory produce zero 'write term' output.  The device
+   will have to be rebooted.
+
+
+2) CVS and filesystem permissions
+
+Q. I am new to cvs, where can i find additional information?
+A. The manual page for cvs is quite complete, but can be be overwhelming even
+   for someone familiar with rcs.  There are some excellent resources on the
+   pages http://www.loria.fr/~molli/cvs-index.html
+
+Q. I keep receiving the same diff for a (or set of) devices, but I know the
+   data is not changing repeatedly.  Why?
+A. This is most likely either a cvs or filesystem permissions problem.  Check
+   the log file from the last run for that group first; it may provide the
+   exact cause.
+
+   note: it is very important the following be done as the user who normally
+         runs the rancid collection from cron.
+
+   Check the cvs status of the device's file.  eg:
+   guelah [2704] cvs status rtr.shrubbery.net
+   ===================================================================
+   File: yogi.shrubbery.net        Status: Up-to-date
+
+      Working revision:    1.197   Tue Jul 10 15:41:16 2001
+      Repository revision: 1.197   /user/local/rancid/CVS/shrubbery/configs/rtr.shrubbery.net,v
+      Sticky Tag:          (none)
+      Sticky Date:         (none)
+      Sticky Options:      (none)
+   The Status: should be Up-to-date.  If the status is "Unknown", then somehow
+   the file has been created without being cvs add'ed.  This should be
+   corrected by removing that device's entry from the group's router.db file,
+   run do-diffs, replace the entry in router.db, and run do-diffs again.
+
+   If the Status is anything else, someone has most likely been touching the
+   files manually.  Sane state can be achieved by removing the file and running
+   cvs update <file> to get a fresh copy from the repository.
+
+   Check the ownership and permissions of the file and directory and the
+   directory and file in the cvs repository (/usr/local/rancid/CVS/).  They
+   should be owned by the user who runs do-diffs from cron.  At the very least,
+   the directory and files should be writable by the rancid user.  Group and
+   world permissions will determined by the umask (default 027), which is set
+   in /usr/local/rancid/bin/env.  Likely the easiest way to fix the ownership
+   on the cvs repository is chmod -R <rancid user> /usr/local/rancid/CVS
+
+
+3) General
+
+Q. I have a (set of) device(s) on which collection fails.  How can i debug
+   this?
+A. Our usual diagnostic procedure for this is:
+   - Make sure that the appropriate *login (eg: clogin for cisco) works.
+     This tests to make sure you don't have routing or firewall issues, DNS
+     or hostname errors, that your .cloginrc is correct, and that the *login
+     script doesnt have a bug of some sort.  For example:
+
+        clogin cisco_router
+
+     Should login to cisco_router and produce a router prompt that you can
+     use normally, as if clogin were not used (ie: telnet cisco_router).
+
+   - See if commands can be executed on the router via clogin.  This will
+     exercise the *login functionality needed for rancid.  For example:
+
+        clogin -c 'show version; show diag' cisco_router
+
+     Should login to cisco_router, run show version and show diag, then
+     disconnect and exit.  The output will be displayed on your terminal.
+
+   - The see if the correct rancid commands work against the router.  For
+     example:
+
+        rancid cisco_router
+
+     Should produce a cisco_router.new file (cooked to a golden rancid-style
+     colour) in the current directory.  If it does not, try again with the
+     -d option, so that the cisco_router.new file will not be removed if
+     an error is detected.  Note: if you have NOPIPE set in your environment,
+     a cisco_router.raw file will be produced that is the raw output of the
+     dialogue with the device.
+
+   If all of these work, make sure that the device's entry in the group's
+   router.db file is correct and check the group's last log file for errors.
+
+Q. I'm still stuck on this problem.  Where can i get more help?
+A. A discussion list is available, rancid-discuss@shrubbery.net.  You must
+   be a subscriber to post.  subscribe like this:
+
+   shell% echo "subscribe" | mail rancid-discuss-request@shrubbery.net
+

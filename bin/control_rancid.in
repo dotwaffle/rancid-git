@@ -1,7 +1,7 @@
 #!/bin/sh
 ##
 ##
-## Copyright (C) 1996 by Henry Kilmer.
+## Copyright (C) 1996-2001 by Henry Kilmer.
 ## All rights reserved.
 ##
 ## This software may be freely copied, modified and redistributed without
@@ -38,9 +38,13 @@ then
     echo "$DIR does not exist."
     echo "Run bin/create_cvs $GROUP to make all of the needed directories."
     (
+	echo "To: @MAILPLUS@admin-$GROUP"
+	echo "Subject: no $GROUP directory"
+	echo "Precedence: bulk"
+	echo ""
 	echo "$DIR does not exist."
 	echo "Run bin/create_cvs $GROUP to make all of the needed directories."
-    ) | Mail -s "no $GROUP directory" @MAILPLUS@admin-$GROUP
+    ) | sendmail -t
     exit 1
 fi
 
@@ -60,8 +64,12 @@ rm -f $TMP
 if [ ! -f $DIR/router.db ]
 then
     (
+	echo "To: @MAILPLUS@admin-$GROUP"
+	echo "Subject: no $GROUP/router.db file"
+	echo "Precedence: bulk"
+	echo ""
 	echo "$DIR/router.db does not exist."
-    ) | Mail -s "no $GROUP/router.db file" @MAILPLUS@admin-$GROUP
+    ) | sendmail -t
     exit 1;
 elif [ ! -s $DIR/router.db ]
 then
@@ -119,7 +127,13 @@ then
     ) > routers.mail
 
     if [ -s routers.mail ] ; then
-        Mail -s "changes in $GROUP routers" @MAILPLUS@admin-$GROUP < routers.mail
+	(
+	  echo "To: @MAILPLUS@admin-$GROUP"
+	  echo "Subject: changes in $GROUP routers"
+	  echo "Precedence: bulk"
+	  echo ""
+	  cat routers.mail
+	) | sendmail -t
     fi
     rm -f routers.mail
 
@@ -149,8 +163,18 @@ mv routers.up.new routers.up
 rm -f routers.db
 trap 'rm -fr $TMP;' 1 2 15
 
-# cvs delete configs for routers not listed in routers.up.
 cd $DIR/configs
+# check for 'up' routers missing in cvs.  no idea how this happens to some folks
+for router in `cut -d: -f1 ../routers.up` ; do
+    cvs status $router | grep -i 'status: unknown' > /dev/null 2>&1
+    if [ $? -eq 0 ]; then
+	touch $router
+	cvs add -ko $router
+	echo "CVS added missing router $router"
+    fi
+    echo
+done
+# cvs delete configs for routers not listed in routers.up.
 for router in `find . \( -name \*.new -prune -o -name CVS -prune \) -o -type f -print | sed -e 's/^.\///'` ; do
     grep -i "^$router:" ../router.db > /dev/null 2>&1
     if [ $? -eq 1 ]; then
@@ -261,13 +285,15 @@ fi
 if [ -s $DIR/routers.failed ]
 then
 	(
-		cat <<END
-The following routers have not been successfully contacted for more
-than $OLDTIME hours.
+	  echo "To: @MAILPLUS@admin-$GROUP"
+	  echo "Subject: config fetcher problems - $GROUP"
+	  echo "Precedence: bulk"
+	  echo ""
+	  echo "The following routers have not been successfully contacted for"
+	  echo "more than $OLDTIME hours."
 
-END
-		cat $DIR/routers.failed
-	) | Mail -s "config fetcher problems - $GROUP" @MAILPLUS@admin-$GROUP
+	  cat $DIR/routers.failed
+	) | sendmail -t
 fi
 
 # Cleanup

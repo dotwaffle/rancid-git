@@ -4,7 +4,7 @@
 ## with switch software 1.50 so far - terry@tmk.com
 ##
 ##
-## Copyright (C) 1997 by Henry Kilmer.
+## Copyright (C) 1997-2001 by Henry Kilmer.
 ## All rights reserved.
 ##
 ## This software may be freely copied, modified and redistributed without
@@ -138,7 +138,7 @@ sub ShowVersion {
     print STDERR "    In ShowVersion: $_" if ($debug);
 
     ProcessHistory("COMMENTS","keysort","A1",
-	"- Chassis type:EZT3 - an ADC EZT3 M13 multiplexor\n");
+	"- Chassis type: EZT3 - an ADC EZT3 M13 multiplexor\n");
 
     while (<INPUT>) {
 	tr/\015//d;

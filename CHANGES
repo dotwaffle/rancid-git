@@ -1,5 +1,59 @@
-2.2b
-	bin/alogin and changes of beta quality for Alteon WebOS switch
+2.2b5
+	fix regex error in clogin affecting catalysts
+
+	clogin attempts to grope entire prompt after login
+
+	*login need to catch{} -x cmd file open so expect doesnt puke if
+	there is an error opening the file
+
+2.2b4
+	add extreme switch bits
+
+	cisco changed the o/p fmt of h/w info on the 65xx in 12.1.8e
+
+	PIX520 supplies different more(1) prompt than others.  from William R
+	Thomas.
+
+	fix typo in jlogin.  from richard doty.
+
+	add 2 example expect script for clogin -s
+
+	handle foundrys and more juniper bits in the lookingglass
+
+	add LG_STRIP knob to strip login o/p in the lookingglass
+
+	add LG_BGP_RT knob to {dis}allow heavy o/p sh ip bgp neighbor LG cmds
+
+	bin/clogin shouldnt insist upon an enable password with -noenable option
+
+2.2b3
+	bin/rancid changes for cisco 124xx
+
+	some serial controllers (PAs) have predefined cable-type in show
+	controllers.  M8T-V.35 was being missed.
+
+	modify jlogin to grope the full prompt after login such that -x
+	can be used within configuration mode.  note: this turns $prompt into
+	a regexp, WRT -s scripts and -re option for expect's.
+
+	add -Evar=x option to pass variables to scripts.  eg:
+		clogin -Evariable=something router...
+		clogin -Evariable=a,b,c [ie: an array/list which user splits]
+
+2.2b2
+	fix jlogin's password/userpassword functionality which broke when
+	cmd-line options were made consistent.
+
+	add check for config/* files missing from the cvs repository.
+
+	add 2 juniper config checks to avoid truncation. 1) config should
+	have at least 1 "section" amounting to at least 3 lines and 2) if
+	a mgd version mismatch exists, there may be inaccuracies.
+
+	convert usage of Mail to sendmail for portability.  local .mailrc
+	aliases can no longer be used.
+
+	bin/alogin and changes (of beta quality) for Alteon WebOS switch
 	from andrew fort.
 
 	Check for more types of cisco 12000s.  Also check for 2600s.
@@ -12,6 +66,8 @@
 	make *login automatically add host keys with openssh's prompting
 
 	All routers not listed as 'up' in router.db are considered down.
+	This allows values other than down to mean 'not up'.  for use
+	by util/downreport.
 
 2.1
 	Change default umask to 027 (it was 007) mainly as an
@@ -202,7 +258,7 @@
 
 	- adds a "-x" switch that takes lines from a file and does the same
 	thing as if you'd specified ;-separated commands with -c (newline
-	separates commands)
+	separates commands).  thanks to stephen stuart.
 
 	- does a subst on commands in run_commands so that expansion of
 	escapes is performed; e.g. you can say "copy rcp://blah slot0:\r" to

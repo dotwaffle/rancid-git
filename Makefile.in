@@ -90,23 +90,22 @@ SSH = @SSH@
 TAR = @TAR@
 TELNET = @TELNET@
 TOUCH = @TOUCH@
-UCBMAIL = @UCBMAIL@
 VERSION = @VERSION@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
 
-EXTRA_DIST = CHANGES README Todo cloginrc.sample configure install-sh 	mkinstalldirs Makefile.in Todo
+EXTRA_DIST = CHANGES COPYING FAQ README Todo cloginrc.sample configure 	install-sh 	mkinstalldirs Makefile.in Todo
 
 #DIST_COMMON = 
 
 # '.' is here (and at the beginnging of the macro) so that distclean-recursive
-# will run make distclean in . after the other dirs (preserving Makefile.inc)
+# will run make distclean in . after the other dirs (preserving Makefile)
 SUBDIRS = . bin man util
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_CLEAN_FILES = 
-DIST_COMMON =  README Makefile.am Makefile.in acinclude.m4 aclocal.m4 \
-configure configure.in install-sh missing mkinstalldirs
+DIST_COMMON =  README COPYING Makefile.am Makefile.in acinclude.m4 \
+aclocal.m4 configure configure.in install-sh missing mkinstalldirs
 
 
 DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)

@@ -1,4 +1,17 @@
 #!@PERLV_PATH@
+## Copyright (C) 1997-2001 by Henry Kilmer.
+## All rights reserved.
+##
+## This software may be freely copied, modified and redistributed without
+## fee for non-commerical purposes provided that this copyright notice is
+## preserved intact on all copies and modified copies.
+##
+## There is no warranty or other guarantee of fitness of this software.
+## It is provided solely "as is". The author(s) disclaim(s) all
+## responsibility and liability with respect to this software's usage
+## or its effect upon hardware, computer systems, other software, or
+## anything else.
+#
 # lgform.cgi - Looking glass front-end
 # produces html form for calling lg.cgi
 
@@ -75,7 +88,7 @@ sub readrouters
 			next if (/^\s*(#|$)/);
 			# fqdn:mfg:state
 			@record = split('\:', $_);
-			next if ($record[2] !~ /up/i || $record[1] !~ /(cisco|juniper)/);
+			next if ($record[2] !~ /up/i || $record[1] !~ /(cisco|foundry|juniper)/);
 			push(@rtrlist, join(':', ($record[0], $record[1])));
 			$rtrlabels{join(':', ($record[0], $record[1]))} = $record[0];
 		    }
@@ -91,7 +104,7 @@ sub readrouters
 		next if (/^\s*(#|$)/);
 		# fqdn:mfg:state
 		@record = split('\:', $_);
-		next if ($record[2] !~ /up/i || $record[1] !~ /(cisco|juniper)/);
+		next if ($record[2] !~ /up/i || $record[1] !~ /(cisco|foundry|juniper)/);
 		push(@rtrlist, join(':', ($record[0], $record[1])));
 		$rtrlabels{join(':', ($record[0], $record[1]))} = $record[0];
 	    }
@@ -140,14 +153,16 @@ print <<QTYPES ;
 <dd><input type=radio name="query" value="framerelay">show frame-relay pvc [DLCI]</DD>
 <dd><input type=radio name="query" value="interface">show interface &lt;interface&gt;</DD>
 <dd><input type=radio name="query" value="prefix">show ip bgp &lt;prefix&gt; [netmask]</DD>
+<dd><input type=radio name="query" value="neighbor">show ip bgp neighbor &lt;IP_addr&gt;</DD>
 <dd><input type=radio name="query" value="regex">show ip bgp regex &lt;reg_exp&gt;</DD>
 <dd><input type=radio name="query" value="summary">show ip bgp summary</DD>
 <dd><input type=radio name="query" value="damp">show ip bgp dampened-paths</DD>
 <dd><input type=radio name="query" value="prefixlist">show ip prefix-list &lt;list_name&gt;</DD>
 <dd><input type=radio name="query" value="route">show ip route &lt;prefix&gt; [netmask]</DD>
+<dd><input type=radio name="query" value="routemap">show route-map &lt;map_name&gt;</DD>
 <dd><input type=radio name="query" value="mbgp">show ip mbgp &lt;prefix&gt; [netmask]</dd>
 <dd><input type=radio name="query" value="mbgpsum">show ip mbgp summary</dd>
-<dd><input type=radio name="query" value="log">show logging [| &lt;match_string&gt;]</DD>
+<dd><input type=radio name="query" value="log">show logging [ | &lt;match_string&gt;]</DD>
 <dd><input type=radio name="query" value="ping">ping &lt;IP_addr | FQDN&gt;</dd>
 <dd><input type=radio name="query" value="trace">traceroute &lt;IP_addr | FQDN&gt;</DD>
 
@@ -159,14 +174,6 @@ print <<QTYPES ;
 <dd>
 QTYPES
 
-# unimplemented/disabled/removed query types.
-#
-# <dd>show ip bgp neighbor &lt;IP_addr&gt;</dd>
-# <dd>show ip bgp neighbor &lt;IP_addr&gt; advertised routes</dd>
-# <dd>show ip bgp neighbor &lt;IP_addr&gt; flap statistics</dd>
-# <dd>show ip bgp neighbor &lt;IP_addr&gt; received</dd>
-# <dd>show ip bgp neighbor &lt;IP_addr&gt; routes</dd>
-#
 # <dd><input type=radio name="query" value="aspath">sh ip as-path-access-list &lt;list_number&gt;</DD>
 # <dd><input type="radio" name="query" value="acl">sh access-list &lt;list_number&gt;</dd>
 # <dd><input type=radio name="query" value="communitylist">sh ip community-list &lt;list_number&gt;<DD>

@@ -1,6 +1,6 @@
 rtrfilter can be used to filter rancid diffs to avoid sending unwanted
 diffs to certain recipient(s) or diffs which those recipient(s) should
-not see without the need to create a separate group(s).
+not see without the need to create separate or duplicate group(s).
 
 /etc/aliases eg:
 

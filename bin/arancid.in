@@ -5,7 +5,7 @@
 ## afort@choqolat.org (andrew fort)
 ##
 ##
-## Copyright (C) 1997 by Henry Kilmer.
+## Copyright (C) 1997-2001 by Henry Kilmer.
 ## All rights reserved.
 ##
 ## This software may be freely copied, modified and redistributed without
@@ -170,17 +170,14 @@ sub WriteTerm {
         tr/\015//d;
         last if(/^>>.*$prompt/);
 	chop;
-	print $ENV{'NOCOMMSTR'};
-        /(rcomm|wcomm|t1com|t2com)(\s+)(.*)/ && 
+	if (/(rcomm|wcomm|t1com|t2com)(\s+)(.*)/ && 
+		defined($ENV{'NOCOMMSTR'})) {
 	    ProcessHistory("","","","\/\*\t$1$2\"<removed>\"\n") && next;
-	#if (/^\s*snmp/ && defined($ENV{'NOCOMMSTR'})) {
-	#    /snmp (getcomm|setcomm|trapcomm)(\s+)(\S*)/ &&
-	#    ProcessHistory("","","","-   snmp $1$2\"<removed>\"\n") && next;
-	#}
+	}
 	next if (/^\/\* Configuration dump taken/i);
-        next if (/^\/\* Version.*Base MAC.*/i);
+	next if (/^\/\* Version.*Base MAC.*/i);
 
-		if (/^\/script end/) { 
+		if (/^\/?script end/) { 
 		$found_end = 1; 
 		ProcessHistory("","","","$_\n");
 		return(1);

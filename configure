@@ -17,8 +17,6 @@ ac_help="$ac_help
                           (and sometimes confusing) to the casual installer"
 ac_help="$ac_help
   --enable-mail-plus      enable mail to rancid+ addresses, instead of rancid-"
-ac_help="$ac_help
-  --with-ucbmail=[FQPN]   path to UCB mail"
 
 # Initialize some variables set by options.
 # The variables have the same names as the options, with
@@ -561,7 +559,7 @@ ac_configure=$ac_aux_dir/configure # This should be Cygnus configure.
 # SVR4 /usr/ucb/install, which tries to use the nonexistent group "staff"
 # ./install, which can be erroneously created by make from ./install.sh.
 echo $ac_n "checking for a BSD compatible install""... $ac_c" 1>&6
-echo "configure:565: checking for a BSD compatible install" >&5
+echo "configure:563: checking for a BSD compatible install" >&5
 if test -z "$INSTALL"; then
 if eval "test \"`echo '$''{'ac_cv_path_install'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
@@ -614,7 +612,7 @@ test -z "$INSTALL_SCRIPT" && INSTALL_SCRIPT='${INSTALL_PROGRAM}'
 test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
 
 echo $ac_n "checking whether build environment is sane""... $ac_c" 1>&6
-echo "configure:618: checking whether build environment is sane" >&5
+echo "configure:616: checking whether build environment is sane" >&5
 # Just in case
 sleep 1
 echo timestamp > conftestfile
@@ -671,7 +669,7 @@ test "$program_suffix" != NONE &&
 test "$program_transform_name" = "" && program_transform_name="s,x,x,"
 
 echo $ac_n "checking whether ${MAKE-make} sets \${MAKE}""... $ac_c" 1>&6
-echo "configure:675: checking whether ${MAKE-make} sets \${MAKE}" >&5
+echo "configure:673: checking whether ${MAKE-make} sets \${MAKE}" >&5
 set dummy ${MAKE-make}; ac_make=`echo "$2" | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_prog_make_${ac_make}_set'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
@@ -717,7 +715,7 @@ EOF
 
 missing_dir=`cd $ac_aux_dir && pwd`
 echo $ac_n "checking for working aclocal""... $ac_c" 1>&6
-echo "configure:721: checking for working aclocal" >&5
+echo "configure:719: checking for working aclocal" >&5
 # Run test in a subshell; some versions of sh will print an error if
 # an executable is not found, even if stderr is redirected.
 # Redirect stdin to placate older versions of autoconf.  Sigh.
@@ -730,7 +728,7 @@ else
 fi
 
 echo $ac_n "checking for working autoconf""... $ac_c" 1>&6
-echo "configure:734: checking for working autoconf" >&5
+echo "configure:732: checking for working autoconf" >&5
 # Run test in a subshell; some versions of sh will print an error if
 # an executable is not found, even if stderr is redirected.
 # Redirect stdin to placate older versions of autoconf.  Sigh.
@@ -743,7 +741,7 @@ else
 fi
 
 echo $ac_n "checking for working automake""... $ac_c" 1>&6
-echo "configure:747: checking for working automake" >&5
+echo "configure:745: checking for working automake" >&5
 # Run test in a subshell; some versions of sh will print an error if
 # an executable is not found, even if stderr is redirected.
 # Redirect stdin to placate older versions of autoconf.  Sigh.
@@ -756,7 +754,7 @@ else
 fi
 
 echo $ac_n "checking for working autoheader""... $ac_c" 1>&6
-echo "configure:760: checking for working autoheader" >&5
+echo "configure:758: checking for working autoheader" >&5
 # Run test in a subshell; some versions of sh will print an error if
 # an executable is not found, even if stderr is redirected.
 # Redirect stdin to placate older versions of autoconf.  Sigh.
@@ -769,7 +767,7 @@ else
 fi
 
 echo $ac_n "checking for working makeinfo""... $ac_c" 1>&6
-echo "configure:773: checking for working makeinfo" >&5
+echo "configure:771: checking for working makeinfo" >&5
 # Run test in a subshell; some versions of sh will print an error if
 # an executable is not found, even if stderr is redirected.
 # Redirect stdin to placate older versions of autoconf.  Sigh.
@@ -794,10 +792,10 @@ PACKAGE=rancid
 # VERSION needs to be updated such that 'make dist' uses the correct
 # filename for the directory name and tarball.
 
-VERSION=2.2b
+VERSION=2.2b5
 
 echo $ac_n "checking whether to enable maintainer-specific portions of Makefiles""... $ac_c" 1>&6
-echo "configure:801: checking whether to enable maintainer-specific portions of Makefiles" >&5
+echo "configure:799: checking whether to enable maintainer-specific portions of Makefiles" >&5
     # Check whether --enable-maintainer-mode or --disable-maintainer-mode was given.
 if test "${enable_maintainer_mode+set}" = set; then
   enableval="$enable_maintainer_mode"
@@ -823,7 +821,7 @@ fi
 # Check for a preference for using mail addresses like rancid+admin-group
 # instead of the standard rancid-admin-group
 echo $ac_n "checking whether mail addresses should be in the rancid+ form""... $ac_c" 1>&6
-echo "configure:827: checking whether mail addresses should be in the rancid+ form" >&5
+echo "configure:825: checking whether mail addresses should be in the rancid+ form" >&5
 # Check whether --enable-mail-plus or --disable-mail-plus was given.
 if test "${enable_mail_plus+set}" = set; then
   enableval="$enable_mail_plus"
@@ -848,7 +846,7 @@ rd_cv_MAILPLUS=$MAILPLUS
 # Extract the first word of "dirname", so it can be a program name with args.
 set dummy dirname; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:852: checking for $ac_word" >&5
+echo "configure:850: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_DIRNAME'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -885,7 +883,7 @@ fi
 # Extract the first word of "diff", so it can be a program name with args.
 set dummy diff; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:889: checking for $ac_word" >&5
+echo "configure:887: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_DIFF'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -946,7 +944,7 @@ rd_cv_DIFF_CMD=$DIFF_CMD
 # Extract the first word of "sendmail", so it can be a program name with args.
 set dummy sendmail; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:950: checking for $ac_word" >&5
+echo "configure:948: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_SENDMAIL'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -979,98 +977,11 @@ else
   echo "$ac_t""no" 1>&6
 fi
 
-# find UCB mail.
-# Check whether --with-ucbmail or --without-ucbmail was given.
-if test "${with_ucbmail+set}" = set; then
-  withval="$with_ucbmail"
-  UCBMAIL=$withval; unset ac_cv_path_UCBMAIL
-fi
-
-# Extract the first word of "Mail", so it can be a program name with args.
-set dummy Mail; ac_word=$2
-echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:993: checking for $ac_word" >&5
-if eval "test \"`echo '$''{'ac_cv_path_UCBMAIL'+set}'`\" = set"; then
-  echo $ac_n "(cached) $ac_c" 1>&6
-else
-  case "$UCBMAIL" in
-  /*)
-  ac_cv_path_UCBMAIL="$UCBMAIL" # Let the user override the test with a path.
-  ;;
-  ?:/*)			 
-  ac_cv_path_UCBMAIL="$UCBMAIL" # Let the user override the test with a dos path.
-  ;;
-  *)
-  IFS="${IFS= 	}"; ac_save_ifs="$IFS"; IFS=":"
-  ac_dummy="$PATH"
-  for ac_dir in $ac_dummy; do 
-    test -z "$ac_dir" && ac_dir=.
-    if test -f $ac_dir/$ac_word; then
-      ac_cv_path_UCBMAIL="$ac_dir/$ac_word"
-      break
-    fi
-  done
-  IFS="$ac_save_ifs"
-  test -z "$ac_cv_path_UCBMAIL" && ac_cv_path_UCBMAIL="no"
-  ;;
-esac
-fi
-UCBMAIL="$ac_cv_path_UCBMAIL"
-if test -n "$UCBMAIL"; then
-  echo "$ac_t""$UCBMAIL" 1>&6
-else
-  echo "$ac_t""no" 1>&6
-fi
-
-if test $UCBMAIL = no; then
-    unset ac_cv_path_UCBMAIL
-    # Extract the first word of "mailx", so it can be a program name with args.
-set dummy mailx; ac_word=$2
-echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:1031: checking for $ac_word" >&5
-if eval "test \"`echo '$''{'ac_cv_path_UCBMAIL'+set}'`\" = set"; then
-  echo $ac_n "(cached) $ac_c" 1>&6
-else
-  case "$UCBMAIL" in
-  /*)
-  ac_cv_path_UCBMAIL="$UCBMAIL" # Let the user override the test with a path.
-  ;;
-  ?:/*)			 
-  ac_cv_path_UCBMAIL="$UCBMAIL" # Let the user override the test with a dos path.
-  ;;
-  *)
-  IFS="${IFS= 	}"; ac_save_ifs="$IFS"; IFS=":"
-  ac_dummy="$PATH"
-  for ac_dir in $ac_dummy; do 
-    test -z "$ac_dir" && ac_dir=.
-    if test -f $ac_dir/$ac_word; then
-      ac_cv_path_UCBMAIL="$ac_dir/$ac_word"
-      break
-    fi
-  done
-  IFS="$ac_save_ifs"
-  test -z "$ac_cv_path_UCBMAIL" && ac_cv_path_UCBMAIL="no"
-  ;;
-esac
-fi
-UCBMAIL="$ac_cv_path_UCBMAIL"
-if test -n "$UCBMAIL"; then
-  echo "$ac_t""$UCBMAIL" 1>&6
-else
-  echo "$ac_t""no" 1>&6
-fi
-
-    if test $UCBMAIL = no; then
-        { echo "configure: error: can't locate a UCB Mail (one which accepts the -s option for subject)." 1>&2; exit 1; }
-        { echo "configure: error: UCB mail is normally Mail or mailx.  use --with-ucbmail to specify the path." 1>&2; exit 1; }
-	exit 1
-    fi
-fi
 
 # Extract the first word of "gmake", so it can be a program name with args.
 set dummy gmake; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:1074: checking for $ac_word" >&5
+echo "configure:985: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_MAKE'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -1108,7 +1019,7 @@ if test $MAKE = no; then
     # Extract the first word of "make", so it can be a program name with args.
 set dummy make; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:1112: checking for $ac_word" >&5
+echo "configure:1023: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_MAKE'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -1147,7 +1058,7 @@ fi
     fi
 fi
 echo $ac_n "checking whether ${MAKE-make} sets \${MAKE}""... $ac_c" 1>&6
-echo "configure:1151: checking whether ${MAKE-make} sets \${MAKE}" >&5
+echo "configure:1062: checking whether ${MAKE-make} sets \${MAKE}" >&5
 set dummy ${MAKE-make}; ac_make=`echo "$2" | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_prog_make_${ac_make}_set'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
@@ -1181,7 +1092,7 @@ do
 # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:1185: checking for $ac_word" >&5
+echo "configure:1096: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_prog_TAR'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -1216,7 +1127,7 @@ do
 # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:1220: checking for $ac_word" >&5
+echo "configure:1131: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_prog_AUTOMAKE'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -1258,7 +1169,7 @@ done
 # SVR4 /usr/ucb/install, which tries to use the nonexistent group "staff"
 # ./install, which can be erroneously created by make from ./install.sh.
 echo $ac_n "checking for a BSD compatible install""... $ac_c" 1>&6
-echo "configure:1262: checking for a BSD compatible install" >&5
+echo "configure:1173: checking for a BSD compatible install" >&5
 if test -z "$INSTALL"; then
 if eval "test \"`echo '$''{'ac_cv_path_install'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
@@ -1313,7 +1224,7 @@ test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
 # Extract the first word of "perl5", so it can be a program name with args.
 set dummy perl5; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:1317: checking for $ac_word" >&5
+echo "configure:1228: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_PERLV_PATH'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -1351,7 +1262,7 @@ if test $PERLV_PATH = no; then
     # Extract the first word of "perl", so it can be a program name with args.
 set dummy perl; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:1355: checking for $ac_word" >&5
+echo "configure:1266: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_PERLV_PATH'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -1402,7 +1313,7 @@ ac_cv_PERLV=`basename $PERLV_PATH`
 # Extract the first word of "expect", so it can be a program name with args.
 set dummy expect; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:1406: checking for $ac_word" >&5
+echo "configure:1317: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_EXPECT_PATH'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -1444,7 +1355,7 @@ fi
 # Extract the first word of "ping", so it can be a program name with args.
 set dummy ping; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:1448: checking for $ac_word" >&5
+echo "configure:1359: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_PING_PATH'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -1510,7 +1421,7 @@ rd_cv_rd_bin_datas=$RD_BIN_DATAS
 RD_BIN_PROGS="cat5rancid control_rancid \
 alogin arancid clogin create_cvs do-diffs elogin erancid \
 flogin francid jlogin jrancid par rancid-fe \
-rancid rename rrancid"
+rancid rename rrancid xrancid"
 
 rd_cv_rd_bin_progs=$RD_BIN_PROGS
 
@@ -1531,12 +1442,12 @@ INST_PROGS=$progs
 # locate tools to build $PATH for env.  order is significant.  want to be
 # sure that we pick up the the proper diff and ucbmail in bin/env.
 ENV_PATH="`dirname $PERLV_PATH`:`dirname $EXPECT_PATH`:`dirname $SENDMAIL`"
-ENV_PATH="$ENV_PATH:`dirname $DIRNAME`:`dirname $DIFF`:`dirname $UCBMAIL`"
+ENV_PATH="$ENV_PATH:`dirname $DIRNAME`:`dirname $DIFF`"
 
 # Extract the first word of "cvs", so it can be a program name with args.
 set dummy cvs; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:1540: checking for $ac_word" >&5
+echo "configure:1451: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_CVS'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -1573,7 +1484,7 @@ ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_CVS`"
 # Extract the first word of "comm", so it can be a program name with args.
 set dummy comm; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:1577: checking for $ac_word" >&5
+echo "configure:1488: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_COMM'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -1610,7 +1521,7 @@ ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_COMM`"
 # Extract the first word of "find", so it can be a program name with args.
 set dummy find; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:1614: checking for $ac_word" >&5
+echo "configure:1525: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_FIND'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -1647,7 +1558,7 @@ ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_FIND`"
 # Extract the first word of "grep", so it can be a program name with args.
 set dummy grep; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:1651: checking for $ac_word" >&5
+echo "configure:1562: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_GREP'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -1684,7 +1595,7 @@ ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_GREP`"
 # Extract the first word of "id", so it can be a program name with args.
 set dummy id; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:1688: checking for $ac_word" >&5
+echo "configure:1599: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_ID'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -1721,7 +1632,7 @@ ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_ID`"
 # Extract the first word of "mkdir", so it can be a program name with args.
 set dummy mkdir; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:1725: checking for $ac_word" >&5
+echo "configure:1636: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_MKDIR'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -1758,7 +1669,7 @@ ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_MKDIR`"
 # Extract the first word of "rsh", so it can be a program name with args.
 set dummy rsh; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:1762: checking for $ac_word" >&5
+echo "configure:1673: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_RSH'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -1795,7 +1706,7 @@ ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_RSH`"
 # Extract the first word of "sort", so it can be a program name with args.
 set dummy sort; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:1799: checking for $ac_word" >&5
+echo "configure:1710: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_SORT'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -1832,7 +1743,7 @@ ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_SORT`"
 # Extract the first word of "ssh", so it can be a program name with args.
 set dummy ssh; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:1836: checking for $ac_word" >&5
+echo "configure:1747: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_SSH'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -1872,7 +1783,7 @@ unset ac_cv_path_SSH
 # Extract the first word of "telnet", so it can be a program name with args.
 set dummy telnet; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:1876: checking for $ac_word" >&5
+echo "configure:1787: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_TELNET'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -1909,7 +1820,7 @@ ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_TELNET`"
 # Extract the first word of "touch", so it can be a program name with args.
 set dummy touch; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:1913: checking for $ac_word" >&5
+echo "configure:1824: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_TOUCH'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -2116,7 +2027,6 @@ s%@DIRNAME@%$DIRNAME%g
 s%@DIFF@%$DIFF%g
 s%@DIFF_CMD@%$DIFF_CMD%g
 s%@SENDMAIL@%$SENDMAIL%g
-s%@UCBMAIL@%$UCBMAIL%g
 s%@MAKE@%$MAKE%g
 s%@TAR@%$TAR%g
 s%@PERLV_PATH@%$PERLV_PATH%g

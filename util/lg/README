@@ -1,9 +1,9 @@
 This is a looking glass based on Ed Kern's which can be found on
-http://nitrous.digex.net/.  This version supports cisco and
-juniper, uses rancid's [cj]login to login (so rcmd is not necessary,
+http://nitrous.digex.net/.  This version supports cisco, juniper, and
+foundry, useing rancid's [cfj]login to login (so rcmd is not necessary,
 it can use telnet, ssh, or rsh), and has some additional commands
-implemented.  There are a few cisco commands where either no juniper
-exists or we have not had time to implement yet.
+implemented.  There are a few cisco commands where either no juniper or
+foundry equivalent exists or we have not had time to implement yet.
 
 packing list:
 README          This file.

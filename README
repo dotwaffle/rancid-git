@@ -93,6 +93,10 @@ Quick Installation Guide (an example):
    Note: the juniper user you use *must* log into a cli shell (which
    is the default on a juniper).
 
+   See the file cloginrc.sample, located in <basedir>, for examples and
+   good starting point.  Also take a look at the cloginrc manual page,
+   'man -M <basedir>/man cloginrc'.
+
 6) Modify /etc/aliases
    Rancid sends the diffs and other administrative emails to rancid-<GROUP>
    and problems to rancid-admin-<GROUP>, where <GROUP> is the "GROUP" of
@@ -100,12 +104,8 @@ Quick Installation Guide (an example):
    access routers or separate based upon network etc...  Different router
    uses forced different people being interested in router "groups" -
    thus this setup.  Make sure email to rancid-<GROUP> works.  /etc/aliases
-   can be maintainable by Majordomo stuff.
-				- OR -
-   Modify your home directory's .mailrc.  Control_rancid uses sendmail
-   to send diffs.  To use a private .mailrc, control_rancid will have to
-   be modified to use ucbmail or, better yet, something else which allow
-   the Precedence header to be set.  Pick your poison.
+   can be maintainable by Majordomo stuff, but make sure the user that
+   runs rancid can post to the list.
 
    The Precedence header set to bulk or junk *hopefully* avoids replies from
    auto-responders and vacation type mail filters.
@@ -116,7 +116,9 @@ Quick Installation Guide (an example):
 
 7) Run create_cvs.
    This creates all of the necessary directories and config files for
-   each of the groups in LIST_OF_GROUPS and imports them into CVS.
+   each of the groups in LIST_OF_GROUPS and imports them into CVS.  This
+   will also be run each time a new group is added.  Also see
+   'man -M <basedir>/man create_cvs'.
 
 8) For each "group", modify the router.db file in the group directory.
    The file is of the form "router:mfg:state" where "router" is
@@ -163,5 +165,25 @@ Quick Installation Guide (an example):
     Subscribe by sending an email whose body contains "subscribe
     rancid-<announce or discuss>" to majordomo@shrubbery.net.
 
+
+Problem with clogin/telnet hanging within rancid or scripts?
+
+If you have experienced rancid (or more precisely, telnet) hanging on a
+solaris 2.6 box; check to be sure you have the following two patches
+installed (see showrev -p).  There may be more recent versions of these
+patches and they are likely included with 2.7 and 2.8: 
+
+Patch-ID# 105529-08
+Keywords: security tcp rlogin TCP ACK FIN packet listen
+Synopsis: SunOS 5.6: /kernel/drv/tcp patch
+
+Patch-ID# 105786-11
+Keywords: security ip tcp_priv_stream routing ip_enable_group_ifs ndd
+Synopsis: SunOS 5.6: /kernel/drv/ip patch
+
+another possibile contributor is expect/tcl.  we've noticed that expect
+5.24.1 (possibly 5.28.*) and whatever tcl happens to compile with it, 
+eems to not exhibit this problem, while 5.32.* appears to on linux and
+solaris but not on netbsd 1.5.
 
 -Hank

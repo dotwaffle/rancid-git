@@ -2,9 +2,28 @@
 #
 # note: these are perl statements!  mind the syntax
 #
-# adjust the path to find [cj]login, telnet, ssh, rsh, etc.
+# adjust the path to find [cfj]login, telnet, ssh, rsh, etc.
 #
 $ENV{PATH}="@prefix@/bin:@ENV_PATH@";
+#
+#
+# LG_CACHE_DIR	is the location of the cache directory.  the LG uses this
+#		to hold lock files, the default log file (lg.log), and o/p from
+#		commands that can be very verbose.  it defaults to "tmp",
+#		ie: relative to the directory where lg.cgi runs in your
+#		server's (httpd) DocumentRoot (eg: /usr/local/www/data/lg/tmp).
+#
+#$LG_CACHE_DIR="./tmp";
+#
+#
+# LG_CLOGINRC	is the .cloginrc that the LG should use.  it defaults to
+#		<prefix>/.cloginrc.  note that the .cloginrc must be readable
+#		by the user or group (UID / GID) that will be running the CGI
+#		and the clogin (and friends) will not allow a world readable
+#		.cloginrc.  this is normally the user the server (httpd) runs
+#		under.
+#
+#$LG_CLOGINRC="@prefix@/.cloginrc";
 #
 #
 # LG_IMAGE	is the filename of an image you wish to appear at the top
@@ -14,6 +33,17 @@ $ENV{PATH}="@prefix@/bin:@ENV_PATH@";
 #
 #$LG_IMAGE="<img src=/icons/rancid.gif hspace=0>\n <font size=+2>FOO</font>";
 #$LG_IMAGE="<img src=rancid.gif hspace=0>\n";
+#
+#
+# LG_LOG	is either a FQPN (fully qualified path name) the syslog
+#		facility to use for logging.  if not defined, the LG
+#		will log to LG_CACHE_DIR/lg.log.  possible syslog facility
+#		values are from the facility codes in /usr/include/syslog.h
+#		minus the 'LOG_' and lower case.
+#
+#$LG_LOG="$LG_CACHE_DIR/lg.log";
+#$LG_LOG="/tmp/lg.log";
+#$LG_LOG="local0";
 #
 #
 # LG_ROUTERDB	is the router.db in rancid's router.db format, listing
@@ -31,27 +61,19 @@ $ENV{PATH}="@prefix@/bin:@ENV_PATH@";
 #$LG_ROUTERDB="@prefix@/util/lg/router.db";
 #
 #
-# LG_CLOGINRC	is the .cloginrc that the LG should use.  it defaults to
-#		<prefix>/.cloginrc.  note that the .cloginrc must readable
-#		by the user or group (UID / GID) that will be running the CGI
-#		and the clogin (and friends) will not allow a world readable
-#		.cloginrc.  this is normally the user the server (httpd) runs
-#		under.
+# Options:
 #
-#$LG_CLOGINRC="@prefix@/.cloginrc";
+# LG_AS_REG	*** not implemented.
+#
+#@LG_AS_REG=();
 #
 #
-# LG_SINGLE	*** not implemented.
-#$LG_SINGLE=0;
+# LG_BGP_RT	allows a few bgp commands which can produce long output (heavy
+#		router load), such as sh ip bgp neighbor <ip> advertised-routes
+#		for a transit customer, sh ip b neigh <ip> received-routes for
+#		a transit provider.
 #
-#
-# LG_CACHE_DIR	is the location of the cache directory.  the LG uses this
-#		to hold lock files, lg.log log file, and o/p from commands
-#		that can be very verbose.  it defaults to "tmp", ie: relative
-#		to the directory where lg.cgi runs in your server's (httpd's)
-#		DocumentRoot (eg: /usr/local/www/data/lg/tmp).
-#
-#$LG_CACHE_DIR="./tmp";
+#$LG_BGP_RT=1
 #
 #
 # LG_CACHE_TIME	is the number of seconds the LG should cache o/p from certain
@@ -62,18 +84,15 @@ $ENV{PATH}="@prefix@/bin:@ENV_PATH@";
 #$LG_CACHE_TIME=600;
 #
 #
-# LG_LOG	is either a FQPN (fully qualified path name) the syslog
-#		facility to use for logging.  if not defined, the LG
-#		will log to LG_CACHE_DIR/lg.log.  possible syslog facility
-#		values are from the facility codes in /usr/include/syslog.h
-#		minus the 'LOG_' and lower case.
+# LG_SINGLE	serializes and limits queries per-router to one at a time via
+#		per-router lock files.
 #
-#$LG_LOG="$LG_CACHE_DIR/lg.log";
-#$LG_LOG="/tmp/lg.log";
-#$LG_LOG="local0";
+#$LG_SINGLE=0;
 #
+# $LG_STRIP	strips login o/p from the looking glass results.  Expect
+#		occassionally screws up disabling echo when passwords are
+#		entered (NOTE SECURITY CONCERN).  However, this o/p can be
+#		very useful for debugging clogin problems.
 #
-# LG_AS_REG	*** not implemented.
-#
-#@LG_AS_REG=();
+$LG_STRIP=1;
 #

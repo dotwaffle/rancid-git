@@ -1,4 +1,20 @@
 #!@PERLV_PATH@
+## The original original lookingglass s/w was written by Ed Kern.  it
+## is a single script and can be found at http://nitrous.digex.net/ 
+#
+## Copyright (C) 1997-2001 by Henry Kilmer.
+## All rights reserved.
+##
+## This software may be freely copied, modified and redistributed without
+## fee for non-commerical purposes provided that this copyright notice is
+## preserved intact on all copies and modified copies.
+##
+## There is no warranty or other guarantee of fitness of this software.
+## It is provided solely "as is". The author(s) disclaim(s) all
+## responsibility and liability with respect to this software's usage
+## or its effect upon hardware, computer systems, other software, or
+## anything else.
+#
 # Looking glass
 # vars: query, router, args
 
@@ -76,7 +92,7 @@ sub dolog
 # run commands on the router
 sub DoRsh
 {
-    my ($router, $mfg, $type, $arg) = @_;
+    my ($router, $mfg, $cmd, $arg) = @_;
     my($ctime) = time();
 
     my($lckobj) = LockFile::Simple->make(-delay => $lock_int,
@@ -93,32 +109,38 @@ sub DoRsh
     if (! $lckobj->lock("$cache_dir/$router")) {
 	return ("$router is busy.  Try again later.\n");
     }
-    @results = &DoCmd($router, $mfg, $type, $arg);
+    @results = &DoCmd($router, $mfg, $cmd, $arg);
     $lckobj->unlock("$cache_dir/$router");
     return (@results);
 }
 sub DoCmd
 {
-    my($rtr, $mfg, $type, $arg) = @_;
+    my($rtr, $mfg, $cmd, $arg) = @_;
     local(*CMD);
 
-    if ($mfg =~ /juniper/i) {
-	open(CMD, "jlogin -f $cloginrc -c \'$juniperCmd{$type} $arg\' $rtr |");
+    if ($mfg =~ /foundry/i) {
+	open(CMD, "sh -c \"flogin -f $cloginrc -c \'$cmd $arg\' $rtr\" 2>&1 |");
+	$cmd = $foundryCmd{$type};
+    } elsif ($mfg =~ /juniper/i) {
+	open(CMD, "sh -c \"jlogin -f $cloginrc -c \'$cmd $arg\' $rtr\" 2>&1 |");
 	$cmd = $juniperCmd{$type};
     } else {
-	open(CMD, "clogin -noenable -f $cloginrc -c \'$ciscoCmd{$type} $arg\' $rtr |");
+	open(CMD, "sh -c \"clogin -noenable -f $cloginrc -c \'$cmd $arg\' $rtr\" 2>&1 |");
 	$cmd = $ciscoCmd{$type};
     }
     while (<CMD>) {
 	tr/\015//d;
 	if (/^error:/i) {
 	    dolog(LOG_ERR, $_);
-	    return ($_);
+	    if ($LG_STRIP) { undef(@results); }
+	    push(@results, $_);
+	    return (@results);
 	}
-#		push(@results, $_);
+	push(@results, $_);
 	if (/$cmd/) {
 	    ($prompt) = /^(\S*)[\#>]/;
 #        		push(@results, "prompt = $prompt\n\n");
+	    if ($LG_STRIP) { undef(@results); }
 	    last;
 	}
     }
@@ -250,41 +272,67 @@ if (!defined($type) || !defined($router)) {
 
 # conversion of command "type" passed from lgform.cgi to the vendor's syntax.
 %ciscoCmd = (	
-		#acl => "sh access-list",
-		#aspath => "sh ip as-path-access-list",
-		#communitylist => "sh ip community-list",
-		damp => "sh ip bgp dampened-paths",
-		framerelay => "sh frame-relay pvc",
-		interface => "sh interface",
-		intbrief => "sh ip interface",
-		log => "sh logging",
-		mbgp => "sh ip mbgp",
-		mbgpsum => "sh ip mbgp summary",
-		regex => "sh ip bgp regex",
-		route => "sh ip route",
-		#routemap => "sh route-map",
+		#acl => "show access-list",
+		#aspath => "show ip as-path-access-list",
+		#communitylist => "show ip community-list",
+		damp => "show ip bgp dampened-paths",
+		framerelay => "show frame-relay pvc",
+		interface => "show interface",
+		intbrief => "show ip interface",
+		log => "show logging",
+		mbgp => "show ip mbgp",
+		mbgpsum => "show ip mbgp summary",
+		mneighbor => "show ip bgp neighbor",
+		neighbor => "show ip bgp neighbor",
+		regex => "show ip bgp regex",
+		route => "show ip route",
+		routemap => "show route-map",
 		ping => "ping",
-		prefix => "sh ip bgp",
-		prefixlist => "sh ip prefix-list",
-		summary => "sh ip bgp summary",
+		prefix => "show ip bgp",
+		prefixlist => "show ip prefix-list",
+		summary => "show ip bgp summary",
+		trace => "traceroute"
+	);
+%foundryCmd = (	
+		#acl => "show access-list",
+		#aspath => "show ip as-path-access-list",
+		#communitylist => "show ip community-list",
+		damp => "show ip bgp dampened-paths",
+		#framerelay => "show frame-relay pvc", # no frame relay
+		interface => "show interface",
+		log => "show log",
+		#mbgp => "show ip mbgp",
+		#mbgpsum => "show bgp summary",
+		#mneighbor => "show ip bgp neighbor",
+		neighbor => "show ip bgp neighbor",
+		#regex => "show ip bgp aspath-regex",
+		route => "show ip route",
+		routemap => "show route-map",
+		ping => "ping",
+		prefix => "show ip bgp",
+		prefixlist => "show ip prefix-list",
+		summary => "show ip bgp summary",
 		trace => "traceroute"
 	);
 %juniperCmd = (	
-		#acl => "sh access-list",
-		#aspath => "sh ip as-path-access-list",
-		#communitylist => "sh ip community-list",
+		#acl => "show access-list",
+		#aspath => "show ip as-path-access-list",
+		#communitylist => "show ip community-list",
 		damp => "show route damping suppressed terse table inet.0",
-		interface => "sh interface",
+		framerelay => "show frame-relay pvc",
+		interface => "show interface",
 		log => "show log messages",
-		mbgp => "sh route table inet.2 terse",
-		mbgpsum => "sh bgp summary",
-		#regex => "sh route table inet.0 aspath-regex",
-		route => "sh route table inet.0",
-		#routemap => "sh route-map",
+		mbgp => "show route table inet.2 terse",
+		mbgpsum => "show bgp summary",
+		mneighbor => "show bgp neighbor",
+		neighbor => "show bgp neighbor",
+		regex => "show route table inet.0 aspath-regex",
+		route => "show route forwarding-table destination",
+		routemap => "show policy",
 		ping => "ping rapid count 5",
-		prefix => "sh route table inet.0",
-		#prefixlist => "sh ip prefix-list",
-		summary => "sh bgp summary",
+		prefix => "show route table inet.0",
+		prefixlist => "show policy",
+		summary => "show bgp summary",
 		trace => "traceroute"
 	);
 %cmdDisp = (	
@@ -292,12 +340,16 @@ if (!defined($type) || !defined($router)) {
 		#aspath => "show ip as-path-access-list",
 		#communitylist => "show ip community-list",
 		damp => "show ip bgp dampened-paths",
+		framerelay => "show frame-relay pvc",
+		interface => "show interface",
 		log => "show logging",
 		mbgp => "show ip mbgp",
 		mbgpsum => "show ip mbgp summary",
+		mneighbor => "show ip mbgp neighbor",
+		neighbor => "show ip bgp neighbor",
 		regex => "show ip bgp regex",
 		route => "show ip route",
-		#routemap => "show route-map",
+		routemap => "show route-map",
 		ping => "ping",
 		prefix => "show ip bgp",
 		prefixlist => "show ip prefix-list",
@@ -306,9 +358,20 @@ if (!defined($type) || !defined($router)) {
 	);
 
 # not all cmds/queries are implemented for junipers
-if ($mfg =~ /juniper/ && ! defined($juniperCmd{$type})) {
-    $results[0] = "$cmdDisp{$type} not implemented for junipers.  sorry.\n";
-    &print_results;
+if ($mfg =~ /juniper/) {
+    if (! defined($juniperCmd{$type})) {
+	$results[0] = "$cmdDisp{$type} not implemented for junipers.  sorry.\n";
+	&print_results;
+    }
+    $cmd = $foundryCmd{$type};
+} elsif ($mfg =~ /foundry/) {
+    if(! defined($foundryCmd{$type})) {
+	$results[0] = "$cmdDisp{$type} not implemented for foundrys.  sorry.\n";
+	&print_results;
+    }
+    $cmd = $foundryCmd{$type};
+} else {
+    $cmd = $ciscoCmd{$type};
 }
 
 
@@ -324,6 +387,11 @@ if ($type eq "prefix" || $type eq "mbgp" || $type eq "route" ) {
 	$arg = $arg[0] . "/" . mask2len($arg[1]);
     }
 } elsif ($type eq "framerelay") {
+    if ($mfg =~ /juniper/) {
+	$results[0] = "Juniper does not have a show frame-relay pvc command.  ".
+		"Use show interface.\n";
+	&print_results;
+    }
     if ($arg[0] > 15 && $arg[0] < 1024) {
 	$arg = $arg[0];
     } else {
@@ -333,7 +401,7 @@ if ($type eq "prefix" || $type eq "mbgp" || $type eq "route" ) {
     if ($arg[1] =~ /[-\/0-9:.]+/) {
 	$arg = $arg[0] . " " . $arg[1];
     } else {
-	if ($arg[0] =~ /^b/i && $mfg =~ /cisco/i) {
+	if ($arg[0] !~ /^b[^ ]+[0-9]/i && $arg[0] =~ /^b/i && $mfg =~ /(cisco|foundry)/i) {
 	    $type = "intbrief";
 	    $arg = "brief";
 	} else {
@@ -341,15 +409,17 @@ if ($type eq "prefix" || $type eq "mbgp" || $type eq "route" ) {
 	}
     }
 } elsif ($type eq "log") {
-    $arg[0] =~ s/^\s*|//;
-    if ($arg[0] =~ /^\s*$/) {
+    if ($arg[0] =~ /^\s*\|?$/) {
 	shift(@arg);
     }
+    $arg[0] =~ s/^\s*\|?//;
     if ($arg[0] !~ /^\s*$/) {
 	if ($mfg =~ /cisco/i) {
 	    $arg = " | include " . join(' ', @arg);
 	} elsif ($mfg =~ /juniper/i) {
 	    $arg = " | match \"" . join(' ', @arg) . "\"";
+	} else {
+	    undef($arg);
 	}
     } else {
 	undef($arg);
@@ -385,9 +455,11 @@ if ($type eq "prefix" || $type eq "mbgp" || $type eq "route" ) {
     $arg = $arg[0];
 } elsif ($type eq "regex") {
     $arg = $arg[0];
-    if ($#arg > 1) {
-	for ($n = 1; $n <= $#arg - 1; $n++) { $arg .= " " . $arg[$n]; }
+    if ($#arg >= 1) {
+	for ($n = 1; $n <= $#arg; $n++) { $arg .= " " . $arg[$n]; }
     }
+    # remove leading/trailing whitespace
+    $arg =~ s/^\s*//; $arg =~ s/\s*$//;
     if ($arg !~ /^[0-9_ ^.*+?[\])\(-]*\$?$/ || $arg =~ /^\s*$/) {
 	$results[0] = "That argument ($arg[0]) is not valid.\n";
 	&print_results;
@@ -398,8 +470,86 @@ if ($type eq "prefix" || $type eq "mbgp" || $type eq "route" ) {
 	$results[0] = "Get real.  Such a query has potential to over-burden our router.\nLook that up on your own router.\n";
 	&print_results;
     }
-    # escape any ()
+    if ($mfg =~ /juniper/) {
+	$arg =~ s/_/ /g;
+	# pre-junos 4.4 do not allow anchors
+	if ($arg =~ /\^\$/) {
+	    $arg =~ "()";
+	} else {
+	    $arg =~ s/[\$^]/ /g;
+	}
+	$arg = "\"$arg\"";
+    }
+    # escape any ()s
     $arg =~ s/([\(\)])/\\$1/g;
+} elsif ($type eq "neighbor") {
+    if ($arg[0] !~ /^\d+\.\d+\.\d+\.\d+$/) {
+	if ($arg[0] !~ /([A-Za-z0-9-]*.)*[A-Za-z0-9-]*.(com|edu|net|org)/) {
+	    $results[0] = "That argument ($arg[0]) is not valid.\n";
+	    &print_results;
+	}
+    }
+    $arg = $arg[0];
+    if (defined($arg[1]) && $arg[1] =~ /^(a|ro|f|re)/) {
+	if ($mfg =~ /juniper/) {
+	    if ($arg[1] =~ /^a/) {
+		if (defined($LG_BGP_RT)) {
+		    $cmd = "show route table inet.0 all advertising-protocol ".
+			"bgp";
+		}
+	    } elsif ($arg[1] =~ /^f/) {
+		if (defined($LG_BGP_RT)) {
+		    $cmd = "show route damping table inet.0 all ".
+			"receive-protocol bgp";
+		}
+	    } elsif ($arg[1] =~ /^r/) {
+		if (defined($LG_BGP_RT)) {
+		    $cmd = "show route table inet.0 all receive-protocol bgp";
+		}
+	    }
+	} else {
+	    if ($arg[1] =~ /^a/) {
+		if (defined($LG_BGP_RT)) { $arg .= " advertised-routes"; }
+	    } elsif ($arg[1] =~ /^f/) {
+		$arg .= " flap-statistics";
+	    } elsif ($arg[1] =~ /^ro/) {
+		if (defined($LG_BGP_RT)) { $arg .= " routes"; }
+	    } elsif ($arg[1] =~ /^re/) {
+		if (defined($LG_BGP_RT)) { $arg .= " received-routes"; }
+	    }
+	}
+    }
+} elsif ($type eq "mneighbor") {
+    if ($arg[0] !~ /^\d+\.\d+\.\d+\.\d+$/) {
+	if ($arg[0] !~ /([A-Za-z0-9-]*.)*[A-Za-z0-9-]*.(com|edu|net|org)/) {
+	    $results[0] = "That argument ($arg[0]) is not valid.\n";
+	    &print_results;
+	}
+    }
+    $arg = $arg[0];
+    if (defined($arg[1]) && $arg[1] =~ /^(a|ro|f|re)/) {
+	if ($mfg =~ /juniper/) {
+	    if ($arg[1] =~ /^a/) {
+		$cmd .= " advertised-routes";
+	    } elsif ($arg[1] =~ /^f/) {
+		$cmd .= " flap-statistics";
+	    } elsif ($arg[1] =~ /^ro/) {
+		$cmd .= " routes";
+	    } elsif ($arg[1] =~ /^re/) {
+		$cmd .= " received-routes";
+	    }
+	} else {
+	    if ($arg[1] =~ /^a/) {
+		$arg .= " advertised-routes";
+	    } elsif ($arg[1] =~ /^f/) {
+		$arg .= " flap-statistics";
+	    } elsif ($arg[1] =~ /^ro/) {
+		$arg .= " routes";
+	    } elsif ($arg[1] =~ /^re/) {
+		$arg .= " received-routes";
+	    }
+	}
+    }
 } elsif ($type eq "damp" || $type eq "summary" || $type eq "mbgpsum") {
     undef($arg);
 }
@@ -433,17 +583,17 @@ if ($type eq "summary" || $type eq "mbgpsu" || $type eq "damp" || $type eq "log"
 	# else, execute command and save to a new cache file
 	open(CACHE,">$file") || die "couldnt create cache file $file" ; 
 
-	@results = &DoRsh($router, $mfg, $type, $arg);
+	@results = &DoRsh($router, $mfg, $cmd, $arg);
 
 	print CACHE "@results";
 	close CACHE ;
     } else {
-	@results = &DoRsh($router, $mfg, $type, $arg);
+	@results = &DoRsh($router, $mfg, $cmd, $arg);
     }
     &print_results ; 
 } # end dampened-paths/flap-statistics
 
-@results = &DoRsh($router, $mfg, $type, $arg);
+@results = &DoRsh($router, $mfg, $cmd, $arg);
 &print_results ;
 
 exit ; 
