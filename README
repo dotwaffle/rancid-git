@@ -34,14 +34,15 @@ tcl	- required by expect
 Quick Installation Guide (an example):
 
 1) mkdir <basedir>
-   All rancid crud will be under this directory.
+   All rancid crud will be under this directory.  we chose /home/rancid.
 
 2) mkdir <basedir>/bin
 
-3) Put the contents of rancid in <basedir>/bin.  modify the location of
-   perl and expect in each of clogin, par, rancid, and rename if necessary.
+3) Put the contents of rancid/bin in <basedir>/bin.  modify the location of
+   perl and expect in each of clogin, par, rancid, rancid-fe, jlogin,
+   jrancid and rename if necessary.
 
-4) Modify env.
+4) Modify <basedir>/bin/env.
 
 5) Put .cloginrc in your home directory.
 
@@ -80,13 +81,13 @@ Quick Installation Guide (an example):
     is either up or down.  Each router listed as "up" will have the
     configuration grabbed.
 
-12) Put run-me/do-diffs in cron to be called however ofter you want it to run
+12) Put run-me/do-diffs in cron to be called however often you want it to run
     for each group (run-me <GROUP>).  eg:
 
 	# run config differ hourly
-	1 * * * * $HOME/bin/do-diffs
+	1 * * * * <BASEDIR>/bin/do-diffs
 	# clean out hourly differ logs
-	50 23 * * * /usr/bin/find $BASEDIR/logs -mtime +2 -exec rm {} \;
+	50 23 * * * /usr/bin/find <BASEDIR>/logs -mtime +2 -exec rm {} \;
 
 13) Send me any bugs, suggestions or updates (rancid@shrubbery.net).
 

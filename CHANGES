@@ -1,0 +1,14 @@
+1.2
+	add more info/clarification to README for install.
+
+	rename .cloginrc.sample -> cloginrc.sample.
+
+	clogin patch (courtesy stephen stuart); does two things:
+
+	- adds a "-x" switch that takes lines from a file and does the same
+	thing as if you'd specified ;-separated commands with -c (newline
+	separates commands)
+
+	- does a subst on commands in run_commands so that expansion of
+	escapes is performed; e.g. you can say "copy rcp://blah slot0:\r" to
+	answer the question that comes after the copy command.
