@@ -18,6 +18,7 @@ erancid.in	Runs commands on ADC EZ-T3 muxes and processes the output.
 francid.in	Runs commands on foundry switches and processes the output.
 jrancid.in	Runs commands on juniper routers and processes the output.
 rrancid.in	Runs commands on redback routers and processes the output.
+xancid.in	Runs commands on extreme switches and processes the output.
 cat5rancid.in	Runs commands on cisco cat5 switches and processes the output.
 clogin.in	Expect script that logs into routers either interactively,
 		runs a set of commands, or runs another expect script.
@@ -123,8 +124,8 @@ Quick Installation Guide (an example):
 8) For each "group", modify the router.db file in the group directory.
    The file is of the form "router:mfg:state" where "router" is
    the name (we use FQDN) of the router, mfg is the manufacturer
-   from the set of (cisco|ezt3|foundry|juniper|redback|cat5), and "state"
-   is either up or down.  Each router listed as "up" will have the
+   from the set of (cisco|ezt3|extreme|foundry|juniper|redback|cat5), and
+   "state" is either up or down.  Each router listed as "up" will have the
    configuration grabbed.  Note: manufacturer cat5 is intended only for
    catalyst switches running catalyst (not IOS) code.
 
@@ -134,6 +135,7 @@ Quick Installation Guide (an example):
 	foundry-switch-router.domain.com:foundry:up
 	juniper-router.domain.com:juniper:up
 	redback-dsl-router.domain.com:redback:down
+	extreme-switch.domain.com:extreme:down
 
 9) For first-time users or new installations, run bin/do-diffs (with no
    arguments) and check the resulting log file(s) (in logs/*) for errors.

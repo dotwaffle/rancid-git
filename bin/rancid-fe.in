@@ -25,7 +25,9 @@ require 5;
 
 ($router, $vendor) = split('\:', $ARGV[0]);
 
-if ($vendor =~ /^cisco$/i) {
+if ($vendor =~ /^baynet$/i) {
+    exec('brancid', $router);
+} elsif ($vendor =~ /^cisco$/i) {
     exec('rancid', $router);
 } elsif ($vendor =~ /^cat5$/i) {
     exec('cat5rancid', $router);

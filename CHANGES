@@ -1,3 +1,6 @@
+2.2b6
+	baynetworks/nortel support from Mark Cooper.  thanks mark!
+
 2.2b5
 	fix regex error in clogin affecting catalysts
 

@@ -1,3 +1,8 @@
+- extreme (xrancid)
+	- collect show switch
+	- filter ssh host private key
+	- ??? separate module p/n and s/n or collect from sh ver instead of
+	  show slot?
 - rancid should filter pap pwds, as in:
 	 ppp pap sent-username AS3727 password 7 10581C17581043
 - need to make sure the following patch was applied to the lookingglass
