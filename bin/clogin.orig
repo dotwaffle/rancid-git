@@ -403,7 +403,7 @@ foreach router [lrange $argv $i end] {
         continue
       } 
       if { $do_enapasswd && !$autoenable && [llength $pswd] < 2 } {
-	send_user "Error - no enable password for $router in $password_file.\n"
+	send_user "Error - no enable password for $router in $password_file."
         continue
       }
      set passwd [lindex $pswd 0]
@@ -413,10 +413,10 @@ foreach router [lrange $argv $i end] {
     # Figure out username
     if {[info exists username]} {  
       # command line username
-      set ruser $username
+      set user $username
     } else {
-      set ruser [find user $router] 
-      if { "$ruser" == "" } { set ruser $default_user }
+      set user [find user $router] 
+      if { "$user" == "" } { set user $default_user }
     } 
 
     # Figure out username's password (if different from the vty password)
@@ -434,11 +434,11 @@ foreach router [lrange $argv $i end] {
       set enauser $enausername
     } else {
       set enauser [find enauser $router] 
-      if { "$enauser" == "" } { set enauser $ruser } 
+      if { "$enauser" == "" } { set enauser $user } 
     } 
-
+    
     # Login to the router
-    if {[login $router $ruser $userpswd $passwd $enapasswd $prompt]} {
+    if {[login $router $user $userpswd $passwd $enapasswd $prompt]} {
 	continue
     }
     if { $enable } { 
