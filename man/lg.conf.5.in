@@ -70,6 +70,14 @@ simply handed off to print().
 Example: $LG_IMAGE="<img src=/icons/rancid.gif hspace=0>\n <font size=+2>FOO</font>";
 .\"
 .TP
+.B LG_INFO
+Defines information in html format which, if defined, will be included at
+the bottom of the looking glass form page.  It may contain any html as it is
+simply handed off to print().
+.sp
+Example: $LG_INFO="For Support contact <a href=mailto:webmaster\@localhost>webmaster</a>";
+.\"
+.TP
 .B LG_LOG
 Defines the fully qualified path name for the log file or the
 .BR syslog (3)
@@ -87,7 +95,7 @@ Sets the location for the
 file in rancid's
 .BR router.db (5)
 format.  It lists the devices that should be available to the looking glass
-users.  Only those devices of supported types and with status 'up' are made
+users.  Only those devices of supported types and with state 'up' are made
 available.  If not defined and the default file does not exist, the looking
 glass will compile a list from the router.db files of all the groups present
 in rancid, that is a concatenation of $BASEDIR/*/router.db.
@@ -108,7 +116,7 @@ debugging clogin problems.
 .\"
 .TP
 .B PATH
-Is a colon separated list of directory pathnames in the the file system
+Is a colon separated list of directory pathnames in the file system
 where rancid's login scripts,
 .IR clogin (1)
 etc. )
@@ -133,7 +141,11 @@ results.
 Configuration file described here, where $BASEDIR is set at the time that
 the rancid package was configured.  In this case, $BASEDIR is
 .IR @prefix@ .
+.B lg.conf
+is located by the value of the environment variable LG_CONF, in the CWD
+(current working directory), or rancid install directory ($BASEDIR/util/lg).
 .El
 .SH SEE ALSO
 .BR cloginrc (5),
-.BR lg_intro (1)
+.BR lg_intro (1),
+.BR router.db (5)

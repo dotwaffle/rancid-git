@@ -287,18 +287,24 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
     # try each of the connection methods in $cmethod until one is successful
     set progs [llength $cmethod]
     foreach prog [lrange $cmethod 0 end] {
-	if ![string compare $prog "telnet"] {
-	    if [ catch {spawn telnet $router} reason ] {
+	if [string match "telnet*" $prog] {
+	    regexp {telnet(:([^[:space:]]+))*} $prog command suffix port
+	    if {"$port" == ""} {
+		set retval [ catch {spawn hpfilter telnet $router} reason ]
+	    } else {
+		set retval [ catch {spawn hpfilter telnet $router $port} reason ]
+	    }
+	    if { $retval } {
 		send_user "\nError: telnet failed: $reason\n"
 		exit 1
 	    }
 	} elseif ![string compare $prog "ssh"] {
-	    if [ catch {spawn ssh -c $cyphertype -x -l $user $router} reason ] {
+	    if [ catch {spawn hpfilter ssh -c $cyphertype -x -l $user $router} reason ] {
 		send_user "\nError: ssh failed: $reason\n"
 		exit 1
 	    }
 	} elseif ![string compare $prog "rsh"] {
-	    if [ catch {spawn rsh -l $user $router} reason ] {
+	    if [ catch {spawn hpfilter rsh -l $user $router} reason ] {
 		send_user "\nError: rsh failed: $reason\n"
 		exit 1
 	    }
@@ -364,7 +370,7 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 	    exp_continue }
 	-re "HOST IDENTIFICATION HAS CHANGED.* \(yes\/no\)\?"   {
 	    send "no\r"
-	    send_user "\nError: The host key for $router has changed.  update the known_hosts file accordingly.\n"
+	    send_user "\nError: The host key for $router has changed.  Update the SSH known_hosts file accordingly.\n"
 	    return 1 }
 	-re "$u_prompt"	{ send "$user\r"
 	    expect {
@@ -500,21 +506,31 @@ proc run_commands { prompt command } {
 						}
 		-re "^<-+ More -+>\[^\n\r]*"	{ send " "
 						  exp_continue }
+		-re "^-+ MORE -+\[^\n\r]*"	{ send " "
+						  exp_continue }
 		-re "\b+"			{ exp_continue }
 	}
     }
     log_user 1
     send "exit\r"
     expect {
-	"Do you want to log out" {
-						  send "y\r"
+	"Do you want to save current configuration"	{
+						  send "n\r"
 						  exp_continue
 						}
 	"Do you wish to save " {
 						  send "n\r"
 						  exp_continue
 						}
-	"\n"					{ exp_continue }
+	"Do you want to log out" 		{
+						  send "y\r"
+						  exp_continue
+						}
+	-re "\[\r\n]+"				{ exp_continue }
+	-re "^.+>"				{
+						  send "exit\r"
+						  exp_continue
+						}
 	timeout					{ return 0 }
 	eof					{ return 0 }
     }
@@ -632,15 +648,7 @@ foreach router [lrange $argv $i end] {
     send "\r"   
     expect {    
 	-re "\[\r\n]+"		{ exp_continue; }
-	-re "^(.+:)1 $prompt"	{ # stoopid extreme cmd-line numbers and
-				  # prompt based on state of config changes
-				  set junk $expect_out(1,string)
-				  regsub -all "^\\\* " $expect_out(1,string) {} junk
-				  set prompt ".? ?$junk\[0-9]+ $prompt";
-				  set platform "extreme"
-				}
 	-re "^.+$prompt"	{ set prompt $expect_out(0,string); }
-	-re "^.+> \\\(enable\\\)"	{ set prompt $expect_out(0,string); }
     }       
 
     if { $do_command } {
@@ -648,14 +656,8 @@ foreach router [lrange $argv $i end] {
 	    continue
 	}
     } elseif { $do_script } {
-	# If the prompt is (enable), then we are on a switch and the
-	# command is "set length 0"; otherwise its "term length 0".
-	if [ regexp -- ".*> .*enable" "$prompt" ] {
-	    send "set length 0\r"
-	    send "set logging session disable\r"
-	} else {
-	    send "term length 0\r"
-	}
+	# disable the pager
+	send "no page\r"
 	expect -re $prompt	{}
 	source $sfile
 	close

@@ -31,6 +31,8 @@ $clean_run = 0;
 $found_end = 0;
 $timeo = 90;			# blogin timeout in seconds
 
+my(%filter_pwds);		# password filtering mode
+
 # This routine is used to print out the router configuration
 sub ProcessHistory {
     my($new_hist_tag,$new_command,$command_string,@string)=(@_);
@@ -141,6 +143,7 @@ sub ShowConfig {
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	next if (/^Reading configuration information/);
 	next if (/^Can\'t find object or class named \"\-all\"\s*$/);
+	next if (/lock-address .*$/);
 	next if (/^\# *uptime +\d+\s*$/);
 	if (/community label /) {
 	    if (defined($ENV{'NOCOMMSTR'})) {
@@ -169,6 +172,7 @@ sub RunCommand {
 	# prompt may have changed
 	if (/\>/) {
 	    $prompt = ($_ =~ /^([^>]+>)/)[0];
+	    $prompt =~ s/([][])/\\$1/g;
 	    last;
 	}
     }
@@ -216,7 +220,16 @@ if ($file) {
     }
 }
 
-ProcessHistory("","","","!RANCID-CONTENT-TYPE: Bay Networks\n!\n");
+# determine password filtering mode
+if ($ENV{"FILTER_PWDS"} =~ /no/i) {
+	$filter_pwds = 0;  
+} elsif ($ENV{"FILTER_PWDS"} =~ /all/i) {
+	$filter_pwds = 2;
+} else {
+	$filter_pwds = 1;
+}
+
+ProcessHistory("","","","!RANCID-CONTENT-TYPE: bay\n!\n");
 TOP: while(<INPUT>) {
     tr/\015//d;
     if ( (/\>\s?logout$/) || $found_end ) {
@@ -231,10 +244,13 @@ TOP: while(<INPUT>) {
     }
     while (/>\s*($cmds_regexp)\s*$/) {
 	$cmd = $1;
-	if (!defined($prompt)) {$prompt = ($_ =~ /^([^>]+>)/)[0]; }
+	if (!defined($prompt)) {
+	    $prompt = ($_ =~ /^([^>]+>)/)[0];
+	    $prompt =~ s/([][])/\\$1/g;
+	}
 	print STDERR ("HIT COMMAND:$_") if ($debug);
 	if (! defined($commands{$cmd})) {
-	    print STDERR "found unexpected command - \"$cmd\"\n";
+	    print STDERR "$host: found unexpected command - \"$cmd\"\n";
 	    $clean_run = 0;
 	    last TOP;
 	}
@@ -260,12 +276,12 @@ if (defined($ENV{NOPIPE})) {
 # check for completeness
 if (scalar(%commands) || !$clean_run || !$found_end) {
     if (scalar(%commands)) {
-	printf(STDOUT "missed cmd(s): %s\n", join(',', keys(%commands)));
-	printf(STDERR "missed cmd(s): %s\n", join(',', keys(%commands))) if ($debug);
+	printf(STDOUT "$host: missed cmd(s): %s\n", join(',', keys(%commands)));
+	printf(STDERR "$host: missed cmd(s): %s\n", join(',', keys(%commands))) if ($debug);
     }
     if (!$clean_run || !$found_end) {
-	print STDOUT "End of run not found\n";
-	print STDERR "End of run not found\n" if ($debug);
+	print STDOUT "$host: End of run not found\n";
+	print STDERR "$host: End of run not found\n" if ($debug);
 	system("/usr/bin/tail -1 $host.new");
     }
     unlink "$host.new" if (! $debug);

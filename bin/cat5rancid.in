@@ -30,6 +30,7 @@ $clean_run = 0;
 $found_end = 0;
 $timeo = 90;		# clogin timeout in seconds
 
+my(%filter_pwds);	# password filtering mode
 my(%modules);		# module info (part from sh ver, part from sh module)
 
 # This routine is used to print out the router configuration
@@ -700,7 +701,7 @@ OUTER:while (<INPUT>) {
 		tr/\015//d;
 		last if (/^\s*$/);
 		last OUTER if (/^$prompt/);
-		if (/^(\d+)\s+(\S+\s+)?\d+\s+(.*)\s+\S+\s+(\S+)\s+\S+\s*$/) {
+		if (/^(\d+)\s+(.+\s+)?\d+\s+(.*)\s+\S+\s+(\S+)\s+\S+\s*$/) {
 		    $modules{$1}->{serial} = $4;
 		    $modules{$1}->{type} = $3;
 		    #$modules{$1}->{type} =~ s/\s{2,}.*$//;
@@ -765,40 +766,6 @@ OUTER:while (<INPUT>) {
     }
 }   
 
-# This routine parses "show c7200" for the 7200
-# This will create arrarys for hw info.
-sub ShowC7200 {
-    # Skip if this is not a 7200.
-    print STDERR "    In ShowC7200: $_" if ($debug);
-
-    while (<INPUT>) {
-	tr/\015//d;
-	last if (/^$prompt/);
-	next if (/^(\s*|\s*$cmd\s*)$/);
-	return(1) if ($type !~ /^72/);
-	/^$/ && next;
-	if (/C7200 Midplane EEPROM:/) {
-	    $_ = <INPUT>;
-	    /revision\s+(\S+).*revision\s+(\S+)/;
-	    ProcessHistory("SLOT","","","!Slot Midplane: hvers $1 rev $2\n");
-	    $_ = <INPUT>;
-	    /number\s+(\S+)\s+Part number\s+(\S+)/;
-	    ProcessHistory("SLOT","","","!Slot Midplane: part $2, serial $1\n!\n");
-	    next;
-	}
-	if (/C720\d(VXR)? CPU EEPROM:/) {
-	    $_ = <INPUT>;
-	    /revision\s+(\S+).*revision\s+(\S+)/ &&
-		ProcessHistory("SLOT","","","!Slot CPU: hvers $1 rev $2\n");
-	    $_ = <INPUT>;
-	    /number\s+(\S+)\s+Part number\s+(\S+)/ &&
-		ProcessHistory("SLOT","","","!Slot CPU: part $2, serial $1\n!\n");
-	    next;
-	}
-    }
-    return(0);
-}
-
 # This routine processes a "show port ifindex"
 sub ShowPortIfindex {
     print STDERR "    In ShowPortIfindex: $_" if ($debug);
@@ -829,7 +796,7 @@ sub WriteTerm {
 	# skip the crap
 	next if (/^This command shows non-default configurations only./i);
 	next if (/^Use 'write terminal all' to show both default and non/i);
-	if (/^(\.\.+$|##+$|Building configuration...)/i) {
+	if (/^(\.\.+$|##+$|(Building|Current) configuration)/i) {
 	    while (<INPUT>) {
 		tr/\015//d;
 		next if (/^Current configuration:/i);
@@ -846,6 +813,7 @@ sub WriteTerm {
 	# some versions have other crap mixed in with the bits in the
 	# block above
 	/^! (Last configuration|NVRAM config last)/ && next;
+	/^#Time: / && next;
 
 	# Dog gone Cool matches to process the rest of the config
 	/^#time: /              && next; # kill time:
@@ -853,22 +821,46 @@ sub WriteTerm {
 	/^ntp clock-period /    && next; # kill ntp clock-period
 	/^ length /		&& next; # kill length on serial lines
 	/^ width /		&& next; # kill width on serial lines
-	/^enable password / &&
-	    ProcessHistory("ENABLE","","","!enable password <removed>\n") &&
+	if (/^enable password / && $filter_pwds >= 1) {
+	    ProcessHistory("ENABLE","","","! $1 <removed>\n");
 	    next;
-	/^(username .*) password /&&
-	    ProcessHistory("USER","","","!$1 password <removed>\n") && next;
-	/^\s*password / &&
-	    ProcessHistory("LINE-PASS","","","! password <removed>\n") && next;
-	/^\s*neighbor (\S*) password / &&
-	    ProcessHistory("","","","! neighbor $1 password <removed>\n") &&
+	}
+	if (/^set enablepass / && $filter_pwds >= 2) {
+	    ProcessHistory("ENABLE","","","! $1 <removed>\n");
 	    next;
-	/^(ip ftp password) / &&
-	    ProcessHistory("","","","!$1 <removed>\n") && next;
-	/^( ip ospf authentication-key) / &&
-	    ProcessHistory("","","","!$1 <removed>\n") && next;
-	/^( ip ospf message-digest-key \d+ md5) / &&
-	    ProcessHistory("","","","!$1 <removed>\n") && next;
+	}
+	if (/^(username .*) password /) {
+	    if (/^(username .*) password / && $filter_pwds >= 1) {
+		ProcessHistory("USER","","","! $1 password <removed>\n");
+	    } else {
+		ProcessHistory("USER","","","$_\n");
+	    }
+	    next;
+	}
+	if (/^set password / && $filter_pwds >= 2) {
+	    ProcessHistory("","","","! set password <removed>\n");
+	    next;
+	}
+	if (/^(\s*)password / && $filter_pwds >= 1) {
+	    ProcessHistory("LINE-PASS","","","!$1password <removed>\n");
+	    next;
+	}
+	if (/^\s*neighbor (\S*) password / && $filter_pwds >= 1) {
+	    ProcessHistory("","","","! neighbor $1 password <removed>\n");
+	    next;
+	}
+	if (/^(ip ftp password) / && $filter_pwds >= 1) {
+	    ProcessHistory("","","","!$1 <removed>\n");
+	    next;
+	}
+	if (/^( ip ospf authentication-key) / && $filter_pwds >= 1) {
+	    ProcessHistory("","","","!$1 <removed>\n");
+	    next;
+	}
+	if (/^( ip ospf message-digest-key \d+ md5) / && $filter_pwds >= 1) {
+	    ProcessHistory("","","","!$1 <removed>\n");
+	    next;
+	}
 	/fair-queue individual-limit/ && next;
 	# sort ip explicit-paths.
 	if (/^ip explicit-path name (\S+)/) {
@@ -956,8 +948,10 @@ sub WriteTerm {
 	# order alias statements
 	/^alias / && ProcessHistory("ALIAS","keysort","$_","$_") && next;
 	# delete ntp auth password
-	/^(ntp authentication-key \d+ md5) / &&
-	    ProcessHistory("","","","!$1 <removed>\n") && next;
+	if (/^(ntp authentication-key \d+ md5) / && $filter_pwds >= 2) {
+	    ProcessHistory("","","","!$1 <removed>\n");
+	    next;
+	}
 	# order ntp peers/servers
 	if (/^ntp (server|peer) (\d+)\.(\d+)\.(\d+)\.(\d+)/) {
 	    $sortkey = sprintf("$1 %03d%03d%03d%03d",$2,$3,$4,$5);
@@ -997,6 +991,8 @@ sub DoNothing {print STDOUT;}
 	'dir bootflash:'	=> "DirSlotN",
 	'dir slot0:'		=> "DirSlotN",
 	'dir slot1:'		=> "DirSlotN",
+	'dir sup-bootflash:'	=> "DirSlotN",
+	'dir sup-microcode:'	=> "DirSlotN",
 	'show module'		=> "ShowModule",
 	'show port ifindex'	=> "ShowPortIfindex",
 	'write term'		=> "WriteTerm"
@@ -1010,6 +1006,8 @@ sub DoNothing {print STDOUT;}
 	"dir bootflash:",
 	"dir slot0:",
 	"dir slot1:",
+	"dir sup-bootflash:",
+	"dir sup-microcode:",
 	"show module",
 	"show port ifindex",
 	"write term"
@@ -1037,7 +1035,16 @@ if ($file) {
     }
 }
 
-ProcessHistory("","","","!RANCID-CONTENT-TYPE: cat5\n!\n");
+# determine password filtering mode
+if ($ENV{"FILTER_PWDS"} =~ /no/i) {
+	$filter_pwds = 0;
+} elsif ($ENV{"FILTER_PWDS"} =~ /all/i) {
+	$filter_pwds = 2;
+} else {
+	$filter_pwds = 1;
+}
+
+ProcessHistory("","","","!RANCID-CONTENT-TYPE: cisco-cat\n!\n");
 ProcessHistory("COMMENTS","keysort","B0","!\n");
 ProcessHistory("COMMENTS","keysort","F0","!\n");
 ProcessHistory("COMMENTS","keysort","G0","!\n");
@@ -1058,7 +1065,7 @@ TOP: while(<INPUT>) {
 	if (!defined($prompt)) {$prompt = ($_ =~ /^([^>]+>)/)[0]; }
 	print STDERR ("HIT COMMAND:$_") if ($debug);
 	if (! defined($commands{$cmd})) {
-	    print STDERR "found unexpected command - \"$cmd\"\n";
+	    print STDERR "$host: found unexpected command - \"$cmd\"\n";
 	    $clean_run = 0;
 	    last TOP;
 	}
@@ -1084,12 +1091,12 @@ if (defined($ENV{NOPIPE})) {
 # check for completeness
 if (scalar(%commands) || !$clean_run || !$found_end) {
     if (scalar(%commands)) {
-	printf(STDOUT "missed cmd(s): %s\n", join(',', keys(%commands)));
-	printf(STDERR "missed cmd(s): %s\n", join(',', keys(%commands))) if ($debug);
+	printf(STDOUT "$host: missed cmd(s): %s\n", join(',', keys(%commands)));
+	printf(STDERR "$host: missed cmd(s): %s\n", join(',', keys(%commands))) if ($debug);
     }
     if (!$clean_run || !$found_end) {
-	print STDOUT "End of run not found\n";
-	print STDERR "End of run not found\n" if ($debug);
+	print STDOUT "$host: End of run not found\n";
+	print STDERR "$host: End of run not found\n" if ($debug);
 	system("/usr/bin/tail -1 $host.new");
     }
     unlink "$host.new" if (! $debug);

@@ -14,7 +14,7 @@ One device is listed per-line, where the syntax is:
 .PP
 .in +1i
 .nf
-<device_name>:<device_type>:<state>[:][comments]
+<device_name>:<device_type>:<state>[:comments]
 .fi
 .in -1i
 .PP
@@ -55,26 +55,34 @@ An Alteon WebOS switches.
 A Bay Networks router.
 .TP
 .B cat5
-A cisco catalyst switch (ie: running the catalyst OS, not IOS).
+A cisco catalyst series 5000 and 4000 switches (ie: running the catalyst OS,
+not IOS).
 .TP
 .B cisco
 A cisco router or switch such as the 3500XL or 6000 running IOS (or IOS-like)
 OS.
 .TP
+.B extreme
+An Extreme switch.
+.TP
 .B ezt3
 An ADC-Kentrox EZ-T3 mux.
 .TP
-.B extreme
-A Extreme switch.
-.TP
 .B foundry
-A Foundry router, switch, or router-switch.
+A Foundry router, switch, or router-switch.  This includes HP
+Procurve switches that are OEMs of Foundry products, such as the
+HP9304M.
 .TP
 .B hp
-A HP switch such as the 2524 or 4108 procurve switches.
+A HP Procurve switch such as the 2524 or 4108 procurve switches.  Also see the
+.B foundry
+type.
 .TP
 .B juniper
 A Juniper router.
+.TP
+.B mrtd
+A host running the (merit) MRTd daemon.
 .TP
 .ID 15n
 .B redback
@@ -89,24 +97,21 @@ collected.
 It is highly recommended that comments are made for 
 any router not listed as up, so as to indicate the
 reason a router is not to be polled, e.g.:
-.TP
-.PP
+.sp
 dial1.paris:cisco:up:
+.br
 core1.paris:cisco:down:in testing until 5/5/2001.
+.br
 core2.paris:cisco:ticketed:Ticket 6054234, 5/3/2001
+.br
 border1.paris:juniper:up:
-.TP
-.PP
-Please see the script "downreport" in util/ for a
-daily report of routers in router.db that aren't
-marked "up".
+.sp
+The script "downreport" in util/ can be used to produce a
+report of routers in router.db that are not marked "up".
 .PP
 .TP
 .B [comments]
-.TP
-.PP
-Freeform string to describe the current state of
-the router.
+Freeform string to describe the current state of the router.
 .PP
 A ``#'' at the begining of a line is a comment; the entire line is
 ignored.

@@ -1,6 +1,6 @@
-# Makefile.in generated automatically by automake 1.4 from Makefile.am
+# Makefile.in generated automatically by automake 1.4-p5 from Makefile.am
 
-# Copyright (C) 1994, 1995-8, 1999 Free Software Foundation, Inc.
+# Copyright (C) 1994, 1995-8, 1999, 2001 Free Software Foundation, Inc.
 # This Makefile.in is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -58,7 +58,9 @@ NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
 AUTOMAKE = @AUTOMAKE@
+CC = @CC@
 COMM = @COMM@
+CPP = @CPP@
 CVS = @CVS@
 DIFF = @DIFF@
 DIFF_CMD = @DIFF_CMD@
@@ -90,19 +92,21 @@ SSH = @SSH@
 TAR = @TAR@
 TELNET = @TELNET@
 TOUCH = @TOUCH@
+U = @U@
 VERSION = @VERSION@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
 
-EXTRA_DIST = CHANGES COPYING FAQ README Todo cloginrc.sample configure 	install-sh 	mkinstalldirs Makefile.in Todo
+EXTRA_DIST = BUGS CHANGES COPYING FAQ README Todo cloginrc.sample configure 	install-sh 	mkinstalldirs Makefile.in Todo
 
 #DIST_COMMON = 
 
 # '.' is here (and at the beginnging of the macro) so that distclean-recursive
 # will run make distclean in . after the other dirs (preserving Makefile)
-SUBDIRS = . bin man util
+SUBDIRS = . include bin man util
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
+CONFIG_HEADER = ./include/config.h
 CONFIG_CLEAN_FILES = 
 DIST_COMMON =  README COPYING Makefile.am Makefile.in acinclude.m4 \
 aclocal.m4 configure configure.in install-sh missing mkinstalldirs
@@ -164,7 +168,7 @@ maintainer-clean-recursive:
 	dot_seen=no; \
 	rev=''; list='$(SUBDIRS)'; for subdir in $$list; do \
 	  rev="$$subdir $$rev"; \
-	  test "$$subdir" = "." && dot_seen=yes; \
+	  test "$$subdir" != "." || dot_seen=yes; \
 	done; \
 	test "$$dot_seen" = "no" && rev=". $$rev"; \
 	target=`echo $@ | sed s/-recursive//`; \
@@ -250,7 +254,7 @@ distdir: $(DISTFILES)
 	@for file in $(DISTFILES); do \
 	  d=$(srcdir); \
 	  if test -d $$d/$$file; then \
-	    cp -pr $$/$$file $(distdir)/$$file; \
+	    cp -pr $$d/$$file $(distdir)/$$file; \
 	  else \
 	    test -f $(distdir)/$$file \
 	    || ln $$d/$$file $(distdir)/$$file 2> /dev/null \
@@ -343,8 +347,11 @@ mostlyclean distclean maintainer-clean
 
 all:
 
+# install-exec-local:
+# 	$(mkinstalldirs) $(prefix) $(prefix)/bin $(prefix)/man $(prefix)/util $(prefix)/util/lg
+
 install-exec-local:
-	$(mkinstalldirs) $(prefix) $(prefix)/bin $(prefix)/man $(prefix)/util $(prefix)/util/lg
+	$(mkinstalldirs) $(prefix)/util $(prefix)/util/lg
 
 install:
 	for file in CHANGES README cloginrc.sample ; do \

@@ -7,9 +7,11 @@
 .B .cloginrc
 contains configuration information for
 .BR alogin (1),
+.BR blogin (1),
 .BR clogin (1),
 .BR elogin (1),
 .BR flogin (1),
+.BR hlogin (1),
 and
 .BR jlogin (1),
 such as usernames, passwords, ssh encryption type, etc., and is read at
@@ -23,7 +25,7 @@ Each line containing a directive is of the form:
 .PP
 .in +1i
 .nf
-add <directive> <hostname regex> {<value>} [{<value>} ...]
+add <directive> <hostname glob> {<value>} [{<value>} ...]
 .sp
 or
 .sp
@@ -34,7 +36,7 @@ include {<file>}
 As
 .B .cloginrc
 is searched for a directive for a hostname, it is always the first instance
-of a directive, whose hostname regular expression matches the hostname, that
+of a directive, whose hostname glob expression matches the hostname, that
 is used.  For example; looking up the password for hostname foo in a
 .B .cloginrc
 file containing
@@ -70,7 +72,7 @@ The accepted directives are (alphabetically):
 .PP
 .\"
 .TP
-.B add autoenable <router name regexp> {[01]}
+.B add autoenable <router name glob> {[01]}
 When using locally defined usernames or AAA, it is possible to have a login
 which is automatically enabled.  This is, that user has enable privileges
 without the need to execute the enable command.  The router's prompt is
@@ -87,7 +89,7 @@ should execute the enable command to gain enable privileges, unless
 negated by the noenable directive or \-noenable command\-line option.
 .\"
 .TP
-.B add cyphertype <router name regexp> {<ssh encryption type>}
+.B add cyphertype <router name glob> {<ssh encryption type>}
 cyphertype defines which encryption algorithm is used with ssh.  A device
 may not support the type ssh uses by default.  See
 .BR ssh (1)'s\c
@@ -96,7 +98,7 @@ may not support the type ssh uses by default.  See
 Default: {3des}
 .\"
 .TP
-.B add enableprompt <router name regexp> {"<enable prompt>"}
+.B add enableprompt <router name glob> {"<enable prompt>"}
 When using AAA with a Cisco router or switch, it is possible to redefine the
 prompt the device presents to the user for the enable password.  enableprompt
 may be used to adjust the prompt that
@@ -109,35 +111,47 @@ Example: add enableprompt rc*.example.net {"\\[Ee]nter the enable password:"}
 Default: "\\[Pp]assword:"
 .\"
 .TP
-.B add enauser <router name regexp> {<username>}
+.B add enauser <router name glob> {<username>}
 This is only needed if a device prompts for a username when gaining
 enable privileges and where this username is different from that defined
 by or the default of the user directive.
 .\"
 .TP
-.B add identity <router name regexp> {<ssh identity file path>}
+.B add identity <router name glob> {<ssh identity file path>}
 May be used to specify an alternate identity file for use with ssh(1).
 See ssh's \-i option for details.
 .sp
 Default: your default identity file.  see ssh(1).
 .\"
 .TP
-.B add method <router name regexp> {ssh} [{...}]
+.B add method <router name glob> {ssh} [{...}]
 Defines, in order, the connection methods to use for a device from the
-set {ssh, telnet, rsh}.
+set {ssh, telnet, rsh}.  Method telnet may have a suffix, indicating an
+alternate TCP port, of the form ":port".
 .sp
-Example: add method * {ssh} {telnet} {rsh}
+Note: Different versions of telnet treat the specification of a
+port differently.  In particular, BSD derived telnets do not do
+option negotiation when a port is given.  Some devices, Extreme
+switches for example, have undesirable telnet default options such
+as linemode.  In the BSD case, to enable option negotiation when
+specifying a port the method should be "{telnet:-23}" or you should
+add "mode character" to .telnetrc.  See
+.BR telnet (1)
+for more information on telnet command-line syntax, telnet options,
+and .telnetrc.
+.sp
+Example: add method * {ssh} {telnet:3000} {rsh}
 .sp
 Which would cause
 .IR clogin
-to first attempt an ssh connection to the device and if that were to
-fail with connection refused, a telnet connection would be tried, and
-then rsh.
+to first attempt an ssh connection to the device and if that were
+to fail with connection refused, a telnet connection to port 3000
+would be tried, and then a rsh connection.
 .sp
 Default: {telnet} {ssh}
 .\"
 .TP
-.B add noenable <router name regexp>
+.B add noenable <router name glob>
 .IR clogin
 will not try to gain enable privileges when noenable is matched for a
 device.  This is equivalent to
@@ -146,7 +160,7 @@ device.  This is equivalent to
 .BR jlogin (1).
 .\"
 .TP
-.B add passprompt <router name regexp> {"<password prompt>"}
+.B add passprompt <router name glob> {"<password prompt>"}
 When using AAA with a Cisco router or switch, it is possible to redefine the
 prompt the device presents to the user for the password.  passprompt may be
 used to adjust the prompt that
@@ -159,14 +173,14 @@ Example: add passprompt rc*.example.net {"\\[Ee]nter the password:"}
 Default: "(\\[Pp]assword|passwd):"
 .\"
 .TP
-.B add password <router name regexp> {<vty passwd>} [{<enable passwd>}]
+.B add password <router name glob> {<vty passwd>} [{<enable passwd>}]
 Specifies a vty password, that which is prompted for upon the connection
 to the router.  The last argument is the enable password and need not be
 specified if the device also has a matching noenable or autoenable
 directive or the corresponding command-line options are used.
 .\"
 .\" .TP
-.\" .B add rc <router name regexp> {<cmd;cmd>}
+.\" .B add rc <router name glob> {<cmd;cmd>}
 .\" rc is used to specifies a command that will be run by
 .\" .IR clogin
 .\" immediately after logging into the device.  Multiple commands may be
@@ -177,7 +191,7 @@ directive or the corresponding command-line options are used.
 .\" Example: add rc *.domain.net {terminal monitor;show version}
 .\"
 .TP
-.B add user <router name regexp> {<username>}
+.B add user <router name glob> {<username>}
 Specifies a username
 .IR clogin
 should use if or when prompted for one.
@@ -185,12 +199,12 @@ should use if or when prompted for one.
 Default: $USER, ie: your Unix username.
 .\"
 .TP
-.B add userpassword <router name regexp> {<user password>}
+.B add userpassword <router name glob> {<user password>}
 Specifies a password to be associated with a user, if different from that
 defined with the password directive.
 .\"
 .TP
-.B add userprompt <router name regexp> {"<username prompt>"}
+.B add userprompt <router name glob> {"<username prompt>"}
 When using AAA with a Cisco router or switch, it is possible to redefine the
 prompt the device presents to the user for the username.  userprompt may be
 used to adjust the prompt that
@@ -229,4 +243,5 @@ Example: include {.cloginrc.group}
 is interpreted directly by Tcl, so its syntax follows that of Tcl.  Errors
 may produce quite unexpected results.
 .SH "SEE ALSO"
-.BR clogin (1)
+.BR clogin (1),
+.BR glob (3)

@@ -1,3 +1,69 @@
+2.2
+	rancid: filter vpdn passwords on PIX - from eric greenwood
+
+	*rancid: handle variable amounts of spaces in front of
+	' password' correctly.
+
+	rancid: remove key from "crypto isakmp key".
+
+	*login: cleanup login() to be more generic and handle openssh password
+	reprompting
+
+	clogin: fix clogin -x for config mode by adjusting the prompt regex
+
+	lg.conf: add LG_INFO to append local information to the main form
+
+	{cat5}rancid: add dir of sup-{bootflash,microcode} for 6500
+
+	*rancid: print $host before "missed cmds", "unexpected command",
+	and "End of run" messages.
+
+	cat5 module type match failed when user module name contained spaces
+
+	add FILTER_PWDS switch to env(5)
+
+	add merit MRTd support
+
+	add -r <device> option to do-diffs and control_rancid
+
+	brancid: handle []'s in bay prompts and drop lock-address from config
+	- from mark cooper
+
+	extreme: strip password if config|configure.  Strip ^M
+	right after ssh key.
+
+	Look for BOOTLDR: on ciscos.
+
+	add par.1 manpage
+
+	allow a TCP port suffix to telnet in .cloginrc - from Alex Bochannek
+
+	Fixed RANCID-CONTENT-TYPE to be more consistant.  Changes are
+		brancid		bay
+		cat5rancid	cisco-cat
+		erancid		adc-ezt3
+
+	jlogin should not look for username@router in .cloginrc
+
+	filter foundry ssh private key
+
+	filter '#Time" from catalyst 4 write term
+
+	display platform specific command in lookingglass results - patch
+	from Janos Mohacsi
+
+	add support for HP procurve switches, in particular 2524M and 4108gl.
+	thanks to hp for the loaners.
+
+	filter encrypted passwords on alteon as the change for each display
+
+	More support for Redbacks.
+
+	rancid now looks for "[kK] bytes" and "slot|disk".
+
+	clogin now looks for "login:" as well as "Login:" and
+	escapes "[]" in $prompt.
+
 2.2b8
 	add PAR_COUNT variable to bin/env for adjusting the number of
 	simultaneous collections.  see bin/env (or bin/env.new for those with

@@ -17,14 +17,15 @@ install: all
 	cd lg; $(MAKE) -e install
 
 clean:
-	@if [ -f util/Makefile ] ; then \
+	@if [ -f lg/Makefile ] ; then \
 	    cd lg; $(MAKE) -e clean; \
 	fi
-	rm -f Makefile $(UTIL_PROGS)
 
 distclean: clean
-	cd lg; $(MAKE) -e distclean;
-	rm -f config.log config.status
+	@if [ -f lg/Makefile ] ; then \
+	    cd lg; $(MAKE) -e distclean; \
+	fi
+	rm -f Makefile $(UTIL_PROGS) config.log config.status
 
 distdir:
 	for file in Makefile.in configure.in *README* *.exp; do \

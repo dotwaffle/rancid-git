@@ -254,8 +254,14 @@ proc login { router user passwd cmethod cyphertype identfile} {
     # try each of the connection methods in $cmethod until one is successful
     set progs [llength $cmethod]
     foreach prog [lrange $cmethod 0 end] {
-	if ![string compare $prog "telnet"] {
-	    if [ catch {spawn telnet $router} reason ] {
+	if [string match "telnet*" $prog] {
+	    regexp {telnet(:([^[:space:]]+))*} $prog command suffix port
+	    if {"$port" == ""} {
+		set retval [ catch {spawn telnet $router} reason ]
+	    } else {
+		set retval [ catch {spawn telnet $router $port} reason ]
+	    }
+	    if { $retval } {
 		send_user "\nError: telnet failed: $reason\n"
 		exit 1
 	    }
@@ -342,26 +348,18 @@ proc login { router user passwd cmethod cyphertype identfile} {
 		exp_continue }
 	    -re "HOST IDENTIFICATION HAS CHANGED.* \(yes\/no\)\?"	{
 		send "no\r"
-		send_user "\nError: The host key for $router has changed.  update the known_hosts file accordingly.\n"
+		send_user "\nError: The host key for $router has changed.  Update the SSH known_hosts file accordingly.\n"
 		return 1 }
-	    -re "(Username|\[\r\n]login):"	{ send "$user\r"
-		expect {
-		    eof             	{ send_user "\nError: Couldn't login\n";
-					  wait; return 1 }
-		    -re "\[Pp]assword:"	{ sleep 1; send "$passwd\r" }
-		    -re "$prompt"	{ break; }
-		}
-		exp_continue
-	    }
-	    "\[Pp]assword:"	{ sleep 1; send "$passwd\r"
-		expect {
-		eof             { send_user "\nError: Couldn't login\n"; wait; return 1 }
-		-re "$prompt"   { break; }
-	    }
-	    exp_continue
-	}
-	-re "$prompt"	{ break; }
-	denied		{ send_user "\nError: Check your passwd for $router\n"
+	    -re "(Username|\[\r\n]login):"	{
+						  send "$user\r"
+						  exp_continue
+	    					}
+	    "\[Pp]assword:"			{
+						  sleep 1; send "$passwd\r"
+						  exp_continue
+						}
+	    -re "$prompt"		{ break; }
+	    denied	{ send_user "\nError: Check your password for $router\n"
 	                  if { $do_command || $do_script } {
 			      send "quit"
 			      wait
@@ -370,9 +368,8 @@ proc login { router user passwd cmethod cyphertype identfile} {
 			      return 1
 			  }
 	                }
-	"% Bad passwords" {send_user "\nError: Check your passwd for $router\n"; return 1 }
+	}
     }
-  }
 
     # we are logged in, now figure out the full prompt
     send "\r"
@@ -452,17 +449,13 @@ foreach router [lrange $argv $i end] {
       # command line passwd
       set passwd $userpasswd
     } else {
-      set userpswd [lindex [find userpassword $loginname@$router] 0]
-      if { "$userpswd" == "" } {
-        set userpswd [lindex [find userpassword $router] 0]
-      }
-      if { "$userpswd" == "" } {
-        set passwd [lindex [find password $loginname@$router] 0]
+      set passwd [lindex [find userpassword $router] 0]
+      if { "$passwd" == "" } {
+        set passwd [lindex [find password $router] 0]
         if { "$passwd" == "" } {
-          set passwd [lindex [find password $router] 0]
+	  send_user "Error: no password for $router in $password_file.\n"
+	  continue
         }
-      } else {
-        set passwd $userpswd
       }
     }
 

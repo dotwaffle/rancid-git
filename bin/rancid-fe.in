@@ -25,27 +25,21 @@ require 5;
 
 ($router, $vendor) = split('\:', $ARGV[0]);
 
-if ($vendor =~ /^baynet$/i) {
-    exec('brancid', $router);
-} elsif ($vendor =~ /^cisco$/i) {
-    exec('rancid', $router);
-} elsif ($vendor =~ /^cat5$/i) {
-    exec('cat5rancid', $router);
-} elsif ($vendor =~ /^ezt3$/i) {
-    exec('erancid', $router);
-} elsif ($vendor =~ /^hp$/i) {
-    exec('hrancid', $router);
-} elsif ($vendor =~ /^juniper$/i) {
-    exec('jrancid', $router);
-} elsif ($vendor =~ /^foundry$/i) {
-    exec('francid', $router);
-} elsif ($vendor =~ /^redback$/i) {
-    exec('rrancid', $router);
-} elsif ($vendor =~ /^alteon$/i) {
-    exec('arancid', $router);
-} elsif ($vendor =~ /^extreme$/i) {
-    exec('xrancid', $router);
+   if ($vendor =~ /^alteon$/i)	{ exec('arancid', $router); }
+elsif ($vendor =~ /^baynet$/i)	{ exec('brancid', $router); }
+elsif ($vendor =~ /^cat5$/i)	{ exec('cat5rancid', $router); }
+elsif ($vendor =~ /^cisco$/i)	{ exec('rancid', $router); }
+elsif ($vendor =~ /^extreme$/i)	{ exec('xrancid', $router); }
+elsif ($vendor =~ /^ezt3$/i)	{ exec('erancid', $router); }
+elsif ($vendor =~ /^foundry$/i)	{ exec('francid', $router); }
+elsif ($vendor =~ /^hp$/i)	{ exec('hrancid', $router); }
+elsif ($vendor =~ /^juniper$/i)	{ exec('jrancid', $router); }
+elsif ($vendor =~ /^mrtd$/i)	{ exec('mrancid', $router); }
+elsif ($vendor =~ /^redback$/i)	{ exec('rrancid', $router); }
+else {
+    printf(STDERR "unknown router manufacturer for $router: $vendor\n");
+    exit(-1);
 }
 
-printf(STDERR "unknown router manufacturer for $router: $vendor\n");
+printf(STDERR "exec failed router manufacturer $vendor: $!\n");
 exit(-1);

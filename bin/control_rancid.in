@@ -19,10 +19,36 @@
 # control_rancid $GROUP
 #
 
+# command-line options
+# -r <device name>
+if [ $# -ge 1 ] ; then
+
+    while [ 1 ] ; do
+	case $1 in
+	-r)
+	    shift
+	    # next arg is the device name
+	    device="$1"
+	    shift
+	    ;;
+	--)
+	    shift; break;
+	    ;;
+	-*)
+	    echo "unknown option: $1" >&2
+	    exit 1
+	    ;;
+	*)
+	    break;
+	    ;;
+	esac
+    done
+fi
+
 # Number of things par should run in parallel.
 PAR_COUNT=${PAR_COUNT:-5}
 
-# Must specify a group to run rancid
+# Must specify a group on which to run rancid
 if [ $# -lt 1 ]; then
     echo 'must specify group'; exit 1
 else
@@ -194,13 +220,25 @@ then
     exit;
 fi
 
+# if a device (-r) was specified, see if that device is in this group
+if [ "X$device" != "X" ] ; then
+    trap 'rm -fr $TMP $DIR/routers.single;' 1 2 15
+    devlistfile="$DIR/routers.single"
+    grep "^$device:" routers.up > $devlistfile
+    if [ $? -eq 1 ] ; then
+	exit;
+    fi
+else
+    devlistfile="$DIR/routers.up"
+fi
+
 # Now we can actually try to get the configs
 cd $DIR/configs
 
 # The number of processes running at any given time can be
 # tailored to the specific installation.
 echo "Trying to get all of the configs."
-par -q -n $PAR_COUNT -c "rancid-fe \{}" $DIR/routers.up
+par -q -n $PAR_COUNT -c "rancid-fe \{}" $devlistfile
 
 # This section will generate a list of missed routers
 # and try to grab them again.  It will run through
@@ -212,7 +250,7 @@ if [ -f $DIR/routers.up.missed ]; then
 fi
 while [ $round -le $pass ]
 do
-    for router in `cat $DIR/routers.up`
+    for router in `cat $devlistfile`
     do
 	OFS=$IFS
 	IFS=':'
@@ -255,7 +293,7 @@ rename 's/.new$//' *.new
 
 # This has been different for different machines...
 # Diff the directory and then checkin.
-trap 'rm -fr $TMP $TMP.diff;' 1 2 15
+trap 'rm -fr $TMP $TMP.diff $DIR/routers.single;' 1 2 15
 cd $DIR
 cvs -f @DIFF_CMD@ | sed -e '/^RCS file: /d' -e '/^--- /d' \
 	-e '/^+++ /d' -e 's/^\([-+ ]\)/\1 /' >$TMP.diff
@@ -281,7 +319,7 @@ if [ "X$OLDTIME" = "X" ] ; then
     OLDTIME=24
 fi
 @PERLV@ -F: -ane "{\$t = (stat(\$F[0]))[9]; print \`ls -ld \$F[0]\`
-	if (time() - \$t >= $OLDTIME*60*60);}" $DIR/routers.up | sort -u > $DIR/routers.failed
+	if (time() - \$t >= $OLDTIME*60*60);}" $devlistfile | sort -u > $DIR/routers.failed
 if [ -s $DIR/routers.failed ]
 then
 	(
@@ -297,5 +335,5 @@ then
 fi
 
 # Cleanup
-rm -f $TMP.diff
+rm -f $TMP.diff $DIR/routers.single
 trap '' 1 2 15

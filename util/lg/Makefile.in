@@ -25,9 +25,9 @@ install: all
 	done
 
 clean:
-	rm -f Makefile $(UTIL_LG_PROGS) lg.conf
 
 distclean: clean
+	rm -f Makefile $(UTIL_LG_PROGS) lg.conf
 	rm -f config.log config.status
 
 distdir:

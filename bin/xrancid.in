@@ -30,6 +30,8 @@ $clean_run = 0;
 $found_end = 0;
 $timeo = 90;			# clogin timeout in seconds
 
+my(%filter_pwds);		# password filtering mode
+
 # This routine is used to print out the router configuration
 sub ProcessHistory {
     my($new_hist_tag,$new_command,$command_string,@string)=(@_);
@@ -182,6 +184,7 @@ sub ShowDiag {
     while (<INPUT>) {
 	tr/\015//d;
 	last if (/^$prompt/);
+	last if (/^Syntax error at token/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
 
 	/platform\s+:\s+(.*)$/i &&
@@ -274,7 +277,7 @@ sub WriteTerm {
 
 	s/^\s*$/#/;
 	# filter extra comments and lead comments in config so we can preserve
-	# the chassis type at the top of muched o/p before the processhistory
+	# the chassis type at the top of muched o/p before the process history
 	# key changes.
 	if (/^#\s*$/) {
  	   if ($comment) {
@@ -297,10 +300,15 @@ sub WriteTerm {
 	/# system name/i && next;
 	/# software version/i && next;
 
-	if (/configure ssh2 key/) {
+	if (/((create|configure) account \S+ \S+) / && $filter_pwds >= 2) {
+	    ProcessHistory("","","","# $1 <key removed>\n");
+	    next;
+	}
+	if (/configure ssh2 key/ && $filter_pwds >= 1) {
 	    ProcessHistory("","","","# $_# <key removed>\n");
 	    while (<INPUT>) {
 		if (/^(#|enable|conf|disable|unconf)/) {
+		    tr/\015//d;
 		    last;
 		}
 	    }
@@ -308,9 +316,10 @@ sub WriteTerm {
 
 	# filter out any RCS/CVS tags to avoid confusing local CVS storage
 	s/\$(Revision|Id):/ $1:/;
-	/^(config bgp (neighbor|peer-group) \S+ password encrypted)/i &&
-	    ProcessHistory("","","","# $1 <removed>\n") &&
+	if (/^((config|configure) bgp (neighbor|peer-group) \S+ password encrypted)/i && $filter_pwds >= 1) {
+	    ProcessHistory("","","","# $1 <removed>\n");
 	    next;
+	}
 
 	# order logging statements
 	/^configure syslog add logging (\d+\.\d+\.\d+\.\d+)/ &&
@@ -327,7 +336,7 @@ sub WriteTerm {
 	    }
 	    next;
 	}
-	if (/^(configure snmp community (readonly|readwrite)) (\S+)/) {
+	if (/^(configure snmp community (readonly|readwrite)( encrypted)?) (\S+)/) {
 	    if (defined($ENV{'NOCOMMSTR'})) {
 		ProcessHistory("SNMPSVRCOMM","keysort","$_","#$1 <removed>$'");
 		next;
@@ -336,8 +345,10 @@ sub WriteTerm {
 	    }
 	}
 	# order/prune tacacs/radius server statements
-	/^(configure radius (primary|secondary) (tacacs-server|radius-server) shared-secret encrypted)/ &&
-	    ProcessHistory("","","","# $1 <removed>\n") && next;
+	if (/^(configure radius (primary|secondary) (tacacs-server|radius-server) shared-secret encrypted)/ && $filter_pwds >= 1) {
+	    ProcessHistory("","","","# $1 <removed>\n");
+	    next;
+	}
 
 	# catch anything that wasnt match above.
 	ProcessHistory("","","","$_");
@@ -396,6 +407,15 @@ if ($file) {
     }
 }
 
+# determine password filtering mode
+if ($ENV{"FILTER_PWDS"} =~ /no/i) {
+	$filter_pwds = 0;  
+} elsif ($ENV{"FILTER_PWDS"} =~ /all/i) {
+	$filter_pwds = 2;
+} else {
+	$filter_pwds = 1;
+}
+
 ProcessHistory("","","","#RANCID-CONTENT-TYPE: extreme\n#\n");
 ProcessHistory("COMMENTS","keysort","B0","#\n");	# chassis info
 ProcessHistory("COMMENTS","keysort","C0","#\n");	# power supply info
@@ -408,7 +428,7 @@ TOP: while(<INPUT>) {
     # note: this match sucks rocks, but currently the extreme bits are
     # unreliable about echoing the 'exit\n' command.  this match might really
     # be a bad idea, but instead rely upon WriteTerm's found_end?
-    if (/$prompt\s?(exit$|Connection closed)/ && $found_end) {
+    if (/$prompt\s?(quit|exit|Connection closed)/ && $found_end) {
 	$clean_run=1;
 	last;
     }
@@ -427,7 +447,7 @@ TOP: while(<INPUT>) {
 	}
 	print STDERR ("HIT COMMAND:$_") if ($debug);
 	if (! defined($commands{$cmd})) {
-	    print STDERR "found unexpected command - \"$cmd\"\n";
+	    print STDERR "$host: found unexpected command - \"$cmd\"\n";
 	    $clean_run = 0;
 	    last TOP;
 	}
@@ -454,14 +474,12 @@ if (defined($ENV{NOPIPE})) {
 # check for completeness
 if (scalar(%commands) || !$clean_run || !$found_end) {
     if (scalar(%commands)) {
-	printf(STDOUT "missed cmd(s): %s\n", join(',', keys(%commands)));
-	if ($debug) {
-	    printf(STDERR "missed cmd(s): %s\n", join(',', keys(%commands)))
-	}
+	printf(STDOUT "$host: missed cmd(s): %s\n", join(',', keys(%commands)));
+	printf(STDERR "$host: missed cmd(s): %s\n", join(',', keys(%commands))) if ($debug);
     }
     if (!$clean_run || !$found_end) {
-	print STDOUT "End of run not found\n";
-	print STDERR "End of run not found\n" if ($debug);
+	print STDOUT "$host: End of run not found\n";
+	print STDERR "$host: End of run not found\n" if ($debug);
 	system("/usr/bin/tail -1 $host.new");
     }
     unlink "$host.new" if (! $debug);

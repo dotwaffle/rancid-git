@@ -31,6 +31,8 @@ $clean_run = 0;
 $found_end = 0;
 $timeo = 90;			# clogin timeout in seconds
 
+my(%filter_pwds);		# password filtering mode
+
 # This routine is used to print out the router configuration
 sub ProcessHistory {
     my($new_hist_tag,$new_command,$command_string,@string)=(@_);
@@ -131,6 +133,21 @@ sub sortbyipaddr {
     &ipaddrval($a) <=> &ipaddrval($b);
 }
 
+# This routine parses "show version"
+sub ShowVersion {
+    print STDERR "    In ShowVersion: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	last if(/^$prompt/);
+
+	/(Copyright|uptime|restarted|^\s*$)/ && next;
+	/(Up Time|Boot Time)/ && next;
+	ProcessHistory("COMMENTS","keysort","A1","!Image: $_");
+    }
+    return;
+}
+
 # This routine parses "dir /<fsys>"
 sub DirFlash {
     print STDERR "    In DirFlash: $_" if ($debug);
@@ -142,6 +159,7 @@ sub DirFlash {
 	/^\s*$/ && next;
 
 	/(Can\'t open|No such device)/ && return;
+	/is not a valid path on a local file system/ && return;
 	ProcessHistory("FLASH","keysort",$dev,"!Flash: $dev: $_");
     }
     ProcessHistory("FLASH","keysort",$dev,"!\n");
@@ -157,6 +175,10 @@ sub ShowHardware {
 	last if(/^$prompt/);
 	s/\s*$/\n/;
 
+	/Can not retrieve information/ && return;
+	/^Temperature:/ && next;
+	/^Voltage/ && next;
+	/^$/ && next;
 	#ProcessHistory("","","","!Chassis: $_") && next;
 	ProcessHistory("COMMENTS","keysort","B1","!Chassis: $_");
     }
@@ -164,17 +186,19 @@ sub ShowHardware {
     return;
 }
 
-# This routine parses "show version"
-sub ShowVersion {
-    print STDERR "    In ShowVersion: $_" if ($debug);
+# This routine parses "show chassis"
+sub ShowChassis {
+    print STDERR "    In ShowChassis: $_" if ($debug);
 
     while (<INPUT>) {
 	tr/\015//d;
 	last if(/^$prompt/);
+	last if(/^invalid input at/i);
+	next if(/^(\s*|\s*$cmd\s*|\s+\^)$/);
 
-	/(uptime|restarted|^\s*$)/ && next;
-	ProcessHistory("COMMENTS","keysort","A1","!Image: $_");
+	ProcessHistory("COMMENTS","keysort","C1","!Chassis: $_");
     }
+    ProcessHistory("COMMENTS","keysort","C1","!\n");
     return;
 }
 
@@ -187,6 +211,8 @@ sub ShowSlotTable {
 	last if(/^$prompt/);
 
 	/(Slot Table|^$)/ && next;
+	/^\s+\^/ && next;
+	/Invalid input at/ && return;
 	s/^\s*//;
 	ProcessHistory("COMMENTS","keysort","D1","!Slot Table: $_");
     }
@@ -201,21 +227,25 @@ sub WriteTerm {
     while (<INPUT>) {
 	tr/\015//d;
 	last if(/^$prompt/);
+	next if(/^\s*$/);
 
 #    /Non-Volatile memory is in use/  && return(-1); # NvRAM is locked
 	# Dog gone Cool matches to process the rest of the config
 	/^! last updated: .*$/ && next; # kill last updated line
+	/^Building configuration/ && next; # kill Building config line
+	/^Current configuration/ && next; # kill Current config line
+	/^!  Configuration last changed by user / && next;
 	/^ length / && next; # kill length on serial lines
 	/^ width / && next; # kill width on serial lines
 	# filter out any RCS/CVS tags to avoid confusing local CVS storage
 	s/\$(Revision|Id):/ $1:/;
 	# order access-lists
 	/^access-list\s+(\d\d?)\s+(\S+)\s+(\S+)/ &&
-        ProcessHistory("ACL $1 $2","ipsort","$3","$_") && next;
+            ProcessHistory("ACL $1 $2","ipsort","$3","$_") && next;
 	# prune snmp community statements
 	if (/^snmp (group|community) (\S+)/) {
 	    if (defined($ENV{'NOCOMMSTR'})) {
-		ProcessHistory("SNMPSERVERCOMM","keysort","$_","!snmp $1 <removed>$'") && next;  
+		ProcessHistory("SNMPSERVERCOMM","keysort","$_","!snmp $1 <removed>$'") && next;
 	    } else {
 		ProcessHistory("SNMPSERVERCOMM","keysort","$_","$_") && next;
 	    }
@@ -240,8 +270,9 @@ sub DoNothing {print STDOUT;}
 sub FlailHelplessly {
     print STDERR "Flailing: $_" if ($debug);
     print STDOUT "Flailing: $_" if ($log);
-    /#(show hardware)$/ && delete($commands{$1}) && return("ShowHardware");
     /#(show version)$/ && delete($commands{$1}) && return("ShowVersion");
+    /#(show hardware)$/ && delete($commands{$1}) && return("ShowHardware");
+    /#(show chassis)$/ && delete($commands{$1}) && return("ShowChassis");
     /#(show slot table)$/ && delete($commands{$1}) && return("ShowSlotTable");
     /#(show config)$/ && delete($commands{$1}) && return("WriteTerm");
     return "FlailHelplessly";
@@ -254,6 +285,7 @@ sub FlailHelplessly {
 	"dir /pcmcia0"		=> "DirFlash",
 	"dir /pcmcia1"		=> "DirFlash",
 	'show hardware'		=> "ShowHardware",
+	'show chassis'		=> "ShowChassis",
 	'show slot table'	=> "ShowSlotTable",
 	'show config'		=> "WriteTerm"
 );
@@ -263,6 +295,7 @@ sub FlailHelplessly {
 	"dir /pcmcia0",
 	"dir /pcmcia1",
 	"show hardware",
+	"show chassis",
 	"show slot table",
 	"show config"
 );
@@ -280,8 +313,8 @@ if ($file) {
     print STDOUT "opening file $host\n" if ($log);
     open(INPUT,"<$host") || die "open failed for $host: $!\n";
 } else {
-    print STDERR "executing clogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($debug);
-    print STDOUT "executing clogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($log);
+    print STDERR "executing clogin -t $timeo -c\"$redback_cmds\" $host\n" if ($debug);
+    print STDOUT "executing clogin -t $timeo -c\"$redback_cmds\" $host\n" if ($log);
 
     if (defined($ENV{NOPIPE})) {
 	system "clogin -t $timeo -c \"$redback_cmds\" $host </dev/null > $host.raw" || die "clogin failed for $host: $!\n";
@@ -289,6 +322,15 @@ if ($file) {
     } else {
 	open(INPUT,"clogin -t $timeo -c \"$redback_cmds\" $host </dev/null |") || die "clogin failed for $host: $!\n";
     }
+}
+
+# determine password filtering mode
+if ($ENV{"FILTER_PWDS"} =~ /no/i) {
+	$filter_pwds = 0;  
+} elsif ($ENV{"FILTER_PWDS"} =~ /all/i) {
+	$filter_pwds = 2;
+} else {
+	$filter_pwds = 1;
 }
 
 ProcessHistory("","","","!RANCID-CONTENT-TYPE: redback\n!\n");
@@ -315,7 +357,7 @@ while(<INPUT>) {
 	}
 	print STDERR ("HIT COMMAND:$_") if ($debug);
 	if (! defined($commands{$cmd})) {
-	    print STDERR "found unexpected command - \"$cmd\"\n";
+	    print STDERR "$host: found unexpected command - \"$cmd\"\n";
 	    $clean_run = 0;
 	    last;
 	}
@@ -341,12 +383,12 @@ if (defined($ENV{NOPIPE})) {
 # check for completeness
 if (scalar(%commands) || !$clean_run || !$found_end) {
     if (scalar(%commands)) {
-	printf(STDOUT "missed cmd(s): %s\n", join(',', keys(%commands)));
-	printf(STDERR "missed cmd(s): %s\n", join(',', keys(%commands))) if ($debug);
+	printf(STDOUT "$host: missed cmd(s): %s\n", join(',', keys(%commands)));
+	printf(STDERR "$host: missed cmd(s): %s\n", join(',', keys(%commands))) if ($debug);
     }
     if (!$clean_run || !$found_end) {
-	print STDOUT "End of run not found\n";
-	print STDERR "End of run not found\n" if ($debug);
+	print STDOUT "$host: End of run not found\n";
+	print STDERR "$host: End of run not found\n" if ($debug);
 	system("/usr/bin/tail -1 $host.new");
     }
     unlink "$host.new" if (! $debug);

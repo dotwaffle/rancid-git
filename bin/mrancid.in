@@ -1,7 +1,7 @@
 #!@PERLV_PATH@
 ##
 ## Amazingly hacked version of Hank's rancid - this one tries to
-## deal with foundrys and foundrys OEM'd by HP as Procurves.
+## deal with MRTd.
 ##
 ## Copyright (C) 1997-2001 by Henry Kilmer.
 ## All rights reserved.
@@ -30,7 +30,7 @@ $file = $opt_f;
 $host = $ARGV[0];
 $clean_run = 0;
 $found_end = 0;
-$timeo = 90;			# flogin timeout in seconds
+$timeo = 90;			# clogin timeout in seconds
 
 my(%filter_pwds);		# password filtering mode
 
@@ -93,8 +93,8 @@ sub valsort{
     local($i) = 0;
     local(@sorted_lines);
     foreach $key (sort values %lines) {
-        $sorted_lines[$i] = $key;
-        $i++;
+	$sorted_lines[$i] = $key;
+	$i++;
     }
     @sorted_lines;
 }
@@ -136,77 +136,19 @@ sub sortbyipaddr {
 
 # This routine parses "show version"
 sub ShowVersion {
-    my($slot);
-
     print STDERR "    In ShowVersion: $_" if ($debug);
 
     while (<INPUT>) {
 	tr/\015//d;
-	next if /^\s*$/;
 	last if(/^$prompt/);
+	next if(/^(\s*|\s*$cmd\s*)$/);
+	return(-1) if (/command authorization failed/i);
 
-	next if (/^(The system |Crash time)/);
+	/compiled on /i && next;
+	/UP for /i && next;
 
-	s/^\s*(HW|SW)/$1/;
-	s/^\s*(Compiled on)/SW: $1/;
-	#s/^(HW.*)/$1\n/;
-	if (/^SL (\d)/) {
-	    $slot = "Slot $1";
-	    s/^SL \d+/$slot/;
-	}
-	if (/MHz .* processor/) {
-	    $slot = "MGMT";
-	}
-	s/^(\s*\d+ )/$slot:$1/;
-	s/^===*//;
-
-	ProcessHistory("VERSION","","","!$_");
+	ProcessHistory("COMMENTS","keysort","A0", "!$_");
     }
-    ProcessHistory("VERSION","","","!\n");
-    return(0);
-}
-
-# This routine parses "show chassis"
-sub ShowChassis {
-    print STDERR "    In ShowChassis: $_" if ($debug);
-
-    while (<INPUT>) {
-	tr/\015//d;
-	last if (/^$prompt/);
-	next if (/ from /);
-	next if (/current temperature/i);
-	ProcessHistory("CHASSIS","","","! $_");
-    }
-    ProcessHistory("CHASSIS","","","!\n");
-    return(0);
-}
-
-# This routine parses "show flash"
-sub ShowFlash {
-    print STDERR "    In ShowFlash: $_" if ($debug);
-
-    while (<INPUT>) {
-    tr/\015//d;
-	last if(/^$prompt/);
-	next if /^\s*$/;
-	ProcessHistory("FLASH","","","!Flash: $_");
-    }
-    ProcessHistory("","","","!\n");
-    return;
-}
-
-# This routine parses "show module"
-sub ShowModule {
-    print STDERR "    In ShowModule: $_" if ($debug);
-
-    while (<INPUT>) {
-	tr/\015//d;
-	last if(/^$prompt/);
-	next if /^\s*$/;
-	next if /:\s*$/;
-	ProcessHistory("MODULE","","","!Module: $_");
-    }
-    ProcessHistory("","","","!\n");
     return(0);
 }
 
@@ -216,21 +158,70 @@ sub WriteTerm {
 
     while (<INPUT>) {
 	tr/\015//d;
+	if (/$prompt\s*exit\s*$/) {
+	    $clean_run=1;
+	    last;
+	}
 	last if(/^$prompt/);
+	return(-1) if (/command authorization failed/i);
+	# the pager can not be disabled per-session on the PIX
+	s/^<-+ More -+>\s*//;
+	/Non-Volatile memory is in use/  && return(-1); # NvRAM is locked
 
-	/Current configuration:/i && next;
-	/^ver \d+\.\d+/ && next;
-	/^module \d+ / && next;
-
-	/^ntp clock-period /    && next; # kill ntp clock-period
-	/^ length /             && next; # kill length on serial lines
-	/^ width /              && next; # kill width on serial lines
 	# filter out any RCS/CVS tags to avoid confusing local CVS storage
 	s/\$(Revision|Id):/ $1:/;
+
+	if (/^(enable )?(password|passwd) / && $filter_pwds >= 1) {
+	    ProcessHistory("ENABLE","","","!$1$2 <removed>\n");
+	    next;
+	}
+	if (/^username (\S+)(\s.*)? password /) {
+	    if ($filter_pwds >= 1) {
+		ProcessHistory("USER","keysort","$1","!username $1$2 password <removed>\n");
+	    } else {
+		ProcessHistory("USER","keysort","$1","$_");
+	    }
+	    next;
+	}
+	if (/^(\s*)password / && $filter_pwds >= 1) {
+	    ProcessHistory("LINE-PASS","","","!$1password <removed>\n"); next;
+	}
+	if (/^\s*neighbor (\S*) password / && $filter_pwds >= 1) {
+	    ProcessHistory("","","","! neighbor $1 password <removed>\n");
+	    next;
+	}
+
+	if (/^( ip ospf authentication-key) / && $filter_pwds >= 1) {
+	    ProcessHistory("","","","!$1 <removed>\n"); next;
+	}
+	if (/^( ip ospf message-digest-key \d+ md5) / && $filter_pwds >= 1) {
+	    ProcessHistory("","","","!$1 <removed>\n"); next;
+	}
+
+	# sort route-maps
+	if (/^route-map (\S+)/) {
+	    my($key) = $1;
+	    my($routemap) = $_;
+	    while (<INPUT>) {
+		tr/\015//d;
+		last if (/^$prompt/ || ! /^(route-map |[ !])/);
+		if (/^route-map (\S+)/) {
+		    ProcessHistory("ROUTEMAP","keysort","$key","$routemap");
+		    $key = $1;
+		    $routemap = $_;
+		} else  {
+		    $routemap .= $_;
+		}
+	    }
+	    ProcessHistory("ROUTEMAP","keysort","$key","$routemap");
+	}
+
+	# catch anything that wasnt match above.
+	ProcessHistory("","","","$_");
+
+
+	next;
 	# order access-lists
-	/^access-list\s+(\d+)\s+(perm|deny)\s+(\d\S+)(\/\d+)\s*$/ &&
-	    ProcessHistory("PACL $1 $2","ipsort","$3","$_")
-	    && next;
 	/^access-list\s+(\d\d?)\s+(\S+)\s+(\S+)/ &&
 	    ProcessHistory("ACL $1 $2","ipsort","$3","$_") && next;
 	# order extended access-lists
@@ -243,34 +234,49 @@ sub WriteTerm {
 	# order arp lists
 	/^arp\s+(\d+\.\d+\.\d+\.\d+)\s+/ &&
 	    ProcessHistory("ARP","ipsort","$1","$_") && next;
+	/^ip prefix-list\s+(\S+)\s+seq\s+(\d+)\s+(permit|deny)\s+(\d\S+)(\/.*)$/ &&
+	    ProcessHistory("PACL $1 $3","ipsort","$4","ip prefix-list $1 $3 $4$5\n")
+	    && next;
 	# order logging statements
 	/^logging (\d+\.\d+\.\d+\.\d+)/ &&
 	    ProcessHistory("LOGGING","ipsort","$1","$_") && next;
-	# order/prune snmp-server host/community statements
-	if (/^(snmp-server host )(\d+\.\d+\.\d+\.\d+)/) {
+	# order/prune snmp-server host statements
+	# we only prune lines of the form
+	# snmp-server host a.b.c.d <community>
+	if (/^snmp-server host (\d+\.\d+\.\d+\.\d+) /) {
 	    if (defined($ENV{'NOCOMMSTR'})) {
-		ProcessHistory("SNMPSERVERHOST","ipsort","$2","!$1 $2 <removed>\n") && next;
+		my($ip) = $1;
+		my($line) = "snmp-server host $ip";
+		my(@tokens) = split(' ', $');
+		my($token);
+		while ($token = shift(@tokens)) {
+		    if ($token eq 'version') {
+			$line .= " " . join(' ', ($token, shift(@tokens)));
+		    } elsif ($token =~ /^(informs?|traps?|(no)?auth)$/) {
+			$line .= " " . $token;
+		    } else {
+			$line = "!$line " . join(' ', ("<removed>", join(' ',@tokens)));
+			last;
+		    }
+		}
+		ProcessHistory("SNMPSERVERHOST","ipsort","$ip","$line\n");
 	    } else {
-		ProcessHistory("SNMPSERVERHOST","ipsort","$2","$_") && next;
+		ProcessHistory("SNMPSERVERHOST","ipsort","$1","$_");
 	    }
+	    next;
 	}
-	if (/^(snmp-server community )(\S+)/) {
+	if (/^(snmp-server community) (\S+)/) {
 	    if (defined($ENV{'NOCOMMSTR'})) {
-		ProcessHistory("SNMPSERVERCOMM","keysort","$_","!$1<removed>$'") && next;
+		ProcessHistory("SNMPSERVERCOMM","keysort","$_","!$1 <removed>$'") && next;
 	    } else {
 		ProcessHistory("SNMPSERVERCOMM","keysort","$_","$_") && next;
 	    }
 	}
-	# order tacacs server statements
-	if (/^(tacacs-server key )/ && $filter_pwds >= 1) {
-	    ProcessHistory("","","","! $1<removed>\n");
-	    next;
-	}
-	# delete ntp auth password
-	if (/^(ntp authentication-key \d+ md5) / && $filter_pwds >= 2) {
-	    ProcessHistory("","","","!$1 <removed>\n");
-	    next;
-	}
+	# order clns host statements
+	/^clns host \S+ (\S+)/ &&
+	    ProcessHistory("CLNS","keysort","$1","$_") && next;
+	# order alias statements
+	/^alias / && ProcessHistory("ALIAS","keysort","$_","$_") && next;
 	# order ntp peers/servers
 	if (/^ntp (server|peer) (\d+)\.(\d+)\.(\d+)\.(\d+)/) {
 	    $sortkey = sprintf("$1 %03d%03d%03d%03d",$2,$3,$4,$5);
@@ -280,26 +286,10 @@ sub WriteTerm {
 	# order ip host line statements
 	/^ip host line(\d+)/ &&
 	    ProcessHistory("IPHOST","numsort","$1","$_") && next;
-	# order ip nat source static statements
-	/^ip nat (\S+) source static (\S+)/ &&
-	    ProcessHistory("IP NAT $1","ipsort","$2","$_") && next;
 
-	# filter ssh public key
-	if (/^(crypto key generate (rsa|dsa) public_key)/ &&
-		$filter_pwds >= 2) {
-	    ProcessHistory("","","","!$1 <removed>\n");
-	    next;
-	}
-	# filter ssh private key
-	if (/^(crypto key generate (rsa|dsa) private_key)/ &&
-		$filter_pwds >= 1) {
-	    ProcessHistory("","","","!$1 <removed>\n");
-	    next;
-	}
-
-	ProcessHistory("","","","$_");
 	# end of config
-	if (/^end$/) {
+	#if (/^end(\n\[OK])?$/) {
+	if (/^(: )?end$/) {
 	    $found_end = 1;
 	    return(1);
 	}
@@ -313,19 +303,13 @@ sub DoNothing {print STDOUT;}
 # Main
 %commands=(
 	'show version'		=> "ShowVersion",
-	'show chassis'		=> "ShowChassis",
-	'show module'		=> "ShowModule",
-	'show flash'		=> "ShowFlash",
-	'write term'		=> "WriteTerm"
+	'show config'		=> "WriteTerm"
 );
 # keys() doesnt return things in the order entered and the order of the
-# cmds is important. pita
+# cmds is important (show version first and write term last). pita
 @commands=(
 	"show version",
-	"show chassis",
-	"show module",
-	"show flash",
-	"write term"
+	"show config"
 );
 $cisco_cmds=join(";",@commands);
 $cmds_regexp=join("|",@commands);
@@ -340,13 +324,13 @@ if ($file) {
     print STDOUT "opening file $host\n" if ($log);
     open(INPUT,"<$host") || die "open failed for $host: $!\n";
 } else {
-    print STDERR "executing flogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($debug);
-    print STDOUT "executing flogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($log);
+    print STDERR "executing clogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($debug);
+    print STDOUT "executing clogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($log);
     if (defined($ENV{NOPIPE})) {
-	system "flogin -t $timeo -c \"$cisco_cmds\" $host </dev/null > $host.raw 2>&1" || die "flogin failed for $host: $!\n";
-	open(INPUT, "< $host.raw") || die "flogin failed for $host: $!\n";
+	system "clogin -t $timeo -c \"$cisco_cmds\" $host </dev/null > $host.raw 2>&1" || die "clogin failed for $host: $!\n";
+	open(INPUT, "< $host.raw") || die "clogin failed for $host: $!\n";
     } else {
-	open(INPUT,"flogin -t $timeo -c \"$cisco_cmds\" $host </dev/null |") || die "flogin failed for $host: $!\n";
+	open(INPUT,"clogin -t $timeo -c \"$cisco_cmds\" $host </dev/null |") || die "clogin failed for $host: $!\n";
     }
 }
 
@@ -359,25 +343,20 @@ if ($ENV{"FILTER_PWDS"} =~ /no/i) {
 	$filter_pwds = 1;
 }
 
-ProcessHistory("","","","!RANCID-CONTENT-TYPE: foundry\n!\n");
+ProcessHistory("","","","!RANCID-CONTENT-TYPE: mrtd\n!\n");
+ProcessHistory("COMMENTS","keysort","B0","!\n");
 TOP: while(<INPUT>) {
     tr/\015//d;
-    if (/\#exit$/) {
-	$clean_run=1;
-	last;
-    }
     if (/^Error:/) {
-	print STDOUT ("$host flogin error: $_");
-	print STDERR ("$host flogin error: $_") if ($debug);
+	print STDOUT ("$host clogin error: $_");
+	print STDERR ("$host clogin error: $_") if ($debug);
 	$clean_run=0;
 	last;
     }
     while (/#\s*($cmds_regexp)\s*$/) {
 	$cmd = $1;
-	if (!defined($prompt)) {
-	    $prompt = ($_ =~ /^([^#]+#)/)[0];
-	    $prompt =~ s/([}{)(\\])/\\$1/g;
-	}
+	if (!defined($prompt)) {$prompt = ($_ =~ /^([^#]+)/)[0];
+				$prompt .= "[#>]"; }
 	print STDERR ("HIT COMMAND:$_") if ($debug);
 	if (! defined($commands{$cmd})) {
 	    print STDERR "$host: found unexpected command - \"$cmd\"\n";
@@ -404,12 +383,12 @@ if (defined($ENV{NOPIPE})) {
 }
 
 # check for completeness
-if (scalar(%commands) || !$clean_run || !$found_end) {
+if (scalar(%commands) || !$clean_run) {
     if (scalar(%commands)) {
 	printf(STDOUT "$host: missed cmd(s): %s\n", join(',', keys(%commands)));
 	printf(STDERR "$host: missed cmd(s): %s\n", join(',', keys(%commands))) if ($debug);
     }
-    if (!$clean_run || !$found_end) {
+    if (!$clean_run) {
 	print STDOUT "$host: End of run not found\n";
 	print STDERR "$host: End of run not found\n" if ($debug);
 	system("/usr/bin/tail -1 $host.new");

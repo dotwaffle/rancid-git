@@ -173,8 +173,8 @@ for {set i 0} {$i < $argc} {incr i} {
 	    }
 	    if [ catch {set cmd_fd [open $cmd_file r]} reason ] {
 		send_user "\nError: $reason\n"
-		exit 1 
-	    }  
+		exit 1
+	    }
 	    set cmd_text [read $cmd_fd]
 	    close $cmd_fd
 	    set command [join [split $cmd_text \n] \;]
@@ -235,25 +235,25 @@ proc label { host } {
 # add password *	hanky-pie
 proc add {var args} { global int_$var ; lappend int_$var $args}
 proc include {args} {
-    global env 
-    regsub -all "(^{|}$)" $args {} args 
+    global env
+    regsub -all "(^{|}$)" $args {} args
     if { [ regexp "^/" $args ignore ] == 0 } {
 	set args $env(HOME)/$args
-    } 
+    }
     source_password_file $args
-}   
-    
+}
+
 proc find {var router} {
-    upvar int_$var list 
+    upvar int_$var list
     if { [info exists list] } {
 	foreach line $list {
 	    if { [string match [lindex $line 0] $router ] } {
 		return [lrange $line 1 end]
-	    }     
-	}       
-    }     
-    return {} 
-}           
+	    }
+	}
+    }
+    return {}
+}
 
 # Loads the password file.  Note that as this file is tcl, and that
 # it is sourced, the user better know what to put in there, as it
@@ -282,12 +282,19 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
     global spawn_id in_proc do_command do_script platform
     global prompt u_prompt p_prompt e_prompt
     set in_proc 1
+    set uprompt_seen 0
 
     # try each of the connection methods in $cmethod until one is successful
     set progs [llength $cmethod]
     foreach prog [lrange $cmethod 0 end] {
-	if ![string compare $prog "telnet"] {
-	    if [ catch {spawn telnet $router} reason ] {
+	if [string match "telnet*" $prog] {
+	    regexp {telnet(:([^[:space:]]+))*} $prog command suffix port
+	    if {"$port" == ""} {
+		set retval [ catch {spawn telnet $router} reason ]
+	    } else {
+		set retval [ catch {spawn telnet $router $port} reason ]
+	    }
+	    if { $retval } {
 		send_user "\nError: telnet failed: $reason\n"
 		exit 1
 	    }
@@ -342,14 +349,17 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 	    if !$progs {
 		send_user "\nError: Connection Refused ($prog)\n"; return 1
 	    }
-	} eof { send_user "\nError: Couldn't login\n"; wait; return 1
-	} -nocase "unknown host\r" {
+	}
+	eof { send_user "\nError: Couldn't login\n"; wait; return 1 }
+	-nocase "unknown host\r" {
 	    catch {close};
 	    send_user "\nError: Unknown host\n"; wait; return 1
-	} "Host is unreachable" {
+	}
+	"Host is unreachable" {
 	    catch {close};
 	    send_user "\nError: Host Unreachable!\n"; wait; return 1
-	} "No address associated with name" {
+	}
+	"No address associated with name" {
 	    catch {close};
 	    send_user "\nError: Unknown host\n"; wait; return 1
 	}
@@ -359,41 +369,51 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 	    exp_continue }
 	-re "HOST IDENTIFICATION HAS CHANGED.* \(yes\/no\)\?"   {
 	    send "no\r"
-	    send_user "\nError: The host key for $router has changed.  update the known_hosts file accordingly.\n"
+	    send_user "\nError: The host key for $router has changed.  Update the SSH known_hosts file accordingly.\n"
 	    return 1 }
-	-re "$u_prompt"	{ send "$user\r"
-	    expect {
-		eof			{ send_user "\nError: Couldn't login\n"; wait; return 1 }
-		"Login invalid"		{ send_user "\nError: Invalid login\n"; vatch {close}; wait; return 1 }
-		-re "$p_prompt"		{ send "$userpswd\r" }
-		"$prompt"		{ set in_proc 0; return 0 }
-	    }
-	    exp_continue
-	}
-	-re "$p_prompt"	{
-	    if ![string compare $prog "ssh"] {
-		send "$userpswd\r"
-	    } else {
-		send "$passwd\r"
-	    }
-	    expect {
-		eof		{ send_user "\nError: Couldn't login\n"; wait; return 1 }
-		-re "$e_prompt"	{ send "$enapasswd\r" }
-		"$prompt"	{ set in_proc 0; return 0 }
-	    }
-	    exp_continue
-	}
-	"$prompt"	{ break; }
-	denied		{ send_user "\nError: Check your passwd for $router\n"
-			    if { $do_command || $do_script } {
-			      send "exit\r"
-			      wait
-			      return 1
-			  } else {
-			      return 1
-			  }
-			}
-	"% Bad passwords" {send_user "\nError: Check your passwd for $router\n"; return 1 }
+	-re "(denied|Sorry)"	{
+				  send_user "\nError: Check your passwd for $router\n"
+				  if { $do_command || $do_script } {
+					send "exit\r"
+					wait
+					return 1
+				  } else {
+					return 1
+				  }
+				}
+	"Login failed"		{
+				  send_user "\nError: Check your passwd for $router\n"
+				  return 1
+				}
+	-re "% (Bad passwords|Authentication failed)"	{
+				  send_user "\nError: Check your passwd for $router\n"
+				  return 1
+				}
+	-re "@\[^\r\n]+ $p_prompt"	{
+					  # ssh pwd prompt
+					  sleep 1
+					  send "$userpswd\r"
+					  exp_continue
+					}
+	-re "$u_prompt"		{
+				  send "$user\r"
+				  set uprompt_seen 1
+				  exp_continue
+				}
+	-re "$p_prompt"		{
+				  sleep 1
+				  if {$uprompt_seen == 1} {
+					send "$userpswd\r"
+				  } else {
+					send "$passwd\r"
+				  }
+				  exp_continue
+				}
+	"$prompt"		{ break; }
+	"Login invalid"		{
+				  send_user "\nError: Invalid login\n";
+				  catch {close}; wait; return 1
+				}
      }
     }
 
@@ -431,7 +451,7 @@ proc run_commands { prompt command } {
 
     # If the prompt is (enable), then we are on a switch and the
     # command is "set length 0"; otherwise its "term length 0".
-    # skip if its and extreme.
+    # skip if its an extreme.
     if { [ string compare "extreme" "$platform" ] } {
 	if [ regexp -- ".*> .*enable" "$prompt" ] {
 	    send "set length 0\r"
@@ -439,6 +459,8 @@ proc run_commands { prompt command } {
 	    send "term length 0\r"
 	}
 	regsub -all "\[)(]" $prompt {\\&} reprompt
+	# match cisco config mode prompts too, but not for catalyst ie: (enable)
+	regsub -all "\[#>]$" $reprompt {(\\([^\\r\\n]+\\))?&} reprompt
 	expect {
 	    -re $reprompt	{}
 	    -re "\[\n\r]+"	{ exp_continue }
@@ -446,7 +468,7 @@ proc run_commands { prompt command } {
     } else {
 	regsub -all "\[)(]" $prompt {\\&} reprompt
     }
-    # this is the only way i see to get rid for more prompts in o/p..grrrrr
+    # this is the only way i see to get rid of more prompts in o/p..grrrrr
     log_user 0
     # Is this a multi-command?
     if [ string match "*\;*" "$command" ] {
@@ -458,23 +480,28 @@ proc run_commands { prompt command } {
 	for {set i 0} {$i < $num_commands} { incr i} {
 	    send "[subst -nocommands [lindex $commands $i]]\r"
 	    expect {
+		-re "\b+"			{ exp_continue }
 		-re "^\[^\n\r *]*$reprompt"	{ send_user -- "$expect_out(buffer)"
 						}
 		-re "^\[^\n\r]*$reprompt."	{ send_user -- "$expect_out(buffer)"
 						  exp_continue }
 		-re "\[\n\r]+"			{ send_user -- "$expect_out(buffer)"
 						  exp_continue }
-		-re "\[^\r\n]*Press <SPACE> to cont\[^\r\n]*"	{ send " "
+		-re "\[^\r\n]*Press <SPACE> to cont\[^\r\n]*"	{
+						  send " "
+						  # bloody ^[[2K after " "
 						  expect {
-							# gag, 2 more prompts
-							-re "\[\r\n]*\r" {}
-							-re "\[^\r\n]*Press <SPACE> to cont\[^\r\n]*"	{ send " "; exp_continue }
-						  }
+							-re "^\[^\r\n]*\r" {}
+							}
 						  exp_continue
 						}
-		-re "^<-+ More -+>\[^\n\r]*"	{ send " "
+		-re "^ --More--\[^\n\r]*"	{
+						  send " "
 						  exp_continue }
-		-re "\b+"			{ exp_continue }
+		-re "^<-+ More -+>\[^\n\r]*"	{
+						  send_user -- "$expect_out(buffer)"
+						  send " "
+						  exp_continue }
 	    }
 	}
     } else {
@@ -483,21 +510,28 @@ proc run_commands { prompt command } {
 	# global switch in the config.
 	send "[subst -nocommands $command]\r"
 	expect {
+		-re "\b+"			{ exp_continue }
 		-re "^\[^\n\r *]*$reprompt"	{ send_user -- "$expect_out(buffer)"
 						}
 		-re "^\[^\n\r]*$reprompt."	{ send_user -- "$expect_out(buffer)"
 						  exp_continue }
 		-re "\[\n\r]+"			{ send_user -- "$expect_out(buffer)"
 						  exp_continue }
-		-re "\[^\r\n]*Press <SPACE> to cont\[^\r\n]*"	{ send " "
+		-re "\[^\r\n]*Press <SPACE> to cont\[^\r\n]*"	{
+						  send " "
+						  # bloody ^[[2K after " "
 						  expect {
-							-re "\[\r\n]*\r\r" {}
-						  }
+							-re "^\[^\r\n]*\r" {}
+							}
 						  exp_continue
 						}
-		-re "^<-+ More -+>\[^\n\r]*"	{ send " "
+		-re "^ --More--\[^\n\r]*"	{
+						  send " "
 						  exp_continue }
-		-re "\b+"			{ exp_continue }
+		-re "^<-+ More -+>\[^\n\r]*"	{
+						  send_user -- "$expect_out(buffer)"
+						  send " "
+						  exp_continue }
 	}
     }
     log_user 1
@@ -595,7 +629,7 @@ foreach router [lrange $argv $i end] {
 
     # Figure out prompts
     set u_prompt [find userprompt $router]
-    if { "$u_prompt" == "" } { set u_prompt "(Username|login|user name):" }
+    if { "$u_prompt" == "" } { set u_prompt "(Username|Login|login|user name):" }
     set p_prompt [find passprompt $router]
     if { "$p_prompt" == "" } { set p_prompt "(\[Pp]assword|passwd):" }
     set e_prompt [find enableprompt $router]
@@ -627,8 +661,8 @@ foreach router [lrange $argv $i end] {
 	}
     }
     # we are logged in, now figure out the full prompt
-    send "\r"   
-    expect {    
+    send "\r"
+    expect {
 	-re "\[\r\n]+"		{ exp_continue; }
 	-re "^(.+:)1 $prompt"	{ # stoopid extreme cmd-line numbers and
 				  # prompt based on state of config changes
@@ -637,9 +671,11 @@ foreach router [lrange $argv $i end] {
 				  set prompt ".? ?$junk\[0-9]+ $prompt";
 				  set platform "extreme"
 				}
-	-re "^.+$prompt"	{ set prompt $expect_out(0,string); }
-	-re "^.+> \\\(enable\\\)"	{ set prompt $expect_out(0,string); }
-    }       
+	-re "^.+$prompt"	{ set junk $expect_out(0,string);
+				  regsub -all "\[\]\[]" $junk {\\&} prompt; }
+	-re "^.+> \\\(enable\\\)"	{ set junk $expect_out(0,string);
+					  regsub -all "\[\]\[]" $junk {\\&} prompt; }
+    }
 
     if { $do_command } {
 	if {[run_commands $prompt $command]} {

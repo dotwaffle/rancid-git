@@ -7,19 +7,20 @@ rancid_intro \- introduction to the Really Awesome New Cisco confIg Differ
 .B rancid
 is really more than just a Cisco configuration differ.  It handles several
 different device's configurations; currently including Alteon, Bay Networks
-(nortel), Cisco, Extreme, Foundry, Juniper, Redback, and the ADC-Kentrox
-EZ-T3 mux.
+(nortel), Cisco, Extreme, Foundry, HP Procurve switches, Juniper, Redback,
+MRTd daemon, and the ADC-Kentrox EZ-T3 mux.
 .PP
 .B rancid
-uses an expect script to login to a list of devices and run a set of
+uses an expect script to login to each of a list of devices and run a set of
 commands for that device-type and collects the output.  The output
 is run through some filtering to summarize, reformat, and/or snip
 unwanted or security related data such as chassis temperature and easily
 reverse-able passwords.
 .PP
-Named after the device's name in the group's configuration file, the
-resulting files are saved in the directory <group>/configs.  Except for the
-data filtered from the configuration file for security reasons, such as
+Named after the device's name in the group's configuration file (\c
+.B router.db\c
+), the resulting files are saved in the directory <group>/configs.  Except for
+the data filtered from the configuration file for security reasons, such as
 reversable passwords, these files are suitable for loading directly to restore
 a lost configuration.  See
 .BR env (5)
@@ -69,8 +70,8 @@ diff -u -4 -r1.144 dfw.shrubbery.net
 .fi
 .PP
 In this example, we see that a Gigabit Ethernet linecard was removed
-from slot 6.  Since this data is collected from "show" commands on the
-router, it could just as easily be that the card crashed so the RP
+from slot 6.  However, since this data is collected from "show" commands on
+the router, it could just as easily be that the card crashed so the RP
 can not communicate with it to collect information.
 .SH "GETTING STARTED"
 Installation instructions are included in the distribution's top-level

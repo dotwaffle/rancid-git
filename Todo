@@ -1,18 +1,18 @@
-- extreme collections loses when the config on the switch is in an unsaved
-  state, probably due to the prompt changing or rather the regex clogin
-  formulates for the prompt.
-- cat4 support?
+- extreme collections lose when the config on the switch is in an unsaved
+  state, probably due to the prompt changing or rather how clogin formulates
+  the prompt used by expect{ -re }'s.
+- extreme collection fails for tacacs-enabled boxen due to diffs in UI - blech!
+- should par's -c override an input files' : cmd?
+- *login should emmit "clogin error:" or "*login error:" to make matches for
+  login failures definitive?
+- would like hpfilter to be more friendly to interactive logins
+- rancid with zebra?  via vtysh?
+- rancid for unix?
 - would be nice if it were possible to add additional commands to be run
   per-platform as a user desires.  how could the user also provide a
   filtering routine?
-- need par.1 manpage
-- need to make sure the following patch was applied to the lookingglass
-	All routers not listed as 'up' in router.db are considered down.
-	This allows values other than down to mean 'not up'.  for use
-	by util/downreport.
 - a format such as {<user>} as the pwd in .cloginrc to indicate *login should
   prompt the user for the password
-- handle redback in the looking glass
 - implement the bits marked unimplemented in lg.conf
 - detect 'same' vty configs
 	- ignoring length/width/passwd is a start, but need more
@@ -24,5 +24,6 @@
 - rancid needs to treat the 3600s like the 7Ks and 12Ks...
   Also, need to allow 12012s, and force 700s to not be treated like 7Ks.
 - clogin/jlogin rsh is munged
-- LG additions
+- LG {requested} additions
 	- show controllers T3 (data)
+	- handle redback in the looking glass

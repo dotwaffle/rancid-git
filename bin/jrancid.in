@@ -32,6 +32,8 @@ $host = $ARGV[0];
 $clean_run = 0;
 $found_end = 0;
 
+my(%filter_pwds);		# password filtering mode
+
 # This routine is used to print out the router configuration
 sub ProcessHistory {
     my($new_hist_tag,$new_command,$command_string,@string)=(@_);
@@ -354,6 +356,7 @@ sub ShowVersion {
 # This routine parses "show configuration"
 sub ShowConfiguration {
     my($lines) = 0;
+    my($snmp) = 0;
     print STDERR "    In ShowConfiguration: $_" if ($debug);
 
     s/^[a-z]+@//;
@@ -371,19 +374,35 @@ sub ShowConfiguration {
 
 	/^database header mismatch: / && return(-1);
 	/^version .*;\d+$/ && return(-1);
-	if (/^(\s*)(community |trap-group )[^ ;]+(\s?[;{])$/) {
+
+	# filter snmp community, when in snmp { stanza }
+	/^snmp/ && $snmp++;
+	/^}/ && ($snmp = 0);
+	if ($snmp && /^(\s*)(community|trap-group) [^ ;]+(\s?[;{])$/) {
 		if (defined($ENV{'NOCOMMSTR'})) {
-		    $_ = "$1$2\"<removed>\"$3\n";
+		    $_ = "$1$2 \"<removed>\"$3\n";
 		}
 	}
-	s/(\s*authentication-key ).*$/#$1<removed>;/;
-	s/^(.*\ssecret \")\$9\$.*(\".*)$/#$1<removed>$2/;
+	if (/(\s*authentication-key ).*$/ && $filter_pwds >= 1) {
+	    s/(\s*authentication-key ).*$/#$1<removed>;/;
+	}
+	if (/^(.*\ssecret \")\$9\$.*(\".*)$/ && $filter_pwds >= 1) {
+	    s/^(.*\ssecret \")\$9\$.*(\".*)$/#$1<removed>$2/;
+	}
+	if (/(\s+encrypted-password ).*$/ && $filter_pwds >= 2) {
+	    ProcessHistory("","","","#$1<removed>;\n");
+	    next;
+	}
+	if (/(\s+ssh-(rsa|dsa) )\"/ && $filter_pwds >= 2) {
+	    ProcessHistory("","","","#$1<removed>;\n");
+	    next;
+	}
 	s/ # SECRET-DATA$//;
 	ProcessHistory("","","","$_");
     }
 
     if ($lines < 3) {
-	printf(STDERR "ERROR: configuration appears truncated.\n");
+	printf(STDERR "ERROR: $host configuration appears truncated.\n");
 	$found_end = 0;
 	return(-1);
     }
@@ -455,6 +474,15 @@ if ($file) {
 
 }
 
+# determine password filtering mode
+if ($ENV{"FILTER_PWDS"} =~ /no/i) {
+	$filter_pwds = 0;  
+} elsif ($ENV{"FILTER_PWDS"} =~ /all/i) {
+	$filter_pwds = 2;
+} else {
+	$filter_pwds = 1;
+}
+
 ProcessHistory("","","","# RANCID-CONTENT-TYPE: juniper\n#\n");
 TOP: while(<INPUT>) {
     tr/\015//d;
@@ -484,7 +512,7 @@ TOP: while(<INPUT>) {
 	}
 	print STDERR ("HIT COMMAND:$_") if ($debug);
 	if (! defined($commands{$cmd})) {
-	    print STDERR "found unexpected command - \"$cmd\"\n";
+	    print STDERR "$host: found unexpected command - \"$cmd\"\n";
 	    $clean_run = 0;
 	    last TOP;
 	}
@@ -515,12 +543,12 @@ if (defined($ENV{NOPIPE})) {
 $commands = join(", ", keys(%commands));
 if (scalar(%commands) || !$clean_run || !$found_end) {
     if (scalar(%commands)) {
-	printf(STDOUT "missed cmd(s): %s\n", join(',', keys(%commands)));
-	printf(STDERR "missed cmd(s): %s\n", join(',', keys(%commands))) if ($debug);
+	printf(STDOUT "$host: missed cmd(s): %s\n", join(',', keys(%commands)));
+	printf(STDERR "$host: missed cmd(s): %s\n", join(',', keys(%commands))) if ($debug);
     }
     if (!$clean_run || !$found_end) {
-	print STDOUT "End of run not found\n";
-	print STDERR "End of run not found\n" if ($debug);
+	print STDOUT "$host: End of run not found\n";
+	print STDERR "$host: End of run not found\n" if ($debug);
 	system("/usr/bin/tail -1 $host.new");
     }
     unlink "$host.new" if (! $debug);

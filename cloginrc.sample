@@ -1,5 +1,5 @@
 # comments are cool, as is whitespace
-# currently clogin supports a number of add directives:
+# clogin supports a number of add directives:
 #	password
 #	user
 #	userprompt
@@ -13,26 +13,26 @@
 #	cyphertype
 #	identity
 #
-# Details on each of these follows.
+# Details on each of these follows.  Also see cloginrc(5).
 #
-# add password <router name regexp> <vty passwd> <enable passwd>
+# add password <router name glob> <vty passwd> <enable passwd>
 #
-# add user <router name regexp> <username>
+# add user <router name glob> <username>
 #	The default user is $USER (i.e.: the user running clogin).
 #
-# add userprompt <router name regexp> <username prompt>
+# add userprompt <router name glob> <username prompt>
 #	What the router prints to prompt for the username.
 #	Default: {"(Username|login|user name):"}
 #
-# add userpassword <router name regexp> <user password>
+# add userpassword <router name glob> <user password>
 #	The password for user if different than the password set
 #	using 'add password'.
 #
-# add passprompt <router name regexp> <password prompt>
+# add passprompt <router name glob> <password prompt>
 #	What the router prints to prompt for the password.
 #	Default: {"(\[Pp]assword|passwd):"}
 #
-# add method <router name regexp> {ssh} [...]
+# add method <router name glob> {ssh} [...]
 #	Defines, in order, which connection method(s) to use for a device
 #	from the set {ssh,telnet,rsh}.  eg: add method * {ssh} {telnet} {rsh}
 #	will attempt ssh connection first.  if ssh fails with connection
@@ -40,24 +40,24 @@
 #	then rsh.
 #	Default: {telnet} {ssh}
 #
-# add noenable <router name regexp>
+# add noenable <router name glob>
 #	equivalent of -noenable on the cmd line to not enable at login.
 #
-# add enableprompt <router name regexp> <enable prompt>
+# add enableprompt <router name glob> <enable prompt>
 #	What the router prints to prompt for the enable password.
 #	Default: {"\[Pp]assword:"}
 #
-# add enauser <router name regexp> <username>
+# add enauser <router name glob> <username>
 #	This is only needed if enable asks for a username and this
 #	username is different from what user is set to.
 #
-# add autoenable <router name regexp> <1/0>
+# add autoenable <router name glob> <1/0>
 #	This is used if you are automatically enabled by the login process.
 #
-# add cyphertype <router name regexp> <ssh encryption type>
+# add cyphertype <router name glob> <ssh encryption type>
 #	Default is 3des.
 #
-# add identity <router name regexp> <path to ssh identity file>
+# add identity <router name glob> <path to ssh identity file>
 #	Default is your default ssh identity.
 #
 # include <file>

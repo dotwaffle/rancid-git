@@ -4,19 +4,22 @@ AUTOMAKE_OPTIONS=foreign no-dependencies
 
 @SET_MAKE@
 
-EXTRA_DIST = CHANGES COPYING FAQ README Todo cloginrc.sample configure \
+EXTRA_DIST = BUGS CHANGES COPYING FAQ README Todo cloginrc.sample configure \
 	install-sh \
 	mkinstalldirs Makefile.in Todo
 #DIST_COMMON = 
 
 # '.' is here (and at the beginnging of the macro) so that distclean-recursive
 # will run make distclean in . after the other dirs (preserving Makefile)
-SUBDIRS = . bin man util
+SUBDIRS = . include bin man util
 
 all:
 
+# install-exec-local:
+# 	$(mkinstalldirs) $(prefix) $(prefix)/bin $(prefix)/man $(prefix)/util $(prefix)/util/lg
+
 install-exec-local:
-	$(mkinstalldirs) $(prefix) $(prefix)/bin $(prefix)/man $(prefix)/util $(prefix)/util/lg
+	$(mkinstalldirs) $(prefix)/util $(prefix)/util/lg
 
 install:
 	for file in CHANGES README cloginrc.sample ; do \

@@ -30,6 +30,8 @@ $clean_run = 0;
 $found_end = 0;
 $timeo = 90;			# clogin timeout in seconds
 
+my(%filter_pwds);		# password filtering mode
+
 # This routine is used to print out the router configuration
 sub ProcessHistory {
     my($new_hist_tag,$new_command,$command_string,@string)=(@_);
@@ -136,6 +138,7 @@ sub ShowVersion {
 
     while (<INPUT>) {
 	tr/\015//d;
+	study;
 	last if(/^$prompt/);
 	next if(/^(\s*|\s*$cmd\s*)$/);
 	return(-1) if (/command authorization failed/i);
@@ -175,6 +178,8 @@ sub ShowVersion {
 	    ProcessHistory("COMMENTS","keysort","G3","!ROM Image: $1\n") && next;
 	/^BOOTFLASH: .*(Version.*)$/ &&
 	    ProcessHistory("COMMENTS","keysort","G4","!BOOTFLASH: $1\n") && next;
+	/^BOOTLDR: .*(Version.*)$/ &&
+	    ProcessHistory("COMMENTS","keysort","G4","!BOOTLDR: $1\n") && next;
 	/^System image file is "([^\"]*)", booted via (\S*)/ &&
 # removed the booted source due to
 # CSCdk28131: cycling info in 'sh ver'
@@ -183,7 +188,7 @@ sub ShowVersion {
 	    next;
 	/^System image file is "([^\"]*)"$/ &&
 	    ProcessHistory("COMMENTS","keysort","F5","!Image: $1\n") && next;
-	if (/(\S+)\s+\((\S+)\)\s+processor.*with (\S+K) bytes/) {
+	if (/(\S+)\s+\((\S+)\)\s+processor.*with (\S+[kK]) bytes/) {
 	    my($proc) = $1;
 	    my($cpu) = $2;
 	    my($mem) = $3;
@@ -241,24 +246,24 @@ sub ShowVersion {
 	    $sspmem = $1;
 	    next;
 	}
-	/^(\d+K) bytes of multibus/ &&
+	/^(\d+[kK]) bytes of multibus/ &&
 	    ProcessHistory("COMMENTS","keysort","B2",
 		"!Memory: multibus $1\n") && next;
-	/^(\d+K) bytes of non-volatile/ &&
+	/^(\d+[kK]) bytes of non-volatile/ &&
 	    ProcessHistory("COMMENTS","keysort","B3",
 		"!Memory: nvram $1\n") && next;
-	/^(\d+K) bytes of flash memory/ &&
+	/^(\d+[kK]) bytes of flash memory/ &&
 	    ProcessHistory("COMMENTS","keysort","B5","!Memory: flash $1\n") &&
 	    next;
-	/^(\d+K) bytes of .*flash partition/ &&
+	/^(\d+[kK]) bytes of .*flash partition/ &&
 	    ProcessHistory("COMMENTS","keysort","B6",
 		"!Memory: flash partition $1\n") && next;
-	/^(\d+K) bytes of Flash internal/ &&
+	/^(\d+[kK]) bytes of Flash internal/ &&
 	    ProcessHistory("COMMENTS","keysort","B4",
 		"!Memory: bootflash $1\n") && next;
-	if(/^(\d+K) bytes of (Flash|ATA)?.*PCMCIA .*slot ?(\d)/i) {
+	if(/^(\d+[kK]) bytes of (Flash|ATA)?.*PCMCIA .*(slot|disk) ?(\d)/i) {
 	    ProcessHistory("COMMENTS","keysort","B7",
-		"!Memory: pcmcia $2 slot$3 $1\n");
+		"!Memory: pcmcia $2 $3$4 $1\n");
 	    next;
 	}
 	if(/^WARNING/) {
@@ -320,9 +325,11 @@ sub ShowEnv {
 		"!Chassis type: $2 backplane\n");
 	    next;
 	}
-	/^\s*(Power .*)/ &&
+	/^\s*(Power [^:\n]+)$/ &&
 	    ProcessHistory("COMMENTS","keysort","E1","!Power: $1\n") && next;
 	/^\s*(Lower Power .*)/i &&
+	    ProcessHistory("COMMENTS","keysort","E2","!Power: $1\n") && next;
+	/^\s*(redundant .*)/i &&
 	    ProcessHistory("COMMENTS","keysort","E2","!Power: $1\n") && next;
     }
     ProcessHistory("COMMENTS","","","!\n");
@@ -451,6 +458,7 @@ sub ShowContAll {
 
     while (<INPUT>) {
 	tr/\015//d;
+	study;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	# return(1) if ($type =~ /^(12[40]|7[05])/);
@@ -554,6 +562,7 @@ sub ShowDiagbus {
 
     while (<INPUT>) {
 	tr/\015//d;
+	study;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	#return(1) if ($type !~ /^7[05]/);
@@ -640,6 +649,7 @@ sub ShowDiag {
 
     while (<INPUT>) {
 	tr/\015//d;
+	study;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	# return(1) if ($type !~ /^(12[40]|720|36|26)/);
@@ -753,7 +763,7 @@ sub ShowModule {
 	}
 	# now match the Revs in the second paragraph of o/p and stick it in
 	# the array with the previous bits...grumble.
-	if (/^ *(\d+)\s+\S+\s+to\s+\S+\s+(\S+)\s+(.*)\s+(\S+)\s*$/) {
+	if (/^ *(\d+)\s+\S+\s+to\s+\S+\s+(\S+)\s+(\S*)\s+(\S+)(\s+\S+)?\s*$/) {
 	    $lines[$1] .= "!Slot $1: hvers $2, firmware $3, sw $4\n";
 	    $lines[$1] =~ s/\s+,/,/g;
 	}
@@ -848,13 +858,14 @@ sub WriteTerm {
 
     while (<INPUT>) {
 	tr/\015//d;
+	study;
 	last if(/^$prompt/);
 	return(-1) if (/command authorization failed/i);
 	# the pager can not be disabled per-session on the PIX
 	s/^<-+ More -+>\s*//;
 	/Non-Volatile memory is in use/  && return(-1); # NvRAM is locked
 	# skip the crap
-	if (/^(##+$|Building configuration...)/i) {
+	if (/^(##+$|(Building|Current) configuration)/i) {
 	    while (<INPUT>) {
 		next if (/^Current configuration\s*:/i);
 		next if (/^:/);
@@ -877,24 +888,58 @@ sub WriteTerm {
 	/^ length /		&& next; # kill length on serial lines
 	/^ width /		&& next; # kill width on serial lines
 	/^ clockrate /		&& next; # kill clockrate on serial interfaces
-	/^(enable )?(password|passwd) / &&
-	    ProcessHistory("ENABLE","","","!$1$2 <removed>\n") &&
+	if (/^(enable )?(password|passwd) / && $filter_pwds >= 1) {
+	    ProcessHistory("ENABLE","","","!$1$2 <removed>\n");
 	    next;
-	/^username (\S+)(\s.*)? password /&&
-	    ProcessHistory("USER","keysort","$1","!username $1$2 password <removed>\n") && next;
-	/^\s*password / &&
-	    ProcessHistory("LINE-PASS","","","! password <removed>\n") && next;
-	/^\s*neighbor (\S*) password / &&
-	    ProcessHistory("","","","! neighbor $1 password <removed>\n") &&
+	}
+	if (/^(enable secret) / && $filter_pwds >= 2) {
+	    ProcessHistory("ENABLE","","","!$1 <removed>\n");
 	    next;
-	/^(ppp .* password) 7 .*/ &&
-	    ProcessHistory("","","","!$1 <removed>\n") && next;
-	/^(ip ftp password) / &&
-	    ProcessHistory("","","","!$1 <removed>\n") && next;
-	/^( ip ospf authentication-key) / &&
-	    ProcessHistory("","","","!$1 <removed>\n") && next;
-	/^( ip ospf message-digest-key \d+ md5) / &&
-	    ProcessHistory("","","","!$1 <removed>\n") && next;
+	}
+	if (/^username (\S+)(\s.*)? secret /) {
+	    if ($filter_pwds >= 2) {
+		ProcessHistory("USER","keysort","$1","!username $1$2 secret <removed>\n");
+	    } else {
+		ProcessHistory("USER","keysort","$1","$_");
+	    }
+	    next;
+	}
+	if (/^username (\S+)(\s.*)? password /) {
+	    if ($filter_pwds >= 1) {
+		ProcessHistory("USER","keysort","$1","!username $1$2 password <removed>\n");
+	    } else {
+		ProcessHistory("USER","keysort","$1","$_");
+	    }
+	    next;
+	}
+	if (/^(\s*)password / && $filter_pwds >= 1) {
+	    ProcessHistory("LINE-PASS","","","!$1password <removed>\n");
+	    next;
+	}
+	if (/^\s*neighbor (\S*) password / && $filter_pwds >= 1) {
+	    ProcessHistory("","","","! neighbor $1 password <removed>\n");
+	    next;
+	}
+	if (/^(ppp .* password) 7 .*/ && $filter_pwds >= 1) {
+	    ProcessHistory("","","","!$1 <removed>\n"); next;
+	}
+	if (/^(ip ftp password) / && $filter_pwds >= 1) {
+	    ProcessHistory("","","","!$1 <removed>\n"); next;
+	}
+	if (/^( ip ospf authentication-key) / && $filter_pwds >= 1) {
+	    ProcessHistory("","","","!$1 <removed>\n"); next;
+	}
+	# this is reversable, despite 'md5' in the cmd
+	if (/^( ip ospf message-digest-key \d+ md5) / && $filter_pwds >= 1) {
+	    ProcessHistory("","","","!$1 <removed>\n"); next;
+	}
+	if (/^((crypto )?isakmp key) \S+ / && $filter_pwds >= 1) {
+	    ProcessHistory("","","","!$1 <removed> $'"); next;
+	}
+	# i am told these are plain-text on the PIX
+	if (/^(vpdn username \S+ password)/ && $filter_pwds >= 1) {
+	    ProcessHistory("","","","!$1 <removed>\n"); next;
+	}
 	/fair-queue individual-limit/ && next;
 	# sort ip explicit-paths.
 	if (/^ip explicit-path name (\S+)/) {
@@ -985,16 +1030,18 @@ sub WriteTerm {
 	    }
 	}
 	# order/prune tacacs/radius server statements
-	/^(tacacs-server|radius-server) key / &&
-	    ProcessHistory("","","","!$1 key <removed>\n") && next;
+	if (/^(tacacs-server|radius-server) key / && $filter_pwds >= 1) {
+	    ProcessHistory("","","","!$1 key <removed>\n"); next;
+	}
 	# order clns host statements
 	/^clns host \S+ (\S+)/ &&
 	    ProcessHistory("CLNS","keysort","$1","$_") && next;
 	# order alias statements
 	/^alias / && ProcessHistory("ALIAS","keysort","$_","$_") && next;
-	# delete ntp auth password
-	/^(ntp authentication-key \d+ md5) / &&
-	    ProcessHistory("","","","!$1 <removed>\n") && next;
+	# delete ntp auth password - this md5 is a reversable too
+	if (/^(ntp authentication-key \d+ md5) / && $filter_pwds >= 1) {
+	    ProcessHistory("","","","!$1 <removed>\n"); next;
+	}
 	# order ntp peers/servers
 	if (/^ntp (server|peer) (\d+)\.(\d+)\.(\d+)\.(\d+)/) {
 	    $sortkey = sprintf("$1 %03d%03d%03d%03d",$2,$3,$4,$5);
@@ -1017,15 +1064,15 @@ sub WriteTerm {
 	/^syscon address (\S*) (\S*)/ &&
 	    ProcessHistory("","","","!syscon address $1 <removed>\n") &&
 	    next;
-	/^syscon password (\S*)/ &&
-	    ProcessHistory("","","","!syscon password <removed>\n") &&
+	if (/^syscon password (\S*)/ && $filter_pwds >= 1) {
+	    ProcessHistory("","","","!syscon password <removed>\n");
 	    next;
+	}
 
-	# catch anything that wasnt match above.
+	# catch anything that wasnt matched above.
 	ProcessHistory("","","","$_");
-	# end of config
-	#if (/^end(\n\[OK])?$/) {
-	if (/^(: )?end$/) {
+	# end of config.  the ": " game is for the PIX
+	if (/^(: +)?end$/) {
 	    $found_end = 1;
 	    return(1);
 	}
@@ -1052,6 +1099,8 @@ sub DoNothing {print STDOUT;}
 	'dir /all disk0:'	=> "DirSlotN",
 	'dir /all slot1:'	=> "DirSlotN",
 	'dir /all disk1:'	=> "DirSlotN",
+	"dir /all sup-bootflash:"=> "DirSlotN",		# cat 6500-ios
+	"dir /all sup-microcode:"=> "DirSlotN",		# cat 6500-ios
 	'show controllers'	=> "ShowContAll",
 	'show controllers cbus'	=> "ShowContCbus",
 	'show diagbus'		=> "ShowDiagbus",
@@ -1079,6 +1128,8 @@ sub DoNothing {print STDOUT;}
 	"dir /all disk0:",
 	"dir /all slot1:",
 	"dir /all disk1:",
+	"dir /all sup-bootflash:",
+	"dir /all sup-microcode:",
 	"show controllers",
 	"show controllers cbus",
 	"show diagbus",
@@ -1112,6 +1163,15 @@ if ($file) {
     }
 }
 
+# determine password filtering mode
+if ($ENV{"FILTER_PWDS"} =~ /no/i) {  
+	$filter_pwds = 0;
+} elsif ($ENV{"FILTER_PWDS"} =~ /all/i) {
+	$filter_pwds = 2;
+} else {
+	$filter_pwds = 1;
+}
+
 ProcessHistory("","","","!RANCID-CONTENT-TYPE: cisco\n!\n");
 ProcessHistory("COMMENTS","keysort","B0","!\n");
 ProcessHistory("COMMENTS","keysort","F0","!\n");
@@ -1133,7 +1193,7 @@ TOP: while(<INPUT>) {
 	if (!defined($prompt)) {$prompt = ($_ =~ /^([^#]+#)/)[0]; }
 	print STDERR ("HIT COMMAND:$_") if ($debug);
 	if (! defined($commands{$cmd})) {
-	    print STDERR "found unexpected command - \"$cmd\"\n";
+	    print STDERR "$host: found unexpected command - \"$cmd\"\n";
 	    $clean_run = 0;
 	    last TOP;
 	}
@@ -1159,12 +1219,12 @@ if (defined($ENV{NOPIPE})) {
 # check for completeness
 if (scalar(%commands) || !$clean_run || !$found_end) {
     if (scalar(%commands)) {
-	printf(STDOUT "missed cmd(s): %s\n", join(',', keys(%commands)));
-	printf(STDERR "missed cmd(s): %s\n", join(',', keys(%commands))) if ($debug);
+	printf(STDOUT "$host: missed cmd(s): %s\n", join(',', keys(%commands)));
+	printf(STDERR "$host: missed cmd(s): %s\n", join(',', keys(%commands))) if ($debug);
     }
     if (!$clean_run || !$found_end) {
-	print STDOUT "End of run not found\n";
-	print STDERR "End of run not found\n" if ($debug);
+	print STDOUT "$host: End of run not found\n";
+	print STDERR "$host: End of run not found\n" if ($debug);
 	system("/usr/bin/tail -1 $host.new");
     }
     unlink "$host.new" if (! $debug);

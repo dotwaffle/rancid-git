@@ -6,22 +6,23 @@ the files below by configure with substitutions completed:
 
 README		This file.
 CHANGES		List of changes to Rancid.
-Todo		partial Todo list of what needs to be done.
+Todo		partial list of what needs to be done.
 env.in		Environment settings needed.
 do-diffs.in	Script designed to be run from cron calling control_rancid.
 control_rancid.in
 		Builds router list, calls rancid on each router and
 		handles cvs routines.
-rancid-fe.in	chooses between rancid/[efjr]rancid/cat5rancid.
+rancid-fe.in	chooses between rancid/[abefhjrx]rancid/cat5rancid.
 rancid.in	Runs commands on cisco routers and processes the output.
 brancid.in	Runs commands on baynet/nortel routers and processes the output.
 erancid.in	Runs commands on ADC EZ-T3 muxes and processes the output.
 francid.in	Runs commands on foundry switches and processes the output.
 hrancid.in	Runs commands on hp procurve switches and processes the output.
 jrancid.in	Runs commands on juniper routers and processes the output.
+mrancid.in	Runs commands on MRT daemons and processes the output.
 rrancid.in	Runs commands on redback routers and processes the output.
-xancid.in	Runs commands on extreme switches and processes the output.
-cat5rancid.in	Runs commands on cisco cat5 switches and processes the output.
+xrancid.in	Runs commands on extreme switches and processes the output.
+cat5rancid.in	Runs commands on cisco Cat switches and processes the output.
 blogin.in	Expect script that logs into baynet/nortel routers either
 		interactively, runs a set of commands, or runs another expect
 		script.
@@ -32,7 +33,7 @@ elogin.in	Expect script that logs into ADC EZ-T3 muxes either
 		script.
 flogin.in	Expect script that logs into foundry switches.  Once foundry
 		cleans up their bloody UI, clogin should do the job.
-blogin.in	Expect script that logs into hp procurve switches either
+hlogin.in	Expect script that logs into hp procurve switches either
 		interactively, runs a set of commands, or runs another expect
 		script.
 jlogin.in	Expect script that logs into juniper routers similarly to
@@ -43,6 +44,7 @@ jlogin.in	Expect script that logs into juniper routers similarly to
 par.in		Parallel processing of commands - any commands.
 rename.in	Perl script to rename files.
 create_cvs.in	Creates all of the CVS and config directories.
+hpfilter.c	HP procurve login filter - see end of hlogin(1).
 man/		man pages
 util/		utilities / contribs
 util/lg		looking glass
@@ -57,7 +59,8 @@ mkinstalldirs	GNU autoconf shell script to make installation directories
 rancid will also need to have the following packages:
 cvs		code revision system available from prep.ai.mit.edu:/pub/gnu
 gnudiff		gnudiff provides the uni-diff (-u) option.  if you do not have
-		gnudiff, configure will use 'diff -c' or 'diff -C'.
+		gnudiff, configure will set-up rancid to use 'diff -c' or
+		'diff -C'.
 perl5		perl version 5 or greater available from www.cpan.org
 expect		http://expect.nist.gov/  we highly suggest that you stick to
 		expect 5.24.1 (or so).  this seems to work best.  note that
@@ -133,10 +136,12 @@ Quick Installation Guide (an example):
 8) For each "group", modify the router.db file in the group directory.
    The file is of the form "router:mfg:state" where "router" is
    the name (we use FQDN) of the router, mfg is the manufacturer
-   from the set of (cisco|ezt3|extreme|foundry|juniper|redback|cat5), and
-   "state" is either up or down.  Each router listed as "up" will have the
-   configuration grabbed.  Note: manufacturer cat5 is intended only for
-   catalyst switches running catalyst (not IOS) code.
+   from the set of
+   (alteon|baynet|cat5|cisco|extreme|ezt3|foundry|hp|juniper|redback),
+   and "state" is either up or down.  Each router listed as "up"
+   will have the configuration grabbed.  Note: manufacturer cat5
+   is intended only for cisco catalyst switches running catalyst (not
+   IOS) code.
 
    eg <basedir>/<group>/router.db:
 	cisco-router.domain.com:cisco:up
@@ -157,7 +162,7 @@ Quick Installation Guide (an example):
 	# run config differ hourly
 	1 * * * * <BASEDIR>/bin/do-diffs
 	# clean out config differ logs
-	50 23 * * * /usr/bin/find <BASEDIR>/logs -mtime +2 -exec rm {} \;
+	50 23 * * * /usr/bin/find <BASEDIR>/logs -type f -mtime +2 -exec rm {} \;
 
 11) Note: If you are using any of these programs (other than
     do-diffs) out of cron, make sure that you set your $PATH

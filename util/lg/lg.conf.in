@@ -35,7 +35,14 @@ $ENV{PATH}="@prefix@/bin:@ENV_PATH@";
 #$LG_IMAGE="<img src=rancid.gif hspace=0>\n";
 #
 #
-# LG_LOG	is either a FQPN (fully qualified path name) the syslog
+# LG_INFO	is info in html format to output at the bottom of main form.
+#		it might be local contact information, disclaimer, etc.  this
+#		is just handed to print, so \n and the like will work.
+#
+#$LG_INFO="For support, contact <a href=\"mailto:webmaster\@localhost\">webmaster</a>";
+#
+#
+# LG_LOG	is either a FQPN (fully qualified path name) or the syslog
 #		facility to use for logging.  if not defined, the LG
 #		will log to LG_CACHE_DIR/lg.log.  possible syslog facility
 #		values are from the facility codes in /usr/include/syslog.h
@@ -56,7 +63,7 @@ $ENV{PATH}="@prefix@/bin:@ENV_PATH@";
 #		option; the group directories and router.db files' modes may
 #		have to be changed, depending upon the UID/GID of the user
 #		your server (httpd) runs under, since rancid's default mask
-#		is 007 (see bin/env).  routers marked 'down' are skipped.
+#		is 007 (see bin/env).  routers not marked 'up' are skipped.
 #
 #$LG_ROUTERDB="@prefix@/util/lg/router.db";
 #

@@ -5,6 +5,9 @@
 do-diffs \- run rancid for each of the groups
 .SH SYNOPSIS
 .B do-diffs
+[\c
+.BI \-r\ \c
+device_name]\ \c
 [group [group ...]]
 .SH DESCRIPTION
 .B do-diffs
@@ -53,6 +56,16 @@ For example:
 .fi
 .in -1i
 .\"
+.PP
+.\"
+The command-line options are as follows:
+.TP
+.B \-r device_name
+Specify the name, as it appears in a group's router.db, of a particular
+device to collect and generate diffs for.  The device must be marked "up".
+If a group is not specified on the command-line, rancid will be run 
+against any group in which the device_name appears.
+.\"
 .SH ENVIRONMENT
 .B do-diffs
 utilizes the following environment variables from
@@ -92,4 +105,5 @@ configuration file.
 .El
 .SH SEE ALSO
 .BR control_rancid (1),
+.BR router.db (5),
 .BR env (5)

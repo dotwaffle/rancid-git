@@ -28,6 +28,8 @@ sub readconf
     local(*CONF);
     if (defined($env{LG_CONF})) {
 	$conffile = $env{LG_CONF};
+    } elsif (-e "lg.conf") {
+	$conffile = "lg.conf";
     } else {
 	$conffile = "$BASEDIR/util/lg/lg.conf";
     }
@@ -199,6 +201,7 @@ TAIL
 
 print <<TAIL ;
 <p>
+$LG_INFO
 </body>
 TAIL
 
