@@ -54,7 +54,7 @@ if {[ info exists env(CISCO_USER) ] } {
     # (without options) on all machines/OSes I've been on recently -
     # unlike whoami or id -nu.
     if [ catch {exec id} reason ] {
-	send_error "Error: could not exec id: $reason\n"
+	send_error "\nError: could not exec id: $reason\n"
 	exit 1
     }
     regexp {\(([^)]*)} "$reason" junk default_user
@@ -106,7 +106,7 @@ for {set i 0} {$i < $argc} {incr i} {
 		set sfile [ lindex $argv $i ]
 	    }
 	    if { ! [ file readable $sfile ] } {
-		send_user "Error: Can't read $sfile\n"
+		send_user "\nError: Can't read $sfile\n"
 		exit 1
 	    }
 	    set do_script 1
@@ -144,7 +144,7 @@ for {set i 0} {$i < $argc} {incr i} {
 		set cypher [ lindex $argv $i ]
 	    }
 	} -* {
-	    send_user "Error: Unknown argument! $arg\n"
+	    send_user "\nError: Unknown argument! $arg\n"
 	    send_user $usage
 	    exit 1
 	} default {
@@ -154,7 +154,7 @@ for {set i 0} {$i < $argc} {incr i} {
 }
 # Process routers...no routers listed is an error.
 if { $i == $argc } {
-    send_user "Error: $usage"
+    send_user "\nError: $usage"
 }
 
 # Only be quiet if we are running a script (it can log its output
@@ -220,16 +220,16 @@ proc find {var router} {
 proc source_password_file { password_file } {
     global env
     if { ! [file exists $password_file] } {
-	send_user "Error: password file ($password_file) does not exist\n"
+	send_user "\nError: password file ($password_file) does not exist\n"
 	exit 1
     }
     file stat $password_file fileinfo
     if { [expr ($fileinfo(mode) & 007)] != 0000 } {
-	send_user "Error: $password_file must not be world readable/writable\n"
+	send_user "\nError: $password_file must not be world readable/writable\n"
 	exit 1
     }
     if [ catch {source $password_file} reason ] {
-	send_user "Error: $reason\n"
+	send_user "\nError: $reason\n"
 	exit 1
     }
 }
@@ -244,7 +244,7 @@ proc login { router user passwd prompt cmethod cyphertype identfile} {
     foreach prog [lrange $cmethod 0 end] {
 	if ![string compare $prog "telnet"] {
 	    if [ catch {spawn telnet $router} reason ] {
-		send_user "Error: telnet failed: $reason\n"
+		send_user "\nError: telnet failed: $reason\n"
 		exit 1
 	    }
 	} elseif ![string compare $prog "ssh"] {
@@ -253,22 +253,22 @@ proc login { router user passwd prompt cmethod cyphertype identfile} {
 	    # spaces correctly.
 	    if {$identfile != ""} {
 		if [ catch {spawn ssh -c $cyphertype -x -l $user -i $identfile $router} reason ] {
-		    send_user "Error: failed to ssh: $reason\n"
+		    send_user "\nError: failed to ssh: $reason\n"
 		    exit 1
 		}
 	    } else {
 		if [ catch {spawn ssh -c $cyphertype -x -l $user $router} reason ] {
-		    send_user "Error: failed to ssh: $reason\n"
+		    send_user "\nError: failed to ssh: $reason\n"
 		    exit 1
 		}
 	    }
 	} elseif ![string compare $prog "rsh"] {
 	    if [ catch {spawn rsh -l $user $router} reason ] {
-		send_user "Error: rsh failed: $reason\n"
+		send_user "\nError: rsh failed: $reason\n"
 		exit 1
 	    }
 	} else {
-	    puts "ERROR: unknown connection method: $prog"
+	    puts "\nError: unknown connection method: $prog"
 	    return 1
 	}
 	incr progs -1
@@ -308,32 +308,32 @@ proc login { router user passwd prompt cmethod cyphertype identfile} {
 		   send_user "\nError: Connection Refused ($prog)\n"; return 1
 		}
 	    }
-            eof { send_user "Error: Couldn't login\n"; wait; return 1
+            eof { send_user "\nError: Couldn't login\n"; wait; return 1
 	    } -nocase "unknown host\r\n" {
 		catch {close};
-		send_user "Error: Unknown host\n"; wait; return 1
+		send_user "\nError: Unknown host\n"; wait; return 1
 	    } "Host is unreachable" {
 		catch {close};
-		send_user "Error: Host Unreachable!\n"; wait; return 1
+		send_user "\nError: Host Unreachable!\n"; wait; return 1
 	    } "No address associated with name" {
 		catch {close};
-		send_user "Error: Unknown host\n"; wait; return 1
+		send_user "\nError: Unknown host\n"; wait; return 1
 	    }
 	    -re "Enter passphrase for RSA key '\[^'\]*': " {
 		send_user "\nKey has passphrase!\n"
 		send "$passphrase\r"
 		exp_continue }
-	    -re "Host key not found .* \(yes\/no\)\?"	{
+	    -re "(Host key not found |The authenticity of host .* be established).*\(yes\/no\)\?" {
 		send "yes\r"
-		send_user "Host $router added to the list of known hosts.\n"
+		send_user "\nHost $router added to the list of known hosts.\n"
 		exp_continue }
 	    -re "HOST IDENTIFICATION HAS CHANGED.* \(yes\/no\)\?"	{
 		send "no\r"
-		send_user "Error: The host key for $router has changed.  update the known_hosts file accordingly.\n"
+		send_user "\nError: The host key for $router has changed.  update the known_hosts file accordingly.\n"
 		return 1 }
 	    -re "(Username|\[\r\n]login):"	{ send "$user\r"
 		expect {
-		    eof             	{ send_user "Error: Couldn't login\n";
+		    eof             	{ send_user "\nError: Couldn't login\n";
 					  wait; return 1 }
 		    -re "\[Pp]assword:"	{ send "$passwd\r" }
 		    "$prompt"		{ set in_proc 0; return 0 }
@@ -342,13 +342,13 @@ proc login { router user passwd prompt cmethod cyphertype identfile} {
 	    }
 	    "\[Pp]assword:"	{ send "$passwd\r"
 		expect {
-		eof             { send_user "Error: Couldn't login\n"; wait; return 1 }
+		eof             { send_user "\nError: Couldn't login\n"; wait; return 1 }
 		"$prompt"       { set in_proc 0; return 0 }
 	    }
 	    exp_continue
 	}
 	"$prompt"       { break; }
-	denied		{ send_user "Error: Check your passwd for $router\n"
+	denied		{ send_user "\nError: Check your passwd for $router\n"
 	                  if { $do_command || $do_script } {
 			      send "quit"
 			      wait
@@ -357,7 +357,7 @@ proc login { router user passwd prompt cmethod cyphertype identfile} {
 			      return 1
 			  }
 	                }
-	"% Bad passwords" {send_user "Error: Check your passwd for $router\n"; return 1 }
+	"% Bad passwords" {send_user "\nError: Check your passwd for $router\n"; return 1 }
     }
   }
     set in_proc 0

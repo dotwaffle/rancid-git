@@ -266,9 +266,6 @@ sub FlailHelplessly {
 	"show slot table",
 	"show config"
 );
-# dir /flash
-# dir /pcmcia0
-# dir /pcmcia1
 
 $redback_cmds=join(";",@commands);
 $cmds_regexp=join("|",@commands);

@@ -341,8 +341,7 @@ TOP: while(<INPUT>) {
 	$clean_run=1;
 	last;
     }
-    if (/Error:/) {
-	s/^.*Error:/Error:/;
+    if (/^Error:/) {
 	print STDOUT ("$host flogin error: $_");
 	print STDERR ("$host flogin error: $_") if ($debug);
 	$clean_run=0;

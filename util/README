@@ -5,3 +5,4 @@ sources included for convenience.
 README		This file.
 lg		looking glass pkg
 rtrfilter	mail filter for diffs
+downreport	Daily report of routers not listed as up in router.db

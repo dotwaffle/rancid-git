@@ -14,7 +14,7 @@ PACKAGE=rancid
 # VERSION needs to be updated such that 'make dist' uses the correct
 # filename for the directory name and tarball.
 AC_SUBST(VERSION)
-VERSION=2.1
+VERSION=2.2b
 
 AM_MAINTAINER_MODE()
 
@@ -157,14 +157,14 @@ rd_cv_rd_bin_datas=$RD_BIN_DATAS
 
 # RD_BIN_PROGS are bin/ .in's that need to be installed with execute perms.
 RD_BIN_PROGS="cat5rancid control_rancid \
-clogin create_cvs do-diffs elogin erancid \
+alogin arancid clogin create_cvs do-diffs elogin erancid \
 flogin francid jlogin jrancid par rancid-fe \
 rancid rename rrancid"
 AC_SUBST(RD_BIN_PROGS)
 rd_cv_rd_bin_progs=$RD_BIN_PROGS
 
 # RD_UTIL_PROGS are util/ .in's that need to be installed with execute perms.
-RD_UTIL_PROGS="rtrfilter"
+RD_UTIL_PROGS="rtrfilter downreport"
 AC_SUBST(RD_UTIL_PROGS)
 rd_cv_rd_util_progs=$RD_UTIL_PROGS
 

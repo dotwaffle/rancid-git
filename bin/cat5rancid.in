@@ -1047,8 +1047,7 @@ TOP: while(<INPUT>) {
 	$clean_run=1;
 	last;
     }
-    if (/Error:/) {
-	s/^.*Error:/Error:/;
+    if (/^Error:/) {
 	print STDOUT ("$host clogin error: $_");
 	print STDERR ("$host clogin error: $_") if ($debug);
 	$clean_run=0;

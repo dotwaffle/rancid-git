@@ -1,3 +1,18 @@
+2.2b
+	bin/alogin and changes of beta quality for Alteon WebOS switch
+	from andrew fort.
+
+	Check for more types of cisco 12000s.  Also check for 2600s.
+
+	jrancid's show chassis hardware needs detail arg in junos 4.4
+
+	make *login print \n before errors, so rancid can use an anchored
+	match to find login errors and avoid such matches in router o/p.
+
+	make *login automatically add host keys with openssh's prompting
+
+	All routers not listed as 'up' in router.db are considered down.
+
 2.1
 	Change default umask to 027 (it was 007) mainly as an
 	attempt to stop people from changing stuff in rancid's CVS

@@ -16,16 +16,17 @@
 ##
 ##
 #
-# elogin - ADC EZT3 login
+# alogin - Alteon WebOS switch login
 #
-# Most options are intuitive for logging into an ADC EZT3 mux.
+# afort@choqolat.org is responsible for this particular mess
+# (andrew fort) 
 #
 
 # Usage line
-set usage "Usage: $argv0 \[-noenable\] \[-c command\] \
-\[-f cloginrc-file\] \[-p user-password\] \
-\[-s script-file\] \[-t timeout\] \[-u username\] \
-\[-v vty-password\] \[-w enable-username\] \[-x command-file\] \
+set usage "Usage: $argv0 \[-c command\]\
+\[-f cloginrc-file\]\
+\[-s script-file\] \[-t timeout\] \[-u username\]\
+\[-v vty-password\] \[-x command-file\]\
 \[-y ssh_cypher_type\] router \[router...\]\n"
 
 # env(CLOGIN) may contain:
@@ -54,7 +55,7 @@ if {[ info exists env(CISCO_USER) ] } {
     # (without options) on all machines/OSes I've been on recently -
     # unlike whoami or id -nu.
     if [ catch {exec id} reason ] {
-	send_error "\nError: could not exec id: $reason\n"
+	send_error "Error: could not exec id: $reason\n"
 	exit 1
     } 
     regexp {\(([^)]*)} "$reason" junk default_user
@@ -75,14 +76,6 @@ for {set i 0} {$i < $argc} {incr i} {
 		incr i
 		set username [ lindex $argv $i ]
 	    }
-	# VTY Password
-	} -p* -
-	-P* {
-	    if {! [  regexp .\[pP\](.+) $arg ignore userpasswd]} {
-		incr i
-		set userpasswd [ lindex $argv $i ]
-	    }
-	    set do_passwd 0
 	# VTY Password
 	} -v* -
 	-v* {
@@ -115,7 +108,7 @@ for {set i 0} {$i < $argc} {incr i} {
 		set sfile [ lindex $argv $i ]
 	    }
 	    if { ! [ file readable $sfile ] } {
-		send_user "\nError: Can't read $sfile\n"
+		send_user "Error: Can't read $sfile\n"
 		exit 1
 	    }
 	    set do_script 1
@@ -159,7 +152,7 @@ for {set i 0} {$i < $argc} {incr i} {
 	} -autoenable {
 	# ignore -autoenable
 	} -* {
-	    send_user "\nError: Unknown argument! $arg\n"
+	    send_user "Error: Unknown argument! $arg\n"
 	    send_user $usage
 	    exit 1
 	} default {
@@ -169,7 +162,7 @@ for {set i 0} {$i < $argc} {incr i} {
 }
 # Process routers...no routers listed is an error.
 if { $i == $argc } {
-    send_user "\nError: $usage"
+    send_user "Error: $usage"
 }
 
 # Only be quiet if we are running a script (it can log its output
@@ -236,34 +229,52 @@ proc find {var router} {
 proc source_password_file { password_file } {
     global env
     if { ! [file exists $password_file] } {
-	send_user "\nError: password file ($password_file) does not exist\n"
+	send_user "Error: password file ($password_file) does not exist\n"
 	exit 1
     }
     file stat $password_file fileinfo
     if { [expr ($fileinfo(mode) & 007)] != 0000 } {
-	send_user "\nError: $password_file must not be world readable/writable\n"
+	send_user "Error: $password_file must not be world readable/writable\n"
 	exit 1
     }
     if [ catch {source $password_file} reason ] {
-	send_user "\nError: $reason\n"
+	send_user "Error: $reason\n"
 	exit 1
     }
 }
 
 
 # Log into the router.
-proc login { router user userpswd passwd prompt cyphertype } {
+proc login { router user userpswd passwd prompt cmethod cyphertype } {
     global spawn_id in_proc do_command do_script
     global u_prompt p_prompt
     set in_proc 1
     set tryssh 1
 
-    # Telnet to the router & try to login.
-    if [ catch {spawn telnet $router} reason ] {
-	send_user "\nError: failed to telnet: $reason\n"
-	exit 1
-    }
-    sleep 0.3
+    # try each of the connection methods in $cmethod until one is successful
+    set progs [llength $cmethod]
+    foreach prog [lrange $cmethod 0 end] {
+        if ![string compare $prog "telnet"] {
+            if [ catch {spawn telnet $router} reason ] {
+                send_user "Error: telnet failed: $reason\n"
+                exit 1
+            }
+        } elseif ![string compare $prog "ssh"] {
+            if [ catch {spawn ssh -c $cyphertype -x -l $user $router} reason ] {
+                send_user "Error: ssh failed: $reason\n"
+                exit 1
+            }
+        } elseif ![string compare $prog "rsh"] {
+            if [ catch {spawn rsh -l $user $router} reason ] {
+                send_user "Error: rsh failed: $reason\n"
+                exit 1
+            }
+        } else {
+            puts "ERROR: unknown connection method: $prog"
+            return 1
+        }
+        incr progs -1
+        sleep 0.3
 
     # This helps cleanup each expect clause.
     expect_after {
@@ -291,23 +302,23 @@ proc login { router user userpswd passwd prompt cyphertype } {
 	    close; wait
 	    sleep 0.3
 		expect eof
-		send_user "\nError: Connection Refused\n"; wait; return 1
-	} eof { send_user "\nError: Couldn't login\n"; wait; return 1
+		send_user "Error: Connection Refused\n"; wait; return 1
+	} eof { send_user "Error: Couldn't login\n"; wait; return 1
 	} "Unknown host\r\n" {
 	    expect eof
-	    send_user "\nError: Unknown host\n"; wait; return 1
+	    send_user "Error: Unknown host\n"; wait; return 1
 	} "Host is unreachable" {
 	    expect eof
-	    send_user "\nError: Host Unreachable!\n"; wait; return 1
+	    send_user "Error: Host Unreachable!\n"; wait; return 1
 	} "No address associated with name" {
 	    expect eof
-	    send_user "\nError: Unknown host\n"; wait; return 1
+	    send_user "Error: Unknown host\n"; wait; return 1
 	}
 	-re "$u_prompt"	{ send "$user\r"
 	    expect {
-		"Login incorrect"	{ send_user "\nError: Couldn't login\n";
+		"Login incorrect"	{ send_user "Error: Couldn't login\n";
 					  catch {close}; wait; return 1 }
-		eof			{ send_user "\nError: Couldn't login\n"; wait; return 1 }
+		eof			{ send_user "Error: Couldn't login\n"; wait; return 1 }
 		-re "$p_prompt"		{ send "$userpswd\r" }
 		"$prompt"		{ set in_proc 0; return 0 }
 	    }
@@ -315,17 +326,19 @@ proc login { router user userpswd passwd prompt cyphertype } {
 	}
 	-re "$p_prompt"	{ send "$passwd\r"
 	    expect {
-		"Password incorrect"	{ send_user "\nError: Couldn't login\n";
+		"Password incorrect"	{ send_user "Error: Couldn't login\n";
 					  catch {close}; wait; return 1 }
-		eof		{ send_user "\nError: Couldn't login\n"; wait; return 1 }
+		eof		{ send_user "Error: Couldn't login\n"; wait; return 1 }
 		"$prompt"	{ set in_proc 0; return 0 }
+		"Confirm seeing above note" { send "y\r" }
 	    }
 	    exp_continue
 	}
-	"Password incorrect"	{ send_user "\nError: Check your password for $router\n";
+	-re "^Confirm seeing above note" { send "y\r" }
+	"Password incorrect"	{ send_user "Error: Check your password for $router\n";
 				  catch {close}; wait; return 1 }
 	"$prompt"	{ }
-	denied		{ send_user "\nError: Check your passwd for $router\n"
+	denied		{ send_user "Error: Check your passwd for $router\n"
 			    if { $do_command || $do_script } {
 			      send "exit\r"
 			      wait
@@ -339,13 +352,14 @@ proc login { router user userpswd passwd prompt cyphertype } {
     set in_proc 0
     return 0
 }
+}
 
 # Run commands given on the command line.
 proc run_commands { prompt command } {
     global in_proc
     set in_proc 1
 
-    send "screen 0\r"
+    send "lines 0\r"
     expect $prompt {}
 
     regsub -all "\[)(]" $prompt {\\&} reprompt
@@ -358,22 +372,28 @@ proc run_commands { prompt command } {
 	for {set i 0} {$i < $num_commands} { incr i} {
 	    send "[subst -nocommands [lindex $commands $i]]\r"
 	    expect {
-		-re "^\[^\n\r]*$reprompt."	{ exp_continue }
-		-re "^\[^\n\r *]*$reprompt"	{}
+		-re "^\[^\n\r]*$reprompt."	{}
+		-re "^\[^\n\r ]*>>.*$reprompt"	{ exp_continue }
 		-re "\[\n\r]"			{ exp_continue }
 	    }
 	}
     } else {
 	send "[subst -nocommands $command]\r"
 	expect {
-		-re "^\[^\n\r]*$reprompt."	{ exp_continue }
-		-re "^\[^\n\r *]*$reprompt"	{}
+		-re "^\[^\n\r]*$reprompt."	{}
+		-re "^\[^\n\r ]*>>.*$reprompt"	{ exp_continue }
 		-re "\[\n\r]"			{ exp_continue }
 	}
     }
     send "exit\r"
     expect {
+	-re "^WARNING: There are unsaved configuration changes."
+ 	{
+		send "y\r"
+		exp_continue
+	}
 	"\n" { exp_continue }
+	"\[^\n\r *]*Session terminated" { return 0 }
 	timeout { return 0 }
 	eof { return 0 }
     }
@@ -390,7 +410,7 @@ foreach router [lrange $argv $i end] {
     send_user "$router\n"
 
     # Figure out prompt.
-    set prompt "Active) > "
+    set prompt "#"
 	    set autoenable 1
 	    set enable 0
 
@@ -437,8 +457,12 @@ foreach router [lrange $argv $i end] {
       if { "$cyphertype" == "" } { set cyphertype "3des" }
     }
 
+    # Figure out connection method
+    set cmethod [find method $router]
+    if { "$cmethod" == "" } { set cmethod {{telnet} {ssh}} }
+
     # Login to the router
-    if {[login $router $ruser $userpswd $passwd $prompt $cyphertype]} {
+    if {[login $router $ruser $userpswd $passwd $prompt $cmethod $cyphertype]} {
 	continue
     }
 
@@ -447,7 +471,7 @@ foreach router [lrange $argv $i end] {
 	    continue
 	}
     } elseif { $do_script } {
-	send "screen 0\r"
+	send "lines 0\r"
 	expect $prompt	{}
 	source $sfile
 	close

@@ -133,7 +133,7 @@ sub filter {
 
 sub usage {
     print STDERR <<USAGE;
-usage: $me [-h] [-i <perl regex>] [-x <perl regex>] [-f <regex file>] [-u <From: address> [-s <subject>] <mail rcpt> [<rcpt> ...]
+usage: $me [-h] [-i <perl regex>] [-x <perl regex>] [-f <regex file>] [-u <From: address>] [-s <subject>] <mail rcpt> [<rcpt> ...]
 	-h prints this message
 	-f file containing perl regex matching router names (mind the cwd())
 	-i perl regex matching router names (inclusive)

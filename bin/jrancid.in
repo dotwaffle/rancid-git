@@ -392,7 +392,7 @@ sub DoNothing {print STDOUT;}
 	"show chassis environment"	=> "ShowChassisEnvironment",
 	"show chassis firmware"		=> "ShowChassisFirmware",
 	"show chassis fpc detail"	=> "ShowChassisFpcDetail",
-	"show chassis hardware"		=> "ShowChassisHardware",
+	"show chassis hardware detail"	=> "ShowChassisHardware",
 	"show chassis routing-engine"	=> "ShowChassisRoutingEngine",
 	"show chassis scb"		=> "ShowChassisSCB",
 	"show chassis sfm detail"	=> "ShowChassisSCB",
@@ -407,7 +407,7 @@ sub DoNothing {print STDOUT;}
 	"show chassis environment",
 	"show chassis firmware",
 	"show chassis fpc detail",
-	"show chassis hardware",
+	"show chassis hardware detail",
 	"show chassis routing-engine",
 	"show chassis scb",
 	"show chassis sfm detail",
@@ -447,7 +447,6 @@ ProcessHistory("","","","# RANCID-CONTENT-TYPE: juniper\n#\n");
 TOP: while(<INPUT>) {
     tr/\015//d;
     if (/^Error:/) {
-	s/^.*Error:/Error:/;
 	print STDOUT ("$host jlogin error: $_");
 	print STDERR ("$host jlogin error: $_") if ($debug);
 	$clean_run=0;

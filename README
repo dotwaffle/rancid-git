@@ -83,6 +83,8 @@ Quick Installation Guide (an example):
 	LIST_OF_GROUPS="backbone aggregation switches"
 
 4) Put .cloginrc in the home directory of the user who will run rancid.
+   .cloginrc must be not be readable/writable/executable by "others",
+   i.e.: .cloginrc must be mode 0600 or 0640.
 
 5) Modify .cloginrc.
 
@@ -113,8 +115,8 @@ Quick Installation Guide (an example):
    for more information on handling of '+'.
 
 7) Run create_cvs.
-   This creates all of the CVS necessary directories and all of the
-   config directories.
+   This creates all of the necessary directories and config files for
+   each of the groups in LIST_OF_GROUPS and imports them into CVS.
 
 8) For each "group", modify the router.db file in the group directory.
    The file is of the form "router:mfg:state" where "router" is
@@ -131,7 +133,11 @@ Quick Installation Guide (an example):
 	juniper-router.domain.com:juniper:up
 	redback-dsl-router.domain.com:redback:down
 
-9) Put do-diffs in cron to be called however often you want it to
+9) For first-time users or new installations, run bin/do-diffs (with no
+   arguments) and check the resulting log file(s) (in logs/*) for errors.
+   Repeat until there are no errors.
+
+10) Put do-diffs in cron to be called however often you want it to
    run for each group (do-diffs [<GROUP>]).  If you run it less
    often than once/hour, check the setting of OLDTIME in bin/env.
    E.g.:
@@ -140,7 +146,7 @@ Quick Installation Guide (an example):
 	# clean out config differ logs
 	50 23 * * * /usr/bin/find <BASEDIR>/logs -mtime +2 -exec rm {} \;
 
-10) Note: If you are using any of these programs (other than
+11) Note: If you are using any of these programs (other than
     do-diffs) out of cron, make sure that you set your $PATH
     correctly so that they work.  E.g.: if you are using clogin,
     it can call id, telnet, ssh, and/or rsh.
@@ -150,7 +156,7 @@ Quick Installation Guide (an example):
 
 	50 23 * * * . /usr/local/rancid/bin/env; clogin -c 'sh vers' router
 
-11) Send any bugs, suggestions or updates to rancid@shrubbery.net.
+12) Send any bugs, suggestions or updates to rancid@shrubbery.net.
     See the web page at http://www.shrubbery.net/rancid.  We have
     created the standard mailing lists for those interested;
     rancid-announce@shrubbery.net and rancid-discuss@shrubbery.net.

@@ -194,6 +194,8 @@ sub ShowVersion {
 		$type = "AGS+";
 	    } elsif ( $1 eq "2511" || $1 eq "2524" || $1 eq "AS2511-RJ") {
 		$type = "2500";
+	    } elsif ( $1 =~ /261[01]/ || $1 =~ /262[01]/ ) {
+		$type = "2600";
 	    } elsif ( $1 eq "3620" || $1 eq "3640") {
 		$type = "3600";
 	    } elsif ( $1 eq "RSP7000") {
@@ -207,6 +209,8 @@ sub ShowVersion {
 	    } elsif ( $1 =~ /720[246]/) {
 		$type = "7200";
 	    } elsif ( $1 =~ /1200[48]\/GRP/ || $1 =~ /1201[26]\/GRP/) {
+		$type = "12000";
+	    } elsif ( $1 =~ /1201[26]-8R\/GRP/) {
 		$type = "12000";
 	    } elsif ( $1 =~ /WS-C29/) {
 		$type = "2900XL";
@@ -429,7 +433,7 @@ sub DirSlotN {
 	return(1) if /\%Error: No such file or directory/;
 	return(1) if /No space information available/;
 	return(-1) if /\%Error calling/;
-	return(-1) if /: device being squeezed/; # Flash is busy
+	return(-1) if /(: device being squeezed|ATA_Status time out)/i; # busy
 	return(-1) if (/command authorization failed/i);
 	return(1) if /(Open device \S+ failed|Error opening \S+:)/;
 	ProcessHistory("FLASH","","","!Flash: $dev: $_");
@@ -1112,8 +1116,7 @@ TOP: while(<INPUT>) {
 	$clean_run=1;
 	last;
     }
-    if (/Error:/) {
-	s/^.*Error:/Error:/;
+    if (/^Error:/) {
 	print STDOUT ("$host clogin error: $_");
 	print STDERR ("$host clogin error: $_") if ($debug);
 	$clean_run=0;

@@ -37,6 +37,8 @@ if ($vendor =~ /^cisco$/i) {
     exec('francid', $router);
 } elsif ($vendor =~ /^redback$/i) {
     exec('rrancid', $router);
+} elsif ($vendor =~ /^alteon$/i) {
+    exec('arancid', $router);
 }
 
 printf(STDERR "unknown router manufacturer for $router: $vendor\n");

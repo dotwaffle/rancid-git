@@ -1,7 +1,8 @@
 #!@PERLV_PATH@
 ##
-## Hacked version of rancid for ADC EZT3 series muxes. Only tested
-## with switch software 1.50 so far - terry@tmk.com
+## Hacked version of rancid for Alteon WebOS switches 
+## tested with: ad3 v8.1.18
+## afort@choqolat.org (andrew fort)
 ##
 ##
 ## Copyright (C) 1997 by Henry Kilmer.
@@ -20,8 +21,10 @@
 ##
 #
 #  RANCID - Really Awesome New Cisco confIg Differ
+#           
+# arancid - Alteon WebOS plugin for rancid
 #
-# usage: rancid [-d] [-l] [-f filename | $host]
+# usage: arancid [-d] [-l] [-f filename | $host]
 #
 use Getopt::Std;
 getopts('dflm');
@@ -31,6 +34,7 @@ $file = $opt_f;
 $host = $ARGV[0];
 $clean_run = 0;
 $found_end = 0;
+$prompt = "#";
 $timeo = 90;			# clogin timeout in seconds
 
 # This routine is used to print out the router configuration
@@ -133,69 +137,58 @@ sub sortbyipaddr {
     &ipaddrval($a) <=> &ipaddrval($b);
 }
 
-# This routine parses "show version"
+# This routine parses "/info/sys" (cf. show version)
 sub ShowVersion {
-    print STDERR "    In ShowVersion: $_" if ($debug);
+	print STDERR "    In ShowVersion: $_" if ($debug);
 
-    ProcessHistory("COMMENTS","keysort","A1",
-	"- Chassis type:EZT3 - an ADC EZT3 M13 multiplexor\n");
-
-    while (<INPUT>) {
-	tr/\015//d;
-	last if(/Active\) >/);
-	next if(/^(\s*|\s*$cmd\s*)$/);
-
-	/Boot Version (\S*)/ &&
-	    ProcessHistory("COMMENTS","keysort","G1",
-		"- ROM Bootstrap: $1\n") && next;
-	/Software Version (\S*)/ &&
-	    ProcessHistory("COMMENTS","keysort","F1",
-		"- Software: $1\n") && next;
-    }
-    return(0);
+	while (<INPUT>)  {
+	    tr/\015//d;
+	    last if (/^>>.*$prompt/);
+	    next if(/^(\s*|\s*$cmd\s*)$/);  
+		
+	/^(ACEdirector.*|ACEswitch.*|Alteon.*)/i && 
+	  ProcessHistory("COMMENTS","keysort","A1", "\/\*Model: $1\n") && next;
+	/^Software Version\s+(.*?)\s\((.*)\)/i &&
+	  ProcessHistory("COMMENTS","keysort","B1", "\/\*Image: Software: $1 ($2)\n") && next;
+	/^Hardware Part No:\s+(.*?)\s+/i &&
+	  ProcessHistory("COMMENTS","keysort","A2", "\/\*Hardware part no: $1\n") && next;
+	/^MAC address:\s+([0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2})/i &&
+	  ProcessHistory("COMMENTS","keysort","C1", "\/\*Base MAC address: $1\n") && next; 
+	}
+	return(0);
 }
 
-# This routine parses "show module"
-sub ShowModule {
-    print STDERR "    In ShowModule: $_" if ($debug);
-
-    # eat the header line
-    $junk = <INPUT>;
-
-    ProcessHistory("SLOT","","","-\n");
-
-    # now just copy it verbatim to the history file
-    while (<INPUT>) {
-        tr/\015//d;
-        last if(/Active\) >/);
-	last if(/^$/);
-	chop;
-	ProcessHistory("SLOT","","","-$_\n");
-    }
-    ProcessHistory("SLOT","","","-\n");
-}
-
-# This routine processes a "write term"
+# This routine processes a "/cfg/dump"
 sub WriteTerm {
     print STDERR "    In WriteTerm: $_" if ($debug);
 
     # eat the header line
-    $junk = <INPUT>;
+    #$junk = <INPUT>;
 
     # now just copy it verbatim to the history file
     while (<INPUT>) {
         tr/\015//d;
-        last if(/Active\) >/);
+        last if(/^>>.*$prompt/);
 	chop;
-	if (/^\s*snmp/ && defined($ENV{'NOCOMMSTR'})) {
-	    /snmp (getcomm|setcomm|trapcomm)(\s+)(\S*)/ &&
-	    ProcessHistory("","","","-   snmp $1$2\"<removed>\"\n") && next;
-	}
-	# believe it or not, "-" is the "whole line is comment" command
+	print $ENV{'NOCOMMSTR'};
+        /(rcomm|wcomm|t1com|t2com)(\s+)(.*)/ && 
+	    ProcessHistory("","","","\/\*\t$1$2\"<removed>\"\n") && next;
+	#if (/^\s*snmp/ && defined($ENV{'NOCOMMSTR'})) {
+	#    /snmp (getcomm|setcomm|trapcomm)(\s+)(\S*)/ &&
+	#    ProcessHistory("","","","-   snmp $1$2\"<removed>\"\n") && next;
+	#}
+	next if (/^\/\* Configuration dump taken/i);
+        next if (/^\/\* Version.*Base MAC.*/i);
+
+		if (/^\/script end/) { 
+		$found_end = 1; 
+		ProcessHistory("","","","$_\n");
+		return(1);
+		}
+
 	ProcessHistory("","","","$_\n");
     }
-    $found_end = 1;
-    return(1);
+    return(0);
 }
 
 # dummy function
@@ -203,16 +196,14 @@ sub DoNothing {print STDOUT;}
 
 # Main
 %commands=(
-	'version'		=> "ShowVersion",
-	'equipment'		=> "ShowModule",
-	'config'		=> "WriteTerm",
+	'/info/sys'		=> "ShowVersion",
+	'/cfg/dump'		=> "WriteTerm",
 );
 # keys() doesnt return things in the order entered and the order of the
 # cmds is important (show version first and write term last). pita
 @commands=(
-	"version",
-	"equipment",
-	"config",
+	"/info/sys",
+	"/cfg/dump",
 );
 $cisco_cmds=join(";",@commands);
 $cmds_regexp=join("|",@commands);
@@ -227,49 +218,40 @@ if ($file) {
     print STDOUT "opening file $host\n" if ($log);
     open(INPUT,"<$host") || die "open failed for $host: $!\n";
 } else {
-    print STDERR "executing elogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($debug);
-    print STDOUT "executing elogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($log);
+    print STDERR "executing alogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($debug);
+    print STDOUT "executing alogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($log);
     if (defined($ENV{NOPIPE})) {
-	system "elogin -t $timeo -c \"$cisco_cmds\" $host </dev/null > $host.raw 2>&1" || die "elogin failed for $host: $!\n";
-	open(INPUT, "< $host.raw") || die "elogin failed for $host: $!\n";
+	system "alogin -t $timeo -c \"$cisco_cmds\" $host </dev/null > $host.raw 2>&1" || die "alogin failed for $host: $!\n";
+	open(INPUT, "< $host.raw") || die "alogin failed for $host: $!\n";
     } else {
-	open(INPUT,"elogin -t $timeo -c \"$cisco_cmds\" $host </dev/null |") || die "elogin failed for $host: $!\n";
+	open(INPUT,"alogin -t $timeo -c \"$cisco_cmds\" $host </dev/null |") || die "alogin failed for $host: $!\n";
     }
 }
 
-ProcessHistory("","","","- RANCID-CONTENT-TYPE: ezt3\n-\n");
-ProcessHistory("COMMENTS","keysort","B0","-\n");
-ProcessHistory("COMMENTS","keysort","F0","-\n");
-ProcessHistory("COMMENTS","keysort","G0","-\n");
-while(<INPUT>) {
+ProcessHistory("","","","\/\*RANCID-CONTENT-TYPE: alteon\n\/\*\n");
+ProcessHistory("COMMENTS","keysort","B0","\/\*\n");
+ProcessHistory("COMMENTS","keysort","F0","\/\*\n");
+TOP: while(<INPUT>) {
     tr/\015//d;
-    if (/Logging out$/) {
-	$clean_run=1;
-	last;
+    if (/^>>.*$prompt exit/) {
+      $clean_run=1;
+      last;
     }
-    if (/^Error:/) {
-	print STDOUT ("$host elogin error: $_");
-	print STDERR ("$host elogin error: $_") if ($debug);
-	$clean_run=0;
-	last;
-    }
-    while (/Active\) >\s*($cmds_regexp)\s*$/) {
-	$cmd = $1;
-	if (!defined($prompt)) {
-	    $prompt = ($_ =~ /^([^#]+#)/)[0];
-	    $prompt =~ s/([}{)(\\])/\\$1/g;
-	}
+
+    while (/>>.*$prompt\s*($cmds_regexp)\s*$/) {
+        $cmd = $1;
+        if (!defined($prompt)) {$prompt = ($_ =~ /^([^#]+#)/)[0]; }
 	print STDERR ("HIT COMMAND:$_") if ($debug);
-	if (! defined($commands{$cmd})) {
+	if (!defined($commands{$cmd})) {
 	    print STDERR "found unexpected command - \"$cmd\"\n";
 	    $clean_run = 0;
-	    last;
+            last TOP;
 	}
 	$rval = &{$commands{$cmd}};
 	delete($commands{$cmd});
 	if ($rval == -1) {
 	    $clean_run = 0;
-	    last;
+	    last TOP;
 	}
     }
 }

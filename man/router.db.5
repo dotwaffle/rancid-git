@@ -14,7 +14,7 @@ One device is listed per-line, where the syntax is:
 .PP
 .in +1i
 .nf
-<device_name>:<device_type>:<state>[:]
+<device_name>:<device_type>:<state>[:][comments]
 .fi
 .in -1i
 .PP
@@ -48,6 +48,9 @@ Domain Name) works best, as in the example above.
 The type of device from the set:
 .RS 8n
 .TP
+.B alteon
+A Alteon WebOS switches.
+.TP
 .B cat5
 A cisco catalyst switch (ie: running the catalyst OS, not IOS).
 .TP
@@ -71,9 +74,30 @@ A Redback router, NAS, etc.
 .\"
 .TP
 .B <state>
-The state is either "up" or "down".  If the device is marked "down", the
-device's
-configuration will not be collected.
+The state is either "up", or some other arbitrary value, e.g. "down".
+If the device is not marked "up" the device's configuration will not be
+collected.
+It is highly recommended that comments are made for 
+any router not listed as up, so as to indicate the
+reason a router is not to be polled, e.g.:
+.TP
+.PP
+dial1.paris:cisco:up:
+core1.paris:cisco:down:in testing until 5/5/2001.
+core2.paris:cisco:ticketed:Ticket 6054234, 5/3/2001
+border1.paris:juniper:up:
+.TP
+.PP
+Please see the script "downreport" in util/ for a
+daily report of routers in router.db that aren't
+marked "up".
+.PP
+.TP
+.B [comments]
+.TP
+.PP
+Freeform string to describe the current state of
+the router.
 .PP
 A ``#'' at the begining of a line is a comment; the entire line is
 ignored.
