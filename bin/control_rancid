@@ -1,0 +1,197 @@
+#!/bin/sh
+##
+##
+## Copyright (C) 1996 by Henry Kilmer.
+## All rights reserved.
+##
+## This software may be freely copied, modified and redistributed without
+## fee for non-commerical purposes provided that this copyright notice is
+## preserved intact on all copies and modified copies.
+##
+## There is no warranty or other guarantee of fitness of this software.
+## It is provided solely "as is". The author(s) disclaim(s) all
+## responsibility and liability with respect to this software's usage
+## or its effect upon hardware, computer systems, other software, or
+## anything else.
+##
+##
+#
+# control_rancid $GROUP
+#
+
+# Number of things par should run in parallel.
+PAR_COUNT=5
+
+# Must specify a group to run rancid
+if [ $# -lt 1 ]; then
+    echo 'must specify group'; exit 1
+else
+    GROUP=$1
+fi
+TMP=/var/tmp/rancid.$GROUP.$$
+DIR=$BASEDIR/$GROUP
+
+# Bail if we do not have the necessary info to run
+if [ ! -d $DIR ]
+then
+    (
+	echo "$DIR does not exist."
+    ) | Mail -s "no $GROUP directory" rancid-admin-$GROUP
+    exit 1
+fi
+if [ ! -f $DIR/router.db ]
+then
+    (
+	echo "$DIR/router.db does not exist."
+    ) | Mail -s "no $GROUP/router.db file" rancid-admin-$GROUP
+    exit 1;
+elif [ ! -s $DIR/router.db ]
+then
+    exit
+fi
+
+# generate the list of routers we should try to fetch
+cd $DIR
+rm -f $DIR/allrouters.new
+perl -F: -ane '{($F[0] =~ tr@A-Z@a-z@,print "$F[0]:$F[1]\n")
+	if ($F[2] =~ /^up$/i);}' $DIR/router.db | sort -u > $DIR/allrouters.new
+
+if diff $DIR/allrouters $DIR/allrouters.new > $DIR/allrouters.diffs
+then
+    rm -f $DIR/allrouters.new
+else
+    (
+	echo New routers:
+	comm -13 $DIR/allrouters $DIR/allrouters.new | sed -e 's/^/        /' -e 's/:.*$//'
+	echo
+	echo Deleted routers:
+	comm -23 $DIR/allrouters $DIR/allrouters.new | sed -e 's/^/        /' -e 's/:.*$//'
+    ) | Mail -s "changes in $GROUP routers" rancid-admin-$GROUP
+
+    cd $DIR/configs
+
+    # Add new routers to the CVS structure.
+    for router in `comm -13 $DIR/allrouters $DIR/allrouters.new`
+    do
+	OFS=$IFS
+	IFS=:
+	set $router
+	IFS=$OFS
+	router=$1
+
+	touch $router
+	cvs add $router
+	cvs commit -m 'new router' $router
+	echo "Added $router"
+    done
+    echo
+    cd $DIR
+
+    mv $DIR/allrouters.new $DIR/allrouters
+fi
+rm -f $DIR/allrouters.diffs $DIR/allrouters.new
+
+# no routers, empty list or all 'down'
+if [ ! -s $DIR/allrouters ]
+then
+	exit;
+fi
+
+# Now we can actually try to get the configs
+cd $DIR/configs
+
+# The number of processes running at any given time can be
+# tailored to the specific installation.
+echo "Trying to get all of the configs."
+par -q -n $PAR_COUNT -c "rancid-fe \{}" $DIR/allrouters
+
+# This section will generate a list of missed routers
+# and try to grab them again.  It will run through
+# $pass times.
+pass=4
+round=1
+if [ -f $DIR/allrouters.missed ]; then
+    rm -f $DIR/allrouters.missed
+fi
+while [ $round -le $pass ]
+do
+    echo "====================================="
+    echo "Getting missed routers: round $round."
+
+    for router in `cat $DIR/allrouters`
+    do
+	OFS=$IFS
+	IFS=':'
+	set $router
+	IFS=$OFS
+	router=$1; mfg=$2
+
+	if [ ! -f $DIR/configs/$router.new ]
+	then
+	    echo "$router:$mfg" >> $DIR/allrouters.missed
+	fi
+    done
+
+    if [ -f $DIR/allrouters.missed ]; then
+	par -q -n $PAR_COUNT -c "rancid-fe \{}" $DIR/allrouters.missed
+	rm -f $DIR/allrouters.missed
+	round=`expr $round + 1`
+    else
+	echo "All routers sucessfully completed."
+	round=`expr $pass + 1`
+    fi
+done
+echo
+
+# Now that we have the new configs, rename them to their proper
+# name.
+rename 's/.new$//' *.new
+
+# This has been different for different machines...
+# Diff the directory and then checkin.
+cd $DIR
+#cvs diff -c3 >$TMP.diff
+#cvs diff -C 3 >$TMP.diff
+cat > $TMP.sedf << EOF
+/^RCS file: /d
+#/^retrieving revision /d
+/^--- /d
+/^+++ /d
+s/^\([-+ ]\)/\1 /
+EOF
+cvs -f diff -u -4 | sed -f $TMP.sedf >$TMP.diff
+rm -f $TMP.sedf
+
+cvs commit -m updates
+
+# Mail out the diffs (if there are any).
+if [ -s $TMP.diff ]; then
+    sendmail -t <<EMAIL
+To: rancid-$GROUP
+Subject: $GROUP router config diffs
+Precedence: bulk
+
+`cat $TMP.diff`
+EMAIL
+fi
+
+# If any machines have not been reached within 24 hours, mail
+# out a list of them.
+cd $DIR/configs
+rm -f $DIR/routers.failed
+perl -F: -ane '{$t = (stat($F[0]))[9]; print `ls -ld $F[0]`
+	if (time() - $t >= 86400);}' $DIR/allrouters | sort -u > $DIR/routers.failed
+if [ -s $DIR/routers.failed ]
+then
+	(
+		cat <<END
+The following routers have not been successfully contacted within the
+last 24 hours.
+
+END
+		cat $DIR/routers.failed
+	) | Mail -s "config fetcher problems - $GROUP" rancid-admin-$GROUP
+fi
+
+# Cleanup
+rm -f $TMP.diff $TMP.lst

@@ -1,0 +1,35 @@
+# comments are cool, as is whitespace
+# currently clogin supports three add directives; password, user, and
+# autoenable.
+# eventually, others may be added to allow other features.
+##
+#add password sl-bb*-dc	cow24
+#add password sl-gw*-dc	geeks
+#add password sl*	hank	dog
+#add password at*	pete	cow
+#add password sdn*	mujahid	horse
+#add password icm*	peter
+#add password *		anything
+#
+#add user sl-gw*-dc	twit
+#add user sdn* 		sdn_auto
+#add user sdn-bb*	ops_eng
+#add user *		$env(USER)
+
+# customer x
+# these routers ask for a username and password.  we automatically get
+# enable access after successful authentication.
+add user *.custx.net		roger
+add password *.custx.net	{doger}
+add autoenable *.custx.net	1
+
+# customer y
+# this is the normal cisco login.  a password followed by and enable password.
+add password *.custy.net	{vector}	{victor}
+
+# customer z
+add user *.custz.net		shirley
+add password *.custz.net	{jive}		{surely}
+
+# all our routers, ie: everything else
+add password *			{clearance}	{clarence}

@@ -1,0 +1,128 @@
+#!/usr/local/bin/perl
+##
+##
+## Copyright (C) 1997 by Henry Kilmer and Peter Whiting.
+## All rights reserved.
+##
+## This software may be freely copied, modified and redistributed without
+## fee for non-commerical purposes provided that this copyright notice is
+## preserved intact on all copies and modified copies.
+## 
+## There is no warranty or other guarantee of fitness of this software.
+## It is provided solely "as is". The author(s) disclaim(s) all
+## responsibility and liability with respect to this software's usage
+## or its effect upon hardware, computer systems, other software, or
+## anything else.
+##
+##
+#
+# PAR - parallel processing of command
+#
+# par -q -n # -l logfile -c command -x -d
+#   -q = quiet mode (don't log anything to the logfiles)
+#   -n # = number of processes to run at once (default = 3)
+#   -l logfile = logfile to store par logging into (.0-.n)
+#   -c command = command to run (can also be in the list
+#                of routers begining with a :
+#   -x = view par logs as they run through xterms
+#   -i = run commands through interactive xterms
+#   -d = print debugging to stderr
+#
+# par takes a list of items to run a command on.  If the list entry begins
+# with a ":" the remainder of the line is the command to run ("{}" will be
+# replaced with each subsequent item in the list.  If the list entry begins
+# with a "#", the entry is ignored.  If a command is defined (either with
+# the -c or with a : line) any entry thereafter will be applied to the
+# command by replacing the {} brackets.  In no cammand is defined, then each
+# line is assumed to be a command to be run.
+#
+use Getopt::Std;
+getopts('n:l:c:xidq');
+$procs=$opt_n;  $procs=3 if(!$procs);
+$command=$opt_c;$command="{}" if(!$command);
+$parlog=$opt_l; $parlog="par.log.".time if(!$parlog);
+$debug=$opt_d;
+
+if ($opt_q && ($opt_x || $opt_l)) {
+    print STDERR "-q nullifies -x and -l\n";
+    exit 1;
+}
+
+$signalled=0;
+
+sub handler { 
+    $signalled++;
+    print STDERR "Received signal - ending run ($signalled).\n";
+    if($signalled>1) {
+	printf STDERR "Ok - killing $id!\n";
+	kill 9, 0;
+        exit(1);
+    }
+}
+
+$SIG{'INT'} = 'handler';
+$SIG{'TERM'} = 'handler';
+$SIG{'QUIT'} = 'handler';
+
+sub start {
+    local($cmd,$logfile)=@_;
+    unless ($id=fork) {
+	if (!$opt_q) {
+	    local($date)=scalar localtime;
+	    open(LOG,">>$logfile");
+	    print(LOG "!!!!!!!\n!$date: $cmd\n!!!!!!!\n");
+	    close(LOG);
+	    exec "($cmd) >>$logfile";
+	} else {
+	    exec "($cmd)";
+	}
+        exit 0;
+    }
+    print STDERR "Starting $cmd: process id=$id logfile=$logfile\n" if ($debug);
+    $id;
+}
+
+sub finish {
+    if(($id=wait)>0){
+        $logfile=$log{$id};
+        print STDERR "$id finished (logfile $logfile)\n" if($logfile && $debug);
+        $logfile;
+    }
+}
+
+sub watchf {
+    local($log)=@_;
+    unless(fork) { exec "xterm -e tail -f $log" ; exit 1; }
+}
+
+for($i=0;<>;$i++) {
+    chop;
+    if (/^\#/){$i--;next;}
+    if(/^:(.*)$/){$command=$1;$i--;next;}
+    if ($i<$procs) {
+	$logfile="running.$i"; $logfile="$parlog.$i" if (!$opt_q);
+	watchf($logfile) if($opt_x);
+    } else { $logfile=finish; }
+    last if $signalled;
+    if ($logfile) {
+        $cmd = $command;
+        $cmd =~ s/\{\}/$_/g;
+	$cmd = "xterm -e $cmd" if ($opt_i);
+        $id=start($cmd,$logfile);
+        $log{$id}=$logfile;
+    }
+    print STDERR "$i/$procs: $_: id=$id, log=$log{$id}\n" if ($debug);
+}
+
+if($signalled && !eof) {
+    $i--;
+    print STDERR "Signalled - not running these:\n$_\n";
+    while(<>){print STDERR;}
+} else {
+    print STDERR "All work assigned.  Waiting for remaining processes.\n" if ($debug);
+}
+$procs=$i if ($i<$procs);
+while($procs) {
+    $procs-- if(finish);
+}
+print STDERR "Complete\n" if ($debug); 

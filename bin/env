@@ -1,0 +1,21 @@
+#
+# This file setups up the environment used for rancid
+#
+# This will be site specific
+#
+TERM=network;export TERM
+#
+# Under $BASEDIR, there will be a bin directory for the rancid programs,
+# a log directory for the logs from rancid and a directory for each group
+# of routers.  In addition to these directories, there will be the CVS
+# repositories as well.
+#
+BASEDIR=$HOME/rancid; export BASEDIR
+PATH=$BASEDIR/bin:/usr/local/bin:/usr/ucb:/usr/bin:/bin:/usr/lib:/usr/sbin;export PATH
+CVSROOT=$BASEDIR/CVS; export CVSROOT
+LIST_OF_GROUPS="sl joebobisp"
+# For each group, define a list of people to receive the diffs
+# in a .mailrc file in the following format:
+#   alias rancid-$GROUP  hank@rem.com pwhiting@sprint.net
+#
+umask 007

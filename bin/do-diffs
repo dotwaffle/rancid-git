@@ -1,0 +1,43 @@
+#!/bin/sh
+##
+# do diffs for each of the diff groups ($LIST_OF_GROUPS) from <BASEDIR>/bin/env
+##
+
+ENVFILE="`dirname $0`/env"
+
+. $ENVFILE
+
+if [ $# -ge 1 ] ; then
+    LIST_OF_GROUPS="$*"; export LIST_OF_GROUPS
+elif [ "$LIST_OF_GROUPS" = "" ] ; then
+	echo "LIST_OF_GROUPS is empty in $ENVFILE"
+	exit 1
+fi
+
+if [ ! -d $BASEDIR/logs ] ; then
+	mkdir $BASEDIR/logs
+fi
+
+for GROUP in $LIST_OF_GROUPS
+do
+
+	LOCKFILE=/tmp/.$GROUP.run.lock
+
+	(
+		echo starting: `date`
+		echo
+
+		if [ -f $LOCKFILE ]
+		then
+			echo hourly config diffs failed: $LOCKFILE exists
+			/bin/ls -l $LOCKFILE
+		else
+			/usr/bin/touch $LOCKFILE
+			control_rancid $GROUP
+			/bin/rm -f $LOCKFILE
+		fi
+
+		echo ending: `date`
+		echo
+	) >$BASEDIR/logs/$GROUP.`date +%y%m%d.%H%M%S` 2>&1 
+done

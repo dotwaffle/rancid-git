@@ -1,0 +1,800 @@
+#!/usr/local/bin/perl
+##
+##
+## Copyright (C) 1997 by Henry Kilmer.
+## All rights reserved.
+##
+## This software may be freely copied, modified and redistributed without
+## fee for non-commerical purposes provided that this copyright notice is
+## preserved intact on all copies and modified copies.
+##
+## There is no warranty or other guarantee of fitness of this software.
+## It is provided solely "as is". The author(s) disclaim(s) all
+## responsibility and liability with respect to this software's usage
+## or its effect upon hardware, computer systems, other software, or
+## anything else.
+##
+##
+#
+#  RANCID - Really Awesome New Cisco confIg Differ
+#
+# usage: rancid [-d] [-l] [-f filename | $host]
+#
+use Getopt::Std;
+getopts('dflm');
+$log = $opt_l;
+$debug = $opt_d;
+$file = $opt_f;
+$host = $ARGV[0];
+$clean_run = 0;
+$found_end = 0;
+$timeo = 90;			# clogin time in seconds
+
+# This routine is used to print out the router configuration
+sub ProcessHistory {
+    my($new_hist_tag,$new_command,$command_string,@string)=(@_);
+    if((($new_hist_tag ne $hist_tag) || ($new_command ne $command))
+       && defined %history) {
+	print eval "$command \%history";
+	undef %history;
+    }
+    if (($new_hist_tag) && ($new_command) && ($command_string)) {
+	if ($history{$command_string}) {
+	    $history{$command_string} = "$history{$command_string}@string";
+	} else {
+	    $history{$command_string} = "@string";
+	}
+    } elsif (($new_hist_tag) && ($new_command)) {
+	$history{++$#history} = "@string";
+    } else {
+	print "@string";
+    }
+    $hist_tag = $new_hist_tag;
+    $command = $new_command;
+    1;
+}
+
+sub numerically { $a <=> $b; }
+
+# This is a sort routing that will sort numerically on the
+# keys of a hash as if it were a normal array.
+sub keynsort {
+    local(%lines)=@_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $key (sort numerically keys(%lines)) {
+	$sorted_lines[$i] = $lines{$key};
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# This is a sort routing that will sort on the
+# keys of a hash as if it were a normal array.
+sub keysort {
+    local(%lines)=@_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $key (sort keys(%lines)) {
+	$sorted_lines[$i] = $lines{$key};
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# This is a sort routing that will sort on the
+# values of a hash as if it were a normal array.
+sub valsort{
+    local(%lines)=@_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $key (sort values %lines) {
+        $sorted_lines[$i] = $key;
+        $i++;
+    }
+    @sorted_lines;
+}
+
+# This is a numerical sort routing (ascending).
+sub numsort {
+    local(%lines)=@_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $num (sort {$a <=> $b} keys %lines) {
+	$sorted_lines[$i] = $lines{$num};
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# This is a sort routine that will sort on the
+# ip address when the ip address is anywhere in
+# the strings.
+sub ipsort {
+    local(%lines)=@_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $addr (sort sortbyipaddr keys %lines) {
+	$sorted_lines[$i] = $lines{$addr};
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# These two routines will sort based upon IP addresses
+sub ipaddrval {
+    my(@a) = ($_[0] =~ m#^(\d+)\.(\d+)\.(\d+)\.(\d+)$#);
+    $a[3]+256*($a[2]+256*($a[1]+256*$a[0]));
+}
+sub sortbyipaddr {
+    &ipaddrval($a) <=> &ipaddrval($b);
+}
+
+# This routine parses "show version"
+sub ShowVersion {
+    print STDERR "    In ShowVersion: $_" if ($debug);
+    if (/^Slave in slot (\d+) is running/) {
+	$slave = " Slave:";
+	return;
+    }
+    /^IOS .* Software \(([A-Za-z-0-9]*)\), .*Version\s+(.*)$/ &&
+	ProcessHistory("COMMENTS","keysort","F1","!Image:$slave Software: $1, $2\n") && return;
+    /^([A-Za-z-0-9_]*) Synced to mainline version: (.*)$/ &&
+	ProcessHistory("COMMENTS","keysort","F2",
+		       "!Image:$slave $1 Synced to mainline version: $2\n") && return;
+    /^Compiled (.*)$/ &&
+	ProcessHistory("COMMENTS","keysort","F3","!Image:$slave Compiled: $1\n") && return;
+    /^ROM: (System )?Bootstrap.*(Version.*)$/ &&
+	    ProcessHistory("COMMENTS","keysort","G1","!ROM Bootstrap: $2\n") && return;
+    /^ROM: \d+ Bootstrap .*(Version.*)$/ &&
+	ProcessHistory("COMMENTS","keysort","G2","!ROM Image: Bootstrap$1\n") &&
+	    return;
+    /^ROM: .*(Version.*)$/ &&
+	ProcessHistory("COMMENTS","keysort","G3","!ROM Image: $1\n") && return;
+    /^BOOTFLASH: .*(Version.*)$/ &&
+	ProcessHistory("COMMENTS","keysort","G4","!BOOTFLASH: $1\n") && return;
+    /^System image file is "([^\"]*)", booted via (\S*)/ &&
+# removed the booted source due to
+# CSCdk28131: cycling info in 'sh ver'
+#	ProcessHistory("COMMENTS","keysort","F4","!Image: booted via $2, $1\n") &&
+	ProcessHistory("COMMENTS","keysort","F4","!Image: booted $1\n") &&
+	    return;
+    /^System image file is "([^\"]*)"$/ &&
+	ProcessHistory("COMMENTS","keysort","F5","!Image: $1\n") &&
+	    return;
+    if (/(\S+)\s+\((\S+)\)\s+processor.*with (\S+K) bytes/) {
+	if ( $1 eq "CSC") {
+	    $type = "AGS";
+	} elsif ( $1 eq "CSC4") {
+	    $type = "AGS+";
+	} elsif ( $1 eq "RSP1") {
+	    $type = "7500";
+	} elsif ( $1 eq "RSP2") {
+	    $type = "7500";
+	} elsif ( $1 eq "RSP4") {
+	    $type = "7500";
+	} elsif ( $1 eq "RSP7000") {
+	    $type = "7500";
+	} elsif ( $1 eq "RP1") {
+	    $type = "7000";
+	} elsif ( $1 eq "RP") {
+	    $type = "7000";
+	} elsif ( $1 eq "7202" || $1 eq "7204" || $1 eq "7206") {
+	    $type = "7200";
+	} elsif ($1 eq "12004/GRP" || $1 eq "12008/GRP" || $1 eq "12012/GRP") {
+	    $type = "12000";
+	} else {
+	    $type = $1;
+	}
+	print STDERR "TYPE = $type\n" if ($debug);
+	ProcessHistory("COMMENTS","keysort","A1","!Chassis type:$slave $1 - a $type router\n");
+	ProcessHistory("COMMENTS","keysort","B1","!Memory:$slave main $3\n");
+	ProcessHistory("COMMENTS","keysort","A3","!CPU:$slave $2\n");
+	return;
+    }
+    if (/(\S+) Silicon\s*Switch Processor/) {
+	if (!defined($C0)) {$C0=1; ProcessHistory("COMMENTS","keysort","C0","!\n");}
+	ProcessHistory("COMMENTS","keysort","C2","!SSP: $1\n");
+	$ssp = 1;
+	$sspmem = $1;
+	return;
+    }
+    /^(\d+K) bytes of multibus/ &&
+	ProcessHistory("COMMENTS","keysort","B2","!Memory: multibus $1\n") && return;
+    /^(\d+K) bytes of non-volatile/ &&
+	ProcessHistory("COMMENTS","keysort","B3","!Memory: nvram $1\n") && return;
+    /^(\d+K) bytes of flash memory/ &&
+	ProcessHistory("COMMENTS","keysort","B5","!Memory: flash $1\n") &&
+	    return;
+    /^(\d+K) bytes of .*flash partition/ &&
+	ProcessHistory("COMMENTS","keysort","B6","!Memory: flash partition $1\n") &&
+	    return;
+    /^(\d+K) bytes of Flash internal/ &&
+	ProcessHistory("COMMENTS","keysort","B4","!Memory: bootflash $1\n") &&
+	    return;
+    /^(\d+K) bytes of Flash PCMCIA card at slot 0 / &&
+	ProcessHistory("COMMENTS","keysort","B7","!Memory: pcmcia slot0 $1\n") && return;
+    /^(\d+K) bytes of Flash PCMCIA card at slot 1 / &&
+	ProcessHistory("COMMENTS","keysort","B8","!Memory: pcmcia slot1 $1\n") && return;
+    if (/^Configuration register is (.*)$/) {
+	$config_register=$1;
+	return;
+    }
+    return;
+}
+
+# This routine parses "show env all"
+sub ShowEnv {
+    # Skip if this is not a 7500 or 7000.
+    print STDERR "    In ShowEnv: $_" if ($debug);
+    return if ($type !~ /^7/);
+    if (!defined($E0)) {$E0=1; ProcessHistory("COMMENTS","keysort","E0","!\n");}
+    if (/^Arbiter type (\d), backplane type (\S+)/) {
+	if (!defined($C0)) {$C0=1; ProcessHistory("COMMENTS","keysort","C0","!\n");}    
+	ProcessHistory("COMMENTS","keysort","C1","!Enviromental Arbiter Type: $1\n");   
+	ProcessHistory("COMMENTS","keysort","A2","!Chassis type: $2 backplane\n");      
+	return;
+    }
+    /^\s*(Power .*)/ &&
+	ProcessHistory("COMMENTS","keysort","E1","!Power: $1\n") && return;
+    /^\s*(Lower Power .*)/i &&
+	ProcessHistory("COMMENTS","keysort","E2","!Power: $1\n") && return;
+    return;
+}
+
+# This routine parses "show gsr chassis-info" for the gsr
+# This will create arrarys for hw info.
+sub ShowGSR {
+    # Skip if this is not a 1200n.
+    print STDERR "    In ShowGSR: $_" if ($debug);
+    return if ($type !~ /^120/);
+    /^$/ && return;
+    /^\s+Chassis: type (\S+) Fab Ver: (\S+)/ &&
+	ProcessHistory("COMMENTS","keysort","D0","!\n") &&
+	ProcessHistory("COMMENTS","keysort","D1","!GSR Chassis type: $1 Fab Ver: $2\n") && return;
+    /^\s+Chassis S\/N: (.*)$/ &&
+	ProcessHistory("COMMENTS","keysort","D2","!GSR Chassis S/N: $1\n") && return;
+    /^\s+PCA: (\S+)\s*rev: (\S+)\s*dev: \S+\s*HW ver: (\S+)$/ &&
+	ProcessHistory("COMMENTS","keysort","D3","!GSR Backplane PCA: $1, rev $2, ver $3\n") && return;
+    /^\s+Backplane S\/N: (\S+)$/ &&
+	ProcessHistory("COMMENTS","keysort","D4","!GSR Backplane S/N: $1\n") && return;
+
+    return;
+}
+
+# This routine parses "show boot"
+sub ShowBoot {
+    # Pick up boot variables if 7000/7500/12000; otherwise pick up bootflash.
+    print STDERR "    In ShowBoot: $_" if ($debug);
+    return if /^\s*$/;
+    return if /^\s*\^\s*$/;
+    return if /Invalid input detected/;
+    return if /(Open device \S+ failed|Error opening \S+:)/;
+    if (!defined($H0)) {$H0=1; ProcessHistory("COMMENTS","keysort","H0","!\n");}
+    if ($type !~ /^(1200|7)/) {
+	ProcessHistory("COMMENTS","keysort","H2","!BootFlash: $_");
+    } elsif (/variable/) {
+	ProcessHistory("COMMENTS","keysort","H1","!Variable: $_");
+    }
+    return;
+}
+
+# This routine parses "show flash"
+sub ShowFlash {
+    # skip if this is 7000, 7200, 7500, or 12000.
+    print STDERR "    In ShowFlash: $_" if ($debug);
+    return if /^\s*$/;
+    return if ($type =~ /^(1200|7.0)/);
+    return if /^\s*\^\s*$/;
+    return if /Invalid input detected/;
+    ProcessHistory("FLASH","","","!Flash: $_");
+    return;
+}
+
+# This routine parses "dir /all bootflash:"
+sub DirBootflash {
+    # Skip if this is not a 7000, 7200, 7500, or 12000.
+    print STDERR "    In DirBootflash: $_" if ($debug);
+    return if /^\s*$/;
+    return if ($type !~ /^(1200|7.0)/);
+    return if /^\s*\^\s*$/;
+    return if /Invalid input detected/;
+    /: device being squeezed/ && return(-1); # Flash is busy
+    return if /(Open device \S+ failed|Error opening \S+:)/;
+    ProcessHistory("FLASH","","","!Flash: BootFlash: $_");
+    return;
+}
+
+# This routine parses "dir /all slot0:"
+sub DirSlot0 {
+    # Skip if this is not a 3600, 7000, 7200, 7500, or 12000.
+    print STDERR "    In DirSlot0: $_" if ($debug);
+    return if /^\s*$/;
+    return if ($type !~ /^(1200|7.0|36.0)/);
+    return if /^\s*\^\s*$/;
+    return if /Invalid input detected/;
+    /: device being squeezed/ && return(-1); # Flash is busy
+    return if /(Open device \S+ failed|Error opening \S+:)/;
+    ProcessHistory("FLASH","","","!Flash: Slot0: $_");
+    return;
+}
+
+# This routine parses "dir /all slot1:"
+sub DirSlot1 {
+    # Skip if this is not a 3600, 7000, 7200, 7500, or 12000.
+    print STDERR "    In DirSlot1: $_" if ($debug);
+    return if /^\s*$/;
+    return if ($type !~ /^(1200|7.0|36.0)/);
+    return if /^\s*\^\s*$/;
+    return if /Invalid input detected/;
+    /: device being squeezed/ && return(-1); # Flash is busy
+    return if /(Open device \S+ failed|Error opening \S+:)/;
+    ProcessHistory("FLASH","","","!Flash: Slot1: $_");
+    return;
+}
+
+# This routine parses "show controllers"
+sub ShowContAll {
+    # Skip if this is a 70[01]0, 7500, or 12000.
+    print STDERR "    In ShowContAll: $_" if ($debug);
+    return if ($type =~ /^(1200|7[05])/);
+    if (/^Interface (\S*)$/) { $INT = "$1, "; return; }
+    /^(BRI unit \d)/ &&
+	ProcessHistory("INT","","","!Interface: $1\n") && return;
+    /^LANCE unit \d, NIM/ &&
+	ProcessHistory("INT","","","!Interface: $_") && return;
+    /^(LANCE unit \d)/ &&
+	ProcessHistory("INT","","","!Interface: $1\n") && return;
+    /(Media Type is \S+),/ &&
+	ProcessHistory("INT","","","!\t$1\n");
+    if (/(M\dT:) show controller:$/) {
+	my($ctlr) = $1;
+	$_ = <INPUT>; tr/\015//d; s/ subunit \d,//;
+	ProcessHistory("INT","","","!Interface: $ctlr $_");
+    }
+    /^(HD unit \d), idb/ &&
+	ProcessHistory("INT","","","!Interface: $1\n") && return;
+    /^HD unit \d, NIM/ &&
+	ProcessHistory("INT","","","!Interface: $_") && return;
+    /^buffer size \d+  HD unit \d, (.*)/ &&
+	ProcessHistory("INT","","","!\t$1\n") && return;
+    /^AM79970 / && ProcessHistory("INT","","","!Interface: $_") && return;
+    /^buffer size \d+  (Universal Serial: .*)/ &&
+	ProcessHistory("INT","","","!\t$1\n") && return;
+    /^Hardware is (.*)/ &&
+	ProcessHistory("INT","","","!Interface: $INT$1\n") && return;
+    /^(QUICC Serial unit \d),/ &&
+	ProcessHistory("INT","","","!$1\n") && return;
+    /^QUICC Ethernet .*/ &&
+	ProcessHistory("INT","","","!$_") && return;
+    /^DTE .*\.$/ &&
+	ProcessHistory("INT","","","!\t$_") && return;
+    /^(cable type :.*),/ &&
+	ProcessHistory("INT","","","!\t$1\n") && return;
+    /^(.* cable.*), received clockrate \d+$/ &&
+	ProcessHistory("INT","","","!\t$1\n") && return;
+    /^.* cable.*$/ &&
+	ProcessHistory("INT","","","!\t$_") && return;
+    return;
+}
+
+# This routine parses "show controllers cbus"
+# Some of this is printed out in ShowDiagbus.
+sub ShowContCbus {
+    # Skip if this is not a 7000 or 7500.
+    print STDERR "    In ShowContCbus: $_" if ($debug);
+    return if ($type !~ /^7[05]0/);
+    if (/^\s*slot(\d+): ([^,]+), hw (\S+), sw (\S+), ccb/) {
+	$slot = $1;
+	$board{$slot} = $2;
+	$hwver{$slot} = $3;
+	$hwucode{$slot} = $4;
+    } elsif (/^\s*(\S+) (\d+), hardware version (\S+), microcode version (\S+)/) {
+	$slot = $2;
+	$board{$slot} = $1;
+	$hwver{$slot} = $3;
+	$hwucode{$slot} = $4;
+    } elsif (/(Microcode .*)/) {
+	$ucode{$slot} = $1;
+    } elsif (/(software loaded .*)/) {
+	$ucode{$slot} = $1;
+    } elsif (/(\d+) Kbytes of main memory, (\d+) Kbytes cache memory/) {
+	$hwmemd{$slot} = $1;
+	$hwmemc{$slot} = $2;
+    } elsif (/byte buffers/) {
+	chop;
+	s/^\s*//;
+	$hwbuf{$slot} = $_;
+    } elsif (/Interface (\d+) - (\S+ \S+),/) {
+	$interface = $1;
+	ProcessHistory("HW","","","!\n!Int $interface: in slot $slot, named $2\n");
+	return;
+    } elsif (/(\d+) buffer RX queue threshold, (\d+) buffer TX queue limit, buffer size (\d+)/) {
+	ProcessHistory("HW","","","!Int $interface: rxq $1, txq $2, bufsize $3\n");
+	return;
+    }
+    return;
+}
+
+# This routine parses "show diagbus"
+# This will create arrarys for hw info.
+sub ShowDiagbus {
+    # Skip if this is not a 7000, 70[01]0, or 7500.
+    print STDERR "    In ShowDiagbus: $_" if ($debug);
+    return if ($type !~ /^7[05]/);
+    if (/^\s*Slot (\d+):/i) {
+	$slot = $1;
+	return;
+    } elsif (/^\s*Slot (\d+) \(virtual\):/i) {
+	$slot = $1;
+	return;
+    } elsif (/^\s*(.*Processor.*|.*controller|.*Chassis Interface), HW rev (\S+), board revision (\S+)/i) {
+	$board = $1;
+	$hwver = $2;
+	$boardrev = $3;
+	if ($board =~ /Processor/) {
+	    if ($board =~ /7000 Route\/Switch/) {
+		$board = "RSP7000";
+	    } elsif ($board =~ /Route\/Switch Processor (\d)/) {
+		$board = "RSP$1";
+	    } elsif ($board =~ /Route/) {
+		$board = "RP";
+	    } elsif ($board =~ /Silicon Switch/) {
+		$board = "SSP";
+	    } elsif ($board =~ /Switch/) {
+		$board = "SP";
+		$board = "SSP $sspmem" if $ssp;
+	    } elsif ($board =~ /ATM/) {
+		$board = "AIP";
+	    }
+	} elsif ($board =~ /(.*) controller/i) {
+	    $board = $1;
+	}
+	# hwucode{$slot} defined in ShowContCbus
+	if (defined $hwucode{$slot}) {
+	    ProcessHistory("SLOT","","","!\n!Slot $slot/$board: hvers $hwver rev $boardrev ucode $hwucode{$slot}\n");
+	} else {
+	    ProcessHistory("SLOT","","","!\n!Slot $slot/$board: hvers $hwver rev $boardrev\n");
+	}
+	# These are also from the ShowContCbus
+	ProcessHistory("SLOT","","","!Slot $slot/$board: $ucode{$slot}\n") if (defined $ucode{$slot});
+	ProcessHistory("SLOT","","","!Slot $slot/$board: memd $hwmemd{$slot}, cache $hwmemc{$slot}\n")
+	    if ((defined $hwmemd{$slot}) && (defined $hwmemc{$slot}));
+	ProcessHistory("SLOT","","","!Slot $slot/$board: $hwbuf{$slot}\n") if (defined $hwbuf{$slot});
+	return;
+    }
+    /Serial number: (\S+)\s*Part number: (\S+)/ &&
+	ProcessHistory("SLOT","","","!Slot $slot/$board: part $2, serial $1\n") && return;
+    /^\s*Controller Memory Size: (.*)$/ &&
+	ProcessHistory("SLOT","","","!Slot $slot/$board: $1\n") &&
+	return;
+    if (/PA Bay (\d) Information/) {
+	$pano = $1;
+	if ("PA" =~ /$board/) {
+	    ($s,$c) = split(/\//,$board);
+	    $board = "$s/$c/PA $pano";
+	} else {
+	    $board =~ s/\/PA \d//;
+	    $board = "$board/PA $pano";
+	}
+	return;
+    }
+    /\s+(.*) PA, (\d) ports?, (\S+)/ &&
+	ProcessHistory("SLOT","","","!Slot $slot/$board: type $3, $2 ports\n") && return;
+    /\s+(.*) PA( \(\S+\))?, (\d) ports?/ &&
+	ProcessHistory("SLOT","","","!Slot $slot/$board: type $1$2, $3 ports\n") && return;
+    /^\s*HW rev (\S+), Board revision (\S+)/ &&
+	ProcessHistory("SLOT","","","!Slot $slot/$board: hvers $1 rev $2\n") && return;
+    /Serial number: (\S+)\s*Part number: (\S+)/ &&
+	ProcessHistory("SLOT","","","!Slot $slot/$board: part $2, serial $1\n") && return;
+    return;
+}
+
+# This routine parses "show diags" for the gsr, 7200, 3600
+# This will create arrarys for hw info.
+sub ShowDiags {
+    # Skip if this is not a 12000.
+    print STDERR "    In ShowDiags: $_" if ($debug);
+    return if ($type !~ /^(1200|720|36.0)/);
+    /^$/ && return;
+    if (!defined($showdiags)) {$showdiags=1; ProcessHistory("SLOT","","","!\n");}
+    s/Port Packet Over SONET/POS/;
+    if (/^\s*SLOT (\d+)\s+\(.*\): (.*)/) {
+	$slot = $1;
+	ProcessHistory("SLOT","","","!Slot $slot: $2\n");
+	$board = "RP" if (/Route Processor/);
+	$board = "CLK" if (/Clock Scheduler Card/);
+	return;
+    }
+    if (/^\s+PCA:\s+(.*)/){
+	local($part) = $1;
+	$_ = <INPUT>;
+	/^\s+HW version (\S+)\s+S\/N (\S+)/ &&
+	    ProcessHistory("SLOT","","","!Slot $slot/PCA: part $part, serial $2\n") &&
+		ProcessHistory("SLOT","","","!Slot $slot/PCA: hvers $1\n");
+	return;
+    }
+
+    if (/^\s+MBUS: .*\)\s+(.*)/) {
+	local($tmp) = "!Slot $slot/MBUS: part $1";
+	$_ = <INPUT>;
+	/^\s+HW version (\S+)\s+S\/N (\S+)/ &&
+	    ProcessHistory("SLOT","","","$tmp, serial $2\n") &&
+		ProcessHistory("SLOT","","","!Slot $slot/MBUS: hvers $1\n");
+	return;
+    }
+    if (/^\s+MBUS Agent Software version (.*)/) {
+	local($sw) = $1;
+	local($tail) = "!\n" if ($board =~ /(CLK|RP)/);
+	ProcessHistory("SLOT","","","!Slot $slot/MBUS: software $sw\n$tail");
+	return;
+    }
+    if (/^\s+DRAM size: (\d+)/) {
+	local($dram) = $1 / 1048576;
+	$_ = <INPUT>;
+	/^\s+FrFab SDRAM size: (\d+)/ &&
+	    ProcessHistory("SLOT","","","!Slot $slot/MBUS: $dram Mbytes DRAM, "
+			   . $1 / 1024 . " Kbytes SDRAM\n!\n");
+	return;
+    }
+    # 7200 and 3600 stuff
+    if (/^(Slot) (\d+):/ || /^\s+(WIC) Slot (\d):/) {
+	if ($1 eq "WIC") {
+	    $WIC = "/$2";
+	} else {
+	    $slot = $2;
+	    undef($WIC);
+	}
+	$_ = <INPUT>; tr/\015//d;
+	# clean up hideous 7200 format to look more like 7500 output
+	s/Fast-ethernet on C7200 I\/O card/FE-IO/;
+	s/ with MII or RJ45/-TX/;
+	s/Fast-ethernet /100Base/; s/[)(]//g;
+
+	/\s+(.*)\s+port adapter?,\s+(\d+)\s+/ &&
+	    ProcessHistory("SLOT","","","!Slot $slot: type $1, $2 ports\n");
+	/\s+(.*)\s+daughter card(.*)$/ &&
+	    ProcessHistory("SLOT","","","!Slot $slot$WIC: type $1$2\n");
+	/\s+(FT1)$/ &&
+	    ProcessHistory("SLOT","","","!Slot $slot$WIC: type $1\n");
+	return;
+    }
+    /revision\s+(\S+).*revision\s+(\S+)/ &&
+	ProcessHistory("SLOT","","","!Slot $slot$WIC: hvers $1 rev $2\n") && return;
+    /number\s+(\S+)\s+Part number\s+(\S+)/ &&
+	ProcessHistory("SLOT","","","!Slot $slot$WIC: part $2, serial $1\n!\n") && return;
+    return;
+}
+
+# This routine parses "show c7200" for the 7200
+# This will create arrarys for hw info.
+sub ShowC7200 {
+    # Skip if this is not a 7200.
+    print STDERR "    In ShowC7200: $_" if ($debug);
+    return if ($type !~ /^72/);
+    /^$/ && return;
+    if (/C7200 Midplane EEPROM:/) {
+	$_ = <INPUT>;
+	/revision\s+(\S+).*revision\s+(\S+)/;
+	ProcessHistory("SLOT","","","!Slot Midplane: hvers $1 rev $2\n");
+	$_ = <INPUT>;
+	/number\s+(\S+)\s+Part number\s+(\S+)/;
+	ProcessHistory("SLOT","","","!Slot Midplane: part $2, serial $1\n!\n");
+	return;
+    }
+    if (/C7200 CPU EEPROM:/) {
+        $_ = <INPUT>;
+        /revision\s+(\S+).*revision\s+(\S+)/ &&
+	    ProcessHistory("SLOT","","","!Slot CPU: hvers $1 rev $2\n");
+        $_ = <INPUT>;
+        /number\s+(\S+)\s+Part number\s+(\S+)/ &&
+	    ProcessHistory("SLOT","","","!Slot CPU: part $2, serial $1\n!\n");
+        return;
+    }
+    return;
+}
+
+# This routine processes a "write term"
+sub WriteTerm {
+    print STDERR "    In WriteTerm: $_" if ($debug);
+    /Non-Volatile memory is in use/  && return(-1); # NvRAM is locked
+    # skip the crap
+    if (/^(##+$|Building configuration...)/i) {
+	while (<INPUT>) {
+	    next if (/^Current configuration:/i);
+	    next if (/^([%!].*|\s*)$/);
+	    next if (/^ip add.*ipv4:/);	# band-aid for 3620 12.0S
+	    last;
+	}
+	ProcessHistory("","","","!\nconfig-register $config_register\n");
+        tr/\015//d;
+    }
+    # Dog gone Cool matches to process the rest of the config
+    /^tftp-server flash /   && return; # kill and tftp remains
+    /^ntp clock-period /    && return; # kill ntp clock-period
+    /^ length /             && return; # kill length on serial lines
+    /^ width /              && return; # kill width on serial lines
+    /^enable password / &&
+	ProcessHistory("ENABLE","","","!enable password <removed>\n") &&
+	    return;
+    /^(username .*) password \d *(\S)\s*(.*)/ &&
+	ProcessHistory("USER","","","$1 password <removed>\n") &&
+	    return;
+    /^\s*password / &&
+	ProcessHistory("LINE-PASS","","","! password <removed>\n") &&
+	    return;
+    /^\s*neighbor (\S*) password / &&
+	ProcessHistory("","","","! neighbor $1 password <removed>\n") &&
+	    return;
+    /fair-queue individual-limit/ && return;
+    # filter out any RCS/CVS tags to avoid confusing local CVS storage
+    s/\$(Revision|Id):/ $1:/;
+    # order access-lists
+    /^access-list\s+(\d\d?)\s+(\S+)\s+(\S+)/ &&
+	ProcessHistory("ACL $1 $2","ipsort","$3","$_") && return;
+    # order extended access-lists
+    /^access-list\s+(\d\d\d)\s+(\S+)\s+ip\s+host\s+(\S+)/ &&
+	ProcessHistory("EACL $1 $2","ipsort","$3","$_") && return;
+    /^access-list\s+(\d\d\d)\s+(\S+)\s+ip\s+(\d\S+)/ &&
+	ProcessHistory("EACL $1 $2","ipsort","$3","$_") && return;
+    /^access-list\s+(\d\d\d)\s+(\S+)\s+ip\s+any/ &&
+	ProcessHistory("EACL $1 $2","ipsort","0.0.0.0","$_") && return;
+    /^ip prefix-list\s+(\S+)\s+seq\s+(\d+)\s+(permit|deny)\s+(\d\S+)(\/.*)$/ &&
+	ProcessHistory("PACL $1 $3","ipsort","$4","ip prefix-list $1 $3 $4$5\n")
+	    && return;
+    # order logging statements
+    /^logging (\d+\.\d+\.\d+\.\d+)/ &&
+	ProcessHistory("LOGGING","ipsort","$1","$_") && return;
+    # order name-server statements
+    /^ip name-server (\d+\.\d+\.\d+\.\d+)/ &&
+	ProcessHistory("NAMESERVER","ipsort","$1","$_") && return;
+    # order snmp-server host statements
+    /^snmp-server host (\d+\.\d+\.\d+\.\d+)/  &&
+	ProcessHistory("SNMPSERVERHOST","ipsort","$1","$_") && return;
+    /^snmp-server community /  &&
+	ProcessHistory("SNMPSERVERCOMM","keysort","$_","$_") && return;
+    # order tacacs server statements
+    /^tacacs-server host (\d+\.\d+\.\d+\.\d+)/ &&
+	ProcessHistory("TAC","ipsort","$1","$_") && return;
+    # order clns host statements
+    /^clns host \S+ (\S+)/ && ProcessHistory("CLNS","keysort","$1","$_") && return;
+    # order alias statements
+    /^alias / && ProcessHistory("ALIAS","keysort","$_","$_") && return;
+    # delete ntp auth password
+    /^(ntp authentication-key \d+ md5) / && 
+	ProcessHistory("","","","!$1 <removed>\n") && return;
+    # order ntp peers/servers
+    if (/^ntp (server|peer) (\d+)\.(\d+)\.(\d+)\.(\d+)/) {
+	$sortkey = sprintf("$1 %03d%03d%03d%03d",$2,$3,$4,$5);
+	ProcessHistory("NTP","keysort",$sortkey,"$_");
+	return;
+    }
+    # order ip host line statements
+    /^ip host line(\d+)/ &&
+	ProcessHistory("IPHOST","numsort","$1","$_") && return;
+    # order ip nat source static statements
+    /^ip nat (\S+) source static (\S+)/ &&
+	ProcessHistory("IP NAT $1","ipsort","$2","$_") && return;
+    # order atm map-list statements
+    /^\s+ip\s+(\d+\.\d+\.\d+\.\d+)\s+atm-vc/ &&
+	ProcessHistory("ATM map-list","ipsort","$1","$_") && return;
+    # order ip rcmd lines
+    /^ip rcmd/ && ProcessHistory("RCMD","keysort","$_","$_") && return;
+    ProcessHistory("","","","$_");
+    # end of config
+    if (/^end$/) {
+	$found_end = 1;
+	return "FlailHelplessly";
+    }
+    return;
+}
+
+# dummy function
+sub DoNothing {print STDOUT;}
+
+# Main subroutine that splits up the work
+# All Subs return the name of the next function to use.
+# If the sub returns a new funtion name, that name will be used
+# else the main loop keeps using the current function
+sub FlailHelplessly {
+    print STDERR "Flailing: $_" if ($debug);
+    print STDOUT "Flailing: $_" if ($log);
+    /#(show version)$/ && delete($commands{$1}) && return("ShowVersion");
+    /#(show env all)$/ && delete($commands{$1}) && return("ShowEnv");
+    /#(show gsr chassis)$/ && delete($commands{$1}) && return("ShowGSR");
+    /#(show boot.*)$/ && delete($commands{$1}) && return("ShowBoot");
+    /#(show flash)$/ && delete($commands{$1}) &&
+	(ProcessHistory("FLASH","","","!\n"),return("ShowFlash"));
+    /#(dir \/all bootflash\:)$/ && delete($commands{$1}) &&
+	(ProcessHistory("FLASH","","","!\n"), return("DirBootflash"));
+    /#(dir \/all slot0\:)$/ && delete($commands{$1}) &&
+	(ProcessHistory("FLASH","","","!\n"),return("DirSlot0"));
+    /#(dir \/all slot1\:)$/ && delete($commands{$1}) &&
+	(ProcessHistory("FLASH","","","!\n"),return("DirSlot1"));
+    # These three generate a list of the hw.
+    # There are a few variable created in ShowContCbus
+    # That are printed out in ShowDiagbus.
+    /#(show controllers cbus)$/ && delete($commands{$1}) && return("ShowContCbus");
+    /#(show controllers)$/ && delete($commands{$1}) && return("ShowContAll");
+    /#(show diagbus)$/ && delete($commands{$1}) && return("ShowDiagbus");
+    /#(show diag)$/ && delete($commands{$1}) && return("ShowDiags");
+    /#(show c7200)$/ && delete($commands{$1}) && return("ShowC7200");
+    /#(write term)$/ && delete($commands{$1}) && return("WriteTerm");
+    return "FlailHelplessly";
+}
+
+# Main
+@commands=("show version","show env all","show gsr chassis",
+	   "show boot","show bootvar","show flash","dir /all bootflash:",
+	   "dir /all slot0:", "dir /all slot1:","show controllers",
+	   "show controllers cbus", "show diagbus","show diag","show c7200",
+	   "write term");
+
+foreach $c (@commands) { $commands{$c} = 1; }
+$cisco_cmds=join(";",@commands);
+$cmds_regexp=join("|",@commands);
+$func = FlailHelplessly;
+
+open(OUTPUT,">$host.new") || die "Can't open $host.new for writing: $!\n";
+# make OUTPUT unbuffered
+select(OUTPUT); $| = 1;
+
+if ($file) {
+    print STDERR "opening file $host\n" if ($debug);
+    print STDOUT "opening file $host\n" if ($log);
+    open(INPUT,"<$host") || die "open failed for $host: $!\n";
+} else {
+    print STDERR "executing clogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($debug);
+    print STDOUT "executing clogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($log);
+    open(INPUT,"clogin -t $timeo -c\"$cisco_cmds\" $host </dev/null |") ||
+	die "clogin failed for $host: $!\n";
+#    open(INPUT,"-|") || exec("clogin","-c\"$cisco_cmds\"",$host);
+}
+
+ProcessHistory("COMMENTS","keysort","B0","!\n");
+ProcessHistory("COMMENTS","keysort","F0","!\n");
+ProcessHistory("COMMENTS","keysort","G0","!\n");
+while(<INPUT>) {
+    tr/\015//d;
+    if (/\#exit$/) {
+	$clean_run=1;
+	last;
+    }
+    if (/^Error:/) {
+	print STDOUT ("$host clogin error: $_");
+	print STDERR ("$host clogin error: $_") if ($debug);
+	$clean_run=0;
+	last;
+    }
+    if (/#\s*($cmds_regexp)/) {
+	$func = FlailHelplessly;
+	print STDERR ("HIT COMMAND:$_") if ($debug);
+    } else {
+        $rval=eval $func;
+	if ($rval == -1) {
+	    $clean_run = 0;
+	    last;
+	} 
+	$func=$rval if ($rval);
+    }
+}
+print STDOUT "Done $logincmd: $_\n" if ($log);
+# Flush History
+ProcessHistory("","","","");
+# Cleanup
+close(INPUT);
+close(OUTPUT);
+
+# check for completeness
+if (scalar(%commands) || !$clean_run || !$found_end) {
+    if (scalar(%commands)) {
+	print STDOUT "missed cmd(s): $commands\n";
+	print STDERR "missed cmd(s): $commands[0]\n" if ($debug);
+    }
+    if (!$clean_run || !$found_end) {
+	print STDOUT "End of run not found - removing $host.new\n";
+	print STDERR "End of run not found - removing $host.new\n" if ($debug);
+	system("/usr/bin/tail -1 $host.new");
+    }
+    unlink "$host.new";
+}

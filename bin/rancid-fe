@@ -1,0 +1,33 @@
+#!/usr/local/bin/perl
+##
+##
+## Copyright (C) 1997 by Henry Kilmer.
+## All rights reserved.
+##
+## This software may be freely copied, modified and redistributed without
+## fee for non-commerical purposes provided that this copyright notice is
+## preserved intact on all copies and modified copies.
+##
+## There is no warranty or other guarantee of fitness of this software.
+## It is provided solely "as is". The author(s) disclaim(s) all
+## responsibility and liability with respect to this software's usage
+## or its effect upon hardware, computer systems, other software, or
+## anything else.
+##
+##
+#
+#  rancid-FE - front-end to rancid/jrancid for use with par. 
+#
+# usage: rancid-fe <router>:<vendor>
+#
+
+($router, $vendor) = split('\:', $ARGV[0]);
+
+if ($vendor =~ /^cisco$/i) {
+    exec('rancid', $router);
+} elsif ($vendor =~ /^juniper$/i) {
+    exec('jrancid', $router);
+}
+
+printf(STDERR "unknown router manufacturer for $router: $vendor\n");
+exit(-1);
