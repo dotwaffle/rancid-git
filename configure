@@ -792,7 +792,7 @@ PACKAGE=rancid
 # VERSION needs to be updated such that 'make dist' uses the correct
 # filename for the directory name and tarball.
 
-VERSION=2.2b6
+VERSION=2.2b7
 
 echo $ac_n "checking whether to enable maintainer-specific portions of Makefiles""... $ac_c" 1>&6
 echo "configure:799: checking whether to enable maintainer-specific portions of Makefiles" >&5

@@ -69,13 +69,13 @@ END
 			rm -f $TMPDIR/.$GROUP.old
 
 		else
-			trap 'rm -fr $LOCKFILE;exit 1' 1 2 3 6 10 11 15
+			trap 'rm -fr $LOCKFILE;exit 1' 1 2 3 6 10 15
 			touch $LOCKFILE
 			if [ $? -eq 0 ] ; then
 			    control_rancid $GROUP
 			    rm -f $LOCKFILE
 			fi
-			trap ''  1 2 3 6 10 11 15
+			trap ''  1 2 3 6 10 15
 		fi
 
 		echo

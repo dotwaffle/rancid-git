@@ -14,7 +14,7 @@ PACKAGE=rancid
 # VERSION needs to be updated such that 'make dist' uses the correct
 # filename for the directory name and tarball.
 AC_SUBST(VERSION)
-VERSION=2.2b6
+VERSION=2.2b7
 
 AM_MAINTAINER_MODE()
 

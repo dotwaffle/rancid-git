@@ -140,8 +140,12 @@ sub ShowConfig {
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	next if (/^Reading configuration information/);
-	return(1) if /(Invalid input detected|Type help or )/;
-	return(-1) if (/command authorization failed/i);
+	if (/community label /) {
+	    if (defined($ENV{'NOCOMMSTR'})) {
+		$_ =~ s/community label .*$/community label <removed>/;
+	    }
+	}
+	return(1) if /(invalid command name)/;
 	ProcessHistory("","","","$_");
     }
     # ProcessHistory("","","","!$_");

@@ -95,9 +95,9 @@ for {set i 0} {$i < $argc} {incr i} {
 	# user Password
 	} -p* -
 	-P* {
-	    if {! [  regexp .\[pP\](.+) $arg ignore userpswd]} {
+	    if {! [  regexp .\[pP\](.+) $arg ignore userpasswd]} {
 		incr i
-		set userpswd [ lindex $argv $i ]
+		set userpasswd [ lindex $argv $i ]
 	    }
 	    set do_passwd 0
 	# passphrase
@@ -447,9 +447,9 @@ foreach router [lrange $argv $i end] {
     }
 
     # Figure out loginname's password (if different from the vty password)
-    if {[info exists userpswd]} {
+    if {[info exists userpasswd]} {
       # command line passwd
-      set passwd $userpswd
+      set passwd $userpasswd
     } else {
       set userpswd [lindex [find userpassword $loginname@$router] 0]
       if { "$userpswd" == "" } {

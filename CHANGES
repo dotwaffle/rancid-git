@@ -1,5 +1,13 @@
+2.2b7
+	brancid: patch to filter community strings from Mark Cooper
+
+	do-diffs: trap'ing SEGV (11) causes error on solaris.
+
 2.2b6
 	baynetworks/nortel support from Mark Cooper.  thanks mark!
+
+	jlogin was overloading -p's variable causing proc login to fail on 2nd
+	router on cmd-line
 
 2.2b5
 	fix regex error in clogin affecting catalysts
