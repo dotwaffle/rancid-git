@@ -1,26 +1,27 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_INIT()
 
+AC_CONFIG_SUBDIRS(lg)
+
 dnl default install location
 AC_PREFIX_DEFAULT(/usr/local/rancid)
 
 dnl install program(s)
 AC_PROG_INSTALL
 
-RD_BIN_DATAS=$rd_cv_rd_bin_datas
-AC_SUBST(RD_BIN_DATAS)
-RD_BIN_PROGS=$rd_cv_rd_bin_progs
-AC_SUBST(RD_BIN_PROGS)
+RD_UTIL_LG_PROGS=$rd_cv_rd_util_lg_progs
+AC_SUBST(RD_UTIL_LG_PROGS)
 
 PERLV_PATH=$ac_cv_path_PERLV_PATH
 AC_SUBST(PERLV_PATH)
-EXPECT_PATH=$ac_cv_path_EXPECT_PATH
-AC_SUBST(EXPECT_PATH)
+
+LG_PING_CMD=$rd_cv_lg_ping_cmd
+AC_SUBST(LG_PING_CMD)
 
 ENV_PATH=$ac_cv_env_path
 AC_SUBST(ENV_PATH)
 
-AC_OUTPUT(Makefile env $RD_BIN_DATAS $RD_BIN_PROGS)
+AC_OUTPUT(Makefile lg.conf $RD_UTIL_LG_PROGS)
 
 # fix permissions on scripts.
-for file in $RD_BIN_PROGS; do chmod a+x $file; done
+for file in $RD_UTIL_LG_PROGS; do chmod a+x $file; done

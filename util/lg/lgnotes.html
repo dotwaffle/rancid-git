@@ -1,0 +1,52 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+
+<head>
+<meta http-equiv="Content-Type"
+content="text/html; charset=iso-8859-1">
+<title>Looking Glass Notes</title>
+</head>
+
+</strong></font><font face="Arial"> </font><font
+size=+3><strong>&nbsp;&nbsp;&nbsp;Looking Glass Notes
+</strong></font></p>
+<br>
+<p>
+<ul>
+Just a few straight forward notes on our implementation of
+Ed Kern's looking glass.  See the "real thing" at
+<a href=http://nitrous.digex.net>http://nitrous.digex.net</a>.
+</ul>
+</p>
+<p>
+<UL>
+<li>Items in the queries column which do not have radio buttons
+    are not yet implemented but are on the list of things to do.</li>
+<li>Some items are not implemented for the junipers yet (so, as i get
+    to it) or no equivalent exists.
+<li>If there is something which you feel is missing, feel free to ask
+    and/or send comments to the <a href=mailto:rancid@shrubbery.net>maintainer
+    </a> to implement it.  No guarantees.</li>
+<li>Only one query per router allowed at any given time.  This is to avoid
+    resource deprivation.  The looking glass will attempt to serialize
+    queries.</li>
+<li>The looking glass will ping a router prior to querying it to avoid
+    trying to query routers which are down or otherwise inaccessible.</li>
+<li>Login failures can be intermittent or permanent, either due to the
+    router being inaccessible from the looking glass machine, 
+    or authorization failure(s).  Contact your local network engineering
+    folks to resolve login failures.</li>
+<li>Queries followed by &lt;something&gt; require an argument(s) in the text
+    window below the query list.  Some queries take optional arguments
+    denoted by [something].  Multiple arguments should be separated by a
+    space.</li>
+<li>Note that output from certain queries is cached by the server and may
+    be slightly out of date.  These queries will be noted as such in the
+    output.  This is limited to queries which could produce lots of output,
+    such as 'sh ip bgp dampened-paths'.</li>
+<li>Note that some queries have potential to produce great load on the router
+    and produce lots of output, such as 'sh ip bgp' or 'sh ip bgp reg '^3561'.
+    The looking glass attempts to deny such commands.</li>
+</ul>
+</body>
+</html>

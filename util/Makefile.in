@@ -11,14 +11,17 @@ install: all
 	for file in $(UTIL_PROGS) ; do \
 	    $(INSTALL) $$file $(PREFIX)/util; \
 	done; \
-	for file in *README* ; do \
+	for file in *README*; do \
 	    $(INSTALL_DATA) $$file $(PREFIX)/util; \
-	done
+	done; \
+	cd lg; $(MAKE) -e install
 
 clean:
+	cd lg; $(MAKE) -e clean; \
 	rm -f Makefile $(UTIL_PROGS)
 
 distclean: clean
+	cd lg; $(MAKE) -e distclean; \
 	rm -f config.log config.status
 
 distdir:
@@ -27,4 +30,5 @@ distdir:
 	done; \
 	for file in configure $(UTIL_PROGS:=.in) ; do \
 	    $(INSTALL) $$file $(distdir); \
-	done
+	done; \
+	cd lg; $(MAKE) -e distdir

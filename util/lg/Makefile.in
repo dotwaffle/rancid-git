@@ -1,0 +1,43 @@
+PREFIX = @prefix@
+
+INSTALL = @INSTALL@
+INSTALL_DATA = @INSTALL_DATA@
+
+UTIL_LG_PROGS = @RD_UTIL_LG_PROGS@
+
+DISTDIR=../$(distdir)/lg
+
+all:
+
+install: all
+	for file in $(UTIL_LG_PROGS) ; do \
+	    $(INSTALL) $$file $(PREFIX)/util/lg; \
+	done; \
+	if test -f $(PREFIX)/util/lg/lg.conf ; then \
+	    echo "WARNING: *** $(PREFIX)/util/lg/lg.conf exists: installing as lg.conf.new."; \
+	    echo "         *** review lg.conf.new for new/deprecated switches"; \
+	    $(INSTALL_DATA) lg.conf $(PREFIX)/util/lg/lg.conf.new; \
+	else \
+	    $(INSTALL_DATA) lg.conf $(PREFIX)/util/lg; \
+	fi; \
+	for file in *README* *.html; do \
+	    $(INSTALL_DATA) $$file $(PREFIX)/util/lg; \
+	done
+
+clean:
+	rm -f Makefile $(UTIL_LG_PROGS) lg.conf
+
+distclean: clean
+	rm -f config.log config.status
+
+distdir:
+	test -d $(DISTDIR) \
+            || mkdir $(DISTDIR) \
+            || exit 1; \
+        chmod 777 $(DISTDIR); \
+	for file in Makefile.in configure.in *README* *.html lg.conf.in ; do \
+	    $(INSTALL_DATA) $$file $(DISTDIR); \
+	done; \
+	for file in configure $(UTIL_LG_PROGS:=.in) ; do \
+	    $(INSTALL) $$file $(DISTDIR); \
+	done

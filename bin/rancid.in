@@ -210,6 +210,9 @@ sub ShowVersion {
 	    } elsif ( $1 =~ /WS-C29/) {
 		$type = "2900XL";
 		$device = "switch";
+	    } elsif ( $1 =~ /WS-C35/) {
+		$type = "3500XL";
+		$device = "switch";
 	    } else {
 		$type = $1;
 	    }
@@ -352,7 +355,7 @@ sub ShowGSR {
 
 # This routine parses "show boot"
 sub ShowBoot {
-    # Pick up boot variables if 7000/7200/7500/12000/2900;
+    # Pick up boot variables if 7000/7200/7500/12000/2900/3500;
     # otherwise pick up bootflash.
     print STDERR "    In ShowBoot: $_" if ($debug);
 
@@ -369,7 +372,7 @@ sub ShowBoot {
 	    $H0=1; ProcessHistory("COMMENTS","keysort","H0","!\n");
 	}
 	if ($type !~ /^(120|7)/) {
-	    if ($type !~ /^2900/) {
+	    if ($type !~ /^(29|35)00/) {
 	        ProcessHistory("COMMENTS","keysort","H2","!BootFlash: $_");
 	    } else {
 	        ProcessHistory("COMMENTS","keysort","H1","!Variable: $_");
@@ -825,8 +828,8 @@ sub WriteTerm {
 	/^(enable )?(password|passwd) / &&
 	    ProcessHistory("ENABLE","","","!$1$2 <removed>\n") &&
 	    next;
-	/^username (\S+) password /&&
-	    ProcessHistory("USER","keysort","$1","!username $1 password <removed>\n") && next;
+	/^username (\S+)(\s.*)? password /&&
+	    ProcessHistory("USER","keysort","$1","!username $1$2 password <removed>\n") && next;
 	/^\s*password / &&
 	    ProcessHistory("LINE-PASS","","","! password <removed>\n") && next;
 	/^\s*neighbor (\S*) password / &&

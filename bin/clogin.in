@@ -248,7 +248,10 @@ proc source_password_file { } {
 	send_user "Error: $password_file must not be world readable/writable\n"
 	exit 1
     }
-    source $password_file
+    if [ catch {source $password_file} reason ] {
+	send_user "Error: $reason\n"
+	exit 1
+    }
 }
 
 # Log into the router.

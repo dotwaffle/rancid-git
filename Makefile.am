@@ -15,7 +15,7 @@ SUBDIRS = . bin util
 all:
 
 install-exec-local:
-	$(mkinstalldirs) $(prefix) $(prefix)/bin $(prefix)/util
+	$(mkinstalldirs) $(prefix) $(prefix)/bin $(prefix)/util $(prefix)/util/lg
 
 install:
 	for file in CHANGES README cloginrc.sample ; do \

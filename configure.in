@@ -14,7 +14,7 @@ PACKAGE=rancid
 # VERSION needs to be updated such that 'make dist' uses the correct
 # filename for the directory name and tarball.
 AC_SUBST(VERSION)
-VERSION=2.0
+VERSION=2.1b
 
 AM_MAINTAINER_MODE()
 
@@ -92,6 +92,31 @@ if test $EXPECT_PATH = no; then
 fi
 AC_SUBST(EXPECT_PATH)
 
+# locate ping and it's syntax
+AC_PATH_PROG(PING_PATH,ping,no)
+if test $PING_PATH = no; then
+    AC_MSG_ERROR([can't locate ping.])
+    exit 1
+fi
+# ping seems to take one of two formats for count (N)
+# BSD: ping -c N host
+# SVR: ping host N
+$PING_PATH -c 1 -v 127.0.0.1 > /dev/null 2>&1
+if test $? -ne 0 ; then
+    $PING_PATH 127.0.0.1 56 1 > /dev/null 2>&1
+    if test $? -ne 0 ; then
+        AC_MSG_ERROR([can't figure out how to pass count == 1 to $PING_PATH.])
+	exit 1
+    else
+	LG_PING_CMD="$PING_PATH"
+	AC_SUBST(LG_PING_CMD)
+    fi
+else
+    LG_PING_CMD="$PING_PATH -c 1"
+    AC_SUBST(LG_PING_CMD)
+fi
+rd_cv_lg_ping_cmd=$LG_PING_CMD
+
 # RD_BIN_DATAS are bin/ .in's that need to be installed without execute
 # perms.
 RD_BIN_DATAS=""
@@ -106,14 +131,46 @@ rancid rename rrancid"
 AC_SUBST(RD_BIN_PROGS)
 rd_cv_rd_bin_progs=$RD_BIN_PROGS
 
-# RD_BIN_PROGS are util/ .in's that need to be installed with execute perms.
+# RD_UTIL_PROGS are util/ .in's that need to be installed with execute perms.
 RD_UTIL_PROGS="rtrfilter"
 AC_SUBST(RD_UTIL_PROGS)
 rd_cv_rd_util_progs=$RD_UTIL_PROGS
 
+# RD_UTIL_LG_PROGS are util/lg .in's that need to be installed with execute
+# perms.
+RD_UTIL_LG_PROGS="lg.cgi lgform.cgi"
+AC_SUBST(RD_UTIL_LG_PROGS)
+rd_cv_rd_util_lg_progs=$RD_UTIL_LG_PROGS
+
 AC_SUBST(INST_PROGS)
 INST_PROGS=$progs
 
+# locate tools to build $PATH for env.  order is significant.  want to be
+# sure that we pick up the the proper diff and ucbmail in bin/env.
+unset ENV_PATH
+AC_PATH_PROG(DIFF,diff,no)
+ENV_PATH=`dirname $ac_cv_path_DIFF`
+AC_PATH_PROG(UCBMAIL,Mail,no)
+ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_UCBMAIL`"
+AC_PATH_PROG(CVS,cvs,no)
+ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_CVS`"
+AC_PATH_PROG(COMM,comm,no)
+ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_COMM`"
+AC_PATH_PROG(MKDIR,mkdir,no)
+ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_MKDIR`"
+AC_PATH_PROG(DIRNAME,dirname,no)
+ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_DIRNAME`"
+AC_PATH_PROG(TOUCH,touch,no)
+ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_TOUCH`"
+AC_PATH_PROG(SENDMAIL,sendmail,no)
+ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_SENDMAIL`"
+AC_PATH_PROG(SORT,sort,no)  
+ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_SORT`"
+ENV_PATH="$ENV_PATH:/usr/local/bin:/usr/bin"
+
+ENV_PATH=`echo $ENV_PATH | $PERLV_PATH -e 'foreach $x(split(":",<>)){next unless (length($x));push(@F, $x),$seen{$x}=1 unless (defined $seen{$x});}print join(":",@F);'`
+ac_cv_env_path=$ENV_PATH
+AC_SUBST(ENV_PATH)
 
 AC_OUTPUT(Makefile)
 

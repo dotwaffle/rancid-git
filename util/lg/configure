@@ -612,12 +612,16 @@ test -z "$INSTALL_SCRIPT" && INSTALL_SCRIPT='${INSTALL_PROGRAM}'
 test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
 
 
-RD_UTIL_PROGS=$rd_cv_rd_util_progs
+RD_UTIL_LG_PROGS=$rd_cv_rd_util_lg_progs
 
 
 PERLV_PATH=$ac_cv_path_PERLV_PATH
 
-EXPECT_PATH=$ac_cv_path_EXPECT_PATH
+
+LG_PING_CMD=$rd_cv_lg_ping_cmd
+
+
+ENV_PATH=$ac_cv_env_path
 
 
 trap '' 1 2 15
@@ -733,7 +737,7 @@ done
 ac_given_srcdir=$srcdir
 ac_given_INSTALL="$INSTALL"
 
-trap 'rm -fr `echo "Makefile $RD_UTIL_PROGS" | sed "s/:[^ ]*//g"` conftest*; exit 1' 1 2 15
+trap 'rm -fr `echo "Makefile lg.conf $RD_UTIL_LG_PROGS" | sed "s/:[^ ]*//g"` conftest*; exit 1' 1 2 15
 EOF
 cat >> $CONFIG_STATUS <<EOF
 
@@ -769,9 +773,10 @@ s%@subdirs@%$subdirs%g
 s%@INSTALL_PROGRAM@%$INSTALL_PROGRAM%g
 s%@INSTALL_SCRIPT@%$INSTALL_SCRIPT%g
 s%@INSTALL_DATA@%$INSTALL_DATA%g
-s%@RD_UTIL_PROGS@%$RD_UTIL_PROGS%g
+s%@RD_UTIL_LG_PROGS@%$RD_UTIL_LG_PROGS%g
 s%@PERLV_PATH@%$PERLV_PATH%g
-s%@EXPECT_PATH@%$EXPECT_PATH%g
+s%@LG_PING_CMD@%$LG_PING_CMD%g
+s%@ENV_PATH@%$ENV_PATH%g
 
 CEOF
 EOF
@@ -813,7 +818,7 @@ EOF
 
 cat >> $CONFIG_STATUS <<EOF
 
-CONFIG_FILES=\${CONFIG_FILES-"Makefile $RD_UTIL_PROGS"}
+CONFIG_FILES=\${CONFIG_FILES-"Makefile lg.conf $RD_UTIL_LG_PROGS"}
 EOF
 cat >> $CONFIG_STATUS <<\EOF
 for ac_file in .. $CONFIG_FILES; do if test "x$ac_file" != x..; then
@@ -983,4 +988,4 @@ fi
 
 
 # fix permissions on scripts.
-for file in $RD_UTIL_PROGS; do chmod a+x $file; done
+for file in $RD_UTIL_LG_PROGS; do chmod a+x $file; done
