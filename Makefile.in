@@ -34,6 +34,7 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
+@MK_LCLSTATEDIR_TRUE@am__append_1 = $(localstatedir)
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in $(top_srcdir)/configure COPYING \
@@ -89,6 +90,8 @@ CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
 COMM = @COMM@
+CONF_INSTALL_FALSE = @CONF_INSTALL_FALSE@
+CONF_INSTALL_TRUE = @CONF_INSTALL_TRUE@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CVS = @CVS@
@@ -121,6 +124,8 @@ MAILPLUS = @MAILPLUS@
 MAKE = @MAKE@
 MAKEINFO = @MAKEINFO@
 MKDIR = @MKDIR@
+MK_LCLSTATEDIR_FALSE = @MK_LCLSTATEDIR_FALSE@
+MK_LCLSTATEDIR_TRUE = @MK_LCLSTATEDIR_TRUE@
 OBJEXT = @OBJEXT@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
@@ -183,6 +188,10 @@ EXTRA_DIST = BUGS Todo configure install-sh \
 # mkinstalldirs will create the install destination before descending into
 # the subdirs.
 SUBDIRS = . include etc bin man share
+
+# sysconfdir is here because etc/Makefile uses a script to be careful about
+# installing rancid.conf, not over-writing an existing one.
+DIRS2_CREATE = $(prefix) $(sysconfdir) $(am__append_1)
 all: all-recursive
 
 .SUFFIXES:
@@ -594,11 +603,8 @@ uninstall-info: uninstall-info-recursive
 
 
 @SET_MAKE@
-
-# sysconfdir is here because etc/Makefile uses a script to be careful about
-# installing rancid.conf, not over-writing an existing one.
 install-data-hook:
-	$(mkinstalldirs) $(prefix) $(localstatedir) $(sysconfdir);
+	$(mkinstalldirs) $(DIRS2_CREATE);
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: clogin.in,v 1.72 2004/01/11 05:39:15 heas Exp $
+## $Id: clogin.in,v 1.77 2004/03/12 05:44:06 asp Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -47,7 +47,7 @@ set password_file $env(HOME)/.cloginrc
 set do_command 0
 set do_script 0
 # The default is to automatically enable
-set enable 1
+set avenable 1
 # The default is that you login non-enabled (tacacs can have you login already
 # enabled)
 set avautoenable 0
@@ -189,11 +189,11 @@ for {set i 0} {$i < $argc} {incr i} {
 	    set do_command 1
 	# Do we enable?
 	} -noenable {
-	    set enable 0
+	    set avenable 0
 	# Does tacacs automatically enable us?
 	} -autoenable {
 	    set avautoenable 1
-	    set enable 0
+	    set avenable 0
 	} -* {
 	    send_user "\nError: Unknown argument! $arg\n"
 	    send_user $usage
@@ -306,8 +306,15 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 		send_user "\nError: telnet failed: $reason\n"
 		exit 1
 	    }
-	} elseif ![string compare $prog "ssh"] {
-	    if [ catch {spawn $sshcmd -c $cyphertype -x -l $user $router} reason ] {
+	} elseif [string match "ssh*" $prog] {
+	    regexp {ssh(:([^[:space:]]+))*} $prog command suffix port
+	    if {"$port" == ""} {
+		set retval [ catch {spawn $sshcmd -c $cyphertype -x -l $user $router} reason ]
+
+	    } else {
+		set retval [ catch {spawn $sshcmd -c $cyphertype -x -l $user -p $port $router} reason ]
+	    }
+	    if { $retval } {
 		send_user "\nError: $sshcmd failed: $reason\n"
 		exit 1
 	    }
@@ -403,7 +410,12 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 				  send_user "\nError: Check your passwd for $router\n"
 				  return 1
 				}
-	-re "^Enter Selection: " {
+	"Press any key to continue." {
+				  # send_user "Pressing the ANY key\n"
+				  send "\r"
+				  exp_continue
+				}
+	-re "Enter Selection: " {
 				  # Catalyst 1900s have some lame menu.  Enter
 				  # K to reach a command-line.
 				  send "K\r"
@@ -453,8 +465,8 @@ proc do_enable { enauser enapasswd } {
 	-re "$e_prompt"	{ send "$enapasswd\r"; exp_continue}
 	"#"		{ set prompt "#" }
 	"(enable)"	{ set prompt "> (enable) " }
-	"denied"	{
-			  # % Access denied - from local auth
+	-re "(denied|Sorry|Incorrect)"	{
+			  # % Access denied - from local auth and poss. others
 			  send_user "\nError: Check your Enable passwd\n";
 			  return 1
 			}
@@ -485,6 +497,9 @@ proc run_commands { prompt command } {
     if { [ string compare "extreme" "$platform" ] } {
 	if [ regexp -- ".*> .*enable" "$prompt" ] {
 	    send "set length 0\r"
+	    # This is ugly, but reduces code duplication, allowing the
+	    # subsequent expects to handle everything as normal.
+	    set command "set logging session disable\r;$command"
 	} else {
 	    send "term length 0\r"
 	}
@@ -618,6 +633,7 @@ foreach router [lrange $argv $i end] {
 	    set prompt "(#| \\(enable\\))"
 	} else {
 	    set autoenable 0
+	    set enable $avenable
 	    set prompt ">"
 	}
     }

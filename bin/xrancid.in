@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: xrancid.in,v 1.32 2004/01/11 03:49:13 heas Exp $
+## $Id: xrancid.in,v 1.33 2004/01/13 01:56:50 asp Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -180,7 +180,7 @@ sub ShowMemory {
     return(0);
 }
 
-# This routine parses "show diagnostics"
+# This routine parses "show diag"
 sub ShowDiag {
     print STDERR "    In ShowDiag: $_" if ($debug);
 
@@ -376,7 +376,7 @@ sub DoNothing {print STDOUT;}
 %commands=(
 	'show version'			=> "ShowVersion",
 	'show memory'			=> "ShowMemory",
-	'show diagnostics'		=> "ShowDiag",
+	'show diag'			=> "ShowDiag",
 	'show switch'			=> "ShowSwitch",
 	'show slot'			=> "ShowSlot",
 	'show configuration detail'	=> "WriteTerm",
@@ -387,7 +387,7 @@ sub DoNothing {print STDOUT;}
 @commands=(
 	"show version",
 	"show memory",
-	"show diagnostics",
+	"show diag",
 	"show switch",
 	"show slot",
 	"show configuration detail",

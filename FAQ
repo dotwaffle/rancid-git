@@ -144,6 +144,13 @@ A. As far as I know, CVS does not provide a way to remove directories.  First,
 	% cd <LOCALSTATEDIR>
 	% rm -rf fubar CVS/fubar
 
+Q. I need a web interface to the rancid CVS repository, for the CVS unsavvy.
+A. cvsweb works with rancid.  Other similar software may as well.
+	http://www.freebsd.org/projects/cvsweb.html
+   cvsweb.conf:
+	@CVSrepositories = (
+		'rancid' => ['RANCID CVS, '/full_path_to_the_RANCID_CVS'],
+   where the path will be <LOCALSTATEDIR>/CVS.
 
 3) General
 
@@ -189,8 +196,8 @@ Q. Are there any characters in the banner that rancid has problems with OR
 A. The trickiest part about clogin (et al) is recognizing the prompt
    correctly.  clogin looks for '>' and '#' to figure out if it is logged
    in or in enable mode.  So if you have a '>' or '#' in your login banner
-   (other other motd), then clogin gets all confused and will not be
-   able to log in correctly, and thus rancid will fail.
+   (or other motd), then clogin gets all confused and will not be able to log
+   in correctly, and thus rancid will fail.
 
    Don't use '>' or '#' in your prompt or in your banner or other motd.
 

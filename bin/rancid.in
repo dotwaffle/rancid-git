@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: rancid.in,v 1.168 2004/01/12 00:52:47 asp Exp $
+## $Id: rancid.in,v 1.172 2004/03/14 16:57:05 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -225,7 +225,17 @@ sub ShowVersion {
 	    # incantations.  for a slave, we dont get this info and its just a
 	    # blank line.
 	    $_ = <INPUT>;
-	    $_ = <INPUT> if (/processor board id/i);
+	    if (/processor board id/i) {
+		my($sn);
+
+		if (/processor board id (\S+)/i) {
+		    $sn = $1;
+		    $sn =~ s/,$//;
+		    ProcessHistory("COMMENTS","keysort","D9",
+							"!Processor ID: $sn\n");
+		}
+		$_ = <INPUT>;
+	    }
 	    $_ = "" if (! /(cpu at |processor: |$cpu processor,)/i);
 	    tr/\015//d;
 	    s/implementation/impl/i;
@@ -372,7 +382,6 @@ sub ShowIDprom {
 
 	/FRU is .(.*)\'/ && ($tmp = $1);
 	/Product Number = .(.*)\'/ &&
-		ProcessHistory("COMMENTS","keysort","D0","!\n") &&
 		ProcessHistory("COMMENTS","keysort","D0",
 				"!Catalyst Chassis type: $1, $tmp\n");
 	/Serial Number = .([0-9A-Za-z]+)/ &&
@@ -461,7 +470,6 @@ sub ShowRSP {
 	/^$/ && next;
 
 	/^\s+Chassis model: (\S+)/ &&
-	    ProcessHistory("COMMENTS","keysort","D0","!\n") &&
 	    ProcessHistory("COMMENTS","keysort","D1",
 				"!RSP Chassis model: $1\n") &&
 	    next;
@@ -490,7 +498,6 @@ sub ShowGSR {
 	s/^<-+ More -+>\s*//;
 	/^$/ && next;
 	/^\s+Chassis: type (\S+) Fab Ver: (\S+)/ &&
-	    ProcessHistory("COMMENTS","keysort","D0","!\n") &&
 	    ProcessHistory("COMMENTS","keysort","D1",
 				"!GSR Chassis type: $1 Fab Ver: $2\n") &&
 	    next;
@@ -562,6 +569,7 @@ sub ShowFlash {
 	return(1) if /(Invalid input detected|Type help or )/;
 	# the pager can not be disabled per-session on the PIX
 	s/^<-+ More -+>\s*//;
+	/\s+vlan\.dat$/ && next;
 	ProcessHistory("FLASH","","","!Flash: $_");
     }
     ProcessHistory("","","","!\n");
@@ -880,6 +888,8 @@ sub ShowDiag {
 		$WIC = "/$2";
 	    } elsif ($1 eq "WIC/VIC") {
 		$WIC = "/$2";
+	    } elsif ($1 eq "DSP") {
+		$WIC = "/$2";
 	    } elsif ($1 eq "Encryption AIM") {
 		$slot = "$2";
 		undef($WIC);
@@ -915,6 +925,15 @@ sub ShowDiag {
 		ProcessHistory("SLOT","keysort","B","!Slot $slot$WIC: type $_");
 	    }
 	    next;
+	} elsif (/^\s+(.* (DSP) Module) Slot (\d):/) {
+	    # The 1760 (at least) has yet another format...where it has two
+	    # dedicated DSP slots, and thus two slot 0s.
+	    my($TYPE) = $1;
+	    $WIC = "/$3";
+	    ProcessHistory("SLOT","","","!\n");
+	    ProcessHistory("SLOT","keysort","B",
+					"!Slot $slot$WIC: type $TYPE\n");
+	    next;
 	}
 	# yet another format.  seen on 2600s w/ 12.1, but appears to be all
 	# 12.1, including 7200s & 3700s.  Sometimes the PCB serial appears
@@ -929,7 +948,7 @@ sub ShowDiag {
 	    while (<INPUT>) {
 		tr/\015//d;
 
-		if (/0x..: /) {
+		if (/0x..: / || /^$/) {
 		    # no effing idea why break does not work there
 		    goto PerlSucks;
 		}
@@ -1531,6 +1550,7 @@ if ($ENV{"FILTER_PWDS"} =~ /no/i) {
 
 ProcessHistory("","","","!RANCID-CONTENT-TYPE: cisco\n!\n");
 ProcessHistory("COMMENTS","keysort","B0","!\n");
+ProcessHistory("COMMENTS","keysort","D0","!\n");
 ProcessHistory("COMMENTS","keysort","F0","!\n");
 ProcessHistory("COMMENTS","keysort","G0","!\n");
 TOP: while(<INPUT>) {

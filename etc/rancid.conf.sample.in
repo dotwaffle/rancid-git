@@ -5,6 +5,10 @@
 #
 TERM=network;export TERM
 #
+# Create files w/o world read/write/exec permissins, but read/exec permissions
+# for group.
+umask 027
+#
 # Under BASEDIR (i.e.: --localstatedir), there will be a "logs" directory for
 # the logs from rancid and a directory for each group of routers defined in
 # LIST_OF_GROUPS (below).  In addition to these, there will be a "CVS"
@@ -53,7 +57,11 @@ OLDTIME=4; export OLDTIME
 # For each group, define a list of people to receive the diffs.
 # in sendmail's /etc/aliases.
 #   rancid-group:	joe,moe@foo
-#   rancid-group-admin:	hostmaster
+#   rancid-admin-group:	hostmaster
 # be sure to read ../README regarding aliases.
 #
-umask 027
+# If your MTA configuration is broken or you want mail to be forwarded to a
+# domain not the same the local one, define that domain here.  "@" must be
+# included, as this is simply appended to the usual recipients.  It is NOT
+# appended to recipients specified in rancid-run's -m option.
+#MAILDOMAIN="@example.com"; export MAILDOMAIN

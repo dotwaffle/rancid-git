@@ -1,8 +1,8 @@
 .\"
-.\" $Id: rancid.conf.5.in,v 1.9 2004/01/11 06:12:35 hank Exp $
+.\" $Id: rancid.conf.5.in,v 1.11 2004/03/12 23:13:09 heas Exp $
 .\"
 .hys 50
-.TH "rancid.conf" "5" "7 Jan 2004"
+.TH "rancid.conf" "5" "12 Mar 2004"
 .SH NAME
 rancid.conf \- rancid environment configuration file
 .SH DESCRIPTION
@@ -11,9 +11,9 @@ contains environment configuration information for
 .BR rancid-run (1)
 and
 .BR rancid (1)
-including shell PATH, list of rancid groups, etc. and is read by
-.BR rancid-run (1)
-at run-time.
+including shell PATH, list of rancid groups, etc. and is read by several
+scripts at run-time, including
+.BR rancid-run (1).
 .PP
 The syntax of
 .B rancid.conf
@@ -113,6 +113,14 @@ Directory where
 places log files.
 .sp
 Default: $BASEDIR/logs
+.\"
+.TP
+.B MAILDOMAIN
+Define the domain part of addresses for administrative and diff e-mail.
+The value of this variable is simply appended to the normal mail addresses.
+For example @MAILPLUS@usfs@example.com, if
+.B MAILDOMAIN
+had been set to "@example.com".
 .\"
 .TP
 .B NOCOMMSTR

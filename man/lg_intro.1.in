@@ -35,8 +35,8 @@ run.
 .PP
 lg.cgi begins by performing some basic checks on the
 arguments passed to it.  If these checks pass, lg.cgi either displays
-cached data from a previous invocation if that data exists and is
-within the cache interval or uses
+cached data from a previous invocation, if that data exists and is
+within the cache interval, or uses
 .BR clogin (1)
 to login to the device and execute the command.  The
 results of the command are cached if applicable and displayed for the

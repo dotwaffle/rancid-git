@@ -1,6 +1,6 @@
 #! /bin/sh
 ##
-## $Id: rancid-run.in,v 1.28 2004/01/11 06:11:23 hank Exp $
+## $Id: rancid-run.in,v 1.30 2004/03/12 23:17:28 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -88,49 +88,48 @@ fi
 for GROUP in $LIST_OF_GROUPS
 do
 
-	LOCKFILE=$TMPDIR/.$GROUP.run.lock
+    LOCKFILE=$TMPDIR/.$GROUP.run.lock
 
-	(
-		echo starting: `date`
-		echo
+    (
+	echo starting: `date`
+	echo
 
-		if [ -f $LOCKFILE ]
-		then
-			echo hourly config diffs failed: $LOCKFILE exists
-			ls -l $LOCKFILE
+	if [ -f $LOCKFILE ]
+	then
+	    echo hourly config diffs failed: $LOCKFILE exists
+	    ls -l $LOCKFILE
 
-			# Send email if the lock file is old.
-			if [ "X$LOCKTIME" = "X" ] ; then
-				LOCKTIME=4
-			fi
-			@PERLV@ -e "\$t = (stat(\"$LOCKFILE\"))[9]; print \"OLD\\n\" if (time() - \$t >= $LOCKTIME*60*60);" > $TMPDIR/.$GROUP.old
-			if [ -s $TMPDIR/.$GROUP.old ]
-			then
-				(
-				  echo "To: @ADMINMAILPLUS@$GROUP"
-				  echo "Subject: rancid hung - $GROUP"
-				  echo "Precedence: bulk"
-				  echo ""
+	    # Send email if the lock file is old.
+	    if [ "X$LOCKTIME" = "X" ] ; then
+		LOCKTIME=4
+	    fi
+	    @PERLV@ -e "\$t = (stat(\"$LOCKFILE\"))[9]; print \"OLD\\n\" if (time() - \$t >= $LOCKTIME*60*60);" > $TMPDIR/.$GROUP.old
+	    if [ -s $TMPDIR/.$GROUP.old ]
+	    then
+		(
+		  echo "To: @ADMINMAILPLUS@${GROUP}${MAILDOMAIN}"
+		  echo "Subject: rancid hung - $GROUP"
+		  echo "Precedence: bulk"
+		  echo ""
 
-				  cat <<END
+		  cat <<END
 rancid $GROUP hung on `hostname`?  Old lockfile still exists:
 `ls -l $LOCKFILE`
 END
-				) | sendmail -t
-			fi
-			rm -f $TMPDIR/.$GROUP.old
+		) | sendmail -t
+	    fi
+	    rm -f $TMPDIR/.$GROUP.old
+	else
+	    trap 'rm -fr $LOCKFILE;exit 1' 1 2 3 6 10 15
+	    touch $LOCKFILE
+	    if [ $? -eq 0 ] ; then
+		control_rancid $CR_ARGV $GROUP
+		rm -f $LOCKFILE
+	    fi
+	    trap ''  1 2 3 6 10 15
+	fi
 
-		else
-			trap 'rm -fr $LOCKFILE;exit 1' 1 2 3 6 10 15
-			touch $LOCKFILE
-			if [ $? -eq 0 ] ; then
-			    control_rancid $CR_ARGV $GROUP
-			    rm -f $LOCKFILE
-			fi
-			trap ''  1 2 3 6 10 15
-		fi
-
-		echo
-		echo ending: `date`
-	) >$LOGDIR/$GROUP.`date +%Y%m%d.%H%M%S` 2>&1 
+	echo
+	echo ending: `date`
+    ) >$LOGDIR/$GROUP.`date +%Y%m%d.%H%M%S` 2>&1 
 done

@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: jlogin.in,v 1.41 2004/01/11 05:39:15 heas Exp $
+## $Id: jlogin.in,v 1.46 2004/03/11 19:36:25 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -42,12 +42,10 @@ set password_file $env(HOME)/.cloginrc
 set do_command 0
 set do_script 0
 # The default is to automatically enable
-set enable 1
+set avenable 1
 # The default is to look in the password file to find the passwords.  This
 # tracks if we receive them on the command line.
 set do_passwd 1
-# No passphrase by default
-set passphrase ""
 
 # Find the user in the ENV, or use the unix userid.
 if {[ info exists env(CISCO_USER) ] } {
@@ -112,7 +110,7 @@ for {set i 0} {$i < $argc} {incr i} {
 	-R* {
 	    if {! [  regexp .\[rR\](.+) $arg ignore passphrase]} {
 		incr i
-		set passphrase [ lindex $argv $i ]
+		set avpassphrase [ lindex $argv $i ]
 	    }
 	# Expect script to run.
 	} -s* -
@@ -345,8 +343,12 @@ proc login { router user passwd cmethod cyphertype identfile} {
 		catch {close};
 		send_user "\nError: Unknown host\n"; wait; return 1
 	    }
-	    -re "Enter passphrase for RSA key '\[^'\]*': " {
-		send_user "\nKey has passphrase!\n"
+	    "Login incorrect" {
+			  send_user "\nError: Check your password for $router\n"
+			  catch {close}; wait; return 1
+			}
+	    -re "Enter passphrase.*: " {
+		# sleep briefly to allow time for stty -echo
 		sleep 1
 		send "$passphrase\r"
 		exp_continue }
@@ -465,10 +467,17 @@ foreach router [lrange $argv $i end] {
       }
     }
 
-    # figure out identity file to use
-    set identfile ""
-    if {[info exists identity]} {
-	set identfile [join [lindex [find identity $router] 0] ""]
+    # Figure out identity file to use
+    set identfile [join [lindex [find identity $router] 0] ""]
+
+    # Figure out passphrase to use
+    if {[info exists avpassphrase]} {
+	set passphrase $avpassphrase
+    } else {
+	set passphrase [join [lindex [find passphrase $router] 0] ""]
+    }
+    if { ! [string length "$passphrase"]} {
+	set passphrase $passwd
     }
 
     # Figure out ssh cypher type

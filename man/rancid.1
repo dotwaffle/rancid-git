@@ -14,61 +14,83 @@ filename]\ \c
 .B rancid
 is a
 .BR perl (1)
-script which uses
-.BR clogin (1)
-to login to a Cisco router, execute commands to display
-the configuration, etc, then filters the output for formatting, security,
-and so on.
+script which uses the login scripts (see
+.BR clogin (1))
+to login to a device, execute commands to display the configuration, etc,
+then filters the output for formatting, security, and so on.
 .B rancid's
 product is a file with the name of it's last argument plus the suffix .new.
-For example, hostname.new.
+For example,
+.IR hostname.new .
 .PP
-There are complementary scripts for
-Alteon WebOS switches,
-Bay Networks (nortel),
-Cisco catalyst switches,
-Cisco content services switches,
-ADC-kentrox EZ-T3 mux,
-Force10,
-Foundry,
-HP Procurve Switches,
-Hitachi Routers,
-Juniper Networks E-series,
-Juniper Networks,
-MRTd,
-Procket Networks,
-Riverstone,
-Redback,
-Lucent TNT,
-Netscreen firewalls,
-Netscaler,
-Extreme,
-and Zebra routing software
-named 
-.B arancid,
-.B brancid,
-.B cat5rancid,
-.B cssrancid,
-.B erancid,
-.B f10rancid,
-.B fnrancid,
-.B francid,
-.B hrancid,
-.B htrancid,
-.B jerancid,
-.B jrancid,
-.B mrancid,
-.B nrancid,
-.B nsrancid,
-.B prancid,
-.B rivrancid,
-.B rrancid,
-.B tntrancid,
-.B nrancid,
-.B xrancid,
-and
-.B zrancid,
-respectively.
+There are complementary scripts for other platforms and/or manufacturers
+that are supported by
+.BR rancid (1).
+Briefly, these are:
+.sp
+.TP 15
+.B arancid
+Alteon WebOS switches
+.TP
+.B brancid
+Bay Networks (nortel)
+.TP
+.B cat5rancid
+Cisco catalyst switches
+.TP
+.B cssrancid
+Cisco content services switches
+.TP
+.B erancid
+ADC-kentrox EZ-T3 mux
+.TP
+.B f10rancid
+Force10
+.TP
+.B fnrancid
+Fortinet Firewalls
+.TP
+.B francid
+Foundry and HP procurve OEMs of Foundry
+.TP
+.B hrancid
+HP Procurve Switches
+.TP
+.B htranicd
+Hitachi Routers
+.TP
+.B jerancid
+Juniper Networks E-series
+.TP
+.B jrancid
+Juniper Networks
+.TP
+.B mrancid
+MRTd
+.TP
+.B prancid
+Procket Networks
+.TP
+.B rivrancid
+Riverstone
+.TP
+.B rrancid
+Redback
+.TP
+.B tntrancid
+Lucent TNT
+.TP
+.B nrancid
+Netscreen firewalls
+.TP
+.B nsrancid
+Netscaler
+.TP
+.B xrancid
+Extreme switches
+.TP
+.B zrancid
+Zebra routing software
 .PP
 The command-line options are as follows:
 .TP

@@ -83,8 +83,8 @@ respectively.
 reads the
 .IR .cloginrc
 file for its configuration, then connects and logins into each of the
-routers specified on the command line in the order listed.  Some command-line
-options exist to override directives found in the
+routers specified on the command line in the order listed.  Command-line
+options exist to override some of the directives found in the
 .IR .cloginrc
 configuration file.
 .PP
@@ -134,8 +134,10 @@ with the connection to the router intact, when it is done.  Note that
 disables
 .IR log_user
 of
-.BR expect (1).
-Example script(s) can be found in util/*.exp.
+.BR expect (1) when
+.B \-s
+is used.
+Example script(s) can be found in share/rancid/*.exp.
 .\"
 .TP
 .B \-t
@@ -249,8 +251,8 @@ The HP Procurve switch CLI relies heavily upon curses for cursor/screen
 manipulation and assumes a vt100 terminal type.  They do not provide a way
 to set a different terminal type or adjust this behavior.  The resulting
 escape codes make automating interaction with these devices very difficult
-or impossible.  Thus bin/hpuifilter, which must be found in the PATH, is used
-by hlogin to filter these.  While this works for rancid's collection,
+or impossible.  Thus bin/hpuifilter, which must be found in the user's PATH,
+is used by hlogin to filter these.  While this works for rancid's collection,
 there are side effects for interactive logins via hlogin; most of which are
 formatting annoyances that may be remedied by typing CTRL-R to reprint the
 current line.

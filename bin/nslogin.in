@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: nslogin.in,v 1.10 2004/01/11 05:39:15 heas Exp $
+## $Id: nslogin.in,v 1.11 2004/02/02 17:38:36 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -49,7 +49,7 @@ set password_file $env(HOME)/.cloginrc
 set do_command 1
 set do_script 0
 # The default is to automatically enable
-set enable 0
+set avenable 0
 # The default is that you login non-enabled (tacacs can have you login already
 # enabled)
 set avautoenable 0
@@ -191,11 +191,11 @@ for {set i 0} {$i < $argc} {incr i} {
 	    set do_command 1
 	# Do we enable?
 	} -noenable {
-	    set enable 0
+	    set avenable 0
 	# Does tacacs automatically enable us?
 	} -autoenable {
 	    set avautoenable 1
-	    set enable 0
+	    set avenable 0
 	} -* {
 	    send_user "\nError: Unknown argument! $arg\n"
 	    send_user $usage
@@ -510,6 +510,8 @@ foreach router [lrange $argv $i end] {
     # look for noenable option in .cloginrc
     if { [find noenable $router] != "" } {
 	set enable 0
+    } else {
+	set enable $avenable
     }
 
     # Figure out passwords

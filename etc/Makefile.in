@@ -63,6 +63,8 @@ CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
 COMM = @COMM@
+CONF_INSTALL_FALSE = @CONF_INSTALL_FALSE@
+CONF_INSTALL_TRUE = @CONF_INSTALL_TRUE@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CVS = @CVS@
@@ -95,6 +97,8 @@ MAILPLUS = @MAILPLUS@
 MAKE = @MAKE@
 MAKEINFO = @MAKEINFO@
 MKDIR = @MKDIR@
+MK_LCLSTATEDIR_FALSE = @MK_LCLSTATEDIR_FALSE@
+MK_LCLSTATEDIR_TRUE = @MK_LCLSTATEDIR_TRUE@
 OBJEXT = @OBJEXT@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
@@ -151,6 +155,7 @@ AUTOMAKE_OPTIONS = foreign
 pkgdata_DATA = lg.conf.sample rancid.conf.sample
 EXTRA_DIST = $(pkgdata_DATA:%=%.in)
 CLEANFILES = $(pkgdata_DATA)
+@CONF_INSTALL_TRUE@DO_CONF_INSTALL = yes
 
 #clean:
 #	rm -f Makefile rancid.conf $(BIN_DATAS) $(BIN_PROGS)
@@ -342,7 +347,8 @@ uninstall-am: uninstall-info-am uninstall-pkgdataDATA
 
 
 install-data-local: all
-	@if test -f $(sysconfdir)/rancid.conf ; then \
+	@if test "$(DO_CONF_INSTALL)" = "yes"; then \
+	if test -f $(sysconfdir)/rancid.conf ; then \
 	    echo ""; \
 	    echo "WARNING: *** $(sysconfdir)/rancid.conf exists.  See "; \
 	    echo "         *** $(pkgdatadir)/rancid.conf.sample for new"; \
@@ -359,7 +365,8 @@ install-data-local: all
 	    echo ""; \
 	else \
 	    $(INSTALL_DATA) lg.conf.sample $(sysconfdir)/lg.conf; \
-	fi;
+	fi; \
+	fi
 
 lg.conf.sample: Makefile $(srcdir)/lg.conf.sample.in
 	rm -f lg.conf.sample lg.conf.sample.tmp; \

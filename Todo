@@ -31,7 +31,7 @@
 - should *login emmit "clogin error:" or "*login error:" to make matches for
   login failures definitive?
 - would like hpfilter to be more friendly to interactive logins
-- rancid with zebra?  via vtysh?
+- rancid with zebra via vtysh?
 - rancid for unix?
 - would be nice if it were possible to add additional commands to be run
   per-platform as a user desires.  how could the user also provide a

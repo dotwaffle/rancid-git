@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: jrancid.in,v 1.58 2004/01/11 03:49:13 heas Exp $
+## $Id: jrancid.in,v 1.59 2004/03/11 23:58:59 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -337,6 +337,7 @@ sub ShowChassisSCB {
 sub ShowChassisAlarms {
     print STDERR "    In ShowChassisAlarms: $_" if ($debug);
 
+    s/^[a-z]+@//;
     ProcessHistory("","","","# $_");
     while (<INPUT>) {
 	tr/\015//d;

@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: rivlogin.in,v 1.15 2004/01/11 05:39:15 heas Exp $
+## $Id: rivlogin.in,v 1.17 2004/02/02 17:38:36 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -60,7 +60,7 @@ set do_script  0
 set log_user   0
 
 # The default CLI mode to login to is "enable" mode
-set enable     1
+set avenable	1
 
 # The default is to look in the password file to find the passwords.  This
 # tracks if we receive them on the command line.
@@ -839,7 +839,7 @@ for {set idx 0} {$idx < $argc} {incr idx} {
             set timeout [ lindex $argv $idx ]
 
         } -noenable {
-            set enable 0
+            set avenable 0
         } -* {
             puts "ERROR:unkown argument passed: $arg\n"
             puts $usage
@@ -863,142 +863,133 @@ if { $idx == $argc } {
 foreach router [lrange $argv $idx end] {
 set router [string tolower $router]
 
-# Figure out passwords
-if {$verbose == 1} {
-    puts "DEBUG: do_passwd = $do_passwd\n"
-    puts "DEBUG: do_enablepasswd = $do_enapasswd\n"
-}
-
-if { $do_passwd || $do_enapasswd } {
-    set pswd [find password $router]
-    if { [llength $pswd] == 0 } {
-        puts "ERROR: - no password for $router in $password_file.\n"
-        exit 1
-    } 
-    if { $do_enapasswd && [llength $pswd] < 2 } {
-        puts "ERROR: no enable password found for $router in $password_file."
-        exit 1
+    # Figure out passwords
+    if {$verbose == 1} {
+	puts "DEBUG: do_passwd = $do_passwd\n"
+	puts "DEBUG: do_enablepasswd = $do_enapasswd\n"
     }
+
+    # look for noenable option in .cloginrc
+    if { [find noenable $router] != "" } {
+	set enable 0
+    } else {
+	set enable $avenable
+    }
+
+    if { $do_passwd || $do_enapasswd } {
+	set pswd [find password $router]
+	if { [llength $pswd] == 0 } {
+	    puts "ERROR: - no password for $router in $password_file.\n"
+	    exit 1
+	} 
+	if { $do_enapasswd && [llength $pswd] < 2 } {
+	    puts "ERROR: no enable password found for $router in $password_file."
+	    exit 1
+	}
     
-    set passwd [join [lindex $pswd 0] ""]
-    set enapasswd [join [lindex $pswd 1] ""]
-}
-
-
-# Figure out user to login with if necessary
-
-if {[info exists username]} {  
-    # command line username
-    set user $username
-} else {
-    set user [join [find user $router] ""]
-    if { "$user" == "" } { set user $default_user }
-} 
-
-# Figure out username's password
-
-if {[info exists userpasswd]} {
-    # command line username
-    set userpswd $userpasswd
-} else {
-    set userpswd [join [find userpassword $router] ""]
-    if { "$userpswd" == "" } { set userpswd $passwd } 
-} 
-
-# Figure out enable username
-
-if {[info exists enausername]} {  
-    # command line enausername
-    set enauser $enausername
-} else {
-    set enauser [join [find enauser $router] ""]
-    if { "$enauser" == "" } { set enauser $user } 
-} 
-
-# Login to the router, set my_prompt to router's cmd prompt
-
-if {[login $router $user $userpswd $passwd $enapasswd ]} {
-    if { $verbose == 1 } {
-	puts "DEBUG: login to $router failed\n"
+	set passwd [join [lindex $pswd 0] ""]
+	set enapasswd [join [lindex $pswd 1] ""]
     }
-    exit 1
-}
 
-if {$verbose == 1 } {
-    puts "DEBUG: login completed ok\n"
-}
+    # Figure out user to login with if necessary
+    if {[info exists username]} {  
+	# command line username
+	set user $username
+    } else {
+	set user [join [find user $router] ""]
+	if { "$user" == "" } { set user $default_user }
+    } 
 
-if { $enable == 1 } {
+    # Figure out username's password
+    if {[info exists userpasswd]} {
+	# command line username
+	set userpswd $userpasswd
+    } else {
+	set userpswd [join [find userpassword $router] ""]
+	if { "$userpswd" == "" } { set userpswd $passwd } 
+    } 
 
-    if { [do_enable $enauser $enapasswd $userpswd] == 1} {
+    # Figure out enable username
+    if {[info exists enausername]} {  
+	# command line enausername
+	set enauser $enausername
+    } else {
+	set enauser [join [find enauser $router] ""]
+	if { "$enauser" == "" } { set enauser $user } 
+    } 
+
+    # Login to the router, set my_prompt to router's cmd prompt
+    if {[login $router $user $userpswd $passwd $enapasswd ]} {
 	if { $verbose == 1 } {
-	    puts "DEBUG: switch to enable mode on $router failed\n"
+	    puts "DEBUG: login to $router failed\n"
 	}
 	exit 1
     }
-}
 
-# run in one of three modes
-
-if { $do_command } {
-
-    disable_cmd_autocomplete
-    disable_cli_paging
-    
-    if {[ start_logfile $output_file] != 0 } {
-	exit 1
+    if {$verbose == 1 } {
+	puts "DEBUG: login completed ok\n"
     }
 
-    if {[ run_commands $my_prompt $command ]} {
+    if { $enable == 1 } {
+	if { [do_enable $enauser $enapasswd $userpswd] == 1} {
+	    if { $verbose == 1 } {
+		puts "DEBUG: switch to enable mode on $router failed\n"
+	    }
+	    exit 1
+	}
+    }
 
-	log_file 
-        exit 1
+    # run in one of three modes
+    if { $do_command } {
+	disable_cmd_autocomplete
+	disable_cli_paging
+    
+	if { [start_logfile $output_file] != 0 } {
+    	    exit 1
+	}
 
+	if {[ run_commands $my_prompt $command ]} {
+	    log_file 
+	    exit 1
+	} else {
+	    logout $my_prompt
+	}
+    } elseif { $do_script } {
+	disable_cmd_autocomplete
+	disable_cli_paging
+    
+	if {[ start_logfile $output_file] != 0 } {
+	    exit 1
+	}
+
+#	if { [process_script_file $sfile] == 1}  {
+#	    puts "DEBUG: logfile $output_file closed on error\n"
+#	    logout $my_prompt
+#	    exit 1
+#	}
+
+	source_script_file $sfile
+
+	logout $my_prompt
     } else {
+	label $router 
+	log_user 1
 
-        logout $my_prompt
-
-    }
-    
-} elseif { $do_script } {
-    
-    disable_cmd_autocomplete
-    disable_cli_paging
-    
-    if {[ start_logfile $output_file] != 0 } {
-	exit 1
+	if {[ start_logfile $output_file] != 0 } {
+	    exit 1
+	}
+	interact
+	log_file 
     }
 
-    #if { [process_script_file $sfile] == 1}  {
-#	puts "DEBUG: logfile $output_file closed on error\n"
-#	logout $my_prompt
-#	exit 1
-#    }
-
-    source_script_file $sfile
-
-    logout $my_prompt
-
-} else {
-    
-    label $router 
-    log_user 1
-
-    if {[ start_logfile $output_file] != 0 } {
-	exit 1
+    if { $verbose == 1 } {
+	puts "DEBUG: exiting normally.\n"
     }
-    interact
-    log_file 
-}
 
-if { $verbose == 1 } {
-    puts "DEBUG: exiting normally.\n"
-}
-
-if { $logging == 1} {
-    log_file 
-    strip_log $output_file $router
-}
+    if { $logging == 1} {
+	log_file 
+	strip_log $output_file $router
+    }
 }
 
 # puts "\n"

@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: francid.in,v 1.26 2004/01/11 03:49:13 heas Exp $
+## $Id: francid.in,v 1.28 2004/03/03 00:33:48 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -154,7 +154,7 @@ sub ShowVersion {
 	s/^\s*(HW|SW)/$1/;
 	s/^\s*(Compiled on)/SW: $1/;
 	#s/^(HW.*)/$1\n/;
-	if (/^SL (\d)/) {
+	if (/^SL (\d+)/) {
 	    $slot = "Slot $1";
 	    s/^SL \d+/$slot/;
 	}
@@ -300,6 +300,23 @@ sub WriteTerm {
 	    ProcessHistory("","","","!$1 <removed>\n");
 	    next;
 	}
+
+	# reorder listing of ports in a vlan
+	if (/^ (?:un)?tagged ethe/) {
+	    chomp;
+	    s/^\s+//;
+	    s/\s+$//;
+
+	    my @list = split /\s+ethe\s+/, $_;
+	    my $tagtype = shift @list;
+
+	    while (@list) {
+		ProcessHistory("","","",
+				" $tagtype ethe " . (shift @list) . "\n");
+	    }
+	    next;
+	}
+
 
 	ProcessHistory("","","","$_");
 	# end of config

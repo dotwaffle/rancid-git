@@ -310,7 +310,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS VERSION PACKAGE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO AMTAR install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot MAKE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE CPP EGREP U ANSI2KNR MAILPLUS ADMINMAILPLUS DIRNAME DIFF DIFF_CMD SENDMAIL TAR PERLV_PATH PERLV EXPECT_PATH PING_PATH LG_PING_CMD CVS COMM FIND GREP ID MKDIR RSH SORT SSH TELNET TOUCH ENV_PATH LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS VERSION PACKAGE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO AMTAR install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot MAKE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE CPP EGREP U ANSI2KNR MK_LCLSTATEDIR_TRUE MK_LCLSTATEDIR_FALSE CONF_INSTALL_TRUE CONF_INSTALL_FALSE MAILPLUS ADMINMAILPLUS DIRNAME DIFF DIFF_CMD SENDMAIL TAR PERLV_PATH PERLV EXPECT_PATH PING_PATH LG_PING_CMD CVS COMM FIND GREP ID MKDIR RSH SORT SSH TELNET TOUCH ENV_PATH LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -848,6 +848,11 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --disable-dependency-tracking Speeds up one-time builds
   --enable-dependency-tracking  Do not reject slow dependency extractors
+  --enable-mk-localstatedir
+                          enable creation of the local state directory at
+                          install time (default: yes)
+  --enable-conf-install   enable install of sample .conf files in sysconfdir
+                          (default: yes)
   --enable-mail-plus      enable mail to rancid+ addresses, instead of rancid-
   --enable-adminmail-plus enable mail to rancid-admin+ addresses, instead of
                           rancid-admin-
@@ -4936,6 +4941,68 @@ fi
 
 # Package-specific options/knobs
 #
+# Check if user wants us to create LOCALSTATEDIR.  If it's a package-system,
+# they might create it themselves for book-keeping sake; eg: NetBSD
+echo "$as_me:$LINENO: checking whether to create the local state directory at install time" >&5
+echo $ECHO_N "checking whether to create the local state directory at install time... $ECHO_C" >&6
+# Check whether --enable-mk-localstatedir or --disable-mk-localstatedir was given.
+if test "${enable_mk_localstatedir+set}" = set; then
+  enableval="$enable_mk_localstatedir"
+  if test "$enable_mk_localstatedir" = yes; then
+    echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+else
+    echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+else
+  echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+    enable_mk_localstatedir="yes"
+
+fi;
+
+
+if test "${enable_mk_localstatedir}" = yes; then
+  MK_LCLSTATEDIR_TRUE=
+  MK_LCLSTATEDIR_FALSE='#'
+else
+  MK_LCLSTATEDIR_TRUE='#'
+  MK_LCLSTATEDIR_FALSE=
+fi
+
+
+# Check if user wants us to create LOCALSTATEDIR.  If it's a package-system,
+# they might create it themselves for book-keeping sake; eg: NetBSD
+echo "$as_me:$LINENO: checking whether to install sample .conf files in sysconfdir" >&5
+echo $ECHO_N "checking whether to install sample .conf files in sysconfdir... $ECHO_C" >&6
+# Check whether --enable-conf-install or --disable-conf-install was given.
+if test "${enable_conf_install+set}" = set; then
+  enableval="$enable_conf_install"
+  if test "$enable_conf_install" = yes; then
+    echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+else
+    echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+else
+  echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+    enable_conf_install="yes"
+
+fi;
+
+
+if test "${enable_conf_install}" = yes; then
+  CONF_INSTALL_TRUE=
+  CONF_INSTALL_FALSE='#'
+else
+  CONF_INSTALL_TRUE='#'
+  CONF_INSTALL_FALSE=
+fi
+
+
 # Check for a preference for using mail addresses like rancid+group
 # instead of the standard rancid-group
 echo "$as_me:$LINENO: checking whether mail addresses should be in the rancid+ form" >&5
@@ -4965,25 +5032,25 @@ rd_cv_MAILPLUS=$MAILPLUS
 
 # Check for a preference for using mail addresses like rancid+admin-group
 # instead of the standard rancid-admin-group
-echo "$as_me:$LINENO: checking whether admin mail addresses should be in the rancid+ form" >&5
-echo $ECHO_N "checking whether admin mail addresses should be in the rancid+ form... $ECHO_C" >&6
+echo "$as_me:$LINENO: checking whether admin mail addresses should be in the rancid-admin+ form" >&5
+echo $ECHO_N "checking whether admin mail addresses should be in the rancid-admin+ form... $ECHO_C" >&6
 # Check whether --enable-adminmail-plus or --disable-adminmail-plus was given.
 if test "${enable_adminmail_plus+set}" = set; then
   enableval="$enable_adminmail_plus"
   if test "$enable_adminmail_plus" = yes; then
-    echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6
+    echo "$as_me:$LINENO: result: rancid-admin+" >&5
+echo "${ECHO_T}rancid-admin+" >&6
     ADMINMAILPLUS="rancid-admin+"
 
 else
-    echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
+    echo "$as_me:$LINENO: result: ${MAILPLUS}admin-" >&5
+echo "${ECHO_T}${MAILPLUS}admin-" >&6
     ADMINMAILPLUS="${MAILPLUS}admin-"
 
 fi
 else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
+  echo "$as_me:$LINENO: result: ${MAILPLUS}admin-" >&5
+echo "${ECHO_T}${MAILPLUS}admin-" >&6
     ADMINMAILPLUS="${MAILPLUS}admin-"
 
 
@@ -5030,74 +5097,40 @@ else
 echo "${ECHO_T}no" >&6
 fi
 
+
 # locate GNU diff (one supporting the -u option)
-# Extract the first word of "diff", so it can be a program name with args.
-set dummy diff; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_path_DIFF+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $DIFF in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_DIFF="$DIFF" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-as_dummy="/usr/local/bin:/usr/gnu/bin:/usr/bin:/usr/contrib/bin"
-for as_dir in $as_dummy
+echo "$as_me:$LINENO: checking for a diff(1) that supports -u" >&5
+echo $ECHO_N "checking for a diff(1) that supports -u... $ECHO_C" >&6
+_DIFF_PATH=`echo $PATH:${prefix}/bin:/usr/bin:/usr/pkg/bin:/usr/local/bin:/usr/gnu/bin:/usr/contrib/bin | sed -e 's/:/ /g'`
+for _diff in ${_DIFF_PATH} ;
 do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_DIFF="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
+    if test -e ${_diff}/diff ; then
+	${_diff}/diff -u /dev/null /dev/null > /dev/null 2>&1
+	if test $? -ne 0; then
+	    if test "${ADIFF}" == "" ; then
+		ADIFF="${_diff}/diff"
+		ADIFF_CMD="diff -c -4"
+	    fi
+	else
+	    DIFF="${_diff}/diff"
+	    DIFF_CMD="diff -u -4"
+	    break
+	fi
+    fi
 done
-done
-
-  test -z "$ac_cv_path_DIFF" && ac_cv_path_DIFF="no"
-  ;;
-esac
+if test "$DIFF" = "" ; then
+    DIFF=$ADIFF
+    DIFF_CMD=$ADIFF_CMD
 fi
-DIFF=$ac_cv_path_DIFF
-
-if test -n "$DIFF"; then
-  echo "$as_me:$LINENO: result: $DIFF" >&5
-echo "${ECHO_T}$DIFF" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-if test $DIFF = no; then
-    unset ac_cv_path_DIFF
+if test "$DIFF" = "" ; then
     { { echo "$as_me:$LINENO: error: can't locate diff." >&5
 echo "$as_me: error: can't locate diff." >&2;}
    { (exit 1); exit 1; }; }
-else
-    $DIFF -u /dev/null /dev/null > /dev/null 2>&1
-    if test $? -ne 0; then
-	$DIFF -C 2 /dev/null /dev/null > /dev/null 2>&1
-	if test $? -ne 0; then
-	    $DIFF -c2 /dev/null /dev/null > /dev/null 2>&1
-	    if test $? -ne 0; then
-		{ { echo "$as_me:$LINENO: error: can't locate a diff which accepts the -u option." >&5
-echo "$as_me: error: can't locate a diff which accepts the -u option." >&2;}
-   { (exit 1); exit 1; }; }
-		exit 1
-	    else
-		DIFF_CMD="diff -c4"
-	    fi
-	else
-	    DIFF_CMD="diff -C 4"
-	fi
-    else
-	DIFF_CMD="diff -u -4"
-    fi
 fi
+echo "$as_me:$LINENO: result: ${DIFF_CMD}" >&5
+echo "${ECHO_T}${DIFF_CMD}" >&6
+rd_cv_DIFF=$DIFF
+
 rd_cv_DIFF_CMD=$DIFF_CMD
 
 
@@ -5896,10 +5929,7 @@ else
 echo "${ECHO_T}no" >&6
 fi
 
-if test $DIFF = no; then
-    ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_SSH`"
-fi
-unset ac_cv_path_SSH
+ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_SSH`"
 # Extract the first word of "telnet", so it can be a program name with args.
 set dummy telnet; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
@@ -6154,6 +6184,20 @@ if test -z "${am__fastdepCC_TRUE}" && test -z "${am__fastdepCC_FALSE}"; then
   { { echo "$as_me:$LINENO: error: conditional \"am__fastdepCC\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
 echo "$as_me: error: conditional \"am__fastdepCC\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${MK_LCLSTATEDIR_TRUE}" && test -z "${MK_LCLSTATEDIR_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"MK_LCLSTATEDIR\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"MK_LCLSTATEDIR\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${CONF_INSTALL_TRUE}" && test -z "${CONF_INSTALL_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONF_INSTALL\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"CONF_INSTALL\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
@@ -6774,6 +6818,10 @@ s,@CPP@,$CPP,;t t
 s,@EGREP@,$EGREP,;t t
 s,@U@,$U,;t t
 s,@ANSI2KNR@,$ANSI2KNR,;t t
+s,@MK_LCLSTATEDIR_TRUE@,$MK_LCLSTATEDIR_TRUE,;t t
+s,@MK_LCLSTATEDIR_FALSE@,$MK_LCLSTATEDIR_FALSE,;t t
+s,@CONF_INSTALL_TRUE@,$CONF_INSTALL_TRUE,;t t
+s,@CONF_INSTALL_FALSE@,$CONF_INSTALL_FALSE,;t t
 s,@MAILPLUS@,$MAILPLUS,;t t
 s,@ADMINMAILPLUS@,$ADMINMAILPLUS,;t t
 s,@DIRNAME@,$DIRNAME,;t t

@@ -1,8 +1,8 @@
 .\"
-.\" $Id: cloginrc.5,v 1.31 2004/01/11 01:53:10 heas Exp $
+.\" $Id: cloginrc.5,v 1.34 2004/03/11 19:37:30 heas Exp $
 .\"
 .hys 50
-.TH "cloginrc" "5" "11 Jan 2004"
+.TH "cloginrc" "5" "11 Mar 2004"
 .SH NAME
  \.cloginrc \- clogin configuration file
 .SH DESCRIPTION
@@ -42,12 +42,13 @@ include {<file>}
 .PP
 Note: the braces ({}) surrounding the values is significant when the values
 include TCL meta-characters.  Best common practice is to always enclose the
-values in braces.  If a value includes a (left or right) brace, it must
-be backslash-escaped, as in:
+values in braces.  If a value includes a (left or right) brace or space
+character, it must be backslash-escaped, as in:
 .PP
 .in +1i
 .nf
 add user <hostname glob> {foo\\}bar}
+add user <hostname glob> {foo\\ bar}
 .fi
 .in -1i
 .PP
@@ -91,7 +92,7 @@ which is automatically enabled.  This is, that user has enable privileges
 without the need to execute the enable command.  The router's prompt is
 different for enabled mode, ending with a # rather than a >.
 .sp
-Example: add autoenable * 1
+Example: add autoenable * {1}
 .sp
 Default: 0
 .sp
@@ -119,7 +120,7 @@ may be used to adjust the prompt that
 should look for when trying to login.  Note that enableprompt can be a Tcl
 style regular expression.
 .sp
-Example: add enableprompt rc*.example.net {"\\[Ee]nter the enable password:"}
+Example: add enableprompt rc*.example.net {"\\[Ee]nter\\ the\\ enable\\ password:"}
 .sp
 Default: "\\[Pp]assword:"
 .\"
@@ -153,7 +154,7 @@ add "mode character" to .telnetrc.  See
 for more information on telnet command-line syntax, telnet options,
 and .telnetrc.
 .sp
-Example: add method * {ssh} {telnet:3000} {rsh}
+Example: add method * {ssh} {telnet:-3000} {rsh}
 .sp
 Which would cause
 .IR clogin
@@ -175,6 +176,16 @@ device.  This is equivalent to
 .BR jlogin (1).
 .\"
 .TP
+.B add passphrase <router name glob> {"<SSH passphrase>"}
+Specify the SSH passphrase.  Note that this may be particular to an
+.B identity
+directive.  The passphrase will default to the
+.B password
+for the given router.
+.sp
+Example: add passphrase rc*.example.net {the\\ bird\\ goes\\ tweet}
+.\"
+.TP
 .B add passprompt <router name glob> {"<password prompt>"}
 When using AAA with a Cisco router or switch, it is possible to redefine the
 prompt the device presents to the user for the password.  passprompt may be
@@ -183,7 +194,7 @@ used to adjust the prompt that
 should look for when trying to login.  Note that passprompt can be a Tcl
 style regular expression.
 .sp
-Example: add passprompt rc*.example.net {"\\[Ee]nter the password:"}
+Example: add passprompt rc*.example.net {"\\[Ee]nter\\ the\\ password:"}
 .sp
 Default: "(\\[Pp]assword|passwd):"
 .\"
@@ -227,7 +238,7 @@ used to adjust the prompt that
 should look for when trying to login.  Note that userprompt can be a Tcl
 style regular expression.
 .sp
-Example: add userprompt rc*.example.net {"\\[Ee]nter your username:"}
+Example: add userprompt rc*.example.net {"\\[Ee]nter\\ your\\ username:"}
 .sp
 Default: "(Username|login|user name):"
 .\"

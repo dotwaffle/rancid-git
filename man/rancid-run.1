@@ -71,10 +71,12 @@ may be specified multiple times.
 .\"
 .TP
 .B \-r device_name
-Specify the name, as it appears in a group's router.db, of a particular
-device to collect and generate diffs for.  The device must be marked "up".
-If a group is not specified on the command-line, rancid will be run 
-against any group in which the device_name appears.
+Run rancid for a single device,
+.IR device_name .
+.IR device_name
+should be name, as it appears in a group's router.db.  The device must be
+marked "up".  If a group is not specified on the command-line, rancid will
+be run against any group in which the device_name appears.
 .sp
 The 
 .B \-r
@@ -88,7 +90,8 @@ utilizes the following environment variables from
 .\"
 .TP
 .B BASEDIR
-Location of group directories, etc.
+Location of group directories, etc.  This is set to the "localstatedir"
+by the configure script at installation time.
 .\"
 .TP
 .B LIST_OF_GROUPS
@@ -106,11 +109,11 @@ If rancid fails to run or collect a device's configuration, the particular
 group's log file (mentioned above) should be consulted.  Any errors produced
 by
 .BR cvs (1)
-or any of the rancid scripts should be included, whether they be a botched
-cvs tree, login authentication failure, rancid configuration error, etc.  If
-the log file produces no clues, the next debugging step should be run the
-commands manually.  For example, can the user who runs rancid login to the
-device with 'clogin hostname', and so on.
+or any of the rancid scripts should be included there, whether they be a
+botched cvs tree, login authentication failure, rancid configuration error,
+etc.  If the log file produces no clues, the next debugging step should be
+run the commands manually.  For example, can the user who runs rancid login
+to the device with 'clogin hostname', and so on.
 .BR 
 .SH FILES
 .TP

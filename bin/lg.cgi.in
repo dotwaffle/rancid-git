@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: lg.cgi.in,v 1.47 2004/01/11 03:49:13 heas Exp $
+## $Id: lg.cgi.in,v 1.50 2004/03/10 23:01:28 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -27,8 +27,8 @@
 # vars: query, router, args
 
 BEGIN {
-$me = $0;
-$me =~ s/.*\/(\S+)$/$1/;
+    $me = $0;
+    $me =~ s/.*\/(\S+)$/$1/;
 }
 
 use CGI qw/:standard escapeHTML/;
@@ -38,6 +38,7 @@ use LockFile::Simple qw(lock trylock unlock);
 
 my($BASEDIR) = "@prefix@";
 my($SYSCONFDIR) = "@sysconfdir@";
+my($LOCALSTATEDIR) = "@localstatedir@";
 my($pingcmd) = "@LG_PING_CMD@";
 
 my($query, $max_time_diff, $cache_dir, $cloginrc, @results);
@@ -134,23 +135,24 @@ sub readrouters
 	# if the router.db file does not exist, try to compile the list from
 	# the rancid group router.db files.
 	local(*DIR);
-	if (! opendir(DIR, $BASEDIR)) {
-	    dolog(LOG_ERR, "ERROR: couldn\'t read $BASEDIR: $!\n");
+	if (! opendir(DIR, $LOCALSTATEDIR)) {
+	    dolog(LOG_ERR, "ERROR: couldn\'t read $LOCALSTATEDIR: $!\n");
 	} else {
 	    while ($dir = readdir(DIR)) {
-		next if ($dir =~ /^(\.|\.\.|CVS|bin|etc|logs|util)$/);
-		push(@dirs, $dir) if (-d "$BASEDIR/$dir");
+		next if ($dir =~ /^(\.|\.\.|\.ssh|CVS|bin|etc|logs|util)$/);
+		push(@dirs, $dir) if (-d "$LOCALSTATEDIR/$dir");
 	    }
 	    closedir(DIR);
 
 	    foreach $dir (@dirs) {
-		if (! opendir(DIR, "$BASEDIR/$dir")) {
-		    dolog(LOG_ERR, "ERROR: couldn\'t read $BASEDIR/$dir: $!\n");
+		if (! opendir(DIR, "$LOCALSTATEDIR/$dir")) {
+		    dolog(LOG_ERR,
+			"ERROR: couldn\'t read $LOCALSTATEDIR/$dir: $!\n");
 		    next;
 		}
 		closedir(DIR);
-		next if (! -f "$BASEDIR/$dir/router.db");
-		if (open(RTR, "< $BASEDIR/$dir/router.db")) {
+		next if (! -f "$LOCALSTATEDIR/$dir/router.db");
+		if (open(RTR, "< $LOCALSTATEDIR/$dir/router.db")) {
 		    while (<RTR>) {
 			next if (/^\s*(#|$)/);
 			# fqdn:mfg:state
@@ -162,7 +164,7 @@ sub readrouters
 		    close(RTR);
 		} else {
 		    dolog(LOG_ERR, "ERROR: couldn\'t open the router.db " .
-					"file: $BASEDIR/$dir/router.db: $!\n");
+				"file: $LOCALSTATEDIR/$dir/router.db: $!\n");
 		}
 	    }
 	}
@@ -430,7 +432,7 @@ $max_lock_hold = 300;
 if (defined($LG_CLOGINRC)) {
     $cloginrc = $LG_CLOGINRC;
 } else {
-    $cloginrc = "$ENV(HOME)/.cloginrc";
+    $cloginrc = $ENV{HOME} . "/.cloginrc";
 }
 
 $query = new CGI;

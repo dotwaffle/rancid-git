@@ -9,7 +9,7 @@ contains configuration for the looking glass scripts.
 .PP
 The syntax is that of
 .IR perl (1).
-It is used to set variables to affect run-time behavior and/or to locate
+It is used to set variables that affect run-time behavior and/or to locate
 resources.
 .\"
 .SH VARIABLES

@@ -1,13 +1,44 @@
-2.3.rc1
+2.3
 	The following files have been moved to make rancid more
 	install/pkg/port/rpm friendly.
 		*** bin/env has been moved to etc/rancid.conf ***
 		*** bin/hpfilter has been renamed hpuifilter ***
 		*** util/lg/lg.conf has been moved to etc/lg.conf ***
 		*** util/lg/lg*.cgi have been moved to bin/lg*cgi ***
+		*** bin/create_cvs has been renamed rancid-cvs ***
+		*** bin/do-diffs has been renamed rancid-run ***
 	Note: existing configuration files are *NOT* copied/moved for you
 
 	bin/rename is no longer shipped with rancid
+
+	rancid.conf: add MAILDOMAIN knob - from David C.
+
+	clogin: allow the port to be specified for method ssh
+
+	jlogin: add cloginrc passphrase directive and order of precedence is
+	cmd-line -r value -> passphrase -> password
+
+	xrancid: do 'show diag' instead of 'show diagnostics' as the
+	longer version has sometimes timed out.
+
+	rancid: filter file vlan.dat from show flash on IOS switches
+
+	rancid: parse cisco 1760's DSP slot show diag output
+
+	francid: reorder listing of ports in a vlans - from Niels Bakker and
+	Steven Bakker
+
+	clogin: disable session logging w/ -c on catos - from Jason Ornstein
+
+	rancid: add Processor ID to save output
+
+	*login: handle TCL meta-characters in cloginrc directive values
+
+	francid: correctly parse modules in slots >= 10.  from Niels Bakker
+
+	run cvs delete code even when router.db is empty.
+
+	Riverstone/Enterasys updates from Andrew Fort
 
 	rancid.conf: add LOGDIR variable - see rancid.conf(5)
 

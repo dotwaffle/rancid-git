@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 ## A Makefile.in is supplied, in case you do not have automake.
 
-## $Id: Makefile.am,v 1.10 2004/01/11 03:43:50 heas Exp $
+## $Id: Makefile.am,v 1.11 2004/01/13 18:02:00 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -28,8 +28,13 @@ EXTRA_DIST= $(pkgdata_DATA:%=%.in)
 
 CLEANFILES= $(pkgdata_DATA)
 
+if CONF_INSTALL
+DO_CONF_INSTALL=yes
+endif
+
 install-data-local: all
-	@if test -f $(sysconfdir)/rancid.conf ; then \
+	@if test "$(DO_CONF_INSTALL)" = "yes"; then \
+	if test -f $(sysconfdir)/rancid.conf ; then \
 	    echo ""; \
 	    echo "WARNING: *** $(sysconfdir)/rancid.conf exists.  See "; \
 	    echo "         *** $(pkgdatadir)/rancid.conf.sample for new"; \
@@ -46,7 +51,8 @@ install-data-local: all
 	    echo ""; \
 	else \
 	    $(INSTALL_DATA) lg.conf.sample $(sysconfdir)/lg.conf; \
-	fi;
+	fi; \
+	fi
 
 #clean:
 #	rm -f Makefile rancid.conf $(BIN_DATAS) $(BIN_PROGS)
