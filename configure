@@ -2560,7 +2560,7 @@ rd_cv_rd_bin_datas=$RD_BIN_DATAS
 # RD_BIN_PROGS are bin/ .in's that need to be installed with execute perms.
 RD_BIN_PROGS="cat5rancid control_rancid \
 alogin arancid clogin create_cvs blogin brancid do-diffs elogin erancid \
-flogin francid jlogin jrancid hlogin hrancid mrancid par rancid-fe \
+f10rancid flogin francid jlogin jrancid hlogin hrancid mrancid par rancid-fe \
 rancid rename rrancid xrancid"
 
 rd_cv_rd_bin_progs=$RD_BIN_PROGS
@@ -3105,8 +3105,8 @@ ac_given_INSTALL="$INSTALL"
 trap 'rm -fr `echo " Makefile include/Makefile bin/Makefile util/Makefile \
 	bin/alogin bin/arancid bin/blogin bin/brancid bin/cat5rancid \
 	bin/clogin bin/control_rancid bin/create_cvs bin/do-diffs bin/elogin \
-	bin/env bin/erancid bin/flogin bin/francid bin/jlogin bin/jrancid \
-	bin/hlogin \
+	bin/env bin/erancid bin/f10rancid bin/flogin bin/francid bin/jlogin \
+	bin/jrancid bin/hlogin \
 	bin/hrancid bin/mrancid bin/par bin/rancid-fe bin/rancid bin/rename \
 	bin/rrancid bin/xrancid \
 	man/Makefile man/env.5 man/lg.conf.5 man/lg_intro.1 \
@@ -3235,8 +3235,8 @@ cat >> $CONFIG_STATUS <<EOF
 CONFIG_FILES=\${CONFIG_FILES-"Makefile include/Makefile bin/Makefile util/Makefile \
 	bin/alogin bin/arancid bin/blogin bin/brancid bin/cat5rancid \
 	bin/clogin bin/control_rancid bin/create_cvs bin/do-diffs bin/elogin \
-	bin/env bin/erancid bin/flogin bin/francid bin/jlogin bin/jrancid \
-	bin/hlogin \
+	bin/env bin/erancid bin/f10rancid bin/flogin bin/francid bin/jlogin \
+	bin/jrancid bin/hlogin \
 	bin/hrancid bin/mrancid bin/par bin/rancid-fe bin/rancid bin/rename \
 	bin/rrancid bin/xrancid \
 	man/Makefile man/env.5 man/lg.conf.5 man/lg_intro.1 \

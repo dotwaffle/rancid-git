@@ -1,5 +1,6 @@
 #!@PERLV_PATH@
 ##
+## This version of rancid tries to deal with Force10s.
 ##
 ## Copyright (C) 1997-2001 by Henry Kilmer.
 ## All rights reserved.
@@ -180,6 +181,10 @@ sub ShowVersion {
 	    ProcessHistory("COMMENTS","keysort","G4","!BOOTFLASH: $1\n") && next;
 	/^BOOTLDR: .*(Version.*)$/ &&
 	    ProcessHistory("COMMENTS","keysort","G4","!BOOTLDR: $1\n") && next;
+	/^.* Version.*$/ &&
+	    ProcessHistory("COMMENTS","keysort","F1", "!Image: $_") && next;
+	/^Build .*$/ &&
+	    ProcessHistory("COMMENTS","keysort","F1", "!Image: $_") && next;
 	/^System image file is "([^\"]*)", booted via (\S*)/ &&
 # removed the booted source due to
 # CSCdk28131: cycling info in 'sh ver'
@@ -237,6 +242,20 @@ sub ShowVersion {
 	    ProcessHistory("COMMENTS","keysort","A3","!CPU:$slave $cpu\n");
 	    next;
 	}
+	if (/^(.*)\s+processor .*with (\d+[kK]?) bytes/) {
+	    my($cpu) = $1;
+	    my($mem) = $2;
+	    my($type) = "Buffy";
+	    my($device) = "Force10";
+	    ProcessHistory("COMMENTS","keysort","A1",
+		"!Chassis type:$slave - a $device $type\n");
+	    ProcessHistory("COMMENTS","keysort","B1",
+		"!Memory:$slave main $mem\n");
+	    ProcessHistory("COMMENTS","keysort","A3","!CPU:$slave $cpu\n");
+	    next;
+	}
+	/^(\S+)\s+processor: part number (\S+), mask (\S+)/ &&
+	    ProcessHistory("COMMENTS","keysort","A4","!CPU:$slave $_") && next;
 	if (/(\S+) Silicon\s*Switch Processor/) {
 	    if (!defined($C0)) {
 		$C0=1; ProcessHistory("COMMENTS","keysort","C0","!\n");
@@ -573,7 +592,7 @@ sub ShowDiagbus {
 	} elsif (/^\s*Slot (\d+) \(virtual\):/i) {
 	    $slot = $1;
 	    next;
-	} elsif (/^\s*(.*Processor.*|.*controller|.*controler|.*Chassis Interface)(, FRU\s?:.*)?, HW rev (\S+), board revision (\S+)/i) {
+	} elsif (/^\s*(.*Processor.*|.*controller|.*Chassis Interface)(, FRU:.*)?, HW rev (\S+), board revision (\S+)/i) {
 	    $board = $1;
 	    $hwver = $3;
 	    $boardrev = $4;
@@ -626,7 +645,7 @@ sub ShowDiagbus {
 	    }
 	    next;
 	}
-	/\s+(.*) (IP|PA), (\d) ports?,( \S+,)? (FRU\s?: )?(\S+)/ &&
+	/\s+(.*) (IP|PA), (\d) ports?,( \S+,)? (FRU: )?(\S+)/ &&
 	    ProcessHistory("SLOT","","","!Slot $slot/$board: type $6, $3 ports\n") &&
 	    next;
 	/\s+(.*) (IP|PA)( \(\S+\))?, (\d) ports?/ &&
@@ -658,52 +677,51 @@ sub ShowDiag {
 	s/Port Packet Over SONET/POS/;
 	if (/^\s*SLOT\s+(\d+)\s+\((.*)\): (.*)/) {
 	    $slot = $1;
-	    ProcessHistory("SLOT","","","!\n");
-	    ProcessHistory("SLOT","keysort","A","!Slot $slot: $3\n");
+	    ProcessHistory("SLOT","","","!\n!Slot $slot: $3\n");
 	    next;
 	}
 	if (/^\s+MAIN:\s* type \d+,\s+(.*)/) {
-	    ProcessHistory("SLOT","keysort","AM","!Slot $slot/MAIN: part $1\n") && next;
+	    ProcessHistory("SLOT","","","!Slot $slot/MAIN: part $1\n") && next;
 	}
 	if (/ Engine:\s+(.*)/) {
-	    ProcessHistory("SLOT","keysort","AE","!Slot $slot/Engine: $1\n");
+	    ProcessHistory("SLOT","","","!Slot $slot/Engine: $1\n");
 	}
 	if (/^\s+PCA:\s+(.*)/) {
 	    local($part) = $1;
 	    $_ = <INPUT>;
 	    /^\s+HW version (\S+)\s+S\/N (\S+)/ &&
-		ProcessHistory("SLOT","keysort","C1","!Slot $slot/PCA: part $part, serial $2\n") &&
-		ProcessHistory("SLOT","keysort","C2","!Slot $slot/PCA: hvers $1\n");
+		ProcessHistory("SLOT","","","!Slot $slot/PCA: part $part, serial $2\n") &&
+		ProcessHistory("SLOT","","","!Slot $slot/PCA: hvers $1\n");
 	    next;
 	}
 	if (/^\s+MBUS: .*\)\s+(.*)/) {
 	    local($tmp) = "!Slot $slot/MBUS: part $1";
 	    $_ = <INPUT>;
 	    /^\s+HW version (\S+)\s+S\/N (\S+)/ &&
-		ProcessHistory("SLOT","keysort","MB1","$tmp, serial $2\n") &&
-		ProcessHistory("SLOT","keysort","MB2","!Slot $slot/MBUS: hvers $1\n");
+		ProcessHistory("SLOT","","","$tmp, serial $2\n") &&
+		ProcessHistory("SLOT","","","!Slot $slot/MBUS: hvers $1\n");
 	    next;
 	}
 	if (/^\s+MBUS Agent Software version (.*)/) {
-	    ProcessHistory("SLOT","keysort","MB3","!Slot $slot/MBUS: software $1\n");
+	    ProcessHistory("SLOT","","","!Slot $slot/MBUS: software $1\n");
 	    next;
 	}
 	if (/^\s+ROM Monitor version (.*)/) {
-	    ProcessHistory("SLOT","keysort","R","!Slot $slot/ROM Monitor: version $1\n");
+	    ProcessHistory("SLOT","","","!Slot $slot/ROM Monitor: version $1\n");
 	    next;
 	}
 	if (/^\s+Fabric Downloader version used (.*)/) {
-	    ProcessHistory("SLOT","keysort","Z","!Slot $slot/Fabric Downloader: version $1\n");
+	    ProcessHistory("SLOT","","","!Slot $slot/Fabric Downloader: version $1\n");
 	    next;
 	}
 	if (/^\s+DRAM size: (\d+)/) {
 	    local($dram) = $1 / 1048576;
 	    $_ = <INPUT>;
 	    if (/^\s+FrFab SDRAM size: (\d+)/) {
-		ProcessHistory("SLOT","keysort","MB4","!Slot $slot/MBUS: $dram Mbytes DRAM, "
+		ProcessHistory("SLOT","","","!Slot $slot/MBUS: $dram Mbytes DRAM, "
 			   . $1 / 1024 . " Kbytes SDRAM\n");
 	    } else {
-		ProcessHistory("SLOT","keysort","MB4","!Slot $slot/MBUS: $dram Mbytes DRAM\n");
+		ProcessHistory("SLOT","","","!Slot $slot/MBUS: $dram Mbytes DRAM\n");
 	    }
 	    next;
 	}
@@ -724,23 +742,22 @@ sub ShowDiag {
 	    s/ with MII or RJ45/-TX/;
 	    s/Fast-ethernet /100Base/; s/[)(]//g;
 
-	    ProcessHistory("SLOT","","","!\n");
 	    /\s+(.*) port adapter,?\s+(\d+)\s+/i &&
-		ProcessHistory("SLOT","keysort","B","!Slot $slot: type $1, $2 ports\n");
+		ProcessHistory("SLOT","","","!\n!Slot $slot: type $1, $2 ports\n");
 	    # I/O controller with no interfaces
 	    /\s+(.*)\s+port adapter\s*$/i &&
-		ProcessHistory("SLOT","keysort","B","!Slot $slot: type $1, 0 ports\n");
+		ProcessHistory("SLOT","","","!\n!Slot $slot: type $1, 0 ports\n");
 	    /\s+(.*)\s+daughter card(.*)$/ &&
-		ProcessHistory("SLOT","keysort","B","!Slot $slot$WIC: type $1$2\n");
+		ProcessHistory("SLOT","","","!\n!Slot $slot$WIC: type $1$2\n");
 	    /\s+(FT1)$/ &&
-		ProcessHistory("SLOT","keysort","B","!Slot $slot$WIC: type $1\n");
+		ProcessHistory("SLOT","","","!\n!Slot $slot$WIC: type $1\n");
 	    next;
 	}
 	/revision\s+(\S+).*revision\s+(\S+)/ &&
-	    ProcessHistory("SLOT","keysort","C","!Slot $slot$WIC: hvers $1 rev $2\n") &&
+	    ProcessHistory("SLOT","","","!Slot $slot$WIC: hvers $1 rev $2\n") &&
 	    next;
 	/number\s+(\S+)\s+Part number\s+(\S+)/ &&
-	    ProcessHistory("SLOT","keysort","D","!Slot $slot$WIC: part $2, serial $1\n") &&
+	    ProcessHistory("SLOT","","","!Slot $slot$WIC: part $2, serial $1\n") &&
 	    next;
     }
     ProcessHistory("SLOT","","","!\n");
@@ -794,7 +811,7 @@ sub ShowC7200 {
 	#return(1) if ($type !~ /^72/);
 	return(-1) if (/command authorization failed/i);
 	/^$/ && next;
-	if (/^(C7200 )?Midplane EEPROM:/) {
+	if (/C7200 Midplane EEPROM:/) {
 	    $_ = <INPUT>;
 	    /revision\s+(\S+).*revision\s+(\S+)/;
 	    ProcessHistory("SLOT","","","!Slot Midplane: hvers $1 rev $2\n");
@@ -804,21 +821,12 @@ sub ShowC7200 {
 	    next;
 	}
 	if (/C720\d(VXR)? CPU EEPROM:/) {
-	    my ($hvers,$rev,$part,$serial);
-	    # npe400s report their cpu eeprom info differently w/ 12.0.21S
-	    while (<INPUT>) {
-		/Hardware Revision\s+: (\S+)/ && ($hvers = $1) && next;
-		/Board Revision\s+: (\S+)/ && ($rev = $1) && next;
-		/Part Number\s+: (\S+)/ && ($part = $1) && next;
-		/Serial Number\s+: (\S+)/ && ($serial = $1) && next;
-		/revision\s+(\S+).*revision\s+(\S+)/ &&
-		    ($hvers = $1, $rev = $2) && next;
-		/number\s+(\S+)\s+Part number\s+(\S+)/ &&
-		    ($serial = $1, $part = $2) && next;
-		/^\s*$/ && last;
-	    }
-	    ProcessHistory("SLOT","","","!Slot CPU: hvers $hvers rev $rev\n");
-	    ProcessHistory("SLOT","","","!Slot CPU: part $part, serial $serial\n!\n");
+	    $_ = <INPUT>;
+	    /revision\s+(\S+).*revision\s+(\S+)/ &&
+		ProcessHistory("SLOT","","","!Slot CPU: hvers $1 rev $2\n");
+	    $_ = <INPUT>;
+	    /number\s+(\S+)\s+Part number\s+(\S+)/ &&
+		ProcessHistory("SLOT","","","!Slot CPU: part $2, serial $1\n!\n");
 	    next;
 	}
     }
@@ -1115,8 +1123,6 @@ sub DoNothing {print STDOUT;}
 	'dir /all disk0:'	=> "DirSlotN",
 	'dir /all slot1:'	=> "DirSlotN",
 	'dir /all disk1:'	=> "DirSlotN",
-	'dir /all slot2:'	=> "DirSlotN",
-	'dir /all disk2:'	=> "DirSlotN",
 	"dir /all sup-bootflash:"=> "DirSlotN",		# cat 6500-ios
 	"dir /all sup-microcode:"=> "DirSlotN",		# cat 6500-ios
 	'show controllers'	=> "ShowContAll",
@@ -1127,7 +1133,7 @@ sub DoNothing {print STDOUT;}
 	'show c7200'		=> "ShowC7200",
 	'show vtp status'	=> "ShowVTP",
 	'show vlan'		=> "ShowVLAN",
-	'write term'		=> "WriteTerm"
+	'show running'		=> "WriteTerm"
 );
 # keys() doesnt return things in the order entered and the order of the
 # cmds is important (show version first and write term last). pita
@@ -1146,8 +1152,6 @@ sub DoNothing {print STDOUT;}
 	"dir /all disk0:",
 	"dir /all slot1:",
 	"dir /all disk1:",
-	"dir /all slot2:",
-	"dir /all disk2:",
 	"dir /all sup-bootflash:",
 	"dir /all sup-microcode:",
 	"show controllers",
@@ -1158,7 +1162,7 @@ sub DoNothing {print STDOUT;}
 	"show c7200",
 	"show vtp status",
 	"show vlan",
-	"write term"
+	"show running"
 );
 $cisco_cmds=join(";",@commands);
 $cmds_regexp=join("|",@commands);
@@ -1192,7 +1196,7 @@ if ($ENV{"FILTER_PWDS"} =~ /no/i) {
 	$filter_pwds = 1;
 }
 
-ProcessHistory("","","","!RANCID-CONTENT-TYPE: cisco\n!\n");
+ProcessHistory("","","","!RANCID-CONTENT-TYPE: force10\n!\n");
 ProcessHistory("COMMENTS","keysort","B0","!\n");
 ProcessHistory("COMMENTS","keysort","F0","!\n");
 ProcessHistory("COMMENTS","keysort","G0","!\n");

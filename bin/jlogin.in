@@ -350,6 +350,10 @@ proc login { router user passwd cmethod cyphertype identfile} {
 		send "no\r"
 		send_user "\nError: The host key for $router has changed.  Update the SSH known_hosts file accordingly.\n"
 		return 1 }
+	    -re "Offending key for .* \(yes\/no\)\?"   {
+		send "no\r"
+		send_user "\nError: host key mismatch for $router.  Update the SSH known_hosts file accordingly.\n"
+		return 1 }
 	    -re "(Username|\[\r\n]login):"	{
 						  send "$user\r"
 						  exp_continue
@@ -360,13 +364,7 @@ proc login { router user passwd cmethod cyphertype identfile} {
 						}
 	    -re "$prompt"		{ break; }
 	    denied	{ send_user "\nError: Check your password for $router\n"
-	                  if { $do_command || $do_script } {
-			      send "quit"
-			      wait
-			      return 1
-			  } else {
-			      return 1
-			  }
+	                  catch {close}; wait; return 1
 	                }
 	}
     }

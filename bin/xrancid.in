@@ -454,7 +454,7 @@ TOP: while(<INPUT>) {
 	$rval = &{$commands{$cmd}};
 	delete($commands{$cmd});
 	if ($rval == -1) {
-	    printf STDERR "rval = -1\n" if (debug);
+	    printf STDERR "rval = -1\n" if ($debug);
 	    $clean_run = 0;
 	    last TOP;
 	}

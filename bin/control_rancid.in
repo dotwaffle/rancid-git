@@ -19,8 +19,15 @@
 # control_rancid $GROUP
 #
 
+# print a usage message to stderr
+pr_usage() {
+    echo "usage: $0 [-r device_name] [-m mail rcpt] [group [group ...]]" >&2;
+}
+
 # command-line options
 # -r <device name>
+# -m <mail recipients>
+alt_mailrcpt=0
 if [ $# -ge 1 ] ; then
 
     while [ 1 ] ; do
@@ -31,11 +38,27 @@ if [ $# -ge 1 ] ; then
 	    device="$1"
 	    shift
 	    ;;
+	-m)
+	    shift
+	    # next arg is the mail recipient
+	    alt_mailrcpt=1
+	    if [ -z "$mailrcpt" ] ; then
+		mailrcpt="$1"
+	    else
+		mailrcpt="$mailrcpt,$1"
+	    fi
+	    shift
+	    ;;
 	--)
 	    shift; break;
 	    ;;
+	-h)
+	    pr_usage
+	    exit
+	    ;;
 	-*)
 	    echo "unknown option: $1" >&2
+	    pr_usage
 	    exit 1
 	    ;;
 	*)
@@ -44,9 +67,6 @@ if [ $# -ge 1 ] ; then
 	esac
     done
 fi
-
-# Number of things par should run in parallel.
-PAR_COUNT=${PAR_COUNT:-5}
 
 # Must specify a group on which to run rancid
 if [ $# -lt 1 ]; then
@@ -57,6 +77,12 @@ fi
 DIR=$BASEDIR/$GROUP
 TMP=${TMPDIR:=/tmp}/rancid.$GROUP.$$
 trap 'rm -fr $TMP;' 1 2 15
+
+# the receipient(s) of diffs
+mailrcpt=${mailrcpt:-"@MAILPLUS@$GROUP"}; export mailrcpt
+
+# Number of things par should run in parallel.
+PAR_COUNT=${PAR_COUNT:-5}
 
 # Bail if we do not have the necessary info to run
 if [ ! -d $DIR ]
@@ -298,13 +324,24 @@ cd $DIR
 cvs -f @DIFF_CMD@ | sed -e '/^RCS file: /d' -e '/^--- /d' \
 	-e '/^+++ /d' -e 's/^\([-+ ]\)/\1 /' >$TMP.diff
 
-cvs commit -m updates
+if [ $alt_mailrcpt -eq 1 ] ; then
+    subject="router config diffs - courtesy of $mailrcpt"
+else
+    subject="router config diffs"
+fi
+if [ "X$device" != "X" ] ; then
+    cvs commit -m "updates - courtesy of $mailrcpt"
+    subject="$GROUP/$device $subject"
+else
+    cvs commit -m updates
+    subject="$GROUP $subject"
+fi
 
 # Mail out the diffs (if there are any).
 if [ -s $TMP.diff ]; then
     sendmail -t <<EMAIL
-To: @MAILPLUS@$GROUP
-Subject: $GROUP router config diffs
+To: $mailrcpt
+Subject: $subject
 Precedence: bulk
 
 `cat $TMP.diff`

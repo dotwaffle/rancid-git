@@ -331,6 +331,19 @@ proc login { router user userpswd passwd prompt cmethod cyphertype } {
 	    expect eof
 	    send_user "Error: Unknown host\n"; wait; return 1
 	}
+	-re "(Host key not found |The authenticity of host .* be established).*\(yes\/no\)\?" {
+	    send "yes\r"
+	    send_user "\nHost $router added to the list of known hosts.\n"
+	    exp_continue }
+	-re "HOST IDENTIFICATION HAS CHANGED.* \(yes\/no\)\?"   {
+	    send "no\r"
+	    send_user "\nError: The host key for $router has changed.  Update the SSH known_hosts file accordingly.\n"
+	    return 1 }
+	-re "Offending key for .* \(yes\/no\)\?"   {
+	    send "no\r"
+	    send_user "\nError: host key mismatch for $router.  Update the SSH known_hosts file accordingly.\n"
+	    return 1 }
+
 	-re "$u_prompt"			{
 					  send "$user\r"
 					  set uprompt_seen 1
@@ -353,19 +366,13 @@ proc login { router user userpswd passwd prompt cmethod cyphertype } {
 				  catch {close}; wait; return 1 }
 	-re "$prompt"	{ break; }
 	denied		{ send_user "Error: Check your passwd for $router\n"
-			    if { $do_command || $do_script } {
-			      send "exit\r"
-			      wait
-			      return 1
-			  } else {
-			      return 1
-			  }
+			  catch {close}; wait; return 1
 			}
 	"\r\n"		{ exp_continue; }
     }
+  }
     set in_proc 0
     return 0
-}
 }
 
 # Run commands given on the command line.

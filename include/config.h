@@ -98,7 +98,7 @@
 #define PACKAGE "rancid"
 
 /* Version number of package */
-#define VERSION "2.2"
+#define VERSION "2.2.1"
 
 /* Define if compiler has function prototypes */
 #define PROTOTYPES 1

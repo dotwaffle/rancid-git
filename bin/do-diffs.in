@@ -21,6 +21,14 @@ ENVFILE="`dirname $0`/env"
 
 TMPDIR=${TMPDIR:=/tmp}; export TMPDIR
 
+# control_rancid argv
+CR_ARGV=""; export CR_ARGV
+
+# print a usage message to stderr
+pr_usage() {
+    echo "usage: $0 [-r device_name] [-m mail rcpt] [group [group ...]]" >&2;
+}
+
 # command-line options
 # -r <device name>
 if [ $# -ge 1 ] ; then
@@ -30,14 +38,25 @@ if [ $# -ge 1 ] ; then
 	-r)
 	    shift
 	    # next arg is the device name
-	    device="$1"
+	    CR_ARGV="$CR_ARGV -r $1"; export CR_ARGV
+	    shift
+	    ;;
+	-m)
+	    shift
+	    # next arg is the mailto name
+	    CR_ARGV="$CR_ARGV -m $1"; export CR_ARGV
 	    shift
 	    ;;
 	--)
 	    shift; break;
 	    ;;
+	-h)
+	    pr_usage
+	    exit
+	    ;;
 	-*)
 	    echo "unknown option: $1" >&2
+	    pr_usage
 	    exit 1
 	    ;;
 	*)
@@ -97,11 +116,7 @@ END
 			trap 'rm -fr $LOCKFILE;exit 1' 1 2 3 6 10 15
 			touch $LOCKFILE
 			if [ $? -eq 0 ] ; then
-			    if [ "X$device" = "X" ] ; then
-				control_rancid $GROUP
-			    else
-				control_rancid -r $device $GROUP
-			    fi
+			    control_rancid $CR_ARGV $GROUP
 			    rm -f $LOCKFILE
 			fi
 			trap ''  1 2 3 6 10 15

@@ -1,7 +1,15 @@
+- extreme v6.2.x need 'show configuration detail' to get full config but
+  does not work on older vers
+- hlogin (hp procurve) needs to adjust it's PATH to find hpfilter
+- hlogin hangs when the procurve is does not ask for passwords
+- util/ tool to prune cvs versions, excluding those with tags, by (all but
+  latest | keep N versions | keep N days/months/years)
 - extreme collections lose when the config on the switch is in an unsaved
   state, probably due to the prompt changing or rather how clogin formulates
   the prompt used by expect{ -re }'s.
 - extreme collection fails for tacacs-enabled boxen due to diffs in UI - blech!
+- FILTER_PWDS knob is not implemented in alteon, bay, ezt3 or redback due to
+  lack of h/w to test against.  need help from the community.
 - should par's -c override an input files' : cmd?
 - *login should emmit "clogin error:" or "*login error:" to make matches for
   login failures definitive?

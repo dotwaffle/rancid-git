@@ -371,15 +371,13 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 	    send "no\r"
 	    send_user "\nError: The host key for $router has changed.  Update the SSH known_hosts file accordingly.\n"
 	    return 1 }
+	-re "Offending key for .* \(yes\/no\)\?"   {
+	    send "no\r"
+	    send_user "\nError: host key mismatch for $router.  Update the SSH known_hosts file accordingly.\n"
+	    return 1 }
 	-re "(denied|Sorry)"	{
 				  send_user "\nError: Check your passwd for $router\n"
-				  if { $do_command || $do_script } {
-					send "exit\r"
-					wait
-					return 1
-				  } else {
-					return 1
-				  }
+				  catch {close}; wait; return 1
 				}
 	"Login failed"		{
 				  send_user "\nError: Check your passwd for $router\n"

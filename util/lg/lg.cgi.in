@@ -276,6 +276,7 @@ $router_param = ($query->param('router'))[0];
 $remote_user = $ENV{REMOTE_USER};
 $arg = ($query->param('args'))[0];
 # handle multiple args
+$arg =~ s/["'`]//g;			# these are BS in any arg for any query
 @arg = split(' ', $arg);
 
 # verify commands, arguments, etc.
@@ -342,7 +343,7 @@ if (!defined($type) || !defined($router)) {
 		mneighbor => "show bgp neighbor",
 		neighbor => "show bgp neighbor",
 		regex => "show route table inet.0 aspath-regex",
-		route => "show route forwarding-table destination",
+		route => "show route table inet.0 terse",
 		routemap => "show policy",
 		ping => "ping rapid count 5",
 		prefix => "show route table inet.0",
@@ -457,7 +458,7 @@ if ($type eq "prefix" || $type eq "mbgp" || $type eq "route" ) {
     }
 } elsif ($type eq "ping" || $type eq "trace") {
     if ($arg[0] !~ /^\d+\.\d+\.\d+\.\d+$/) {
-	if ($arg[0] !~ /([A-Za-z0-9-]*.)*[A-Za-z0-9-]*.(com|edu|net|org)/) {
+	if ($arg[0] !~ /^[A-Za-z0-9._-]+$/) {
 	    $results[0] = "That argument ($arg[0]) is not valid.\n";
 	    &print_results($mfg);
 	}

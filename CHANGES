@@ -1,3 +1,48 @@
+2.2.1
+	rancid: npe400 cpu eeprom info o/p format changed in 12.0.21S1 -
+	spotted by tom campbell
+
+	fix problem in *login where if there was a login failure we would try
+	to disconnect gracefully (albeit incorrectly).  writing to the
+	half-closed socket would not return an error (at least on some
+	platform/expect combinations or even consistently) and expect would
+	hang.
+
+	add device name to diff mail subject when -r is specified
+
+	add -m <mail rcpt> option to do-diffs and control_rancid to allow
+	specific mail recipient.  intended for use with -r to trigger diffs
+	off specific events.
+
+	router.db(5): note that PIX is a 'cisco' - thank kris gulka
+
+	*login: match openssh prompt for host key to ip key mismatch
+
+	rancid: add disk/slot2
+
+	rancid: 12.2 show c7200 o/p for midplane changed
+
+	lg: use table inet.0 terse for sh ip route on juniper instead of
+	forwarding-table destination
+
+	rancid: 12.0S(21) added "FRU" field in show diagbus output.
+	Also look for a couple more things in some show diag output
+	and sort the output a bit better.  Also look for 'controler'
+	(cisco can't always spell - thanks to Terry Kennedy for
+	spotting the misspelling).
+
+	lg: filter ["`'] from args
+
+	rancid: fix username secret filtering
+
+	alogin: misplaced brace caused improper return from proc login
+
+	relax the check ping and traceroute check of hostname arguments such
+	that non-fqdn hosts are allowed.  ie: just check that arg chars are
+	valid dns chars and leave the resolve errors to the router.
+
+	Add initial support for Force10.
+
 2.2
 	rancid: filter vpdn passwords on PIX - from eric greenwood
 

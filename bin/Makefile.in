@@ -122,9 +122,9 @@ BIN_DATAS = @RD_BIN_DATAS@
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../include/config.h
 CONFIG_CLEAN_FILES =  alogin arancid blogin brancid cat5rancid clogin \
-control_rancid create_cvs do-diffs elogin env erancid flogin francid \
-jlogin jrancid hlogin hrancid mrancid par rancid-fe rancid rename \
-rrancid xrancid
+control_rancid create_cvs do-diffs elogin env erancid f10rancid flogin \
+francid jlogin jrancid hlogin hrancid mrancid par rancid-fe rancid \
+rename rrancid xrancid
 PROGRAMS =  $(bin_PROGRAMS)
 
 
@@ -141,9 +141,9 @@ CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(LDFLAGS) -o $@
 DIST_COMMON =  Makefile.am Makefile.in alogin.in arancid.in blogin.in \
 brancid.in cat5rancid.in clogin.in control_rancid.in create_cvs.in \
-do-diffs.in elogin.in env.in erancid.in flogin.in francid.in hlogin.in \
-hrancid.in jlogin.in jrancid.in mrancid.in par.in rancid-fe.in \
-rancid.in rename.in rrancid.in xrancid.in
+do-diffs.in elogin.in env.in erancid.in f10rancid.in flogin.in \
+francid.in hlogin.in hrancid.in jlogin.in jrancid.in mrancid.in par.in \
+rancid-fe.in rancid.in rename.in rrancid.in xrancid.in
 
 
 DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
@@ -185,6 +185,8 @@ elogin: $(top_builddir)/config.status elogin.in
 env: $(top_builddir)/config.status env.in
 	cd $(top_builddir) && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
 erancid: $(top_builddir)/config.status erancid.in
+	cd $(top_builddir) && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
+f10rancid: $(top_builddir)/config.status f10rancid.in
 	cd $(top_builddir) && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
 flogin: $(top_builddir)/config.status flogin.in
 	cd $(top_builddir) && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
