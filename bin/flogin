@@ -262,7 +262,7 @@ proc login { router user userpswd passwd enapasswd prompt cyphertype } {
     expect_after {
 	timeout {
 	    send_user "\nError: TIMEOUT reached\n"
-	    close; wait
+	    catch {close}; wait
 	    if { $in_proc} {
 	        return 1
 	    } else {
@@ -270,7 +270,7 @@ proc login { router user userpswd passwd enapasswd prompt cyphertype } {
 	    }
         } eof {
 	    send_user "\nError: EOF received\n"
-	    close; wait
+	    catch {close}; wait
 	    if { $in_proc} {
 	        return 1
 	    } else {

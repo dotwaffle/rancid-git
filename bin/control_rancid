@@ -112,7 +112,7 @@ then
 	router=$1
 
 	touch $router
-	cvs add $router
+	cvs add -ko $router
 	cvs commit -m 'new router' $router
 	echo "Added $router"
     done
@@ -172,9 +172,10 @@ do
 	IFS=$OFS
 	router=$1; mfg=$2
 
-	if [ ! -f $router.new ]
+	if [ ! -s $router.new ]
 	then
 	    echo "$router:$mfg" >> $DIR/routers.up.missed
+	    rm -f $router.new
 	fi
     done
 
@@ -190,6 +191,15 @@ do
     fi
 done
 echo
+
+# Make sure that all of the new configs are not empty.
+for config in *.new
+do
+    if [ ! -s $config ]
+    then
+	rm -f $config
+    fi
+done
 
 # Now that we have the new configs, rename them to their proper
 # name.
@@ -224,18 +234,21 @@ Precedence: bulk
 EMAIL
 fi
 
-# If any machines have not been reached within 24 hours, mail
-# out a list of them.
+# If any machines have not been reached within the last $OLDTIME
+# hours, mail out a list of them.
 cd $DIR/configs
 rm -f $DIR/routers.failed
-perl -F: -ane '{$t = (stat($F[0]))[9]; print `ls -ld $F[0]`
-	if (time() - $t >= 86400);}' $DIR/routers.up | sort -u > $DIR/routers.failed
+if [ "X$OLDTIME" = "X" ] ; then
+    OLDTIME=24
+fi
+perl -F: -ane "{\$t = (stat(\$F[0]))[9]; print \`ls -ld \$F[0]\`
+	if (time() - \$t >= $OLDTIME*60*60);}" $DIR/routers.up | sort -u > $DIR/routers.failed
 if [ -s $DIR/routers.failed ]
 then
 	(
 		cat <<END
-The following routers have not been successfully contacted within the
-last 24 hours.
+The following routers have not been successfully contacted for more
+than $OLDTIME hours.
 
 END
 		cat $DIR/routers.failed

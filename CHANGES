@@ -1,3 +1,61 @@
+1.5
+	sync command-line option between clogin / jlogin.  jlogin modified:
+		-x passphrase   ->      -r passphrase
+				->      -x command-file
+		-e encrypt type ->      -y ssh_chyper_type
+
+	add .cloginrc noenable directive to set the cmd-line -noenable
+	option.
+
+	add .cloginrc userprompt, passprompt, and enableprompt directives
+	to adjust expected cisco router prompts in clogin.
+
+	see README for info on web interface to rancid CVS repository.
+
+	Try to detect hung rancid jobs & send email.
+
+	Add (partial) support for the cat5s.  Still need more work
+	on the show output, but it does grab the config.
+
+	Skip the juniper's kernel version, memory, and fsck output
+	of "show system boot-messages" - fsck output changes every
+	time you boot and the version & memory is better found
+	elsewhere.
+
+	Delete the cisco ospf authentication and ftp passwords.
+
+	Get both (juniper) show chassis ssb and scb but only process
+	them once.
+
+	Get info from show diag for 2600s as well.
+
+	Catch juniper "command is not valid on the olive" errors.
+
+	Catch juniper config mismatch between versions of JUNOS.
+
+	Catch close on EOF in clogin/jlogin/flogin.
+
+	Don't expand RCS keywords in config files.
+
+	Catch the case were rancid gets and error and leaves an
+	empty new config file.
+
+	Make the time to elapse before complaining about unreachable
+	routers be configurable instead of fixed at 24 hrs.  The
+	default is now 4 hours.
+
+	Add -x passphrase to jlogin.
+
+	You can now set a ssh identity file in .cloginrc for use
+	with jlogin.
+
+	Handle more errors in jrancid.  Also handle changes for
+	JUNOS 4.0 and collect "show system boot-messages" output.
+
+	rancid now recognizes cisco 12016s and more types of 7200s.
+	It also looks for WARNING messages in show version.
+	And sort ip explicit-paths.
+
 1.4
 	sort cisco route-maps
 

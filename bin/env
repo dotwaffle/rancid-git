@@ -12,6 +12,7 @@ TERM=network;export TERM
 # use a full path (no sym-links) for BASEDIR.  some versions of CVS seemingly
 # don't take kindly to sym-links.
 #
+TMPDIR=/tmp; export TMPDIR
 BASEDIR=$HOME/rancid; export BASEDIR
 PATH=$BASEDIR/bin:/usr/local/bin:/usr/ucb:/usr/bin:/bin:/usr/lib:/usr/sbin;export PATH
 CVSROOT=$BASEDIR/CVS; export CVSROOT
@@ -19,6 +20,10 @@ CVSROOT=$BASEDIR/CVS; export CVSROOT
 # if NOPIPE is set, temp files will be used instead of a cmd pipe during
 # collection from the router(s).
 #NOPIPE=YES; export NOPIPE
+#
+# How many hours to go by before complaining about routers that
+# can not be reached.
+OLDTIME=4; export OLDTIME
 #
 LIST_OF_GROUPS="sl joebobisp"
 #

@@ -261,6 +261,7 @@ sub ShowInstallActive {
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if /^\s*\^\s*$/;
 	return(1) if /Invalid input detected/;
+	return(1) if /Unknown command/;
 	ProcessHistory("COMMENTS","keysort","F5","!Image: $_") && next;
     }
     return(0);
@@ -346,6 +347,7 @@ sub ShowBoot {
 	return(1) if /^\s*\^\s*$/;
 	return(1) if /Ambiguous command/i;
 	return(1) if /Invalid input detected/;
+	return(1) if /Unknown command/;
 	return(1) if /(Open device \S+ failed|Error opening \S+:)/;
 	next if /CONFGEN variable/;
 	if (!defined($H0)) {
@@ -722,14 +724,15 @@ sub WriteTerm {
 	last if(/^$prompt/);
 	/Non-Volatile memory is in use/  && return(-1); # NvRAM is locked
 	# skip the crap
-	if (/^(##+$|Building configuration...)/i) {
+	if (/^(\.\.+$|##+$|Building configuration...)/i) {
 	    while (<INPUT>) {
+		tr/\015//d;
 		next if (/^Current configuration:/i);
-		next if (/^([%!].*|\s*)$/);
+		next if (/^(\.+|[%!].*|\s*)$/);
 		next if (/^ip add.*ipv4:/);	# band-aid for 3620 12.0S
 		last;
 	    }
-	    ProcessHistory("","","","!\nconfig-register $config_register\n");
+	    ProcessHistory("","","","!\n");
 	    tr/\015//d;
 	}
 	# some versions have other crap mixed in with the bits in the
@@ -737,11 +740,11 @@ sub WriteTerm {
 	/^! (Last configuration|NVRAM config last)/ && next;
 
 	# Dog gone Cool matches to process the rest of the config
+	/^#time: /              && next; # kill time:
 	/^tftp-server flash /   && next; # kill any tftp remains
 	/^ntp clock-period /    && next; # kill ntp clock-period
 	/^ length /		&& next; # kill length on serial lines
 	/^ width /		&& next; # kill width on serial lines
-	/^ clockrate /		&& next; # kill clockrate on serial interfaces
 	/^enable password / &&
 	    ProcessHistory("ENABLE","","","!enable password <removed>\n") &&
 	    next;
@@ -938,7 +941,7 @@ ProcessHistory("COMMENTS","keysort","F0","!\n");
 ProcessHistory("COMMENTS","keysort","G0","!\n");
 TOP: while(<INPUT>) {
     tr/\015//d;
-    if (/\#exit$/) {
+    if (/> \(enable\) exit$/) {
 	$clean_run=1;
 	last;
     }
@@ -949,9 +952,10 @@ TOP: while(<INPUT>) {
 	$clean_run=0;
 	last;
     }
-    while (/#\s*($cmds_regexp)\s*$/) {
+    while (/> \(enable\)\s*($cmds_regexp)\s*$/) {
 	$cmd = $1;
-	if (!defined($prompt)) {$prompt = ($_ =~ /^([^#]+#)/)[0]; }
+#	if (!defined($prompt)) {$prompt = ($_ =~ /^([^>]+> .enable.)/)[0]; }
+	if (!defined($prompt)) {$prompt = ($_ =~ /^([^>]+>)/)[0]; }
 	print STDERR ("HIT COMMAND:$_") if ($debug);
 	if (! defined($commands{$cmd})) {
 	    print STDERR "found unexpected command - \"$cmd\"\n";

@@ -7,7 +7,7 @@
 ## This software may be freely copied, modified and redistributed without
 ## fee for non-commerical purposes provided that this copyright notice is
 ## preserved intact on all copies and modified copies.
-## 
+##
 ## There is no warranty or other guarantee of fitness of this software.
 ## It is provided solely "as is". The author(s) disclaim(s) all
 ## responsibility and liability with respect to this software's usage
@@ -23,8 +23,9 @@
 #
 
 # Usage line
-set usage "Usage: $argv0 \[-e encryption_type\] \[-u username\] \[-p user-password\]\
-\[-f cloginrc-file\] \[-c command\] \[-s script-file\]\
+set usage "Usage: $argv0 \[-c command\] \[-f cloginrc-file\] \
+\[-p user-password\] \[-r passphrase\] \[-s script-file\] \
+\[-u username\] \[-t timeout\] \[-x command-file\] \[-y ssh_cypher_type\] \
 router \[router...\]\n"
 
 # env(CLOGIN) may contain the following chars:
@@ -40,31 +41,41 @@ set enable 1
 # The default is to look in the password file to find the passwords.  This
 # tracks if we receive them on the command line.
 set do_passwd 1
+# No passphrase by default
+set passphrase ""
 
 # Find the user in the ENV, or use the unix userid.
 if {[ info exists env(CISCO_USER) ] } {
     set default_user $env(CISCO_USER)
 } else {
-    # This uses "id" which I think is portable.  At least it has existed 
-    # (without options) on all machines/OSes I've been on recently - 
+    # This uses "id" which I think is portable.  At least it has existed
+    # (without options) on all machines/OSes I've been on recently -
     # unlike whoami or id -nu.
     regexp {\(([^)]*)} [exec id] junk default_user
 }
 
 # Sometimes routers take awhile to answer (the default is 10 sec)
-set timeout 45
+set timeout 120
 
 # Process the command line
 for {set i 0} {$i < $argc} {incr i} {
     set arg [lindex $argv $i]
 
     switch  -glob -- $arg {
-	# Username
-	-u* -
-	-U* {
-	    if {! [  regexp .\[uU\](.+) $arg ignore user]} {
+	# Command to run.
+	-c* -
+	-C* {
+	    if {! [  regexp .\[cC\](.+) $arg ignore command]} {
 		incr i
-		set username [ lindex $argv $i ]
+		set command [ lindex $argv $i ]
+	    }
+	    set do_command 1
+	# alternate cloginrc file
+	} -f* -
+	-F* {
+	    if {! [ regexp .\[fF\](.+) $arg ignore password_file]} {
+		incr i
+		set password_file [ lindex $argv $i ]
 	    }
 	# user Password
 	} -p* -
@@ -74,14 +85,13 @@ for {set i 0} {$i < $argc} {incr i} {
 		set userpswd [ lindex $argv $i ]
 	    }
 	    set do_passwd 0
-	# Command to run.
-	} -c* -
-	-C* {
-	    if {! [  regexp .\[cC\](.+) $arg ignore command]} {
+	# passphrase
+	} -r* -
+	-R* {
+	    if {! [  regexp .\[rR\](.+) $arg ignore passphrase]} {
 		incr i
-		set command [ lindex $argv $i ]
+		set passphrase [ lindex $argv $i ]
 	    }
-	    set do_command 1
 	# Expect script to run.
 	} -s* -
 	-S* {
@@ -94,19 +104,38 @@ for {set i 0} {$i < $argc} {incr i} {
 		exit 1
 	    }
 	    set do_script 1
-	# encryption type
-	} -e* -
-	-E* {
-	    if {! [  regexp .\[eE\](.+) $arg ignore encrypt]} {
+	# Timeout
+	} -t* -
+	-T* {
+	    if {! [ regexp .\[tT\](.+) $arg ignore timeout]} {
 		incr i
-		set encrypt [ lindex $argv $i ]
+		set timeout [ lindex $argv $i ]
 	    }
-	# alternate cloginrc file
-	} -f* -
-	-F* {
-	    if {! [ regexp .\[fF\](.+) $arg ignore password_file]} {
+	# Username
+	} -u* -
+	-U* {
+	    if {! [  regexp .\[uU\](.+) $arg ignore user]} {
 		incr i
-		set password_file [ lindex $argv $i ]
+		set username [ lindex $argv $i ]
+	    }
+	# command file
+	} -x* -
+	-X* {
+	    if {! [  regexp .\[xX\](.+) $arg ignore cmd_file]} {
+		incr i
+		set cmd_file [ lindex $argv $i ]
+	    }
+            set cmd_fd [open $cmd_file r]
+            set cmd_text [read $cmd_fd]
+            close $cmd_fd
+            set command [join [split $cmd_text \n] \;]
+            set do_command 1
+	# 'ssh -c' cypher type
+	} -y* -
+	-Y* {
+	    if {! [  regexp .\[yY\](.+) $arg ignore cypher]} {
+		incr i
+		set cypher [ lindex $argv $i ]
 	    }
 	} -* {
 	    send_user "Error: Unknown argument! $arg\n"
@@ -158,9 +187,9 @@ proc label { host } {
 proc add {var args} { global $var ;lappend $var $args }
 
 proc find {var router} {
-  source_password_file 
-  upvar $var list 
-  if { [info exists list] } { 
+  source_password_file
+  upvar $var list
+  if { [info exists list] } {
     foreach line $list {
       if { [string match [lindex $line 0] $router ] } {
 	return [lrange $line 1 end]
@@ -174,31 +203,45 @@ proc find {var router} {
 # it is sourced, the user better know what to put in there, as it
 # could install more than just password info...  I will assume however,
 # that a "bad guy" could just as easy put such code in the clogin
-# script, so I will leave .cloginrc as just an extention of that script 
+# script, so I will leave .cloginrc as just an extention of that script
 proc source_password_file { } {
-  global env password_file read_password_file
-  if { [info exists read_password_file] } { return }
-  if { [info exists password_file] == 0 } { 
+    global env password_file read_password_file
+    if { [info exists read_password_file] } { return }
+    if { [info exists password_file] == 0 } {
 	set password_file $env(HOME)/.cloginrc
-  }
-  set read_password_file 1
-  file stat $password_file fileinfo
-  if { [expr ($fileinfo(mode) & 007)] != 0000 } {
-      send_user "Error: $password_file must not be world readable/writable\n"
-      exit 1
-  }
-  source $password_file
+    }
+    if { ! [file exists $password_file] } {
+	send_user "Error: password file ($password_file) does not exist\n"
+	exit 1
+    }
+
+    set read_password_file 1
+    file stat $password_file fileinfo
+    if { [expr ($fileinfo(mode) & 007)] != 0000 } {
+	send_user "Error: $password_file must not be world readable/writable\n"
+	exit 1
+    }
+    source $password_file
 }
 
 # Log into the router.
-proc login { router user passwd prompt encrypttype} {
-    global spawn_id in_proc do_command do_script
+proc login { router user passwd prompt cyphertype identfile} {
+    global spawn_id in_proc do_command do_script passphrase
     set in_proc 1
 
-    # ssh to the router & try to login.
-    if [ catch {spawn ssh -c $encrypttype -x -l $user $router} reason ] {
-	send_user "Error: failed to ssh: $reason\n"
-	exit 1
+    # ssh to the router & try to login with or without an identfile.
+    # We use two calls to spawn since spawn does not seem to parse
+    # spaces correctly.
+    if {$identfile != ""} {
+	if [ catch {spawn ssh -c $cyphertype -x -l $user -i $identfile $router} reason ] {
+	    send_user "Error: failed to ssh: $reason\n"
+	    exit 1
+	}
+    } else {
+	if [ catch {spawn ssh -c $cyphertype -x -l $user $router} reason ] {
+	    send_user "Error: failed to ssh: $reason\n"
+	    exit 1
+	}
     }
     sleep 0.3
 
@@ -206,7 +249,7 @@ proc login { router user passwd prompt encrypttype} {
     expect_after {
 	timeout {
 	    send_user "\nError: TIMEOUT reached\n"
-	    close; wait
+	    catch {close}; wait
 	    if { $in_proc} {
 	        return 1
 	    } else {
@@ -214,7 +257,7 @@ proc login { router user passwd prompt encrypttype} {
 	    }
         } eof {
 	    send_user "\nError: EOF received\n"
-	    close; wait
+	    catch {close}; wait
 	    if { $in_proc} {
 	        return 1
 	    } else {
@@ -231,10 +274,10 @@ proc login { router user passwd prompt encrypttype} {
     # then it will just send the passwd.
     expect {
         eof { send_user "Error: Couldn't login\n"; wait; return 1 }
-	"Connection refused" { 
+	"Connection refused" {
 	    expect eof
 	    send_user "Error: Connection Refused\n"; wait; return 1
-	} "Unknown host\r\n" { 
+	} "Unknown host\r\n" {
 	    expect eof
 	    send_user "Error: Unknown host\n"; wait; return 1
 	} "Host is unreachable" {
@@ -244,6 +287,10 @@ proc login { router user passwd prompt encrypttype} {
 	    expect eof
 	    send_user "Error: Unknown host\n"; wait; return 1
 	}
+	-re "Enter passphrase for RSA key '\[^'\]*': " {
+	    send_user "\nKey has passphrase!\n"
+	    send "$passphrase\r"
+	    exp_continue }
 	-re "Host key not found .* \(yes\/no\)\?"	{
 	    send "yes\r"
 	    send_user "Host $router added to the list of known hosts.\n"
@@ -253,7 +300,7 @@ proc login { router user passwd prompt encrypttype} {
 	    send_user "Error: The host key for $router has changed.  update the known_hosts file accordingly.\n"
 	    return 1 }
 	-re "(Username|^login):"	{ send "$user\r"
-	    expect { 
+	    expect {
 		eof             	{ send_user "Error: Couldn't login\n"; wait; return 1 }
 		-re "\[Pp]assword:"	{ send "$passwd\r" }
 		"$prompt"		{ set in_proc 0; return 0 }
@@ -261,15 +308,15 @@ proc login { router user passwd prompt encrypttype} {
 	    exp_continue
 	}
 	"\[Pp]assword:"	{ send "$passwd\r"
-	    expect { 
+	    expect {
 		eof             { send_user "Error: Couldn't login\n"; wait; return 1 }
 		"$prompt"       { set in_proc 0; return 0 }
 	    }
 	    exp_continue
 	}
 	"$prompt"       { }
-	denied		{ send_user "Error: Check your passwd for $router\n" 
-	                  if { $do_command || $do_script } {	
+	denied		{ send_user "Error: Check your passwd for $router\n"
+	                  if { $do_command || $do_script } {
 			      send "quit"
 			      wait
 			      return 1
@@ -339,7 +386,7 @@ foreach router [lrange $argv $i end] {
 #      if { [llength $pswd] == 0 } {
 #        send_user "Error - no password for $router in $password_file.\n"
 #        continue
-#      } 
+#      }
 #      if { $do_enapasswd && !$autoenable && [llength $pswd] < 2 } {
 #	send_user "Error - no enable password for $router in $password_file."
 #        continue
@@ -348,13 +395,13 @@ foreach router [lrange $argv $i end] {
 #    }
 
     # Figure out username
-    if {[info exists username]} {  
+    if {[info exists username]} {
       # command line username
       set loginname $username
     } else {
-      set loginname [find user $router] 
+      set loginname [find user $router]
       if { "$loginname" == "" } { set loginname $default_user }
-    } 
+    }
 
     # Figure out loginname's password (if different from the vty password)
     if {[info exists userpswd]} {
@@ -363,18 +410,25 @@ foreach router [lrange $argv $i end] {
     } else {
       set passwd [lindex [find password $loginname@$router] 0]
       if { "$passwd" == "" } { set passwd [lindex [find password $router] 0] }
-    } 
+    }
 
-    # Figure out encryption tpye
-    if {[info exists encrypt]} {  
-      # command line encryption type
-      set encrypttype $encrypt
+    # figure out identity file to use
+    set identfile ""
+    if {[info exists identity]} {
+	set identfile [lindex [find identity $router] 0]
+    }
+
+    # Figure out ssh cypher type
+    if {[info exists cypher]} {
+      # command line ssh cypher type
+      set cyphertype $cypher
     } else {
-      set encrypttype "3des"
-    } 
+      set cyphertype [find cyphertype $router]
+      if { "$cyphertype" == "" } { set cyphertype "3des" }
+    }
 
     # Login to the router
-    if {[login $router $loginname $passwd $prompt $encrypttype]} {
+    if {[login $router $loginname $passwd $prompt $cyphertype $identfile]} {
 	continue
     }
 
@@ -390,7 +444,7 @@ foreach router [lrange $argv $i end] {
 	source $sfile
 	close
     } else {
-	label $router 
+	label $router
 	log_user 1
 	interact
     }

@@ -30,7 +30,7 @@ $file = $opt_f;
 $host = $ARGV[0];
 $clean_run = 0;
 $found_end = 0;
-$timeo = 90;			# clogin timeout in seconds
+$timeo = 90;			# flogin timeout in seconds
 
 # This routine is used to print out the router configuration
 sub ProcessHistory {
@@ -172,6 +172,7 @@ sub ShowChassis {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/ from /);
+	next if (/current temperature/i);
 	ProcessHistory("CHASSIS","","","! $_");
     }
     ProcessHistory("CHASSIS","","","!\n");
@@ -327,7 +328,7 @@ if ($file) {
     }
 }
 
-while(<INPUT>) {
+TOP: while(<INPUT>) {
     tr/\015//d;
     if (/\#exit$/) {
 	$clean_run=1;
@@ -347,13 +348,13 @@ while(<INPUT>) {
 	if (! defined($commands{$cmd})) {
 	    print STDERR "found unexpected command - \"$cmd\"\n";
 	    $clean_run = 0;
-	    last;
+	    last TOP;
 	}
 	$rval = &{$commands{$cmd}};
 	delete($commands{$cmd});
 	if ($rval == -1) {
 	    $clean_run = 0;
-	    last;
+	    last TOP;
 	}
     }
 }

@@ -27,6 +27,8 @@ require 5;
 
 if ($vendor =~ /^cisco$/i) {
     exec('rancid', $router);
+} elsif ($vendor =~ /^cat5$/i) {
+    exec('cat5rancid', $router);
 } elsif ($vendor =~ /^juniper$/i) {
     exec('jrancid', $router);
 } elsif ($vendor =~ /^foundry$/i) {

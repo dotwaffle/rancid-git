@@ -21,7 +21,7 @@ fi
 for GROUP in $LIST_OF_GROUPS
 do
 
-	LOCKFILE=/tmp/.$GROUP.run.lock
+	LOCKFILE=$TMPDIR/.$GROUP.run.lock
 
 	(
 		echo starting: `date`
@@ -31,6 +31,23 @@ do
 		then
 			echo hourly config diffs failed: $LOCKFILE exists
 			/bin/ls -l $LOCKFILE
+
+			# Send email if the lock file is old.
+			if [ "X$LOCKTIME" = "X" ] ; then
+				LOCKTIME=4
+			fi
+			perl -e "\$t = (stat(\"$LOCKFILE\"))[9]; print \"OLD\\n\" if (time() - \$t >= $LOCKTIME*60*60);" > $TMPDIR/.$GROUP.old
+			if [ -s $TMPDIR/.$GROUP.old ]
+			then
+				(
+					cat <<END
+rancid $GROUP hung on `hostname`?  Old lockfile still exists:
+`/bin/ls -l $LOCKFILE`
+END
+				) | Mail -s "rancid hung - $GROUP" rancid-admin-$GROUP
+			fi
+			rm -f $TMPDIR/.$GROUP.old
+
 		else
 			/usr/bin/touch $LOCKFILE
 			control_rancid $GROUP
