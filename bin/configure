@@ -616,10 +616,19 @@ RD_BIN_PROGS=$rd_cv_rd_bin_progs
 
 PERLV_PATH=$ac_cv_path_PERLV_PATH
 
+PERLV=$ac_cv_PERLV
+
+
 EXPECT_PATH=$ac_cv_path_EXPECT_PATH
 
 
 ENV_PATH=$ac_cv_env_path
+
+
+MAILPLUS=$rd_cv_MAILPLUS
+
+
+DIFF_CMD=$rd_cv_DIFF_CMD
 
 
 trap '' 1 2 15
@@ -773,8 +782,11 @@ s%@INSTALL_DATA@%$INSTALL_DATA%g
 s%@RD_BIN_DATAS@%$RD_BIN_DATAS%g
 s%@RD_BIN_PROGS@%$RD_BIN_PROGS%g
 s%@PERLV_PATH@%$PERLV_PATH%g
+s%@PERLV@%$PERLV%g
 s%@EXPECT_PATH@%$EXPECT_PATH%g
 s%@ENV_PATH@%$ENV_PATH%g
+s%@MAILPLUS@%$MAILPLUS%g
+s%@DIFF_CMD@%$DIFF_CMD%g
 
 CEOF
 EOF

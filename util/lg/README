@@ -12,7 +12,7 @@ index.html	often the default document the server will load, contains
 lg.conf		looking glass configuration file
 lg.cgi          work horse of the looking glass
 lgform.cgi      front-end form for the looking glass engine
-lgnotes.html    manual for the looking glass
+lgnotes.html    user info for the looking glass
 
 the looking glass requires the CGI and LockFile-Simple perl modules.
 these can be retrieved from CPAN, http://www.cpan.org/.  CGI's home is
@@ -42,6 +42,16 @@ and install bits in /usr/local/rancid/util/lg (or <prefix>/util/lg).
    allow following symlinks.  eg:
 	% cat /usr/local/www/data/lg/.htaccess
 	Options FollowSymLinks ExecCGI
+
+   note on index.html: index.html is typically the default file loaded
+   when a url ends with a '/'.  index.html can be used to redirect this
+   to lgform.cgi using a netscape meta refresh.  Though this is supported
+   by many browsers, it is supposedly netscape specific and non-standard.
+   In apache, the same thing can be acheived by altering the default
+   directory index like this:
+
+	% cat /usr/local/www/data/lg/.htaccess
+	DirectoryIndex lgform.cgi
 
 2) the LG needs to be able to find and read lg.conf.  by default this
    is installed as <PREFIX>/util/lg/lg.conf and the LG will look there.

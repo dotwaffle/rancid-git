@@ -1,0 +1,106 @@
+.\"
+.hys 50
+.TH "router.db" "5" "22 Jan 2001"
+.SH NAME
+router.db \- rancid group configuration file
+.SH DESCRIPTION
+.B router.db
+contains information for devices which are members of a rancid group.
+.IR control_rancid (1)
+reads this file to compile a list of devices which it should collect.
+.\"
+.SH SYNTAX
+One device is listed per-line, where the syntax is:
+.PP
+.in +1i
+.nf
+<device_name>:<device_type>:<state>[:]
+.fi
+.in -1i
+.PP
+For example:
+.in +1i
+.nf
+scooby.shrubbery.net:cisco:up
+.fi
+.in -1i
+.PP
+.\"
+The fields are as follows:
+.TP
+.B <device_name>
+The name of the device, which must resolve via
+.I gethostbyname\c
+, used as the argument to
+.IR telnet (1),
+.IR rsh (1),
+or
+.IR ssh (1),
+to connect to the device.  Once converted to lower-case, this
+also becomes the name of the file used to store the configuration under
+\fI$BASEDIR/<group>/configs\fR.
+.sp
+Experience has shown that using the device's FQDN (Fully Qualified
+Domain Name) works best, as in the example above.
+.\"
+.TP
+.B <device_type>
+The type of device from the set:
+.RS 8n
+.TP
+.B cat5
+A cisco catalyst switch (ie: running the catalyst OS, not IOS).
+.TP
+.B cisco
+A cisco router or switch such as the 3500XL or 6000 running IOS (or IOS-like)
+OS.
+.TP
+.B ezt3
+An ADC-Kentrox EZ-T3 mux.
+.TP
+.B foundry
+A Foundry router, switch, or router-switch.
+.TP
+.B juniper
+A Juniper router.
+.TP
+.ID 15n
+.B redback
+A Redback router, NAS, etc.
+.RE
+.\"
+.TP
+.B <state>
+The state is either "up" or "down".  If the device is marked "down", the
+device's
+configuration will not be collected.
+.PP
+A ``#'' at the begining of a line is a comment; the entire line is
+ignored.
+.PP
+If you delete a device from the 
+.B router.db
+file, then
+.B rancid
+will clean up by removing the device's config file from
+\fI$BASEDIR/<group>/configs\fR.
+The
+.IR cvs (1)
+information for the device will be moved to 
+.IR cvs (1)'s
+Attic directory (using
+.IR "cvs delete").
+.PP
+.SH FILES
+.ta \w'xBASEDIR/<group>/router.db  'u
+.TP
+.B $BASEDIR/<group>/router.db
+Configuration file described here, where <group> is a device group name
+defined in the variable
+.I LIST_OF_GROUPS
+within \fI$BASEDIR/bin/env\fR.
+.El
+.SH SEE ALSO
+.BR control_rancid (1),
+.BR env (5),
+.BR rancid (1)

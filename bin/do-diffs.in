@@ -7,6 +7,8 @@ ENVFILE="`dirname $0`/env"
 
 . $ENVFILE
 
+TMPDIR=${TMPDIR:=/tmp}; export TMPDIR
+
 if [ $# -ge 1 ] ; then
     LIST_OF_GROUPS="$*"; export LIST_OF_GROUPS
 elif [ "$LIST_OF_GROUPS" = "" ] ; then
@@ -17,6 +19,7 @@ fi
 if [ ! -d $BASEDIR/logs ] ; then
 	mkdir $BASEDIR/logs
 fi
+
 
 for GROUP in $LIST_OF_GROUPS
 do
@@ -30,28 +33,32 @@ do
 		if [ -f $LOCKFILE ]
 		then
 			echo hourly config diffs failed: $LOCKFILE exists
-			/bin/ls -l $LOCKFILE
+			ls -l $LOCKFILE
 
 			# Send email if the lock file is old.
 			if [ "X$LOCKTIME" = "X" ] ; then
 				LOCKTIME=4
 			fi
-			@PERLV_PATH@ -e "\$t = (stat(\"$LOCKFILE\"))[9]; print \"OLD\\n\" if (time() - \$t >= $LOCKTIME*60*60);" > $TMPDIR/.$GROUP.old
+			@PERLV@ -e "\$t = (stat(\"$LOCKFILE\"))[9]; print \"OLD\\n\" if (time() - \$t >= $LOCKTIME*60*60);" > $TMPDIR/.$GROUP.old
 			if [ -s $TMPDIR/.$GROUP.old ]
 			then
 				(
 					cat <<END
 rancid $GROUP hung on `hostname`?  Old lockfile still exists:
-`/bin/ls -l $LOCKFILE`
+`ls -l $LOCKFILE`
 END
-				) | Mail -s "rancid hung - $GROUP" rancid-admin-$GROUP
+				) | Mail -s "rancid hung - $GROUP" @MAILPLUS@admin-$GROUP
 			fi
 			rm -f $TMPDIR/.$GROUP.old
 
 		else
-			/usr/bin/touch $LOCKFILE
-			control_rancid $GROUP
-			/bin/rm -f $LOCKFILE
+			trap 'rm -fr $LOCKFILE;' 1 2 15
+			touch $LOCKFILE
+			if [ $? -eq 0 ] ; then
+			    control_rancid $GROUP
+			    rm -f $LOCKFILE
+			fi
+			trap '' 1 2 15
 		fi
 
 		echo

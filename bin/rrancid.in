@@ -212,11 +212,19 @@ sub WriteTerm {
 	# order access-lists
 	/^access-list\s+(\d\d?)\s+(\S+)\s+(\S+)/ &&
         ProcessHistory("ACL $1 $2","ipsort","$3","$_") && next;
+	# prune snmp community statements
+	if (/^snmp (group|community) (\S+)/) {
+	    if (defined($ENV{'NOCOMMSTR'})) {
+		ProcessHistory("SNMPSERVERCOMM","keysort","$_","!snmp $1 <removed>$'") && next;  
+	    } else {
+		ProcessHistory("SNMPSERVERCOMM","keysort","$_","$_") && next;
+	    }
+	}
 	ProcessHistory("","","","$_");
         # end of config
-        if (/^end$/) {
-            $found_end = 1;
-            last;
+	if (/^end$/) {
+	    $found_end = 1;
+	    last;
 	}
     }
     return;
@@ -286,6 +294,7 @@ if ($file) {
     }
 }
 
+ProcessHistory("","","","!RANCID-CONTENT-TYPE: redback\n!\n");
 ProcessHistory("COMMENTS","keysort","B0","!\n");
 ProcessHistory("COMMENTS","keysort","C0","!\n");
 ProcessHistory("COMMENTS","keysort","E0","!\n");

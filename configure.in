@@ -14,27 +14,58 @@ PACKAGE=rancid
 # VERSION needs to be updated such that 'make dist' uses the correct
 # filename for the directory name and tarball.
 AC_SUBST(VERSION)
-VERSION=2.1b
+VERSION=2.1
 
 AM_MAINTAINER_MODE()
 
-AC_PATH_PROG(CVS,cvs,no)
-AC_PATH_PROG(COMM,comm,no)
-AC_PATH_PROG(MKDIR,mkdir,no)
+# Check for a preference for using mail addresses like rancid+admin-group
+# instead of the standard rancid-admin-group
+AC_MSG_CHECKING([whether mail addresses should be in the rancid+ form])
+AC_ARG_ENABLE(mail-plus,
+[  --enable-mail-plus      enable mail to rancid+ addresses, instead of rancid-],
+[if test "$enable_mail_plus" = yes; then
+    AC_MSG_RESULT(yes)
+    MAILPLUS="rancid+"
+    AC_SUBST(MAILPLUS)
+else
+    AC_MSG_RESULT(no)
+    MAILPLUS="rancid-"
+    AC_SUBST(MAILPLUS)
+fi],
+[AC_MSG_RESULT(no)
+    MAILPLUS="rancid-"
+    AC_SUBST(MAILPLUS)
+])
+rd_cv_MAILPLUS=$MAILPLUS
+
 AC_PATH_PROG(DIRNAME,dirname,no)
 # locate GNU diff (-u option)
 AC_PATH_PROG(DIFF,diff,no, /usr/local/bin:/usr/gnu/bin:/usr/bin:/usr/contrib/bin)
 if test $DIFF = no; then
     unset ac_cv_path_DIFF
-    AC_MSG_ERROR([can't locate a GNU diff.])
+    AC_MSG_ERROR([can't locate diff.])
 else
     $DIFF -u /dev/null /dev/null > /dev/null 2>&1
     if test $? -ne 0; then
-        AC_MSG_ERROR([can't locate a GNU diff (one which accepts the -u option).])
-	exit 1
+	$DIFF -C 2 /dev/null /dev/null > /dev/null 2>&1
+	if test $? -ne 0; then
+	    $DIFF -c2 /dev/null /dev/null > /dev/null 2>&1
+	    if test $? -ne 0; then
+		AC_MSG_ERROR([can't locate a diff which accepts the -u option.])
+		exit 1
+	    else
+		DIFF_CMD="diff -c4"
+	    fi
+	else
+	    DIFF_CMD="diff -C 4"
+	fi
+    else
+	DIFF_CMD="diff -u -4"
     fi
 fi
-AC_PATH_PROG(TOUCH,touch,no)
+rd_cv_DIFF_CMD=$DIFF_CMD
+AC_SUBST(DIFF_CMD)
+
 AC_PATH_PROG(SENDMAIL,sendmail,no, /usr/sbin:/usr/bin:/usr/lib)
 # find UCB mail.
 AC_ARG_WITH(ucbmail, [  --with-ucbmail=[FQPN]   path to UCB mail], UCBMAIL=$withval; unset ac_cv_path_UCBMAIL)
@@ -48,7 +79,6 @@ if test $UCBMAIL = no; then
 	exit 1
     fi
 fi
-AC_PATH_PROG(SORT,sort,no)
 
 AC_PATH_PROG(MAKE,gmake,no)
 if test $MAKE = no; then
@@ -85,6 +115,8 @@ if test $PERLV_PATH = no; then
     fi
 fi
 AC_SUBST(PERLV_PATH)
+ac_cv_PERLV=`basename $PERLV_PATH`
+AC_SUBST(PERLV)
 
 AC_PATH_PROG(EXPECT_PATH,expect,no)
 if test $EXPECT_PATH = no; then
@@ -147,32 +179,43 @@ INST_PROGS=$progs
 
 # locate tools to build $PATH for env.  order is significant.  want to be
 # sure that we pick up the the proper diff and ucbmail in bin/env.
-unset ENV_PATH
-AC_PATH_PROG(DIFF,diff,no)
-ENV_PATH=`dirname $ac_cv_path_DIFF`
-AC_PATH_PROG(UCBMAIL,Mail,no)
-ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_UCBMAIL`"
+ENV_PATH="`dirname $PERLV_PATH`:`dirname $EXPECT_PATH`:`dirname $SENDMAIL`"
+ENV_PATH="$ENV_PATH:`dirname $DIRNAME`:`dirname $DIFF`:`dirname $UCBMAIL`"
+
 AC_PATH_PROG(CVS,cvs,no)
 ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_CVS`"
 AC_PATH_PROG(COMM,comm,no)
 ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_COMM`"
+AC_PATH_PROG(FIND,find,no)
+ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_FIND`"
+AC_PATH_PROG(GREP,grep,no)
+ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_GREP`"
+AC_PATH_PROG(ID,id,no)
+ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_ID`"
 AC_PATH_PROG(MKDIR,mkdir,no)
 ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_MKDIR`"
-AC_PATH_PROG(DIRNAME,dirname,no)
-ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_DIRNAME`"
+AC_PATH_PROG(RSH,rsh,no)
+ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_RSH`"
+AC_PATH_PROG(SORT,sort,no)
+ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_SORT`"
+AC_PATH_PROG(SSH,ssh,no)
+if test $DIFF = no; then
+    ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_SSH`"
+fi
+unset ac_cv_path_SSH
+AC_PATH_PROG(TELNET,telnet,no)
+ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_TELNET`"
 AC_PATH_PROG(TOUCH,touch,no)
 ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_TOUCH`"
-AC_PATH_PROG(SENDMAIL,sendmail,no)
-ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_SENDMAIL`"
-AC_PATH_PROG(SORT,sort,no)  
-ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_SORT`"
 ENV_PATH="$ENV_PATH:/usr/local/bin:/usr/bin"
+AC_SUBST(ENV_PATH)
 
 ENV_PATH=`echo $ENV_PATH | $PERLV_PATH -e 'foreach $x(split(":",<>)){next unless (length($x));push(@F, $x),$seen{$x}=1 unless (defined $seen{$x});}print join(":",@F);'`
 ac_cv_env_path=$ENV_PATH
 AC_SUBST(ENV_PATH)
 
-AC_OUTPUT(Makefile)
+AC_OUTPUT(Makefile \
+	man/Makefile man/env.5 man/lg.conf.5 man/lg_intro.1)
 
 # fix permissions on scripts.
 for file in $progs; do chmod a+x $file; done

@@ -13,10 +13,12 @@ install: all
 	    $(INSTALL) $$prog $(PREFIX)/bin; \
 	done; \
 	if test -f $(PREFIX)/bin/env ; then \
-	    echo "WARNING: *** $(PREFIX)/bin/env exists: not installing."; \
+	    echo "WARNING: *** $(PREFIX)/bin/env exists: installing as env.new."; \
+	    echo "         *** review env.new for new/deprecated switches"; \
+	    $(INSTALL_DATA) env $(PREFIX)/bin/env.new; \
 	else \
 	    $(INSTALL_DATA) env $(PREFIX)/bin; \
-	fi  
+	fi
 # BIN_DATAS are empty at the moment.
 #	for prog in $(BIN_DATAS) ; do \
 #	    $(INSTALL_DATA) $$prog $(PREFIX)/bin; \

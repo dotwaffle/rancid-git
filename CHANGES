@@ -1,9 +1,59 @@
+2.1
+	Change default umask to 027 (it was 007) mainly as an
+	attempt to stop people from changing stuff in rancid's CVS
+	store.  Only rancid should be updating its CVS store.
+
+	control_rancid cvs updates router.db before starting a
+	group's collection.
+
+	configure now has a --enable-mail-plus option to have rancid
+	send mail to rancid+$GROUP instead of to rancd-$GROUP.
+	Patch from davidw@certaintysolutions.com.
+
+	configure should figure out diff options on it's own.
+
+	try to get default user from env() and catch exec on id in *login
+
+	make clean/distclean was missing some files
+
+	make sure do-diffs cleans up after itself if it exits prematurely
+
+	ignore case when cvs delete'g removed routers
+
+	francid/rrancid (foundry/redback) now strip snmp communities like
+	the others, via NOCOMMSTR var in bin/env.
+
+	add man pages
+
+	collect 'sh vlan' on cat 6000 - afort@staff.webcentral.com.au
+
+	Add 'show vtp status' for the 3500XLs as well.
+
+	Escape regex meta-chars found in device prompts in *rancid
+
+	Add "include" directive to include other pwd files via .cloginrc
+
+	Add "show port ifindex" for the cat5s.
+
+	Try to detect flash being busy on a cat5.
+
+	Tag each config file with its 'type'.  E.g.:
+		!RANCID-CONTENT-TYPE: cisco
+
+	fix from afort@staff.webcentral.com.au to lg.cgi to allow prefix-list
+	with numerals.
+
+	fix lg form's formatting (on some browsers/conditions).  Thanks to
+	rrashid@verio.net for the html help.
+
 2.1b
 	add looking glass utility based on Ed Kern's original source.  Thanks
 	to Ed for permission to include it with rancid.  this is only partially
 	tested.
 
 	fixed expect foo in *login when .cloginrc is unreadable.
+
+	Don't sort 'ip name-server' - order matters.
 
 2.0
 	Better formatting for cisco catalyst [non-ios] switches.

@@ -61,25 +61,34 @@ AUTOMAKE = @AUTOMAKE@
 COMM = @COMM@
 CVS = @CVS@
 DIFF = @DIFF@
+DIFF_CMD = @DIFF_CMD@
 DIRNAME = @DIRNAME@
 ENV_PATH = @ENV_PATH@
 EXPECT_PATH = @EXPECT_PATH@
+FIND = @FIND@
+GREP = @GREP@
+ID = @ID@
 INST_PROGS = @INST_PROGS@
 LG_PING_CMD = @LG_PING_CMD@
+MAILPLUS = @MAILPLUS@
 MAINT = @MAINT@
 MAKE = @MAKE@
 MAKEINFO = @MAKEINFO@
 MKDIR = @MKDIR@
 PACKAGE = @PACKAGE@
+PERLV = @PERLV@
 PERLV_PATH = @PERLV_PATH@
 PING_PATH = @PING_PATH@
 RD_BIN_DATAS = @RD_BIN_DATAS@
 RD_BIN_PROGS = @RD_BIN_PROGS@
 RD_UTIL_LG_PROGS = @RD_UTIL_LG_PROGS@
 RD_UTIL_PROGS = @RD_UTIL_PROGS@
+RSH = @RSH@
 SENDMAIL = @SENDMAIL@
 SORT = @SORT@
+SSH = @SSH@
 TAR = @TAR@
+TELNET = @TELNET@
 TOUCH = @TOUCH@
 UCBMAIL = @UCBMAIL@
 VERSION = @VERSION@
@@ -92,7 +101,7 @@ EXTRA_DIST = CHANGES README Todo cloginrc.sample configure install-sh 	mkinstall
 
 # '.' is here (and at the beginnging of the macro) so that distclean-recursive
 # will run make distclean in . after the other dirs (preserving Makefile.inc)
-SUBDIRS = . bin util
+SUBDIRS = . bin man util
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_CLEAN_FILES = 
@@ -176,14 +185,6 @@ tags-recursive:
 	done
 
 tags: TAGS
-
-ID: $(HEADERS) $(SOURCES) $(LISP)
-	list='$(SOURCES) $(HEADERS)'; \
-	unique=`for i in $$list; do echo $$i; done | \
-	  awk '    { files[$$0] = 1; } \
-	       END { for (i in files) print i; }'`; \
-	here=`pwd` && cd $(srcdir) \
-	  && mkid -f$$here/ID $$unique $(LISP)
 
 TAGS: tags-recursive $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) $(LISP)
 	tags=; \
@@ -344,7 +345,7 @@ mostlyclean distclean maintainer-clean
 all:
 
 install-exec-local:
-	$(mkinstalldirs) $(prefix) $(prefix)/bin $(prefix)/util $(prefix)/util/lg
+	$(mkinstalldirs) $(prefix) $(prefix)/bin $(prefix)/man $(prefix)/util $(prefix)/util/lg
 
 install:
 	for file in CHANGES README cloginrc.sample ; do \

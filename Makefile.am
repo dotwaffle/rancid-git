@@ -10,12 +10,12 @@ EXTRA_DIST = CHANGES README Todo cloginrc.sample configure install-sh \
 
 # '.' is here (and at the beginnging of the macro) so that distclean-recursive
 # will run make distclean in . after the other dirs (preserving Makefile.inc)
-SUBDIRS = . bin util
+SUBDIRS = . bin man util
 
 all:
 
 install-exec-local:
-	$(mkinstalldirs) $(prefix) $(prefix)/bin $(prefix)/util $(prefix)/util/lg
+	$(mkinstalldirs) $(prefix) $(prefix)/bin $(prefix)/man $(prefix)/util $(prefix)/util/lg
 
 install:
 	for file in CHANGES README cloginrc.sample ; do \

@@ -1,0 +1,55 @@
+.\"
+.hys 50
+.TH "rancid" "1" "13 Jan 2001"
+.SH NAME
+rancid \- Cisco configuration filter
+.SH SYNOPSIS
+.B rancid
+[\fB\-dl\fP]
+([\c
+.BI \-f\ \c
+filename]\ \c
+| hostname)
+.SH DESCRIPTION
+.B rancid
+is a
+.BR perl (1)
+script which uses
+.BR clogin (1)
+to login to a Cisco router, execute commands to display
+the configuration, etc, then filters the output for formatting, security,
+and so on.
+.B rancid's
+product is a file with the name of it's last argument plus the suffix .new.
+For example, hostname.new.
+.PP
+There are complementary scripts for Cisco catalyst switch, Juniper, Foundry,
+and ADC-kentrox EZ-T3 mux named 
+.B cat5rancid,
+.B jrancid,
+.B francid,
+and
+.B erancid,
+respectively.
+.PP
+The command-line options are as follows:
+.TP
+.B \-d
+Display debugging information.
+.\"
+.TP
+.B \-l
+Display somewhat less debugging information.
+.\"
+.TP
+.B \-f
+.B rancid
+should interpret the next argument as a filename which contains the
+output it would normally collect from the device (
+.I hostname\c
+) with
+.IR clogin (1).
+.SH "SEE ALSO"
+.BR control_rancid (1),
+.BR clogin (1),
+.BR env (5)

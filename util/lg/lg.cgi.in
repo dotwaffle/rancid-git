@@ -378,7 +378,7 @@ if ($type eq "prefix" || $type eq "mbgp" || $type eq "route" ) {
     # don't show the jewels
     &print_results if ($arg == 98 || $arg == 99);
 } elsif ($type eq "prefixlist" || $type eq "routemap") {
-    if ($arg[0] !~ /^[A-Za-z][^\s\"]*$/) {
+    if ($arg[0] !~ /^[0-9A-Za-z][^\s\"]*$/) {
 	$results[0] = "That argument ($arg[0]) is not valid.\n";
 	&print_results;
     }

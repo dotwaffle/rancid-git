@@ -1,0 +1,95 @@
+.\"
+.hys 50
+.TH "do-diffs" "1" "13 Jan 2001"
+.SH NAME
+do-diffs \- run rancid for each of the groups
+.SH SYNOPSIS
+.B do-diffs
+[group [group ...]]
+.SH DESCRIPTION
+.B do-diffs
+is a
+.IR sh (1)
+script to run
+.IR rancid (1)
+for a set of rancid group(s).
+.PP
+.B do-diffs
+reads
+.BR env (5)
+to configure itself, then uses
+.IR control_rancid (1)
+to run
+.IR rancid (1)
+for each rancid group.  The set of rancid groups can either be provided
+as command-line arguments or via the
+.I LIST_OF_GROUPS
+variable in
+.BR env (5),
+if the group argument is omitted.
+.PP
+A lock file is maintained per-group to prevent simultaneous runs for a given
+group by
+.IR do-diffs (1).
+The lock file will be named
+.IR .<group>.run.lock
+and will be located in
+.IR $TMPDIR
+(see below).
+.PP
+A log file is produced under
+.IR $BASEDIR/logs
+for each rancid group processed.  The file name will be <group>.YYYYMMDD.HHMMSS
+(year month day . hour minute second).
+.PP
+.B do-diffs
+is normally used to run rancid from
+.BR cron (8).
+For example:
+.PP
+.in +1i
+.nf
+0 * * * *      /usr/local/rancid/bin/do-diffs
+.fi
+.in -1i
+.\"
+.SH ENVIRONMENT
+.B do-diffs
+utilizes the following environment variables from
+.BR env (5).
+.\"
+.TP
+.B BASEDIR
+Location of group directories, etc.
+.\"
+.TP
+.B LIST_OF_GROUPS
+List of rancid groups to collect.
+.\"
+.TP
+.B PATH
+Search path for utilities.
+.\"
+.TP
+.B TMPDIR
+Directory to hold temporary and lock files.
+.SH ERRORS
+If rancid fails to run or collect a device's configuration, the particular
+group's log file (mentioned above) should be consulted.  Any errors produced
+by
+.BR cvs (1)
+or any of the rancid scripts should be included, whether they be a botched
+cvs tree, login authentication failure, rancid configuration error, etc.  If
+the log file produces no clues, the next debugging step should be run the
+commands manually.  For example, can the user who runs rancid login to the
+device with 'clogin hostname', and so on.
+.BR 
+.SH FILES
+.TP
+.B $BASEDIR/bin/env
+.B do-diffs
+configuration file.
+.El
+.SH SEE ALSO
+.BR control_rancid (1),
+.BR env (5)

@@ -22,7 +22,7 @@
 #
 # add userprompt <router name regexp> <username prompt>
 #	What the router prints to prompt for the username.
-#	Default: "(Username|login):"
+#	Default: {"(Username|login|user name):"}
 #
 # add userpassword <router name regexp> <user password>
 #	The password for user if different than the password set
@@ -30,7 +30,7 @@
 #
 # add passprompt <router name regexp> <password prompt>
 #	What the router prints to prompt for the password.
-#	Default: "\[Pp]assword:"
+#	Default: {"(\[Pp]assword|passwd):"}
 #
 # add method <router name regexp> {ssh} [...]
 #	Defines, in order, which connection method(s) to use for a device
@@ -45,7 +45,7 @@
 #
 # add enableprompt <router name regexp> <enable prompt>
 #	What the router prints to prompt for the enable password.
-#	Default: "\[Pp]assword:"
+#	Default: {"\[Pp]assword:"}
 #
 # add enauser <router name regexp> <username>
 #	This is only needed if enable asks for a username and this
@@ -59,6 +59,9 @@
 #
 # add identity <router name regexp> <path to ssh identity file>
 #	Default is your default ssh identity.
+#
+# include <file>
+#	include a secondary .cloginrc file
 #
 #
 # Note: The first match for a hostname takes precedence.
@@ -105,7 +108,7 @@ add password *			{clearance}	{clarence}
 add cyphertype *		{3des}
 
 # set the username prompt to "router login:"
-#add userprompt *		router login:
+#add userprompt *		{"router login:"}
 
 # ssh identity for a juniper; used with jlogin
 add identity	my.juniper	$env(HOME)/.ssh/juniper

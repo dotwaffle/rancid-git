@@ -443,6 +443,7 @@ if ($file) {
 
 }
 
+ProcessHistory("","","","# RANCID-CONTENT-TYPE: juniper\n#\n");
 TOP: while(<INPUT>) {
     tr/\015//d;
     if (/^Error:/) {
@@ -460,7 +461,10 @@ TOP: while(<INPUT>) {
     }
     while (/>\s*($cmds_regexp)\s*$/) {
 	$cmd = $1;
-	if (!defined($prompt)) {$prompt = ($_ =~ /^([^>]+>)/)[0]; }
+	if (!defined($prompt)) {
+	    $prompt = ($_ =~ /^([^>]+>)/)[0];
+	    $prompt =~ s/([}{)(\\])/\\$1/g;
+	}
 	print STDERR ("HIT COMMAND:$_") if ($debug);
 	if (! defined($commands{$cmd})) {
 	    print STDERR "found unexpected command - \"$cmd\"\n";

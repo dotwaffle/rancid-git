@@ -28,38 +28,61 @@ if [ $# -lt 1 ]; then
 else
     GROUP=$1
 fi
-TMP=/var/tmp/rancid.$GROUP.$$
 DIR=$BASEDIR/$GROUP
+TMP=${TMPDIR:=/tmp}/rancid.$GROUP.$$
+trap 'rm -fr $TMP;' 1 2 15
 
 # Bail if we do not have the necessary info to run
 if [ ! -d $DIR ]
 then
+    echo "$DIR does not exist."
+    echo "Run bin/create_cvs $GROUP to make all of the needed directories."
     (
 	echo "$DIR does not exist."
-    ) | Mail -s "no $GROUP directory" rancid-admin-$GROUP
+	echo "Run bin/create_cvs $GROUP to make all of the needed directories."
+    ) | Mail -s "no $GROUP directory" @MAILPLUS@admin-$GROUP
     exit 1
 fi
+
+# do cvs update of router.db in case anyone has fiddled.
+cd $DIR
+cvs update router.db > $TMP 2>&1
+grep "^C" $TMP > /dev/null
+if [ $? -eq 0 ] ; then
+    echo "There were CVS conflicts during update."
+    echo ""
+    cat $TMP
+    rm -f $TMP
+    exit 1
+fi
+rm -f $TMP
+
 if [ ! -f $DIR/router.db ]
 then
     (
 	echo "$DIR/router.db does not exist."
-    ) | Mail -s "no $GROUP/router.db file" rancid-admin-$GROUP
+    ) | Mail -s "no $GROUP/router.db file" @MAILPLUS@admin-$GROUP
     exit 1;
 elif [ ! -s $DIR/router.db ]
 then
     exit
 fi
 
-# generate the list of routers we should try to fetch
+# generate the list of all, up, & down routers
 cd $DIR
+trap 'rm -fr routers.db routers.all.new routers.down.new routers.up.new \
+	$TMP;' 1 2 15
 grep -v '^#' router.db > routers.db
 cut -d: -f1,2 routers.db | sort -u > routers.all.new
+if [ ! -f routers.all ] ; then touch routers.all; fi
 diff routers.all routers.all.new > /dev/null 2>&1; RALL=$?
-@PERLV_PATH@ -F: -ane '{($F[0] =~ tr@A-Z@a-z@,print "$F[0]:$F[1]\n")
+@PERLV@ -F: -ane '{($F[0] =~ tr@A-Z@a-z@,print "$F[0]:$F[1]\n")
     if ($F[2] =~ /^down$/i);}' routers.db | sort -u > routers.down.new
+if [ ! -f routers.down ] ; then touch routers.down; fi
 diff routers.down routers.down.new > /dev/null 2>&1; RDOWN=$?
-@PERLV_PATH@ -F: -ane '{($F[0] =~ tr@A-Z@a-z@,print "$F[0]:$F[1]\n")
+@PERLV@ -F: -ane '{($F[0] =~ tr@A-Z@a-z@,print "$F[0]:$F[1]\n")
     if ($F[2] =~ /^up$/i);}' routers.db | sort -u > routers.up.new
+if [ ! -f routers.up ] ; then touch routers.up; fi
 diff routers.up routers.up.new > /dev/null 2>&1; RUP=$?
 
 if [ $RALL -ne 0 -o $RDOWN -ne 0 -o $RUP -ne 0 ]
@@ -96,7 +119,7 @@ then
     ) > routers.mail
 
     if [ -s routers.mail ] ; then
-        Mail -s "changes in $GROUP routers" rancid-admin-$GROUP < routers.mail
+        Mail -s "changes in $GROUP routers" @MAILPLUS@admin-$GROUP < routers.mail
     fi
     rm -f routers.mail
 
@@ -124,11 +147,12 @@ mv routers.all.new routers.all
 mv routers.down.new routers.down
 mv routers.up.new routers.up
 rm -f routers.db
+trap 'rm -fr $TMP;' 1 2 15
 
 # cvs delete configs for routers not listed in routers.up.
 cd $DIR/configs
 for router in `find . \( -name \*.new -prune -o -name CVS -prune \) -o -type f -print | sed -e 's/^.\///'` ; do
-    grep "^$router:" ../router.db > /dev/null 2>&1
+    grep -i "^$router:" ../router.db > /dev/null 2>&1
     if [ $? -eq 1 ]; then
 	rm -f $router
 	cvs delete $router
@@ -207,26 +231,17 @@ rename 's/.new$//' *.new
 
 # This has been different for different machines...
 # Diff the directory and then checkin.
+trap 'rm -fr $TMP $TMP.diff;' 1 2 15
 cd $DIR
-#cvs diff -c3 >$TMP.diff
-#cvs diff -C 3 >$TMP.diff
-# Change the output of a unified diff to make it a bit more readable.
-cat > $TMP.sedf << EOF
-/^RCS file: /d
-#/^retrieving revision /d
-/^--- /d
-/^+++ /d
-s/^\([-+ ]\)/\1 /
-EOF
-cvs -f diff -u -4 | sed -f $TMP.sedf >$TMP.diff
-rm -f $TMP.sedf
+cvs -f @DIFF_CMD@ | sed -e '/^RCS file: /d' -e '/^--- /d' \
+	-e '/^+++ /d' -e 's/^\([-+ ]\)/\1 /' >$TMP.diff
 
 cvs commit -m updates
 
 # Mail out the diffs (if there are any).
 if [ -s $TMP.diff ]; then
     sendmail -t <<EMAIL
-To: rancid-$GROUP
+To: @MAILPLUS@$GROUP
 Subject: $GROUP router config diffs
 Precedence: bulk
 
@@ -241,7 +256,7 @@ rm -f $DIR/routers.failed
 if [ "X$OLDTIME" = "X" ] ; then
     OLDTIME=24
 fi
-@PERLV_PATH@ -F: -ane "{\$t = (stat(\$F[0]))[9]; print \`ls -ld \$F[0]\`
+@PERLV@ -F: -ane "{\$t = (stat(\$F[0]))[9]; print \`ls -ld \$F[0]\`
 	if (time() - \$t >= $OLDTIME*60*60);}" $DIR/routers.up | sort -u > $DIR/routers.failed
 if [ -s $DIR/routers.failed ]
 then
@@ -252,8 +267,9 @@ than $OLDTIME hours.
 
 END
 		cat $DIR/routers.failed
-	) | Mail -s "config fetcher problems - $GROUP" rancid-admin-$GROUP
+	) | Mail -s "config fetcher problems - $GROUP" @MAILPLUS@admin-$GROUP
 fi
 
 # Cleanup
-rm -f $TMP.diff $TMP.lst
+rm -f $TMP.diff
+trap '' 1 2 15

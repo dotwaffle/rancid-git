@@ -4,51 +4,56 @@ maintain CVS controlled copies of router configs.
 The following is the packing list for Rancid.  .in is stripped from
 the files below by configure with substitutions completed:
 
-README -    This file.
-CHANGES -   List of changes to Rancid.
-Todo -      partial Todo list of what needs to be done.
-env.in -    Enviromental settings needed.
-do-diffs.in - Script designed to be run from cron calling control_rancid.
-control_rancid.in - Builds router list, calls rancid on each router and
-		    handles cvs routines.
-rancid-fe.in - chooses between rancid/[efjr]rancid/cat5rancid.
-rancid.in - Runs commands on cisco routers and processes the output - the meat.
-erancid.in -   Runs commands on ADC EZ-T3 muxes and processes the output.
-francid.in -   Runs commands on foundry switches and processes the output.
-jrancid.in -   Runs commands on juniper routers and processes the output.
-rrancid.in -   Runs commands on redback routers and processes the output.
-cat5rancid.in -Runs commands on cisco cat5 switches and processes the output.
-clogin.in - Expect script that logs into routers either interactively,
-	    runs a set of commands, or runs another expect script.
-elogin.in - Expect script that logs into ADC EZ-T3 muxes either interactively,
-	    runs a set of commands, or runs another expect script.
-flogin.in - Expect script that logs into foundry switches.  Once foundry
-	    cleans up their bloody UI, clogin should do the job.
-jlogin.in - Expect script that logs into juniper routers similarly to
-	    clogin.  It is not terribly robust, but mainly used for it's
-	    -c and -s options.
-.cloginrc - TCL commands to set passwords, usernames etc. used by clogin and
-	    jlogin.
-par.in -    Parallel processing of commands - any commands.
-rename.in - Perl script to rename files.
-create_cvs.in - Creates all of the CVS and config directories.
-util/ -   utilities / contribs
+README		This file.
+CHANGES		List of changes to Rancid.
+Todo		partial Todo list of what needs to be done.
+env.in		Environment settings needed.
+do-diffs.in	Script designed to be run from cron calling control_rancid.
+control_rancid.in
+		Builds router list, calls rancid on each router and
+		handles cvs routines.
+rancid-fe.in	chooses between rancid/[efjr]rancid/cat5rancid.
+rancid.in	Runs commands on cisco routers and processes the output.
+erancid.in	Runs commands on ADC EZ-T3 muxes and processes the output.
+francid.in	Runs commands on foundry switches and processes the output.
+jrancid.in	Runs commands on juniper routers and processes the output.
+rrancid.in	Runs commands on redback routers and processes the output.
+cat5rancid.in	Runs commands on cisco cat5 switches and processes the output.
+clogin.in	Expect script that logs into routers either interactively,
+		runs a set of commands, or runs another expect script.
+elogin.in	Expect script that logs into ADC EZ-T3 muxes either
+		interactively, runs a set of commands, or runs another expect
+		script.
+flogin.in	Expect script that logs into foundry switches.  Once foundry
+		cleans up their bloody UI, clogin should do the job.
+jlogin.in	Expect script that logs into juniper routers similarly to
+		clogin.  It is not terribly robust, but mainly used for it's
+		-c and -s options.
+.cloginrc	TCL commands to set passwords, usernames etc. used by clogin
+		and jlogin.
+par.in		Parallel processing of commands - any commands.
+rename.in	Perl script to rename files.
+create_cvs.in	Creates all of the CVS and config directories.
+man/		man pages
+util/		utilities / contribs
+util/lg		looking glass
 
 The following are included as part of the installation tools:
 
-Makefile.in - processed by configure to produce Makefiles
-configure -   gnu autoconf script
-install-sh -  shell script to simulate BSD style install
-mkinstalldirs - shell script to make installation directories
+Makefile.in	processed by configure to produce Makefiles
+configure	GNU autoconf script
+install-sh	shell script to simulate BSD style install
+mkinstalldirs	shell script to make installation directories
 
 rancid will also need to have the following packages:
-cvs	- code revision system available from prep.ai.mit.edu:/pub/gnu
-gnudiff - gnudiff provides the -u option.  if you do not have gnudiff,
-	  you will have to modify control_rancid to use 'diff -c' or some
-	  such.  see examples.
-perl5	- perl version 5 or greater available from www.cpan.org
-expect	- http://expect.nist.gov/
-tcl	- required by expect.
+cvs		code revision system available from prep.ai.mit.edu:/pub/gnu
+gnudiff		gnudiff provides the uni-diff (-u) option.  if you do not have
+		gnudiff, configure will use 'diff -c' or 'diff -C'.
+perl5		perl version 5 or greater available from www.cpan.org
+expect		http://expect.nist.gov/  we highly suggest that you stick to
+		expect 5.24.1 (or so).  this seems to work best.  note that
+		you have to have the accompanying tcl &/ tk.
+tcl		required by expect.
 
 Bill Fenner has a cgi script for interacting with CVS repositories via
 a web interface.  This provides a great way to view rancid diffs and
@@ -57,12 +62,17 @@ not included, but can be found here:
 
 	http://www.freebsd.org/~fenner/cvsweb/cvsweb-1.0.tar.gz
 
+
 Quick Installation Guide (an example):
 
 1) ./configure [--prefix=<basedir>]
    By default, All rancid crud will be installed under /usr/local/rancid.
    This can be overridden with the --prefix option.  E.g.:
+
 	./configure --prefix=/home/rancid
+
+   see ./configure --help for other configure options.
+
    The user who will run rancid must have write permission in this
    directory.
 
@@ -82,10 +92,10 @@ Quick Installation Guide (an example):
    is the default on a juniper).
 
 6) Modify /etc/aliases
-   Rancid sends the diffs and other controlling emails to rancid-<GROUP>
+   Rancid sends the diffs and other administrative emails to rancid-<GROUP>
    and problems to rancid-admin-<GROUP>, where <GROUP> is the "GROUP" of
-   routers.  This way you can seperate your backbone routers from your
-   access routers or seperate based upon network etc...  Different router
+   routers.  This way you can separate your backbone routers from your
+   access routers or separate based upon network etc...  Different router
    uses forced different people being interested in router "groups" -
    thus this setup.  Make sure email to rancid-<GROUP> works.  /etc/aliases
    can be maintainable by Majordomo stuff.
@@ -97,6 +107,10 @@ Quick Installation Guide (an example):
 
    The Precedence header set to bulk or junk *hopefully* avoids replies from
    auto-responders and vacation type mail filters.
+
+   The --enable-mail-plus option to configure will set each of the "rancid-"
+   addresses mentioned above to "rancid+".  See sendmail's operation manual
+   for more information on handling of '+'.
 
 7) Run create_cvs.
    This creates all of the CVS necessary directories and all of the
@@ -126,7 +140,17 @@ Quick Installation Guide (an example):
 	# clean out config differ logs
 	50 23 * * * /usr/bin/find <BASEDIR>/logs -mtime +2 -exec rm {} \;
 
-10) Send any bugs, suggestions or updates to rancid@shrubbery.net.
+10) Note: If you are using any of these programs (other than
+    do-diffs) out of cron, make sure that you set your $PATH
+    correctly so that they work.  E.g.: if you are using clogin,
+    it can call id, telnet, ssh, and/or rsh.
+
+    configure already makes sure that $PATH is set correctly in
+    bin/env for do-diffs, so you could use the $PATH from there. eg:
+
+	50 23 * * * . /usr/local/rancid/bin/env; clogin -c 'sh vers' router
+
+11) Send any bugs, suggestions or updates to rancid@shrubbery.net.
     See the web page at http://www.shrubbery.net/rancid.  We have
     created the standard mailing lists for those interested;
     rancid-announce@shrubbery.net and rancid-discuss@shrubbery.net.
