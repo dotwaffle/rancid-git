@@ -1,20 +1,25 @@
-#!@EXPECT_PATH@ --
+#! @EXPECT_PATH@ --
 ##
+## $Id: hlogin.in,v 1.21 2004/01/11 05:39:15 heas Exp $
 ##
-## Copyright (C) 1997-2001 by Henry Kilmer, Erik Sherk and Pete Whiting.
+## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
-## This software may be freely copied, modified and redistributed without
-## fee for non-commerical purposes provided that this copyright notice is
-## preserved intact on all copies and modified copies.
+## This software may be freely copied, modified and redistributed
+## without fee for non-commerical purposes provided that this license
+## remains intact and unmodified with any RANCID distribution.
 ##
 ## There is no warranty or other guarantee of fitness of this software.
-## It is provided solely "as is". The author(s) disclaim(s) all
+## It is provided solely "as is".  The author(s) disclaim(s) all
 ## responsibility and liability with respect to this software's usage
 ## or its effect upon hardware, computer systems, other software, or
 ## anything else.
 ##
+## Except where noted otherwise, rancid was written by and is maintained by
+## Henry Kilmer, John Heasley, Andrew Partan, Pete Whiting, and Austin Schutz.
 ##
+#
+# The login expect scripts were based on Erik Sherk's gwtn, by permission.
 #
 # hlogin - hp login
 #
@@ -43,8 +48,9 @@ set do_command 0
 set do_script 0
 # The default is to automatically enable
 set enable 1
-# The default is that you login non-enabled (tacacs can have you login already enabled)
-set autoenable 0
+# The default is that you login non-enabled (tacacs can have you login already
+# enabled)
+set avautoenable 0
 # The default is to look in the password file to find the passwords.  This
 # tracks if we receive them on the command line.
 set do_passwd 1
@@ -57,6 +63,8 @@ if {[ info exists env(CISCO_USER) ] } {
     set default_user $env(CISCO_USER)
 } elseif {[ info exists env(USER) ]} {
     set default_user $env(USER)
+} elseif {[ info exists env(LOGNAME) ]} {
+    set default_user $env(LOGNAME)
 } else {
     # This uses "id" which I think is portable.  At least it has existed
     # (without options) on all machines/OSes I've been on recently -
@@ -112,7 +120,7 @@ for {set i 0} {$i < $argc} {incr i} {
 	    if {[ regexp .\[E\](.+)=(.+) $arg ignore varname varvalue]} {
 		set E$varname $varvalue
 	    } else {
-		send_user "Error: invalid format for -E in $arg\n"
+		send_user "\nError: invalid format for -E in $arg\n"
 		exit 1
 	    }
 	# Enable Password
@@ -281,30 +289,35 @@ proc source_password_file { password_file } {
 # Log into the router.
 proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
     global spawn_id in_proc do_command do_script platform
-    global prompt u_prompt p_prompt e_prompt
+    global prompt u_prompt p_prompt e_prompt sshcmd
     set in_proc 1
 
     # try each of the connection methods in $cmethod until one is successful
     set progs [llength $cmethod]
     foreach prog [lrange $cmethod 0 end] {
+	regexp {(telnet|ssh)(:([^[:space:]]+))*} $prog command suffix junk port
 	if [string match "telnet*" $prog] {
-	    regexp {telnet(:([^[:space:]]+))*} $prog command suffix port
 	    if {"$port" == ""} {
-		set retval [ catch {spawn hpfilter telnet $router} reason ]
+		set retval [ catch {spawn hpuifilter telnet $router} reason ]
 	    } else {
-		set retval [ catch {spawn hpfilter telnet $router $port} reason ]
+		set retval [ catch {spawn hpuifilter telnet $router $port} reason ]
 	    }
 	    if { $retval } {
 		send_user "\nError: telnet failed: $reason\n"
 		exit 1
 	    }
-	} elseif ![string compare $prog "ssh"] {
-	    if [ catch {spawn hpfilter ssh -c $cyphertype -x -l $user $router} reason ] {
-		send_user "\nError: ssh failed: $reason\n"
+	} elseif [string match "ssh*" $prog] {
+	    if {"$port" == ""} {
+		set retval [ catch {spawn hpuifilter $sshcmd -c $cyphertype -x -l $user $router} reason ]
+	    } else {
+		set retval [ catch {spawn hpuifilter $sshcmd -c $cyphertype -p $port -x -l $user $router} reason ]
+	    }
+	    if { $retval } {
+		send_user "\nError: $sshcmd failed: $reason\n"
 		exit 1
 	    }
 	} elseif ![string compare $prog "rsh"] {
-	    if [ catch {spawn hpfilter rsh -l $user $router} reason ] {
+	    if [ catch {spawn hpuifilter rsh -l $user $router} reason ] {
 		send_user "\nError: rsh failed: $reason\n"
 		exit 1
 	    }
@@ -353,14 +366,17 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 	    if !$progs {
 		send_user "\nError: Connection Refused ($prog)\n"; return 1
 	    }
-	} eof { send_user "\nError: Couldn't login\n"; wait; return 1
-	} -nocase "unknown host\r" {
+	}
+	eof { send_user "\nError: Couldn't login\n"; wait; return 1 }
+	-nocase "unknown host\r" {
 	    catch {close};
 	    send_user "\nError: Unknown host\n"; wait; return 1
-	} "Host is unreachable" {
+	}
+	"Host is unreachable" {
 	    catch {close};
 	    send_user "\nError: Host Unreachable!\n"; wait; return 1
-	} "No address associated with name" {
+	}
+	"No address associated with name" {
 	    catch {close};
 	    send_user "\nError: Unknown host\n"; wait; return 1
 	}
@@ -542,7 +558,9 @@ foreach router [lrange $argv $i end] {
     # Since autoenable is off by default, if we have it defined, it
     # was done on the command line. If it is not specifically set on the
     # command line, check the password file.
-    if $autoenable {
+    if $avautoenable {
+	set autoenable 1
+	set enable 0
 	set prompt "#"
     } else {
 	set ae [find autoenable $router]
@@ -565,15 +583,15 @@ foreach router [lrange $argv $i end] {
     if { $do_passwd || $do_enapasswd } {
       set pswd [find password $router]
       if { [llength $pswd] == 0 } {
-	send_user "Error: no password for $router in $password_file.\n"
+	send_user "\nError: no password for $router in $password_file.\n"
 	continue
       }
       if { $enable && $do_enapasswd && $autoenable == 0 && [llength $pswd] < 2 } {
-	send_user "Error: no enable password for $router in $password_file.\n"
+	send_user "\nError: no enable password for $router in $password_file.\n"
 	continue
       }
-      set passwd [lindex $pswd 0]
-      set enapasswd [lindex $pswd 1]
+      set passwd [join [lindex $pswd 0] ""]
+      set enapasswd [join [lindex $pswd 1] ""]
     }
 
     # Figure out username
@@ -581,7 +599,7 @@ foreach router [lrange $argv $i end] {
       # command line username
       set ruser $username
     } else {
-      set ruser [find user $router]
+      set ruser [join [find user $router] ""]
       if { "$ruser" == "" } { set ruser $default_user }
     }
 
@@ -590,7 +608,7 @@ foreach router [lrange $argv $i end] {
       # command line username
       set userpswd $userpasswd
     } else {
-      set userpswd [find userpassword $router]
+      set userpswd [join [find userpassword $router] ""]
       if { "$userpswd" == "" } { set userpswd $passwd }
     }
 
@@ -599,7 +617,7 @@ foreach router [lrange $argv $i end] {
       # command line enausername
       set enauser $enausername
     } else {
-      set enauser [find enauser $router]
+      set enauser [join [find enauser $router] ""]
       if { "$enauser" == "" } { set enauser $ruser }
     }
 
@@ -608,19 +626,19 @@ foreach router [lrange $argv $i end] {
     if { "$u_prompt" == "" } {
 	set u_prompt "(Username|login|user name):"
     } else {
-	set u_prompt [lindex $u_prompt 0]
+	set u_prompt [join [lindex $u_prompt 0] ""]
     }
     set p_prompt [find passprompt $router]
     if { "$p_prompt" == "" } {
 	set p_prompt "(\[Pp]assword|passwd):"
     } else {
-	set p_prompt [lindex $p_prompt 0]
+	set p_prompt [join [lindex $p_prompt 0] ""]
     }
     set e_prompt [find enableprompt $router]
     if { "$e_prompt" == "" } {
 	set e_prompt "\[Pp]assword:"
     } else {
-	set e_prompt [lindex $e_prompt 0]
+	set e_prompt [join [lindex $e_prompt 0] ""]
     }
 
     # Figure out cypher type
@@ -635,6 +653,16 @@ foreach router [lrange $argv $i end] {
     # Figure out connection method
     set cmethod [find method $router]
     if { "$cmethod" == "" } { set cmethod {{telnet} {ssh}} }
+
+    # Figure out the SSH executable name  
+    set sshcmd [find sshcmd $router]  
+    if { "$sshcmd" == "" } { set sshcmd {ssh} }  
+
+    # Adjust our path to find hpuifilter
+    regexp {(.*)/[^/]+} $argv0 junk hpf_path
+    if { "$hpf_path" != "" && "$hpf_path" != "." } {
+	append env(PATH) ":$hpf_path"
+    }
 
     # Login to the router
     if {[login $router $ruser $userpswd $passwd $enapasswd $cmethod $cyphertype]} {

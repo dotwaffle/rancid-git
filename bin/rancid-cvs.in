@@ -1,0 +1,94 @@
+#! /bin/sh
+##
+## $Id: rancid-cvs.in,v 1.16 2004/01/11 03:49:13 heas Exp $
+##
+## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
+## All rights reserved.
+##
+## This software may be freely copied, modified and redistributed
+## without fee for non-commerical purposes provided that this license
+## remains intact and unmodified with any RANCID distribution.
+##
+## There is no warranty or other guarantee of fitness of this software.
+## It is provided solely "as is".  The author(s) disclaim(s) all
+## responsibility and liability with respect to this software's usage
+## or its effect upon hardware, computer systems, other software, or
+## anything else.
+##
+## Except where noted otherwise, rancid was written by and is maintained by
+## Henry Kilmer, John Heasley, Andrew Partan, Pete Whiting, and Austin Schutz.
+##
+#
+# Create all of the misc files & dirs needed for each group and import them
+# into CVS.
+#
+# rancid-cvs
+#
+
+# Read in the environment
+ENVFILE="@sysconfdir@/rancid.conf"
+
+. $ENVFILE
+
+# Base dir
+if [ ! -d $BASEDIR ]; then
+    mkdir -p $BASEDIR ||
+	(echo "Could not create local state directory: $BASEDIR"; exit 1)
+fi
+
+cd $BASEDIR
+
+# Top level CVS stuff
+if [ ! -d $CVSROOT ]; then
+    cvs init
+fi
+
+# Log dir
+if [ ! -d logs ]; then
+    mkdir logs
+fi
+
+# Which groups to do
+if [ $# -ge 1 ] ; then
+	LIST_OF_GROUPS="$*"; export LIST_OF_GROUPS
+elif [ "$LIST_OF_GROUPS" = "" ] ; then
+	echo "LIST_OF_GROUPS is empty in $ENVFILE"
+	exit 1
+fi
+
+for GROUP in `echo $LIST_OF_GROUPS` ;
+do
+
+    DIR=$BASEDIR/$GROUP
+
+    # Directory for the group and the configs
+    if [ ! -d $DIR ]; then
+	mkdir -p $DIR
+	cd $DIR
+	cvs import -m "$GROUP" $GROUP new rancid
+	cd $BASEDIR
+	cvs co $GROUP
+    fi
+    cd $DIR
+    if [ ! -d configs ]; then
+	mkdir configs
+	cvs add configs
+	cvs commit -m 'new' configs
+    fi
+
+    # main files
+    if [ ! -f routers.all ]; then
+	touch routers.all
+    fi
+    if [ ! -f routers.down ]; then
+	touch routers.down
+    fi
+    if [ ! -f routers.up ]; then
+	touch routers.up
+    fi
+    if [ ! -f router.db ]; then
+	touch router.db
+	cvs add router.db
+	cvs commit -m 'new' router.db
+    fi
+done

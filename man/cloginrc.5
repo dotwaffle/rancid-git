@@ -1,6 +1,8 @@
 .\"
+.\" $Id: cloginrc.5,v 1.31 2004/01/11 01:53:10 heas Exp $
+.\"
 .hys 50
-.TH "cloginrc" "5" "22 Jan 2001"
+.TH "cloginrc" "5" "11 Jan 2004"
 .SH NAME
  \.cloginrc \- clogin configuration file
 .SH DESCRIPTION
@@ -12,8 +14,13 @@ contains configuration information for
 .BR elogin (1),
 .BR flogin (1),
 .BR hlogin (1),
-and
+.BR htlogin (1),
 .BR jlogin (1),
+.BR nlogin (1),
+.BR nslogin (1),
+.BR rivlogin (1),
+and
+.BR tntlogin (1),
 such as usernames, passwords, ssh encryption type, etc., and is read at
 run-time.
 .PP
@@ -33,11 +40,23 @@ include {<file>}
 .fi
 .in -1i
 .PP
+Note: the braces ({}) surrounding the values is significant when the values
+include TCL meta-characters.  Best common practice is to always enclose the
+values in braces.  If a value includes a (left or right) brace, it must
+be backslash-escaped, as in:
+.PP
+.in +1i
+.nf
+add user <hostname glob> {foo\\}bar}
+.fi
+.in -1i
+.PP
 As
 .B .cloginrc
-is searched for a directive for a hostname, it is always the first instance
-of a directive, whose hostname glob expression matches the hostname, that
-is used.  For example; looking up the password for hostname foo in a
+is searched for a directive matching a hostname, it is always the first
+matching instance of a directive, one whose hostname glob expression matches
+the hostname, which is used.  For example; looking up the "password"
+directive for hostname foo in a
 .B .cloginrc
 file containing
 .sp
@@ -61,12 +80,6 @@ of the same unix group.  See
 and
 .BR chmod (1)
 for more information on ownership and file modes.
-.PP
-A sample
-.B .cloginrc
-file can be found in the top-level directory of the rancid distribution by the
-name
-.IR "cloginrc.sample" .
 .SH DIRECTIVES
 The accepted directives are (alphabetically):
 .PP
@@ -148,6 +161,8 @@ to first attempt an ssh connection to the device and if that were
 to fail with connection refused, a telnet connection to port 3000
 would be tried, and then a rsh connection.
 .sp
+Note that not all platforms support all of these connection methods.
+.sp
 Default: {telnet} {ssh}
 .\"
 .TP
@@ -196,7 +211,7 @@ Specifies a username
 .IR clogin
 should use if or when prompted for one.
 .sp
-Default: $USER, ie: your Unix username.
+Default: $USER (or $LOGNAME), i.e.: your Unix username.
 .\"
 .TP
 .B add userpassword <router name glob> {<user password>}
@@ -231,17 +246,31 @@ file that is shared among a group of folks.
 If <file> is not a full pathname, $HOME/ will be prepended.
 .sp
 Example: include {.cloginrc.group}
+.\"
+.TP
+.B add sshcmd {<ssh>}
+<ssh> is the name of the ssh executable.  OpenSSH uses a command-line
+option to specify the protocol version, but other implementations use
+a separate binary such as "ssh1".
+.B sshcmd
+allows this to be adjusted as necessary for the local environment.
+.sp
+Default: ssh
 .El
 .SH FILES
 .br
 .nf
 .\" set tabstop to longest possible filename, plus a wee bit
 .ta \w'xHOME/xcloginrc  'u
-\fI$HOME/.cloginrc\fR Configuration file described here.
+\fI$HOME/.cloginrc\fR               Configuration file described here.
+.\"
+\fIshare/rancid/cloginrc.sample\fR  A sample \fB.cloginrc\fR.
+.\"
 .SH ERRORS
 .B .cloginrc
 is interpreted directly by Tcl, so its syntax follows that of Tcl.  Errors
 may produce quite unexpected results.
 .SH "SEE ALSO"
 .BR clogin (1),
-.BR glob (3)
+.BR glob (3),
+.BR tclsh (1)

@@ -1,19 +1,22 @@
-#!@PERLV_PATH@
+#! @PERLV_PATH@
 ##
+## $Id: xrancid.in,v 1.32 2004/01/11 03:49:13 heas Exp $
 ##
-## Copyright (C) 1997-2001 by Henry Kilmer.
+## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
-## This software may be freely copied, modified and redistributed without
-## fee for non-commerical purposes provided that this copyright notice is
-## preserved intact on all copies and modified copies.
+## This software may be freely copied, modified and redistributed
+## without fee for non-commerical purposes provided that this license
+## remains intact and unmodified with any RANCID distribution.
 ##
 ## There is no warranty or other guarantee of fitness of this software.
-## It is provided solely "as is". The author(s) disclaim(s) all
+## It is provided solely "as is".  The author(s) disclaim(s) all
 ## responsibility and liability with respect to this software's usage
 ## or its effect upon hardware, computer systems, other software, or
 ## anything else.
 ##
+## Except where noted otherwise, rancid was written by and is maintained by
+## Henry Kilmer, John Heasley, Andrew Partan, Pete Whiting, and Austin Schutz.
 ##
 #
 #  RANCID - Really Awesome New Cisco confIg Differ
@@ -21,7 +24,7 @@
 # usage: rancid [-d] [-l] [-f filename | $host]
 #
 use Getopt::Std;
-getopts('dflm');
+getopts('dfl');
 $log = $opt_l;
 $debug = $opt_d;
 $file = $opt_f;
@@ -272,10 +275,14 @@ sub WriteTerm {
 	tr/\015//d;
 	last if(/^$prompt/);
 	next if(/^\s*$/);
+	return(0) if(/^syntax error at token /i);
 	# the pager can not be disabled per-session on the PIX
 	s/^<-+ More -+>\s*//;
+	return(0) if ($found_end);
 
 	s/^\s*$/#/;
+	next if (/full detail configuration/i);
+
 	# filter extra comments and lead comments in config so we can preserve
 	# the chassis type at the top of muched o/p before the process history
 	# key changes.
@@ -291,7 +298,7 @@ sub WriteTerm {
 
 	# Dog gone Cool matches to process the rest of the config
 	# some chassis report their chassis type in show diag...oh, but
-	# other noooo.  grab it here, if available.  so, nothing else
+	# others do not.  grab it here, if available.  so, nothing else
 	# can change the keysort key until this is grabbed.  sigh.
 	/# (\S+) configuration generated/i &&
 	    ProcessHistory("COMMENTS","keysort","A0","#Chassis type: $1\n") &&
@@ -301,11 +308,11 @@ sub WriteTerm {
 	/# software version/i && next;
 
 	if (/((create|configure) account \S+ \S+) / && $filter_pwds >= 2) {
-	    ProcessHistory("","","","# $1 <key removed>\n");
+	    ProcessHistory("COMMENTS","keysort","H0","# $1 <key removed>\n");
 	    next;
 	}
 	if (/configure ssh2 key/ && $filter_pwds >= 1) {
-	    ProcessHistory("","","","# $_# <key removed>\n");
+	    ProcessHistory("COMMENTS","keysort","H0","# $_# <key removed>\n");
 	    while (<INPUT>) {
 		if (/^(#|enable|conf|disable|unconf)/) {
 		    tr/\015//d;
@@ -317,7 +324,7 @@ sub WriteTerm {
 	# filter out any RCS/CVS tags to avoid confusing local CVS storage
 	s/\$(Revision|Id):/ $1:/;
 	if (/^((config|configure) bgp (neighbor|peer-group) \S+ password encrypted)/i && $filter_pwds >= 1) {
-	    ProcessHistory("","","","# $1 <removed>\n");
+	    ProcessHistory("COMMENTS","keysort","H0","# $1 <removed>\n");
 	    next;
 	}
 
@@ -346,17 +353,17 @@ sub WriteTerm {
 	}
 	# order/prune tacacs/radius server statements
 	if (/^(configure radius (primary|secondary) (tacacs-server|radius-server) shared-secret encrypted)/ && $filter_pwds >= 1) {
-	    ProcessHistory("","","","# $1 <removed>\n");
+	    ProcessHistory("COMMENTS","keysort","H0","# $1 <removed>\n");
 	    next;
 	}
 
 	# catch anything that wasnt match above.
-	ProcessHistory("","","","$_");
+	ProcessHistory("COMMENTS","keysort","H0","$_");
 	# end of config
 	if (/^# End of configuration file/i) {
 	    printf STDERR "    End WriteTerm: $_" if ($debug);
 	    $found_end = 1;
-	    return(1);
+	    return(0);
 	}
     }
     return(0);
@@ -367,12 +374,13 @@ sub DoNothing {print STDOUT;}
 
 # Main
 %commands=(
-	'show version'		=> "ShowVersion",
-	'show memory'		=> "ShowMemory",
-	'show diagnostics'	=> "ShowDiag",
-	'show switch'		=> "ShowSwitch",
-	'show slot'		=> "ShowSlot",
-	'show configuration'	=> "WriteTerm"
+	'show version'			=> "ShowVersion",
+	'show memory'			=> "ShowMemory",
+	'show diagnostics'		=> "ShowDiag",
+	'show switch'			=> "ShowSwitch",
+	'show slot'			=> "ShowSlot",
+	'show configuration detail'	=> "WriteTerm",
+	'show configuration'		=> "WriteTerm"
 );
 # keys() doesnt return things in the order entered and the order of the
 # cmds is important (show version first and write term last). pita
@@ -382,6 +390,7 @@ sub DoNothing {print STDOUT;}
 	"show diagnostics",
 	"show switch",
 	"show slot",
+	"show configuration detail",
 	"show configuration"
 );
 $cisco_cmds=join(";",@commands);
@@ -397,13 +406,13 @@ if ($file) {
     print STDOUT "opening file $host\n" if ($log);
     open(INPUT,"<$host") || die "open failed for $host: $!\n";
 } else {
-    print STDERR "executing clogin -t $timeo -autoenable -c\"$cisco_cmds\" $host\n" if ($debug);
-    print STDOUT "executing clogin -t $timeo -autoenable -c\"$cisco_cmds\" $host\n" if ($log);
+    print STDERR "executing clogin -t $timeo -c \"$cisco_cmds\" $host\n" if ($debug);
+    print STDOUT "executing clogin -t $timeo -c \"$cisco_cmds\" $host\n" if ($log);
     if (defined($ENV{NOPIPE})) {
-	system "clogin -t $timeo -autoenable -c \"$cisco_cmds\" $host </dev/null > $host.raw 2>&1" || die "clogin failed for $host: $!\n";
+	system "clogin -t $timeo -c \"$cisco_cmds\" $host </dev/null > $host.raw 2>&1" || die "clogin failed for $host: $!\n";
 	open(INPUT, "< $host.raw") || die "clogin failed for $host: $!\n";
     } else {
-	open(INPUT,"clogin -t $timeo -autoenable -c \"$cisco_cmds\" $host </dev/null |") || die "clogin failed for $host: $!\n";
+	open(INPUT,"clogin -t $timeo -c \"$cisco_cmds\" $host </dev/null |") || die "clogin failed for $host: $!\n";
     }
 }
 
@@ -422,13 +431,14 @@ ProcessHistory("COMMENTS","keysort","C0","#\n");	# power supply info
 ProcessHistory("COMMENTS","keysort","D0","#\n");	# image name
 ProcessHistory("COMMENTS","keysort","E0","#\n");	# h/w info
 ProcessHistory("COMMENTS","keysort","F0","#\n");	# slot info
+ProcessHistory("COMMENTS","keysort","H0","#\n");	# config
 ProcessHistory("COMMENTS","keysort","X0","#\n");
 TOP: while(<INPUT>) {
     tr/\015//d;
     # note: this match sucks rocks, but currently the extreme bits are
     # unreliable about echoing the 'exit\n' command.  this match might really
     # be a bad idea, but instead rely upon WriteTerm's found_end?
-    if (/$prompt\s?(quit|exit|Connection closed)/ && $found_end) {
+    if (/$prompt\s?(quit|exit|Connection( to \S+)? closed)/ && $found_end) {
 	$clean_run=1;
 	last;
     }
@@ -442,8 +452,10 @@ TOP: while(<INPUT>) {
 	$cmd = $1;
 	if (!defined($prompt)) {
 	    $prompt = ($_ =~ /^([^#]+#)/)[0];
+	    $prompt =~ s/([][}{)(\\])/\\$1/g;
 	    $prompt =~ s/:(\d+ ?)#/:\\d+ ?#/;
-	    print STDERR ("PROMPT MATCH:$prompt\n") if ($debug);
+	    $prompt =~ s/\*/\\\*/;
+	    print STDERR ("PROMPT MATCH: $prompt\n") if ($debug);
 	}
 	print STDERR ("HIT COMMAND:$_") if ($debug);
 	if (! defined($commands{$cmd})) {

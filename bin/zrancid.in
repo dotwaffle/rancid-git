@@ -1,0 +1,411 @@
+#! @PERLV_PATH@
+##
+## $Id: zrancid.in,v 1.8 2004/01/11 03:49:13 heas Exp $
+##
+## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
+## All rights reserved.
+##
+## This software may be freely copied, modified and redistributed
+## without fee for non-commerical purposes provided that this license
+## remains intact and unmodified with any RANCID distribution.
+##
+## There is no warranty or other guarantee of fitness of this software.
+## It is provided solely "as is".  The author(s) disclaim(s) all
+## responsibility and liability with respect to this software's usage
+## or its effect upon hardware, computer systems, other software, or
+## anything else.
+##
+## Except where noted otherwise, rancid was written by and is maintained by
+## Henry Kilmer, John Heasley, Andrew Partan, Pete Whiting, and Austin Schutz.
+##
+#
+# This version of rancid tries to deal with zebra s/w.
+#
+#  RANCID - Really Awesome New Cisco confIg Differ
+#
+# usage: rancid [-d] [-l] [-f filename | $host]
+#
+use Getopt::Std;
+getopts('dfl');
+$log = $opt_l;
+$debug = $opt_d;
+$file = $opt_f;
+$host = $ARGV[0];
+$clean_run = 0;
+$found_end = 0;
+$timeo = 90;			# clogin timeout in seconds
+
+my(%filter_pwds);		# password filtering mode
+
+# This routine is used to print out the router configuration
+sub ProcessHistory {
+    my($new_hist_tag,$new_command,$command_string,@string)=(@_);
+    if((($new_hist_tag ne $hist_tag) || ($new_command ne $command))
+       && defined %history) {
+	print eval "$command \%history";
+	undef %history;
+    }
+    if (($new_hist_tag) && ($new_command) && ($command_string)) {
+	if ($history{$command_string}) {
+	    $history{$command_string} = "$history{$command_string}@string";
+	} else {
+	    $history{$command_string} = "@string";
+	}
+    } elsif (($new_hist_tag) && ($new_command)) {
+	$history{++$#history} = "@string";
+    } else {
+	print "@string";
+    }
+    $hist_tag = $new_hist_tag;
+    $command = $new_command;
+    1;
+}
+
+sub numerically { $a <=> $b; }
+
+# This is a sort routing that will sort numerically on the
+# keys of a hash as if it were a normal array.
+sub keynsort {
+    local(%lines)=@_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $key (sort numerically keys(%lines)) {
+	$sorted_lines[$i] = $lines{$key};
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# This is a sort routing that will sort on the
+# keys of a hash as if it were a normal array.
+sub keysort {
+    local(%lines)=@_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $key (sort keys(%lines)) {
+	$sorted_lines[$i] = $lines{$key};
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# This is a sort routing that will sort on the
+# values of a hash as if it were a normal array.
+sub valsort{
+    local(%lines)=@_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $key (sort values %lines) {
+	$sorted_lines[$i] = $key;
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# This is a numerical sort routing (ascending).
+sub numsort {
+    local(%lines)=@_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $num (sort {$a <=> $b} keys %lines) {
+	$sorted_lines[$i] = $lines{$num};
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# This is a sort routine that will sort on the
+# ip address when the ip address is anywhere in
+# the strings.
+sub ipsort {
+    local(%lines)=@_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $addr (sort sortbyipaddr keys %lines) {
+	$sorted_lines[$i] = $lines{$addr};
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# These two routines will sort based upon IP addresses
+sub ipaddrval {
+    my(@a) = ($_[0] =~ m#^(\d+)\.(\d+)\.(\d+)\.(\d+)$#);
+    $a[3]+256*($a[2]+256*($a[1]+256*$a[0]));
+}
+sub sortbyipaddr {
+    &ipaddrval($a) <=> &ipaddrval($b);
+}
+
+# This routine parses "show version"
+sub ShowVersion {
+    print STDERR "    In ShowVersion: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	last if(/^$prompt/);
+	next if(/^(\s*|\s*$cmd\s*)$/);
+	return(-1) if (/command authorization failed/i);
+
+	ProcessHistory("COMMENTS","keysort","B0", "!$_") && next;
+
+    }
+    return(0);
+}
+
+# This routine processes a "write term"
+sub WriteTerm {
+    print STDERR "    In WriteTerm: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	last if(/^$prompt/);
+	return(-1) if (/command authorization failed/i);
+
+	/Non-Volatile memory is in use/  && return(-1); # NvRAM is locked
+	# skip the crap
+	if (/^(##+$|(Building|Current) configuration)/i) {
+	    while (<INPUT>) {
+		next if (/^Current configuration\s*:/i);
+		next if (/^([%!].*|\s*)$/);
+		last;
+	    }
+	    tr/\015//d;
+	}
+	# some versions have other crap mixed in with the bits in the
+	# block above
+	/^! Last Changed:/ && next;
+
+	# Dog gone Cool matches to process the rest of the config
+#	/^tftp-server flash /   && next; # kill any tftp remains
+#	/^ntp clock-period /    && next; # kill ntp clock-period
+#	/^ length /		&& next; # kill length on serial lines
+#	/^ width /		&& next; # kill width on serial lines
+#	/^ clockrate /		&& next; # kill clockrate on serial interfaces
+
+	if (/^(enable password( \d)?) / && $filter_pwds >= 1) {
+	    ProcessHistory("ENABLE","","","!$1 <removed>\n");
+	    next;
+	}
+	if (/^username (\S+)(\s.*)? password ((\d) \S+|\S+)/) {
+	    if ($filter_pwds == 2) {
+		ProcessHistory("USER","keysort","$1","!username $1$2 password <removed>\n");
+	    } elsif ($filter_pwds == 1 && $4 ne "5"){
+		ProcessHistory("USER","keysort","$1","!username $1$2 password <removed>\n");
+	    } else {
+		ProcessHistory("USER","keysort","$1","$_");
+	    }
+	    next;
+	}
+
+	# prune passwords {bgp, ...}
+	if (/^\s*neighbor (\S*) password / && $filter_pwds >= 1) {
+	    ProcessHistory("","","","! neighbor $1 password <removed>\n");
+	    next;
+	}
+	# sort route-maps
+	if (/^route-map (\S+)/) {
+	    my($key) = $1;
+	    my($routemap) = $_;
+	    while (<INPUT>) {
+		tr/\015//d;
+		last if (/^$prompt/ || ! /^(route-map |[ !])/);
+		if (/^route-map (\S+)/) {
+		    ProcessHistory("ROUTEMAP","keysort","$key","$routemap");
+		    $key = $1;
+		    $routemap = $_;
+		} else  {
+		    $routemap .= $_;
+		}
+	    }
+	    ProcessHistory("ROUTEMAP","keysort","$key","$routemap");
+	}
+
+	# filter out any RCS/CVS tags to avoid confusing local CVS storage
+	s/\$(Revision|Id):/ $1:/;
+
+	# order access-lists
+	/^access-list\s+(\d\d?)\s+(\S+)\s+(\S+)/ &&
+	    ProcessHistory("ACL $1 $2","ipsort","$3","$_") && next;
+
+	# order logging statements
+	/^logging (\d+\.\d+\.\d+\.\d+)/ &&
+	    ProcessHistory("LOGGING","ipsort","$1","$_") && next;
+
+	# order/prune snmp-server host statements
+	# we only prune lines of the form
+	# snmp-server host a.b.c.d <community>
+	if (/^snmp-server host (\d+\.\d+\.\d+\.\d+) /) {
+	    if (defined($ENV{'NOCOMMSTR'})) {
+		my($ip) = $1;
+		my($line) = "snmp-server host $ip";
+		my(@tokens) = split(' ', $');
+		my($token);
+		while ($token = shift(@tokens)) {
+		    if ($token eq 'version') {
+			$line .= " " . join(' ', ($token, shift(@tokens)));
+		    } elsif ($token =~ /^(informs?|traps?|(no)?auth)$/) {
+			$line .= " " . $token;
+		    } else {
+			$line = "!$line " . join(' ', ("<removed>", join(' ',@tokens)));
+			last;
+		    }
+		}
+		ProcessHistory("SNMPSERVERHOST","ipsort","$ip","$line\n");
+	    } else {
+		ProcessHistory("SNMPSERVERHOST","ipsort","$1","$_");
+	    }
+	    next;
+	}
+	if (/^(snmp-server community) (\S+)/) {
+	    if (defined($ENV{'NOCOMMSTR'})) {
+		ProcessHistory("SNMPSERVERCOMM","keysort","$_","!$1 <removed>$'") && next;
+	    } else {
+		ProcessHistory("SNMPSERVERCOMM","keysort","$_","$_") && next;
+	    }
+	}
+
+	# prune tacacs/radius server keys
+	if (/^(tacacs-server|radius-server) key / && $filter_pwds >= 1) {
+	    ProcessHistory("","","","!$1 key <removed>\n"); next;
+	}
+	if (/^(tacacs-server host \S+( .*)? key) (\d )?\S+/
+							&& $filter_pwds >= 1) {
+	    ProcessHistory("","","","!$1 <removed>\n"); next;
+	}
+
+	# order clns host statements
+#	/^clns host \S+ (\S+)/ &&
+#	    ProcessHistory("CLNS","keysort","$1","$_") && next;
+
+	# prune isis password
+	if (/^( isis authentication-key) \d \S+/ && $filter_pwds >= 1) {
+	    ProcessHistory("","","","!$1 <removed>$'"); next;
+	}
+	# prune msdp password
+	if (/^(ip msdp password \S+) / && $filter_pwds >= 1) {
+	    ProcessHistory("","","","!$1 <removed>\n"); next;
+	}
+
+#	# order ip host line statements
+#	/^ip host line(\d+)/ &&
+#	    ProcessHistory("IPHOST","numsort","$1","$_") && next;
+
+	# catch anything that wasnt matched above.
+	ProcessHistory("","","","$_");
+	# end of config.
+	if (/^end$/) {
+	    $found_end = 1;
+	    return(1);
+	}
+    }
+    return(0);
+}
+
+# dummy function
+sub DoNothing {print STDOUT;}
+
+# Main
+%commands=(
+	'show version'		=> "ShowVersion",
+	'write term'		=> "WriteTerm"
+);
+# keys() doesnt return things in the order entered and the order of the
+# cmds is important (show version first and write term last). pita
+@commands=(
+	"show version",
+	"write term"
+);
+$cisco_cmds=join(";",@commands);
+$cmds_regexp=join("|",@commands);
+
+open(OUTPUT,">$host.new") || die "Can't open $host.new for writing: $!\n";
+select(OUTPUT);
+# make OUTPUT unbuffered if debugging
+if ($debug) { $| = 1; }
+
+if ($file) {
+    print STDERR "opening file $host\n" if ($debug);
+    print STDOUT "opening file $host\n" if ($log);
+    open(INPUT,"<$host") || die "open failed for $host: $!\n";
+} else {
+    print STDERR "executing clogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($debug);
+    print STDOUT "executing clogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($log);
+    if (defined($ENV{NOPIPE})) {
+	system "clogin -t $timeo -c \"$cisco_cmds\" $host </dev/null > $host.raw 2>&1" || die "clogin failed for $host: $!\n";
+	open(INPUT, "< $host.raw") || die "clogin failed for $host: $!\n";
+    } else {
+	open(INPUT,"clogin -t $timeo -c \"$cisco_cmds\" $host </dev/null |") || die "clogin failed for $host: $!\n";
+    }
+}
+
+# determine password filtering mode
+if ($ENV{"FILTER_PWDS"} =~ /no/i) {
+	$filter_pwds = 0;
+} elsif ($ENV{"FILTER_PWDS"} =~ /all/i) {
+	$filter_pwds = 2;
+} else {
+	$filter_pwds = 1;
+}
+
+ProcessHistory("","","","!RANCID-CONTENT-TYPE: zebra\n!\n");
+ProcessHistory("COMMENTS","keysort","B0","!\n");	# show version
+ProcessHistory("COMMENTS","keysort","C0","!\n");	# show package
+ProcessHistory("COMMENTS","keysort","D0","!\n");	# show hardware
+ProcessHistory("COMMENTS","keysort","Z0","!\n");
+TOP: while(<INPUT>) {
+    tr/\015//d;
+    if (/\#\s?exit$/) {
+	$clean_run=1;
+	last;
+    }
+    if (/^Error:/) {
+	print STDOUT ("$host clogin error: $_");
+	print STDERR ("$host clogin error: $_") if ($debug);
+	$clean_run=0;
+	last;
+    }
+    while (/#\s*($cmds_regexp)\s*$/) {
+	$cmd = $1;
+	if (!defined($prompt)) {
+	    $prompt = ($_ =~ /^([^#]+#)/)[0];
+	    $prompt =~ s/([][}{)(\\])/\\$1/g;
+	}
+	print STDERR ("HIT COMMAND:$_") if ($debug);
+	if (! defined($commands{$cmd})) {
+	    print STDERR "$host: found unexpected command - \"$cmd\"\n";
+	    $clean_run = 0;
+	    last TOP;
+	}
+	$rval = &{$commands{$cmd}};
+	delete($commands{$cmd});
+	if ($rval == -1) {
+	    $clean_run = 0;
+	    last TOP;
+	}
+    }
+}
+print STDOUT "Done $logincmd: $_\n" if ($log);
+# Flush History
+ProcessHistory("","","","");
+# Cleanup
+close(INPUT);
+close(OUTPUT);
+
+if (defined($ENV{NOPIPE})) {
+    unlink("$host.raw") if (! $debug);
+}
+
+# check for completeness
+if (scalar(%commands) || !$clean_run || !$found_end) {
+    if (scalar(%commands)) {
+	printf(STDOUT "$host: missed cmd(s): %s\n", join(',', keys(%commands)));
+	printf(STDERR "$host: missed cmd(s): %s\n", join(',', keys(%commands))) if ($debug);
+    }
+    if (!$clean_run || !$found_end) {
+	print STDOUT "$host: End of run not found\n";
+	print STDERR "$host: End of run not found\n" if ($debug);
+	system("/usr/bin/tail -1 $host.new");
+    }
+    unlink "$host.new" if (! $debug);
+}

@@ -1,0 +1,81 @@
+#! /bin/sh
+##
+## $Id: downreport.in,v 1.9 2004/01/11 03:43:50 heas Exp $
+##
+## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
+## All rights reserved.
+##
+## This software may be freely copied, modified and redistributed
+## without fee for non-commerical purposes provided that this license
+## remains intact and unmodified with any RANCID distribution.
+##
+## There is no warranty or other guarantee of fitness of this software.
+## It is provided solely "as is".  The author(s) disclaim(s) all
+## responsibility and liability with respect to this software's usage
+## or its effect upon hardware, computer systems, other software, or
+## anything else.
+##
+## Except where noted otherwise, rancid was written by and is maintained by
+## Henry Kilmer, John Heasley, Andrew Partan, Pete Whiting, and Austin Schutz.
+##
+#
+# Reports the list of routers not listed as 'up'.
+
+# Put this in your crontab to run once a day:
+# 0 0 * * * @pkgdatadir@/downreport
+
+# It can optionally
+# take a space list of groups on the command line
+# It will use the list of groups defined in rancid.conf otherwise.
+
+
+ENVFILE="@sysconfdir@/rancid.conf"
+
+. $ENVFILE
+
+if [ $# -ge 1 ] ; then
+    LIST_OF_GROUPS="$*"
+elif [ "$LIST_OF_GROUPS" = "" ] ; then
+    echo "LIST_OF_GROUPS is empty in $ENVFILE"
+    exit 1
+fi
+
+
+for GROUP in $LIST_OF_GROUPS; do
+  (
+    echo "To: @MAILPLUS@admin-$GROUP"
+    echo "Subject: Down router report - $GROUP"
+    echo "Precedence: bulk"
+    echo ""
+    DIR=$BASEDIR/$GROUP
+    if [ -s $DIR/routers.down ]; then
+      (
+  
+      cat  << EOM
+  
+	The following $GROUP routers are listed as other than up.
+
+	Routers listed as "up" in rancid's router.db are polled several
+times daily. This is a list of routers that are not "up" and therefore
+not polled.
+
+EOM
+
+      cat $DIR/routers.down;
+
+      )
+
+    else
+      (
+
+      cat  << EOM
+
+        No routers are down/ticketed for router group $GROUP (yay).
+
+EOM
+
+      ) 
+    fi
+  ) | sendmail -t
+
+done

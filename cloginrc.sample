@@ -34,9 +34,9 @@
 #
 # add method <router name glob> {ssh} [...]
 #	Defines, in order, which connection method(s) to use for a device
-#	from the set {ssh,telnet,rsh}.  eg: add method * {ssh} {telnet} {rsh}
+#	from the set {ssh,telnet,rsh}.  e.g.: add method * {ssh} {telnet} {rsh}
 #	will attempt ssh connection first.  if ssh fails with connection
-#	refused (ie: not due to authentication failure), then try telnet,
+#	refused (i.e.: not due to authentication failure), then try telnet,
 #	then rsh.
 #	Default: {telnet} {ssh}
 #
@@ -101,7 +101,7 @@ add method *.custz.net		ssh
 # equivalent.
 add noenable route-server*	1
 
-# all our routers, ie: everything else
+# all our routers, i.e.: everything else
 add password *			{clearance}	{clarence}
 
 # set ssh encryption type, dflt: 3des
@@ -112,3 +112,13 @@ add cyphertype *		{3des}
 
 # ssh identity for a juniper; used with jlogin
 add identity	my.juniper	$env(HOME)/.ssh/juniper
+
+# riverstone / enterasys / cabletron (rivlogin) example
+# these boxes are 'back-to-front' from cisco (i.e., ask
+# for vty password always, then tac+/radius if configured).
+#
+# vty password and last resort (enable) password for rivlogin
+add password rs3000		{vtypass}	{lastresort}
+# if using tac+ or radius login, include these lines
+add user rs3000			{monster}
+add userpassword rs3000		{scary}

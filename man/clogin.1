@@ -1,6 +1,6 @@
 .\"
 .hys 50
-.TH "clogin" "1" "13 Jan 2001"
+.TH "clogin" "1" "6 Jan 2004"
 .SH NAME
 clogin \- Cisco/Foundry login script
 .SH SYNOPSIS
@@ -50,22 +50,33 @@ router
 is an
 .BR expect (1)
 script to automate the process of logging into a Cisco router,
-catalyst switch, Extreme switch, or Redback router.  There are
-complementary scripts for
+catalyst switch, Extreme switch, Juniper ERX/E-series, Procket Networks,
+or Redback router.
+There are complementary scripts for
 Alteon,
 Bay Networks (nortel),
 ADC-kentrox EZ-T3 mux,
 Foundry,
 HP Procurve Switches,
-and Juniper,
+Hitachi Routers,
+Juniper Networks,
+Netscreen firewalls,
+Netscaler,
+Riverstone,
+and Lucent TNT,
 named
 .B alogin,
 .B blogin,
 .B elogin,
 .B flogin,
 .B hlogin,
-and
+.B htlogin,
 .B jlogin,
+.B nlogin,
+.B nslogin,
+.B rivlogin,
+and
+.B tntlogin,
 respectively.
 .PP
 .B clogin
@@ -89,7 +100,7 @@ should be quoted to avoid shell expansion.
 .B \-E
 Specifies a variable to pass through to scripts (\-s).  For example, the
 command-line option \-Efoo=bar will produce a global variable by the name
-Efoo with the initial value "foo".
+Efoo with the initial value "bar".
 .\"
 .TP
 .B \-e
@@ -118,8 +129,13 @@ The filename of an
 script which will be sourced after the login is successful and is expected
 to return control to
 .B clogin,
-with the connection to the router intact, when it is done.  Example script(s)
-can be found in util/*.exp.
+with the connection to the router intact, when it is done.  Note that
+.B clogin
+disables
+.IR log_user
+of
+.BR expect (1).
+Example script(s) can be found in util/*.exp.
 .\"
 .TP
 .B \-t
@@ -209,16 +225,33 @@ configuration file.
 .SH "SEE ALSO"
 .BR cloginrc (5),
 .BR expect (1)
+.\"
 .SH CAVEATS
 The HP Procurve switches that are Foundry OEMs use flogin, not hlogin.
-.SH BUGS
-All these login scripts for separate devices should be rolled into one.
 .PP
-The HP Procurve switch CLI relies heavily upon curses based cursor/screen
+The Extreme is supported by
+.B clogin,
+but it has no concept of an "enabled" privilege level.  You must
+set autoenable for these devices in your
+.IR .cloginrc .
+.\"
+.SH BUGS
+Do not use greater than (>) or pound sign (#) in device banners.  These
+are the normal terminating characters of device prompts and the login
+scripts need to locate the initial prompt.  Afterward, the full prompt
+is collected and makes a more precise match so that the scripts know
+when the device is ready for the next command.
+.PP
+All these login scripts for separate devices should be rolled into one.
+This goal is exceedingly difficult.
+.PP
+The HP Procurve switch CLI relies heavily upon curses for cursor/screen
 manipulation and assumes a vt100 terminal type.  They do not provide a way
 to set a different terminal type or adjust this behavior.  The resulting
 escape codes make automating interaction with these devices very difficult
-or impossible.  Therefore, bin/hpfilter is used by hlogin to filter these.
-While this works for rancid's collection, there are side effects for
-interactive logins via hlogin; most of which are formatting annoyances that
-may be remedied by hitting CTRL-R to reprint the current line.
+or impossible.  Thus bin/hpuifilter, which must be found in the PATH, is used
+by hlogin to filter these.  While this works for rancid's collection,
+there are side effects for interactive logins via hlogin; most of which are
+formatting annoyances that may be remedied by typing CTRL-R to reprint the
+current line.
+.PP

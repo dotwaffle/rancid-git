@@ -1,6 +1,6 @@
 .\"
 .hys 50
-.TH "lg.conf" "5" "22 Jan 2001"
+.TH "lg.conf" "5" "7 Jan 2004"
 .SH NAME
 lg.conf \- looking glass configuration file
 .SH DESCRIPTION
@@ -36,7 +36,7 @@ Default: ./tmp
 .sp
 Note that the default is relative to the directory where 
 .IR lg.cgi
-runs in the server's document root (eg: /usr/local/www/data/lg/tmp).
+runs in the server's document root (e.g.: /usr/local/www/data/lg/tmp).
 .\"
 .TP
 .B LG_CACHE_TIME
@@ -53,7 +53,7 @@ Defines the location of the
 that the looking glass should use.  The path may be relative to the directory
 where the CGI scripts run in the server's document root.
 .sp
-Default: @prefix@/.cloginrc
+Default: $HOME/.cloginrc
 .sp
 Note that the .cloginrc must be readable by the user or group that will be
 running the CGI and that
@@ -80,7 +80,7 @@ Example: $LG_INFO="For Support contact <a href=mailto:webmaster\@localhost>webma
 .\"
 .TP
 .B LG_LOG
-Defines the fully qualified path name (ie: begins with '/') for the log file
+Defines the fully qualified path name (i.e.: begins with '/') for the log file
 or the
 .BR syslog (3)
 facility to use for logging.  For syslog, the argument is the lowercase name
@@ -100,14 +100,14 @@ format.  It lists the devices that should be available to the looking glass
 users.  Only those devices of supported types and with state 'up' are made
 available.  If not defined and the default file does not exist, the looking
 glass will compile a list from the router.db files of all the groups present
-in rancid, that is, the list will be a concatenation of $BASEDIR/*/router.db.
-.sp
-Default: @prefix@/util/lg/router.db
+in rancid, that is, the list will be a concatenation of the available
+.IR router.db (5)
+files.
 .sp
 Note that if the concatenation method is used, it may be necessary to alter
 the mode of the router.db files in the rancid group directories, since rancid's
 default umask is 027 (see
-.BR env (5)).
+.BR rancid.conf (5)).
 .\"
 .TP
 .B LG_STRIP
@@ -117,16 +117,23 @@ this is a SECURITY CONCERN!  However, this output can be very useful for
 debugging clogin problems.
 .\"
 .TP
+.B LG_STYLE
+Defines the URL of a style sheet to be used for HTML formatting.
+.\"
+.TP
 .B PATH
 Is a colon separated list of directory pathnames in the file system
 where rancid's login scripts,
 .IR clogin (1)
-etc. )
+etc.)
 and programs needed within these, such as
 .IR telnet (1),
 are located.
 Its value is set by configure.  Should it be necessary to modify PATH,
 note that it must include $BASEDIR/bin (see above).
+.\"
+.TP
+Queries		...................................
 .\"
 .El
 .\"
@@ -148,19 +155,23 @@ is interpreted directly by
 so its syntax follows that of perl.  Syntax errors may produce quite unexpected
 results.
 .SH FILES
-.Bl -tag -width .BASEDIR/bin/ENV -compact
+.Bl -tag -width @sysconfdir@/rancid.conf -compact
 .TP
-.B $BASEDIR/util/lg/lg.conf
-Configuration file described here, where $BASEDIR is set at the time that
-the rancid package was configured.  In this installation, $BASEDIR is
-.IR @prefix@ .
+.B @sysconfdir@/lg.conf
+Configuration file described here.
 .sp
 .B lg.conf
 is located by the value of the environment variable LG_CONF, in the CWD
-(current working directory), or rancid install directory ($BASEDIR/util/lg),
-in that order.
+(current working directory), or the sysconfdir defined when rancid was
+installed, in that order.
 .El
-.SH SEE ALSO
+.SH "SEE ALSO"
 .BR cloginrc (5),
 .BR lg_intro (1),
 .BR router.db (5)
+.\"
+.SH HISTORY
+In RANCID releases prior to 2.3,
+.B lg.conf
+was located in the util/lg sub-directory of the install path.  This was
+changed to be more consistent with common file location practices.

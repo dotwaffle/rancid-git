@@ -1,0 +1,188 @@
+# configuration file for the looking glass
+#
+# note: these are perl statements!  Mind the syntax.  "perl -c lg.conf"
+#       should succeed.
+#
+# adjust the path to find [cfj]login, telnet, ssh, rsh, etc.
+#
+$ENV{PATH}="@prefix@/bin:@ENV_PATH@";
+#
+#
+# LG_CACHE_DIR	is the location of the cache directory.  the LG uses this
+#		to hold lock files, the default log file (lg.log), and o/p from
+#		commands that can be very verbose.  it defaults to "tmp",
+#		i.e.: relative to the directory where lg.cgi runs in your
+#		server's (httpd) DocumentRoot (e.g.:
+#		/usr/local/www/data/lg/tmp).
+#
+#$LG_CACHE_DIR="./tmp";
+#
+#
+# LG_CACHE_TIME	is the number of seconds the LG should cache o/p from certain
+#		commands; those that tend to produce a lot of o/p, such as
+#		'show ip bgp dampened-paths'.  it defaults to 600 seconds
+#		(10 minutes).
+#
+#$LG_CACHE_TIME=600;
+#
+#
+# LG_CLOGINRC	is the .cloginrc that the LG should use.  it defaults to
+#		<prefix>/.cloginrc.  note that the .cloginrc must be readable
+#		by the user or group (UID / GID) that will be running the CGI
+#		and the clogin (and friends) will not allow a world readable
+#		.cloginrc.  this is normally the user the server (httpd) runs
+#		under.
+#
+#$LG_CLOGINRC="$ENV(HOME)/.cloginrc";
+#
+#
+# LG_IMAGE	is the filename of an image you wish to appear at the top
+#		of the LG pages.  it can also be other html goo, like
+#		the first example.  this is just handed to print, so \n and
+#		the like will work and mind the character escapes (backslashes).
+#
+#$LG_IMAGE="<img src=/icons/rancid.gif hspace=0>\n <font size=+2>FOO</font>";
+#$LG_IMAGE="<img src=rancid.gif hspace=0>\n";
+#
+#
+# LG_INFO	is info in html format to output at the bottom of main form.
+#		it might be local contact information, disclaimer, etc.  this
+#		is just handed to print, so \n and the like will work and mind
+#		the character escapes (backslashes).
+#
+#$LG_INFO="For support, contact <a href=\"mailto:webmaster\@localhost\">webmaster</a>";
+#
+#
+# LG_LOG	is either a FQPN (fully qualified path name) or the syslog
+#		facility to use for logging.  if not defined, the LG
+#		will log to LG_CACHE_DIR/lg.log.  possible syslog facility
+#		values are from the facility codes in /usr/include/syslog.h
+#		minus the 'LOG_' and lower case.
+#
+#$LG_LOG="$LG_CACHE_DIR/lg.log";
+#$LG_LOG="/tmp/lg.log";
+#$LG_LOG="local0";
+#
+#
+# LG_ROUTERDB	is the router.db in rancid's router.db format, listing
+#		the routers and their platform that should be available to
+#		the looking glass.  if defined, the LG will use this variable
+#		to find the router.db.  if not defined, it will look for it
+#		at <prefix>/<sysconfdir>/router.db.  if it does not exist, it
+#		will build the list from <prefix>/*/router.db (i.e.: the
+#		router.db's from all your groups).  note that if you choose
+#		this last option; the group directories and router.db files'
+#		modes may have to be changed, depending upon the UID/GID of
+#		the user your server (httpd) runs under, since rancid's default
+#		mask is 007 (see etc/rancid.conf).  routers not marked 'up' are
+#		skipped.
+#
+#$LG_ROUTERDB="@sysconfdir@/router.db";
+#
+#
+# LG_STYLE	define a style sheet to be used for formatting HTML.
+#
+#$LG_STYLE="http://www.your.site/style/style.css";
+#
+#
+# Options:
+#
+# LG_AS_REG	*** not implemented.
+#
+#@LG_AS_REG=();
+#
+#
+# LG_BGP_RT	allows a few bgp commands which can produce long output (heavy
+#		router load), such as sh ip bgp neighbor <ip> advertised-routes
+#		would for a transit customer or sh ip b neigh <ip>
+#		received-routes would for a transit provider.
+#
+#$LG_BGP_RT=1;
+#
+#
+# LG_SINGLE	serializes and limits queries per-router to one at a time via
+#		per-router lock files.
+#
+#$LG_SINGLE=0;
+#
+# LG_STRIP	strips login o/p from the looking glass results.  Expect
+#		occassionally screws up disabling echo when passwords are
+#		entered (NOTE: SECURITY CONCERN).  However, this o/p can be
+#		very useful for debugging clogin/flogin/jlogin problems.
+#
+$LG_STRIP=1;
+#
+#
+# Commands/Queries:
+#		Un-comment/Comment the commands that are desired/not desired.
+#		The Commands are separated into a few categories.  The value
+#		of each variable is the string which will appear in the
+#		(lgform.cgi) menu.  Mind the ,'s within hash assignments.
+#
+#		The double-commented (##) queries are not implemented or have
+#		not been tested.
+#
+$queries = {};
+#
+# Interface queries
+$queries->{"interface"} = {
+        framerelay => "show frame-relay PVC [DLCI]",
+        interface => "show interface [interface]"
+};
+#
+# Routing queries
+$queries->{"routing"} = {
+	damp => "show ip bgp dampened-paths",
+	neighbor => "show ip bgp neighbor <IP_addr>",
+	prefix => "show ip bgp <prefix> [netmask]",
+	prefixlist => "show ip prefix-list <list_name>",
+	regex => "show ip bgp regex <regex>",
+	route => "show ip route <prefix> [netmask]",
+	routemap => "show route-map <policy_name/number>",
+	summary => "show ip bgp summary"
+};
+#
+# Debug queries
+$queries->{"debug"} = {
+	log => "Show Logs [ | <match_string>]",
+	ping => "ping <IP_addr | FQDN>",
+	trace => "traceroute <IP_addr | FQDN>"
+};
+#
+# Multicast queries
+$queries->{"multicast"} = {
+	mbgp => "Show ip mbgp <prefix> [netmask]",
+	mbgpsum => "Show ip mbgp summary",
+	# show ip pim interface/show pim interface
+	## pim_interface => "Show PIM Interfaces",
+	# ???/show pim join (extensive)
+	## pim_join => "Show PIM Join [group_address]",
+	# show ip mroute/show multicast route [active]
+	## mroute => "Show Multicast Forwarding Table [active]",
+	# show ip msdp summary/show msdp
+	## msdp => "Show MSDP Peering Status",
+	# show ip msdp sa cache/show msdp source-active
+	## msdpsa => "Show MSDP Source Active Table",
+	# show ip sdr|show multicast sessions
+	## msess => "Show Multicast SDR sessions [detail]",
+	# show ip pim neighbor/show pim neighbors
+	## pim_neighbor => "Show PIM Neighbors [detail]",
+	# show ip pim rp mapping/show pim rps
+	## pim_rp => "Show PIM Rendez-vous Points [detail]",
+	# show ip rpf [address] /show multicast rpf [address]
+	## rpf => "Test Multicast RPF <address>"
+};
+#
+# IPv6 commands
+$queries->{"ipv6"} = {
+	# show bgp ipv6 / ???
+	## v6_bgp => "Show IPv6 BGP table";
+	# show ipv6 interface / show interface
+	## v6_interface => "Show IPv6 interface parameters [interface]";
+	# show bgp ipv6 summary / show bgp summary
+	## v6_summary => "Show IPv6 BGP Summary";
+	# show ipv6 route / show route table inet6.0
+	## v6_route => "Show IPv6 Routes <prefix>";
+};
+#
+# %EOF%

@@ -1,0 +1,53 @@
+## Process this file with automake to produce Makefile.in
+## A Makefile.in is supplied, in case you do not have automake.
+
+## $Id: Makefile.am,v 1.7 2004/01/11 03:43:50 heas Exp $
+##
+## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
+## All rights reserved.
+##
+## This software may be freely copied, modified and redistributed
+## without fee for non-commerical purposes provided that this license
+## remains intact and unmodified with any RANCID distribution.
+##
+## There is no warranty or other guarantee of fitness of this software.
+## It is provided solely "as is".  The author(s) disclaim(s) all
+## responsibility and liability with respect to this software's usage
+## or its effect upon hardware, computer systems, other software, or
+## anything else.
+##
+## Except where noted otherwise, rancid was written by and is maintained by
+## Henry Kilmer, John Heasley, Andrew Partan, Pete Whiting, and Austin Schutz.
+##
+
+#AUTOMAKE_OPTIONS=foreign no-dependencies
+AUTOMAKE_OPTIONS=foreign
+
+pkgdata_SCRIPTS= rtrfilter downreport
+dist_pkgdata_SCRIPTS=getipacctg
+dist_pkgdata_DATA=README.misc cisco-load.exp cisco-reload.exp \
+	index.html lgnotes.html
+
+EXTRA_DIST = rtrfilter.in downreport.in
+
+CLEANFILES= downreport
+
+all:
+
+# auto_edit does the autoconf variable substitution.  This allows the
+# substitution to have the full expansion of the variables, e.g.: $sysconfdir
+# will be /prefix/etc instead of ${prefix}/etc.
+#
+# This is a bit of a PITA, but is the method recommended by the autoconf
+# documentation.
+auto_edit = sed \
+	-e 's,@prefix\@,$(prefix),g' \
+	-e 's,@localstatedir\@,$(localstatedir),g' \
+	-e 's,@sysconfdir\@,$(sysconfdir),g' \
+	-e 's,@pkgdatadir\@,$(pkgdatadir),g'
+
+downreport: Makefile $(srcdir)/downreport.in
+	rm -f downreport downreport.tmp; \
+	$(auto_edit) $(srcdir)/downreport.in >downreport.tmp; \
+	chmod +x downreport.tmp; \
+	mv downreport.tmp downreport

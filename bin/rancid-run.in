@@ -1,0 +1,136 @@
+#! /bin/sh
+##
+## $Id: rancid-run.in,v 1.28 2004/01/11 06:11:23 hank Exp $
+##
+## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
+## All rights reserved.
+##
+## This software may be freely copied, modified and redistributed
+## without fee for non-commerical purposes provided that this license
+## remains intact and unmodified with any RANCID distribution.
+##
+## There is no warranty or other guarantee of fitness of this software.
+## It is provided solely "as is".  The author(s) disclaim(s) all
+## responsibility and liability with respect to this software's usage
+## or its effect upon hardware, computer systems, other software, or
+## anything else.
+##
+## Except where noted otherwise, rancid was written by and is maintained by
+## Henry Kilmer, John Heasley, Andrew Partan, Pete Whiting, and Austin Schutz.
+##
+#
+# Run rancid for each of the rancid groups defined by $LIST_OF_GROUPS in
+# @sysconfdir@/rancid.conf or those specified on the command-line.
+#
+
+ENVFILE="@sysconfdir@/rancid.conf"
+
+. $ENVFILE
+
+TMPDIR=${TMPDIR:=/tmp}; export TMPDIR
+
+# control_rancid argv
+CR_ARGV=""; export CR_ARGV
+
+# print a usage message to stderr
+pr_usage() {
+    echo "usage: $0 [-r device_name] [-m mail rcpt] [group [group ...]]" >&2;
+}
+
+# command-line options
+# -r <device name>
+if [ $# -ge 1 ] ; then
+
+    while [ 1 ] ; do
+	case $1 in
+	-r)
+	    shift
+	    # next arg is the device name
+	    CR_ARGV="$CR_ARGV -r $1"; export CR_ARGV
+	    shift
+	    ;;
+	-m)
+	    shift
+	    # next arg is the mailto name
+	    CR_ARGV="$CR_ARGV -m $1"; export CR_ARGV
+	    shift
+	    ;;
+	--)
+	    shift; break;
+	    ;;
+	-h)
+	    pr_usage
+	    exit
+	    ;;
+	-*)
+	    echo "unknown option: $1" >&2
+	    pr_usage
+	    exit 1
+	    ;;
+	*)
+	    break;
+	    ;;
+	esac
+    done
+fi
+
+if [ $# -ge 1 ] ; then
+    LIST_OF_GROUPS="$*"; export LIST_OF_GROUPS
+elif [ "$LIST_OF_GROUPS" = "" ] ; then
+    echo "LIST_OF_GROUPS is empty in $ENVFILE"
+    exit 1
+fi
+
+if [ ! -d $LOGDIR ] ; then
+    mkdir $LOGDIR || (echo "Could not create log directory: $LOGDIR"; exit 1)
+fi
+
+for GROUP in $LIST_OF_GROUPS
+do
+
+	LOCKFILE=$TMPDIR/.$GROUP.run.lock
+
+	(
+		echo starting: `date`
+		echo
+
+		if [ -f $LOCKFILE ]
+		then
+			echo hourly config diffs failed: $LOCKFILE exists
+			ls -l $LOCKFILE
+
+			# Send email if the lock file is old.
+			if [ "X$LOCKTIME" = "X" ] ; then
+				LOCKTIME=4
+			fi
+			@PERLV@ -e "\$t = (stat(\"$LOCKFILE\"))[9]; print \"OLD\\n\" if (time() - \$t >= $LOCKTIME*60*60);" > $TMPDIR/.$GROUP.old
+			if [ -s $TMPDIR/.$GROUP.old ]
+			then
+				(
+				  echo "To: @ADMINMAILPLUS@$GROUP"
+				  echo "Subject: rancid hung - $GROUP"
+				  echo "Precedence: bulk"
+				  echo ""
+
+				  cat <<END
+rancid $GROUP hung on `hostname`?  Old lockfile still exists:
+`ls -l $LOCKFILE`
+END
+				) | sendmail -t
+			fi
+			rm -f $TMPDIR/.$GROUP.old
+
+		else
+			trap 'rm -fr $LOCKFILE;exit 1' 1 2 3 6 10 15
+			touch $LOCKFILE
+			if [ $? -eq 0 ] ; then
+			    control_rancid $CR_ARGV $GROUP
+			    rm -f $LOCKFILE
+			fi
+			trap ''  1 2 3 6 10 15
+		fi
+
+		echo
+		echo ending: `date`
+	) >$LOGDIR/$GROUP.`date +%Y%m%d.%H%M%S` 2>&1 
+done

@@ -1,19 +1,22 @@
-#!@PERLV_PATH@
+#! @PERLV_PATH@
 ##
+## $Id: rancid.in,v 1.168 2004/01/12 00:52:47 asp Exp $
 ##
-## Copyright (C) 1997-2001 by Henry Kilmer.
+## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
-## This software may be freely copied, modified and redistributed without
-## fee for non-commerical purposes provided that this copyright notice is
-## preserved intact on all copies and modified copies.
+## This software may be freely copied, modified and redistributed
+## without fee for non-commerical purposes provided that this license
+## remains intact and unmodified with any RANCID distribution.
 ##
 ## There is no warranty or other guarantee of fitness of this software.
-## It is provided solely "as is". The author(s) disclaim(s) all
+## It is provided solely "as is".  The author(s) disclaim(s) all
 ## responsibility and liability with respect to this software's usage
 ## or its effect upon hardware, computer systems, other software, or
 ## anything else.
 ##
+## Except where noted otherwise, rancid was written by and is maintained by
+## Henry Kilmer, John Heasley, Andrew Partan, Pete Whiting, and Austin Schutz.
 ##
 #
 #  RANCID - Really Awesome New Cisco confIg Differ
@@ -21,7 +24,7 @@
 # usage: rancid [-d] [-l] [-f filename | $host]
 #
 use Getopt::Std;
-getopts('dflm');
+getopts('dfl');
 $log = $opt_l;
 $debug = $opt_d;
 $file = $opt_f;
@@ -135,31 +138,40 @@ sub sortbyipaddr {
 # This routine parses "show version"
 sub ShowVersion {
     print STDERR "    In ShowVersion: $_" if ($debug);
+    my($slaveslot);
 
     while (<INPUT>) {
 	tr/\015//d;
-	study;
 	last if(/^$prompt/);
 	next if(/^(\s*|\s*$cmd\s*)$/);
 	return(-1) if (/command authorization failed/i);
+	# the pager can not be disabled per-session on the PIX
+	s/^<-+ More -+>\s*//;
 	if (/^Slave in slot (\d+) is running/) {
 	    $slave = " Slave:";
+	    $slaveslot = ", slot $1";
 	    next;
 	}
+	if (/^Application and Content Networking Software/) { $type="CE"; }
+	/^Application and Content Networking Software Release /i &&
+	    ProcessHistory("COMMENTS","keysort","F1", "!Image: $_") && next;
 	/^Cisco Secure PIX /i &&
 	    ProcessHistory("COMMENTS","keysort","F1", "!Image: $_") && next;
-	/^IOS .* Software \(([A-Za-z-0-9]*)\), .*Version\s+(.*)$/ &&
+	# PIX fail-over license
+	/^This PIX has an?\s+(.*)$/ &&
+	    ProcessHistory("COMMENTS","keysort","C1", "!$_") && next;
+	/^(Cisco )?IOS .* Software,? \(([A-Za-z-0-9]*)\), .*Version\s+(.*)$/ &&
 	    ProcessHistory("COMMENTS","keysort","F1",
-		"!Image:$slave Software: $1, $2\n") && next;
+		"!Image:$slave Software: $2, $3\n") && next;
 	/^([A-Za-z-0-9_]*) Synced to mainline version: (.*)$/ &&
 	    ProcessHistory("COMMENTS","keysort","F2",
 		"!Image:$slave $1 Synced to mainline version: $2\n") && next;
 	/^Compiled (.*)$/ &&
 	    ProcessHistory("COMMENTS","keysort","F3",
 		"!Image:$slave Compiled: $1\n") && next;
-	/^ROM: (System )?Bootstrap.*(Version.*)$/ &&
+	/^ROM: (IOS \S+ )?(System )?Bootstrap.*(Version.*)$/ &&
 	    ProcessHistory("COMMENTS","keysort","G1",
-		"!ROM Bootstrap: $2\n") && next;
+		"!ROM Bootstrap: $3\n") && next;
 	if (/^Hardware:\s+(.*), (.* RAM), CPU (.*)$/) {
 	    ProcessHistory("COMMENTS","keysort","A1",
 		"!Chassis type: $1 - a PIX\n");
@@ -169,6 +181,17 @@ sub ShowVersion {
 	}
 	/^Serial Number:\s+(.*)$/ &&
 	    ProcessHistory("COMMENTS","keysort","C1", "!$_") && next;
+	# CatOS 3500xl stuff
+	/^System serial number(:\s+.*)$/ &&
+	    ProcessHistory("COMMENTS","keysort","C1", "!Serial Number$1\n") &&
+	    next;
+	/^Model / &&
+	    ProcessHistory("COMMENTS","keysort","C2", "!$_") && next;
+	/^Motherboard / &&
+	    ProcessHistory("COMMENTS","keysort","C3", "!$_") && next;
+	/^Power supply / &&
+	    ProcessHistory("COMMENTS","keysort","C4", "!$_") && next;
+
 	/^Activation Key:\s+(.*)$/ &&
 	    ProcessHistory("COMMENTS","keysort","C2", "!$_") && next;
 	/^ROM: \d+ Bootstrap .*(Version.*)$/ &&
@@ -193,48 +216,80 @@ sub ShowVersion {
 	    my($cpu) = $2;
 	    my($mem) = $3;
 	    my($device) = "router";
-	    if ( $1 eq "CSC") {
+
+	    # the next line ought to be the more specific cpu info, grab it.
+	    # yet, some boards/IOS vers have a processor ID line between these
+	    # two.  grrr.  make sure we dont grab the "software" junk that
+	    # follows these lines by looking for "CPU at " or the 2600s
+	    # "processor: " unique string.  there are undoubtedly many other
+	    # incantations.  for a slave, we dont get this info and its just a
+	    # blank line.
+	    $_ = <INPUT>;
+	    $_ = <INPUT> if (/processor board id/i);
+	    $_ = "" if (! /(cpu at |processor: |$cpu processor,)/i);
+	    tr/\015//d;
+	    s/implementation/impl/i;
+	    if ($_ !~ /^\s*$/) {
+		chomp;
+		s/^/, /;
+	    }
+
+	    if ( $proc eq "CSC") {
 		$type = "AGS";
-	    } elsif ( $1 eq "CSC4") {
+	    } elsif ( $proc eq "CSC4") {
 		$type = "AGS+";
-	    } elsif ( $1 eq "2511" || $1 eq "2524" || $1 eq "AS2511-RJ") {
+	    } elsif ( $proc =~ /^(AS)?25[12][12]/) {
 		$type = "2500";
-	    } elsif ( $1 =~ /261[01]/ || $1 =~ /262[01]/ ) {
+	    } elsif ( $proc =~ /261[01]/ || $proc =~ /262[01]/ ) {
 		$type = "2600";
-	    } elsif ( $1 eq "3620" || $1 eq "3640") {
+	    } elsif ( $proc =~ /^36[0246][0-9]/) {
 		$type = "3600";
-	    } elsif ( $1 eq "RSP7000") {
+	    } elsif ( $proc =~ /^37/) {
+		$type = "3700";
+	    } elsif ( $proc eq "RSP7000") {
 		$type = "7500";
-	    } elsif ( $1 =~ /RSP\d/) {
+	    } elsif ( $proc =~ /RSP\d/) {
 		$type = "7500";
-	    } elsif ( $1 eq "RP1") {
+	    } elsif ( $proc eq "RP1") {
 		$type = "7000";
-	    } elsif ( $1 eq "RP") {
+	    } elsif ( $proc eq "RP") {
 		$type = "7000";
-	    } elsif ( $1 =~ /720[246]/) {
+	    } elsif ( $proc =~ /720[246]/) {
 		$type = "7200";
-	    } elsif ( $1 =~ /1200[48]\/GRP/ || $1 =~ /1201[26]\/GRP/) {
+	    } elsif ( $proc =~ /1200[48]\/GRP/ || $proc =~ /1201[26]\/GRP/) {
 		$type = "12000";
-	    } elsif ( $1 =~ /1201[26]-8R\/GRP/) {
+	    } elsif ( $proc =~ /1201[26]-8R\/GRP/) {
 		$type = "12000";
-	    } elsif ( $1 =~ /WS-C29/) {
+	    } elsif ( $proc =~ /WS-C29/) {
 		$type = "2900XL";
 		$device = "switch";
-	    } elsif ( $1 =~ /WS-C35/) {
+	    } elsif ( $proc =~ /WS-C355/) {
+		$type = "3550";
+		$device = "switch";
+	    } elsif ( $proc =~ /WS-C35/) {
 		$type = "3500XL";
 		$device = "switch";
-	    } elsif ( $1 =~ /6000/) {
+	    } elsif ( $proc =~ /WS-C45/) {
+		$type = "4500";
+		$device = "switch";
+	    } elsif ( $proc =~ /6000/) {
 		$type = "6000";
 		$device = "switch";
+	    } elsif ( $proc =~ /CISCO76/) {
+		$type = "7600";
+		$device = "router";
+	    } elsif ( $proc =~ /1900/) {
+		$type = "1900";
+		$device = "switch";
 	    } else {
-		$type = $1;
+		$type = $proc;
 	    }
 	    print STDERR "TYPE = $type\n" if ($debug);
 	    ProcessHistory("COMMENTS","keysort","A1",
 		"!Chassis type:$slave $proc - a $type $device\n");
 	    ProcessHistory("COMMENTS","keysort","B1",
 		"!Memory:$slave main $mem\n");
-	    ProcessHistory("COMMENTS","keysort","A3","!CPU:$slave $cpu\n");
+	    ProcessHistory("COMMENTS","keysort","A3","!CPU:$slave $cpu$_$slaveslot\n");
 	    next;
 	}
 	if (/(\S+) Silicon\s*Switch Processor/) {
@@ -249,7 +304,7 @@ sub ShowVersion {
 	/^(\d+[kK]) bytes of multibus/ &&
 	    ProcessHistory("COMMENTS","keysort","B2",
 		"!Memory: multibus $1\n") && next;
-	/^(\d+[kK]) bytes of non-volatile/ &&
+	/^(\d+[kK]) bytes of (non-volatile|NVRAM)/ &&
 	    ProcessHistory("COMMENTS","keysort","B3",
 		"!Memory: nvram $1\n") && next;
 	/^(\d+[kK]) bytes of flash memory/ &&
@@ -272,14 +327,62 @@ sub ShowVersion {
 		ProcessHistory("COMMENTS","keysort","I0","!\n");
 	    }
 	    ProcessHistory("COMMENTS","keysort","I1","! $_");
-	    # The line after the WARNING is what to do about it.
-	    $_ = <INPUT>; tr/\015//d;
-	    ProcessHistory("COMMENTS","keysort","I1","!          $_");
 	}
 	if (/^Configuration register is (.*)$/) {
 	    $config_register=$1;
 	    next;
 	}
+    }
+    return(0);
+}
+
+# This routine parses "show redundancy"
+sub ShowRedundancy {
+    print STDERR "    In ShowRedundancy: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	last if(/^$prompt/);
+	next if(/^(\s*|\s*$cmd\s*)$/);
+	# the pager can not be disabled per-session on the PIX
+	s/^<-+ More -+>\s*//;
+
+	/^IOS .* Software \(([A-Za-z-0-9]*)\), .*Version\s+(.*)$/ &&
+	    ProcessHistory("COMMENTS","keysort","F1",
+		"!Image:$slave Software: $1, $2\n") && next;
+	/^Compiled (.*)$/ &&
+	    ProcessHistory("COMMENTS","keysort","F3",
+		"!Image:$slave Compiled: $1\n") && next;
+    }
+    return(0);
+}
+
+# This routine parses "show IDprom"
+sub ShowIDprom {
+    my($tmp);
+
+    print STDERR "    In ShowIDprom: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	last if(/^$prompt/);
+	next if(/^(\s*|\s*$cmd\s*)$/);
+	# the pager can not be disabled per-session on the PIX
+	s/^<-+ More -+>\s*//;
+
+	/FRU is .(.*)\'/ && ($tmp = $1);
+	/Product Number = .(.*)\'/ &&
+		ProcessHistory("COMMENTS","keysort","D0","!\n") &&
+		ProcessHistory("COMMENTS","keysort","D0",
+				"!Catalyst Chassis type: $1, $tmp\n");
+	/Serial Number = .([0-9A-Za-z]+)/ &&
+		ProcessHistory("COMMENTS","keysort","D1",
+				"!Catalyst Chassis S/N: $1\n");
+	/Manufacturing Assembly Number = .([-0-9]+)/ && ($tmp = $1);
+	/Manufacturing Assembly Revision = .(.*)\'/ && ($tmp .= ", rev " . $1);
+	/Hardware Revision = ([0-9.]+)/ &&
+		ProcessHistory("COMMENTS","keysort","D2",
+				"!Catalyst Chassis assembly: $tmp, ver $1\n");
     }
     return(0);
 }
@@ -295,6 +398,8 @@ sub ShowInstallActive {
 	return(1) if /^\s*\^\s*$/;
 	return(1) if /(Invalid input detected|Type help or )/;
 	return(-1) if (/command authorization failed/i);
+	# the pager can not be disabled per-session on the PIX
+	s/^<-+ More -+>\s*//;
 	ProcessHistory("COMMENTS","keysort","F5","!Image: $_") && next;
     }
     return(0);
@@ -311,6 +416,8 @@ sub ShowEnv {
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	#return(1) if ($type !~ /^7/);
 	return(-1) if (/command authorization failed/i);
+	# the pager can not be disabled per-session on the PIX
+	s/^<-+ More -+>\s*//;
 	if (!defined($E0)) {
 	    $E0=1;
 	    ProcessHistory("COMMENTS","keysort","E0","!\n");
@@ -331,8 +438,39 @@ sub ShowEnv {
 	    ProcessHistory("COMMENTS","keysort","E2","!Power: $1\n") && next;
 	/^\s*(redundant .*)/i &&
 	    ProcessHistory("COMMENTS","keysort","E2","!Power: $1\n") && next;
+	/^\s*(RPS is .*)/i &&
+	    ProcessHistory("COMMENTS","keysort","E2","!Power: $1\n") && next;
     }
     ProcessHistory("COMMENTS","","","!\n");
+    return(0);
+}
+
+# This routine parses "show rsp chassis-info" for the rsp
+# This will create arrays for hw info.
+sub ShowRSP {
+    print STDERR "    In ShowRSP: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(-1) if (/command authorization failed/i);
+	# return(1) if ($type !~ /^12[40]/);
+	# the pager can not be disabled per-session on the PIX
+	s/^<-+ More -+>\s*//;
+	/^$/ && next;
+
+	/^\s+Chassis model: (\S+)/ &&
+	    ProcessHistory("COMMENTS","keysort","D0","!\n") &&
+	    ProcessHistory("COMMENTS","keysort","D1",
+				"!RSP Chassis model: $1\n") &&
+	    next;
+	/^\s+Chassis S\/N: (.*)$/ &&
+	    ProcessHistory("COMMENTS","keysort","D2",
+				"!RSP Chassis S/N: $1\n") &&
+	    next;
+    }
+
     return(0);
 }
 
@@ -348,6 +486,8 @@ sub ShowGSR {
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(-1) if (/command authorization failed/i);
 	# return(1) if ($type !~ /^12[40]/);
+	# the pager can not be disabled per-session on the PIX
+	s/^<-+ More -+>\s*//;
 	/^$/ && next;
 	/^\s+Chassis: type (\S+) Fab Ver: (\S+)/ &&
 	    ProcessHistory("COMMENTS","keysort","D0","!\n") &&
@@ -386,15 +526,17 @@ sub ShowBoot {
 	return(1) if /Ambiguous command/i;
 	return(1) if /(Invalid input detected|Type help or )/;
 	return(1) if /(Open device \S+ failed|Error opening \S+:)/;
+	# the pager can not be disabled per-session on the PIX
+	s/^<-+ More -+>\s*//;
 	next if /CONFGEN variable/;
 	if (!defined($H0)) {
 	    $H0=1; ProcessHistory("COMMENTS","keysort","H0","!\n");
 	}
 	if ($type !~ /^(12[04]|7)/) {
 	    if ($type !~ /^(29|35)00/) {
-	        ProcessHistory("COMMENTS","keysort","H2","!BootFlash: $_");
+		ProcessHistory("COMMENTS","keysort","H2","!BootFlash: $_");
 	    } else {
-	        ProcessHistory("COMMENTS","keysort","H1","!Variable: $_");
+		ProcessHistory("COMMENTS","keysort","H1","!Variable: $_");
 	    }
 	} elsif (/variable/) {
 	    ProcessHistory("COMMENTS","keysort","H1","!Variable: $_");
@@ -418,6 +560,8 @@ sub ShowFlash {
 	return(-1) if (/command authorization failed/i);
 	return(1) if /^\s*\^\s*$/;
 	return(1) if /(Invalid input detected|Type help or )/;
+	# the pager can not be disabled per-session on the PIX
+	s/^<-+ More -+>\s*//;
 	ProcessHistory("FLASH","","","!Flash: $_");
     }
     ProcessHistory("","","","!\n");
@@ -438,13 +582,15 @@ sub DirSlotN {
 	# return(1) if ($type !~ /^(12[40]|7|36)/);
 	return(1) if /^\s*\^\s*$/;
 	return(1) if /(Invalid input detected|Type help or )/;
-	return(1) if /No such device/i;
+	return(1) if /(No such device|Error Sending Request)/i;
 	return(1) if /\%Error: No such file or directory/;
 	return(1) if /No space information available/;
 	return(-1) if /\%Error calling/;
 	return(-1) if /(: device being squeezed|ATA_Status time out)/i; # busy
 	return(-1) if (/command authorization failed/i);
 	return(1) if /(Open device \S+ failed|Error opening \S+:)/;
+	# the pager can not be disabled per-session on the PIX
+	s/^<-+ More -+>\s*//;
 	ProcessHistory("FLASH","","","!Flash: $dev: $_");
     }
     ProcessHistory("","","","!\n");
@@ -458,11 +604,12 @@ sub ShowContAll {
 
     while (<INPUT>) {
 	tr/\015//d;
-	study;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	# return(1) if ($type =~ /^(12[40]|7[05])/);
 	return(-1) if (/command authorization failed/i);
+	# the pager can not be disabled per-session on the PIX
+	s/^<-+ More -+>\s*//;
 	if (/^Interface ([^ \n(]*)/) { $INT = "$1, "; next; }
 	/^(BRI unit \d)/ &&
 	    ProcessHistory("INT","","","!Interface: $1\n") && next;
@@ -521,6 +668,8 @@ sub ShowContCbus {
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	#return(1) if ($type !~ /^7[05]0/);
 	return(-1) if (/command authorization failed/i);
+	# the pager can not be disabled per-session on the PIX
+	s/^<-+ More -+>\s*//;
 	if (/^\s*slot(\d+): ([^,]+), hw (\S+), sw (\S+), ccb/) {
 	    $slot = $1;
 	    $board{$slot} = $2;
@@ -562,11 +711,12 @@ sub ShowDiagbus {
 
     while (<INPUT>) {
 	tr/\015//d;
-	study;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	#return(1) if ($type !~ /^7[05]/);
 	return(-1) if (/command authorization failed/i);
+	# the pager can not be disabled per-session on the PIX
+	s/^<-+ More -+>\s*//;
 	if (/^\s*Slot (\d+):/i) {
 	    $slot = $1;
 	    next;
@@ -641,7 +791,7 @@ sub ShowDiagbus {
     return(0);
 }
 
-# This routine parses "show diag" for the gsr, 7200, 3600, 2600.
+# This routine parses "show diag" for the gsr, 7200, 3700, 3600, 2600.
 # This will create arrarys for hw info.
 sub ShowDiag {
     # Skip if this is not a 12000.
@@ -649,12 +799,14 @@ sub ShowDiag {
 
     while (<INPUT>) {
 	tr/\015//d;
-	study;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	# return(1) if ($type !~ /^(12[40]|720|36|26)/);
 	return(-1) if (/command authorization failed/i);
 	/^$/ && next;
+	# the pager can not be disabled per-session on the PIX
+	s/^<-+ More -+>\s*//;
+
 	s/Port Packet Over SONET/POS/;
 	if (/^\s*SLOT\s+(\d+)\s+\((.*)\): (.*)/) {
 	    $slot = $1;
@@ -663,10 +815,21 @@ sub ShowDiag {
 	    next;
 	}
 	if (/^\s+MAIN:\s* type \d+,\s+(.*)/) {
-	    ProcessHistory("SLOT","keysort","AM","!Slot $slot/MAIN: part $1\n") && next;
+	    ProcessHistory("SLOT","keysort","AM","!Slot $slot/MAIN: part $1\n");
+	    next;
+	}
+	if (/^c3700\s+(io-board|mid-plane)/i) {
+	    $slot=$1;
+	    ProcessHistory("SLOT","","","!\n");
+	    ProcessHistory("SLOT","keysort","A","!Slot $slot: part $1\n");
+	    next;
 	}
 	if (/ Engine:\s+(.*)/) {
 	    ProcessHistory("SLOT","keysort","AE","!Slot $slot/Engine: $1\n");
+	}
+	if (/FRU:\s+Linecard\/Module:\s+(\S+)/) {
+	    ProcessHistory("SLOT","keysort","AF","!Slot $slot/FRU: Linecard/Module: $1\n");
+	    next;
 	}
 	if (/^\s+PCA:\s+(.*)/) {
 	    local($part) = $1;
@@ -707,34 +870,77 @@ sub ShowDiag {
 	    }
 	    next;
 	}
-	# 7200 and 3600 stuff
-	if (/^(Slot)\s+(\d+(\/\d+)?):/ || /^\s+(WIC|VIC) Slot (\d):/) {
+	# 7200, 3600, 2600, and 1700 stuff
+	if (/^(Slot)\s+(\d+(\/\d+)?):/
+	    || /^\s+(WIC|VIC|WIC\/VIC) Slot (\d):/
+	    || /^(Encryption AIM) (\d):/) {
 	    if ($1 eq "WIC") {
 		$WIC = "/$2";
 	    } elsif ($1 eq "VIC") {
 		$WIC = "/$2";
+	    } elsif ($1 eq "WIC/VIC") {
+		$WIC = "/$2";
+	    } elsif ($1 eq "Encryption AIM") {
+		$slot = "$2";
+		undef($WIC);
+		ProcessHistory("SLOT","","","!\n");
+		ProcessHistory("SLOT","keysort","B","!Slot $slot: type $1\n");
+		next;
 	    } else {
 		$slot = $2;
 		undef($WIC);
 	    }
 	    $_ = <INPUT>; tr/\015//d;
 
-	    # clean up hideous 7200 format to look more like 7500 output
+	    # clean up hideous 7200/etc formats to look more like 7500 output
 	    s/Fast-ethernet on C7200 I\/O card/FE-IO/;
 	    s/ with MII or RJ45/-TX/;
 	    s/Fast-ethernet /100Base/; s/[)(]//g;
+	    s/intermediate reach/IR/i;
 
 	    ProcessHistory("SLOT","","","!\n");
 	    /\s+(.*) port adapter,?\s+(\d+)\s+/i &&
-		ProcessHistory("SLOT","keysort","B","!Slot $slot: type $1, $2 ports\n");
+		ProcessHistory("SLOT","keysort","B","!Slot $slot: type $1, $2 ports\n") && next;
 	    # I/O controller with no interfaces
 	    /\s+(.*)\s+port adapter\s*$/i &&
-		ProcessHistory("SLOT","keysort","B","!Slot $slot: type $1, 0 ports\n");
+		ProcessHistory("SLOT","keysort","B","!Slot $slot: type $1, 0 ports\n") && next;
 	    /\s+(.*)\s+daughter card(.*)$/ &&
-		ProcessHistory("SLOT","keysort","B","!Slot $slot$WIC: type $1$2\n");
+		ProcessHistory("SLOT","keysort","B","!Slot $slot$WIC: type $1$2\n") && next;
 	    /\s+(FT1)$/ &&
-		ProcessHistory("SLOT","keysort","B","!Slot $slot$WIC: type $1\n");
+		ProcessHistory("SLOT","keysort","B","!Slot $slot$WIC: type $1\n") && next;
+	    # handle WICs lacking "daughter card" in the 2nd line of their
+	    # show diag o/p
+	    if (defined($WIC)) {
+		s/^\s+//;
+		ProcessHistory("SLOT","keysort","B","!Slot $slot$WIC: type $_");
+	    }
 	    next;
+	}
+	# yet another format.  seen on 2600s w/ 12.1, but appears to be all
+	# 12.1, including 7200s & 3700s.  Sometimes the PCB serial appears
+	# before the hardware revision.
+	if (/(pcb serial number|hardware revision)\s+:\s+(\S+)$/i) {
+	    my($hw, $pn, $rev, $sn);
+	    if ($1 =~ /^pcb/i) {
+		$sn = $2;
+	    } else {
+		$hw = $2;
+	    }
+	    while (<INPUT>) {
+		tr/\015//d;
+
+		if (/0x..: /) {
+		    # no effing idea why break does not work there
+		    goto PerlSucks;
+		}
+		if (/hardware revision\s+:\s+(\S+)/i) { $hw = $1; }
+		if (/part number\s+:\s+(\S+)/i) { $pn = $1; }
+		if (/board revision\s+:\s+(\S+)/i) { $rev = $1; }
+		if (/pcb serial number\s+:\s+(\S+)/i) { $sn = $1; }
+	    }
+PerlSucks:
+	    ProcessHistory("SLOT","keysort","B","!Slot $slot$WIC: hvers $hw rev $rev\n");
+	    ProcessHistory("SLOT","keysort","C","!Slot $slot$WIC: part $pn, serial $sn\n");
 	}
 	/revision\s+(\S+).*revision\s+(\S+)/ &&
 	    ProcessHistory("SLOT","keysort","C","!Slot $slot$WIC: hvers $1 rev $2\n") &&
@@ -760,6 +966,8 @@ sub ShowModule {
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(-1) if (/command authorization failed/i);
+	# the pager can not be disabled per-session on the PIX
+	s/^<-+ More -+>\s*//;
 
 	# match slot/card info line
 	if (/^ *(\d+)\s+(\d+)\s+(.*)\s+(\S+)\s+(\S+)\s*$/) {
@@ -781,6 +989,24 @@ sub ShowModule {
     return(0);
 }
 
+# This routine parses "show spe version".
+sub ShowSpeVersion {
+    print STDERR "    In ShowSpeVersion: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /^\s*\^\s*$/;
+	return(1) if /(Invalid input detected|Type help or )/;
+	return(-1) if (/command authorization failed/i);
+
+	ProcessHistory("MODEM","","","!Modem: $_") && next;
+    }
+    ProcessHistory("MODEM","","","!\n");
+    return(0);
+}
+
 # This routine parses "show c7200" for the 7200
 # This will create arrays for hw info.
 sub ShowC7200 {
@@ -794,6 +1020,8 @@ sub ShowC7200 {
 	#return(1) if ($type !~ /^72/);
 	return(-1) if (/command authorization failed/i);
 	/^$/ && next;
+	# the pager can not be disabled per-session on the PIX
+	s/^<-+ More -+>\s*//;
 	if (/^(C7200 )?Midplane EEPROM:/) {
 	    $_ = <INPUT>;
 	    /revision\s+(\S+).*revision\s+(\S+)/;
@@ -838,6 +1066,8 @@ sub ShowVTP {
 	#return(1) if ($type !~ /^(2900XL|3500XL|6000)$/);
 	return(-1) if (/command authorization failed/i);
 	next if (/^Configuration last modified by/);
+	# the pager can not be disabled per-session on the PIX
+	s/^<-+ More -+>\s*//;
 	if (/^VTP Operating Mode\s+:\s+(Transparent|Server)/) {
 	    $DO_SHOW_VLAN = 1;
 	}
@@ -858,8 +1088,13 @@ sub ShowVLAN {
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if /(Invalid input detected|Type help or )/;
+	# newer releases (~12.1(9)) place the vlan config in the normal
+	# configuration (write term).
+	return(1) if ($type =~ /^(3550|4500|7600)$/);
 	#return(1) if ($type !~ /^(2900XL|3500XL|6000)$/);
 	return(-1) if (/command authorization failed/i);
+	# the pager can not be disabled per-session on the PIX
+	s/^<-+ More -+>\s*//;
 	ProcessHistory("COMMENTS","keysort","IO","!VLAN: $_");
     }
     ProcessHistory("COMMENTS","keysort","IO","!\n");
@@ -869,16 +1104,17 @@ sub ShowVLAN {
 # This routine processes a "write term"
 sub WriteTerm {
     print STDERR "    In WriteTerm: $_" if ($debug);
-    my($lineauto) = 0;
+    my($lineauto,$comment,$linecnt) = (0,0,0);
 
     while (<INPUT>) {
 	tr/\015//d;
-	study;
 	last if(/^$prompt/);
 	return(-1) if (/command authorization failed/i);
 	# the pager can not be disabled per-session on the PIX
 	s/^<-+ More -+>\s*//;
 	/Non-Volatile memory is in use/  && return(-1); # NvRAM is locked
+	return(0) if ($found_end);		# Only do this routine once
+	$linecnt++;
 	$lineauto = 0 if (/^[^ ]/);
 	# skip the crap
 	if (/^(##+$|(Building|Current) configuration)/i) {
@@ -897,6 +1133,16 @@ sub WriteTerm {
 	# some versions have other crap mixed in with the bits in the
 	# block above
 	/^! (Last configuration|NVRAM config last)/ && next;
+
+	# skip consecutive comment lines to avoid oscillating extra comment
+	# line on some access servers.  grrr.
+	if (/^!/) {
+	    next if ($comment);
+	    ProcessHistory("","","",$_);
+	    $comment++;
+	    next;
+	}
+	$comment = 0;
 
 	# Dog gone Cool matches to process the rest of the config
 	/^tftp-server flash /   && next; # kill any tftp remains
@@ -932,6 +1178,14 @@ sub WriteTerm {
 	    }
 	    next;
 	}
+	if (/^( set session-key (in|out)bound ah \d+ )/ && $filter_pwds >= 1) {
+	    ProcessHistory("","","","!$1<removed>\n");
+	    next;
+	}
+	if (/^( set session-key (in|out)bound esp \d+ (authenticator|cypher) )/ && $filter_pwds >= 1) {
+	    ProcessHistory("","","","!$1<removed>\n");
+	    next;
+	}
 	if (/^(\s*)password / && $filter_pwds >= 1) {
 	    ProcessHistory("LINE-PASS","","","!$1password <removed>\n");
 	    next;
@@ -955,7 +1209,7 @@ sub WriteTerm {
 	}
 	if (/^\s+(domain-password|area-password) (\S+)( .*)?/
 							&& $filter_pwds >= 1) {
-	    ProcessHistory("","","","!$1 <removed>$2\n"); next;
+	    ProcessHistory("","","","!$1 <removed>$3\n"); next;
 	}
 	# this is reversable, despite 'md5' in the cmd
 	if (/^( ip ospf message-digest-key \d+ md5) / && $filter_pwds >= 1) {
@@ -964,9 +1218,24 @@ sub WriteTerm {
 	if (/^((crypto )?isakmp key) \S+ / && $filter_pwds >= 1) {
 	    ProcessHistory("","","","!$1 <removed> $'"); next;
 	}
+	# filter HSRP passwords
+	if (/^(\s+standby \d authentication) / && $filter_pwds >= 1) {
+	    ProcessHistory("","","","!$1 <removed>\n"); next;
+	}
+	# this appears in "measurement/sla" images
+	if (/^(\s+key-string \d?)/ && $filter_pwds >= 1) {
+	    ProcessHistory("","","","!$1 <removed>\n"); next;
+	}
+	if (/^( l2tp tunnel \S+ password)/ && $filter_pwds >= 1) {
+	    ProcessHistory("","","","!$1 <removed>\n"); next;
+	}
 	# i am told these are plain-text on the PIX
 	if (/^(vpdn username \S+ password)/ && $filter_pwds >= 1) {
 	    ProcessHistory("","","","!$1 <removed>\n"); next;
+	}
+	if (/^( cable shared-secret ) / && $filter_pwds >= 1) {
+	    ProcessHistory("","","","!$1 <removed>\n");
+	    next;
 	}
 	/fair-queue individual-limit/ && next;
 	# sort ip explicit-paths.
@@ -1057,9 +1326,13 @@ sub WriteTerm {
 		ProcessHistory("SNMPSERVERCOMM","keysort","$_","$_") && next;
 	    }
 	}
-	# order/prune tacacs/radius server statements
+	# prune tacacs/radius server keys
 	if (/^(tacacs-server|radius-server) key / && $filter_pwds >= 1) {
 	    ProcessHistory("","","","!$1 key <removed>\n"); next;
+	}
+	if (/^((tacacs-server|radius-server) host \S+ key) / &&
+							$filter_pwds >= 1) {
+	    ProcessHistory("","","","!$1 <removed>\n"); next;
 	}
 	# order clns host statements
 	/^clns host \S+ (\S+)/ &&
@@ -1076,9 +1349,9 @@ sub WriteTerm {
 	    ProcessHistory("NTP","keysort",$sortkey,"$_");
 	    next;
 	}
-	# order ip host line statements
-	/^ip host line(\d+)/ &&
-	    ProcessHistory("IPHOST","numsort","$1","$_") && next;
+	# order ip host statements
+	/^ip host (\S+) / &&
+	    ProcessHistory("IPHOST","keysort","$1","$_") && next;
 	# order ip nat source static statements
 	/^ip nat (\S+) source static (\S+)/ &&
 	    ProcessHistory("IP NAT $1","ipsort","$2","$_") && next;
@@ -1105,6 +1378,14 @@ sub WriteTerm {
 	    return(1);
 	}
     }
+    # The ContentEngine lacks a definitive "end of config" marker.  If we
+    # know that it is a CE and we have seen at least 5 lines of write term
+    # o/p, we can be reasonably sure that we got the config.
+    if ($type =~ /^CE$/ && $linecnt > 5) {
+	$found_end = 1;
+	return(1);
+    }
+
     return(0);
 }
 
@@ -1114,8 +1395,11 @@ sub DoNothing {print STDOUT;}
 # Main
 %commands=(
 	'show version'		=> "ShowVersion",
+	'show redundancy secondary'	=> "ShowRedundancy",
+	'show idprom backplane',	=> "ShowIDprom",
 	'show install active'	=> "ShowInstallActive",
 	'show env all'		=> "ShowEnv",
+	'show rsp chassis-info',=> "ShowRSP",
 	'show gsr chassis'	=> "ShowGSR",
 	'show boot'		=> "ShowBoot",
 	'show bootvar'		=> "ShowBoot",
@@ -1131,22 +1415,44 @@ sub DoNothing {print STDOUT;}
 	'dir /all disk2:'	=> "DirSlotN",
 	"dir /all sup-bootflash:"=> "DirSlotN",		# cat 6500-ios
 	"dir /all sup-microcode:"=> "DirSlotN",		# cat 6500-ios
+	'dir /all slavenvram:'	=> "DirSlotN",
+	'dir /all slavebootflash:'	=> "DirSlotN",
+	'dir /all slaveslot0:'	=> "DirSlotN",
+	'dir /all slavedisk0:'	=> "DirSlotN",
+	'dir /all slaveslot1:'	=> "DirSlotN",
+	'dir /all slavedisk1:'	=> "DirSlotN",
+	'dir /all slaveslot2:'	=> "DirSlotN",
+	'dir /all slavedisk2:'	=> "DirSlotN",
+	"dir /all slavesup-bootflash:"=> "DirSlotN",	# cat 7609
+	'dir /all sec-nvram:'	=> "DirSlotN",
+	'dir /all sec-bootflash:'	=> "DirSlotN",
+	'dir /all sec-slot0:'	=> "DirSlotN",
+	'dir /all sec-disk0:'	=> "DirSlotN",
+	'dir /all sec-slot1:'	=> "DirSlotN",
+	'dir /all sec-disk1:'	=> "DirSlotN",
+	'dir /all sec-slot2:'	=> "DirSlotN",
+	'dir /all sec-disk2:'	=> "DirSlotN",
 	'show controllers'	=> "ShowContAll",
 	'show controllers cbus'	=> "ShowContCbus",
 	'show diagbus'		=> "ShowDiagbus",
 	'show diag'		=> "ShowDiag",
 	'show module'		=> "ShowModule",	# cat 6500-ios
+	'show spe version'	=> "ShowSpeVersion",
 	'show c7200'		=> "ShowC7200",
 	'show vtp status'	=> "ShowVTP",
 	'show vlan'		=> "ShowVLAN",
+	'show running-config'	=> "WriteTerm",
 	'write term'		=> "WriteTerm"
 );
 # keys() doesnt return things in the order entered and the order of the
 # cmds is important (show version first and write term last). pita
 @commands=(
 	"show version",
+	"show redundancy secondary",
+	"show idprom backplane",
 	"show install active",
 	"show env all",
+	"show rsp chassis-info",
 	"show gsr chassis",
 	"show boot",
 	"show bootvar",
@@ -1162,14 +1468,33 @@ sub DoNothing {print STDOUT;}
 	"dir /all disk2:",
 	"dir /all sup-bootflash:",
 	"dir /all sup-microcode:",
+	"dir /all slavenvram:",
+	"dir /all slavebootflash:",
+	"dir /all slaveslot0:",
+	"dir /all slavedisk0:",
+	"dir /all slaveslot1:",
+	"dir /all slavedisk1:",
+	"dir /all slaveslot2:",
+	"dir /all slavedisk2:",
+	"dir /all slavesup-bootflash:",
+	"dir /all sec-nvram:",
+	"dir /all sec-bootflash:",
+	"dir /all sec-slot0:",
+	"dir /all sec-disk0:",
+	"dir /all sec-slot1:",
+	"dir /all sec-disk1:",
+	"dir /all sec-slot2:",
+	"dir /all sec-disk2:",
 	"show controllers",
 	"show controllers cbus",
 	"show diagbus",
 	"show diag",
 	"show module",
+	"show spe version",
 	"show c7200",
 	"show vtp status",
 	"show vlan",
+	"show running-config",
 	"write term"
 );
 $cisco_cmds=join(";",@commands);
@@ -1196,7 +1521,7 @@ if ($file) {
 }
 
 # determine password filtering mode
-if ($ENV{"FILTER_PWDS"} =~ /no/i) {  
+if ($ENV{"FILTER_PWDS"} =~ /no/i) {
 	$filter_pwds = 0;
 } elsif ($ENV{"FILTER_PWDS"} =~ /all/i) {
 	$filter_pwds = 2;
@@ -1210,7 +1535,7 @@ ProcessHistory("COMMENTS","keysort","F0","!\n");
 ProcessHistory("COMMENTS","keysort","G0","!\n");
 TOP: while(<INPUT>) {
     tr/\015//d;
-    if (/\#\s?exit$/) {
+    if (/[>#]\s?exit$/) {
 	$clean_run=1;
 	last;
     }
@@ -1222,7 +1547,11 @@ TOP: while(<INPUT>) {
     }
     while (/#\s*($cmds_regexp)\s*$/) {
 	$cmd = $1;
-	if (!defined($prompt)) {$prompt = ($_ =~ /^([^#]+#)/)[0]; }
+	if (!defined($prompt)) {
+	    $prompt = ($_ =~ /^([^#]+#)/)[0];
+	    $prompt =~ s/([][}{)(\\])/\\$1/g;
+	    print STDERR ("PROMPT MATCH: $prompt\n") if ($debug);
+	}
 	print STDERR ("HIT COMMAND:$_") if ($debug);
 	if (! defined($commands{$cmd})) {
 	    print STDERR "$host: found unexpected command - \"$cmd\"\n";

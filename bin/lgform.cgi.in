@@ -1,0 +1,259 @@
+#! @PERLV_PATH@
+##
+## $Id: lgform.cgi.in,v 1.25 2004/01/11 03:49:13 heas Exp $
+##
+## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
+## All rights reserved.
+##
+## This software may be freely copied, modified and redistributed
+## without fee for non-commerical purposes provided that this license
+## remains intact and unmodified with any RANCID distribution.
+##
+## There is no warranty or other guarantee of fitness of this software.
+## It is provided solely "as is".  The author(s) disclaim(s) all
+## responsibility and liability with respect to this software's usage
+## or its effect upon hardware, computer systems, other software, or
+## anything else.
+##
+## Except where noted otherwise, rancid was written by and is maintained by
+## Henry Kilmer, John Heasley, Andrew Partan, Pete Whiting, and Austin Schutz.
+##
+#
+# The original original lookingglass s/w was written by Ed Kern.  It was
+# a single script that used to be available at http://nitrous.digex.net/.
+# Provided by permission and modified beyond recognition.
+#
+# lgform.cgi - Looking glass front-end
+# produces html form for calling lg.cgi
+
+use CGI qw/:standard/;
+
+my(@rtrlist, %rtrlabels);
+my($BASEDIR) = "@prefix@";
+my($SYSCONFDIR) = "@sysconfdir@";
+
+# note: the following functions are duplicated between lgform.cgi and lg.cgi
+# to avoid the need for module inclusion headaches from within a httpd context.
+# it is just easier to be self-contained.
+# SO, ANY CHANGES HERE SHOULD BE REFLECTED IN THE OTHER .cgi.
+
+# logging
+sub dolog
+{
+    my($level, $msg) = @_;
+
+    if (defined($LG_LOG) && $LG_LOG !~ /\//) {
+	openlog($me, "pid", $LG_LOG);
+	syslog($level, "%s", $msg);
+	closelog;
+    } else {
+	local(*LOG);
+	my($file);
+	if (defined($LG_LOG)) {
+	    $file = $LG_LOG;
+	} else {
+	    $file = "$cache_dir/lg.log";
+	}
+	#  log date, hostname, query, addr
+	if (open(LOG, ">>$file") == 0) {
+	    # stderr, if all else fails
+	    printf(STDERR "[" . strftime("%a %b %e %H:%M:%S %Y", gmtime) .
+			"] could not open log file $file: $!\n");
+	    printf(STDERR $msg);
+	} else {
+	    printf(LOG $msg);
+	    close(LOG);
+	}
+    }
+    return;
+}
+
+# read LG configuration file
+sub readconf
+{
+    my($conffile, $cmds);
+    local(*CONF);
+    if (defined($ENV{LG_CONF})) {
+	$conffile = $ENV{LG_CONF};
+    } elsif (-e "lg.conf") {
+	$conffile = "lg.conf";
+    } else {
+	$conffile = "$SYSCONFDIR/lg.conf";
+    }
+
+    if (! -f $conffile) {
+	return;
+    }
+
+    if (open(CONF, "< $conffile")) {
+	while (<CONF>) {
+	    next if (/^\s*(#|$)/);
+	    $cmds .= $_;
+	}
+	close(CONF);
+	eval $cmds;
+    } else {
+	printf(STDERR "ERROR: couldn\'t open the configuration file: " .
+							"$conffile: $!\n");
+	exit(1);
+    }
+
+    return;
+}
+
+# read router.db file
+sub readrouters
+{
+    my($rtrdb);
+    local(*RTR);
+
+    if (defined($LG_ROUTERDB)) {
+	$rtrdb = $LG_ROUTERDB;
+    } else {
+	$rtrdb = "$SYSCONFDIR/router.db";
+    }
+
+    if (! -f $rtrdb) {
+	my(@dirs, $dir);
+	# if the router.db file does not exist, try to compile the list from
+	# the rancid group router.db files.
+	local(*DIR);
+	if (! opendir(DIR, $BASEDIR)) {
+	    dolog(LOG_ERR, "ERROR: couldn\'t read $BASEDIR: $!\n");
+	} else {
+	    while ($dir = readdir(DIR)) {
+		next if ($dir =~ /^(\.|\.\.|CVS|bin|etc|logs|util)$/);
+		push(@dirs, $dir) if (-d "$BASEDIR/$dir");
+	    }
+	    closedir(DIR);
+
+	    foreach $dir (@dirs) {
+		if (! opendir(DIR, "$BASEDIR/$dir")) {
+		    dolog(LOG_ERR, "ERROR: couldn\'t read $BASEDIR/$dir: $!\n");
+		    next;
+		}
+		closedir(DIR);
+		next if (! -f "$BASEDIR/$dir/router.db");
+		if (open(RTR, "< $BASEDIR/$dir/router.db")) {
+		    while (<RTR>) {
+			next if (/^\s*(#|$)/);
+			# fqdn:mfg:state
+			@record = split('\:', $_);
+			next if ($record[2] !~ /up/i || $record[1] !~ /(cisco|foundry|juniper)/);
+			push(@rtrlist, join(':', ($record[0], $record[1])));
+			$rtrlabels{join(':', ($record[0], $record[1]))} = $record[0];
+		    }
+		    close(RTR);
+		} else {
+		    dolog(LOG_ERR, "ERROR: couldn\'t open the router.db " .
+					"file: $BASEDIR/$dir/router.db: $!\n");
+		}
+	    }
+	}
+    } else {
+	if (open(RTR, "< $rtrdb")) {
+	    while (<RTR>) {
+		next if (/^\s*(#|$)/);
+		# fqdn:mfg:state
+		@record = split('\:', $_);
+		next if ($record[2] !~ /up/i || $record[1] !~ /(cisco|foundry|juniper)/);
+		push(@rtrlist, join(':', ($record[0], $record[1])));
+		$rtrlabels{join(':', ($record[0], $record[1]))} = $record[0];
+	    }
+	    close(RTR);
+	} else {
+	    dolog(LOG_ERR, "ERROR: couldn\'t open the router.db file: " .
+								"$rtrdb: $!\n");
+	    exit(1);
+	}
+    }
+
+    return;
+}
+
+# Main()
+# read the configuration file if it exists.
+readconf();
+
+$query = new CGI;
+
+print $query->header;
+if ($LG_STYLE) {
+    print $query->start_html(-title =>"LookingGlass form",
+						-style => {'src' => $LG_STYLE});
+} else {
+    print $query->start_html(-title =>"LookingGlass form");
+}
+
+# add the company image, LG_IMAGE
+print $LG_IMAGE;
+
+print <<HEAD ;
+<br>
+<B><FONT SIZE=+2>Looking Glass</FONT></B>
+<br>
+<hr>
+HEAD
+
+# start table, etc here
+print $query->startform( -action => 'lg.cgi', -method => 'POST');
+print <<DOTABLE ;
+<center>
+<table border cellspacing=0 width=575 align=center>
+
+DOTABLE
+
+# available query types here
+print <<TABLEHEAD ;
+<tr valign=top>
+        <th align=left><B>Query:</B></th>
+        <th align=left><B>Router:</B></th>
+</tr>
+<tr><td>
+TABLEHEAD
+
+foreach $sub_type (sort keys(%$queries)) {
+    next if (! scalar(%{$queries->{$sub_type}}));
+    print $query->radio_group (-name => 'query',
+				-values => $queries->{$sub_type},
+				-default => '-', -linebreak => 'true');
+    print "\n" . $query->hr . "\n";
+}
+
+print <<QTYPES ;
+
+<P><B>Argument(s):</B> <INPUT name="args" size=30></P>
+        </TD>
+        <td aligh=left valign=top>
+QTYPES
+
+# read routers table and create the scrolling list
+readrouters();
+print $query->scrolling_list(-name => 'router',
+			-values => \@rtrlist,
+			-size => 20,
+			-labels => \%rtrlabels);
+
+# end
+print <<TABLEEND ;
+</dd>
+</td>
+</TABLE>
+<p>
+TABLEEND
+
+print $query->submit(-name => 'submit', -value =>'Submit');
+print $query->reset;
+print $query->endform;
+
+print <<TAIL ;
+</center>
+<br>
+<a href=lgnotes.html>Looking Glass notes</a>
+<p>
+$LG_INFO
+TAIL
+
+print $query->end_html;
+
+exit(0);

@@ -1,19 +1,22 @@
-#!/bin/sh
+#! /bin/sh
 ##
+## $Id: control_rancid.in,v 1.61 2004/01/11 05:25:13 hank Exp $
 ##
-## Copyright (C) 1996-2001 by Henry Kilmer.
+## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
-## This software may be freely copied, modified and redistributed without
-## fee for non-commerical purposes provided that this copyright notice is
-## preserved intact on all copies and modified copies.
+## This software may be freely copied, modified and redistributed
+## without fee for non-commerical purposes provided that this license
+## remains intact and unmodified with any RANCID distribution.
 ##
 ## There is no warranty or other guarantee of fitness of this software.
-## It is provided solely "as is". The author(s) disclaim(s) all
+## It is provided solely "as is".  The author(s) disclaim(s) all
 ## responsibility and liability with respect to this software's usage
 ## or its effect upon hardware, computer systems, other software, or
 ## anything else.
 ##
+## Except where noted otherwise, rancid was written by and is maintained by
+## Henry Kilmer, John Heasley, Andrew Partan, Pete Whiting, and Austin Schutz.
 ##
 #
 # control_rancid $GROUP
@@ -80,6 +83,7 @@ trap 'rm -fr $TMP;' 1 2 15
 
 # the receipient(s) of diffs
 mailrcpt=${mailrcpt:-"@MAILPLUS@$GROUP"}; export mailrcpt
+adminmailrcpt=${mailrcpt:-"@ADMINMAILPLUS@$GROUP"}; export adminmailrcpt
 
 # Number of things par should run in parallel.
 PAR_COUNT=${PAR_COUNT:-5}
@@ -88,14 +92,14 @@ PAR_COUNT=${PAR_COUNT:-5}
 if [ ! -d $DIR ]
 then
     echo "$DIR does not exist."
-    echo "Run bin/create_cvs $GROUP to make all of the needed directories."
+    echo "Run bin/rancid-cvs $GROUP to make all of the needed directories."
     (
-	echo "To: @MAILPLUS@admin-$GROUP"
+	echo "To: $adminmailrcpt"
 	echo "Subject: no $GROUP directory"
 	echo "Precedence: bulk"
 	echo ""
 	echo "$DIR does not exist."
-	echo "Run bin/create_cvs $GROUP to make all of the needed directories."
+	echo "Run bin/rancid-cvs $GROUP to make all of the needed directories."
     ) | sendmail -t
     exit 1
 fi
@@ -116,7 +120,7 @@ rm -f $TMP
 if [ ! -f $DIR/router.db ]
 then
     (
-	echo "To: @MAILPLUS@admin-$GROUP"
+	echo "To: $adminmailrcpt"
 	echo "Subject: no $GROUP/router.db file"
 	echo "Precedence: bulk"
 	echo ""
@@ -132,16 +136,17 @@ fi
 cd $DIR
 trap 'rm -fr routers.db routers.all.new routers.down.new routers.up.new \
 	routers.mail routers.added routers.deleted $TMP;' 1 2 15
-grep -v '^#' router.db > routers.db
-cut -d: -f1,2 routers.db | sort -u > routers.all.new
+sed -e '/^#/d' -e 's/^ *//' -e 's/ *$//' -e 's/ *: */:/g' router.db | 
+	sort -u > routers.db
+cut -d: -f1,2 routers.db > routers.all.new
 if [ ! -f routers.all ] ; then touch routers.all; fi
 diff routers.all routers.all.new > /dev/null 2>&1; RALL=$?
 @PERLV@ -F: -ane '{($F[0] =~ tr@A-Z@a-z@,print $_)
-    if ($F[2] !~ /^up$/i);}' routers.db | sort -u > routers.down.new
+    if ($F[2] !~ /^up$/i);}' routers.db > routers.down.new
 if [ ! -f routers.down ] ; then touch routers.down; fi
 diff routers.down routers.down.new > /dev/null 2>&1; RDOWN=$?
 @PERLV@ -F: -ane '{($F[0] =~ tr@A-Z@a-z@,print "$F[0]:$F[1]\n")
-    if ($F[2] =~ /^up$/i);}' routers.db | sort -u > routers.up.new
+    if ($F[2] =~ /^up$/i);}' routers.db > routers.up.new
 if [ ! -f routers.up ] ; then touch routers.up; fi
 diff routers.up routers.up.new > /dev/null 2>&1; RUP=$?
 
@@ -207,7 +212,7 @@ then
 
     if [ -s routers.mail ] ; then
 	(
-	  echo "To: @MAILPLUS@admin-$GROUP"
+	  echo "To: $adminmailrcpt"
 	  echo "Subject: changes in $GROUP routers"
 	  echo "Precedence: bulk"
 	  echo ""
@@ -236,9 +241,18 @@ then
     cd $DIR
 
 fi
-mv routers.all.new routers.all
-mv routers.down.new routers.down
-mv routers.up.new routers.up
+mv -f routers.all.new routers.all
+if [ $? -ne 0 ]; then
+    echo "Error: could not rename routers.all.new"
+fi
+mv -f routers.down.new routers.down
+if [ $? -ne 0 ]; then
+    echo "Error: could not rename routers.down.new"
+fi
+mv -f routers.up.new routers.up
+if [ $? -ne 0 ]; then
+    echo "Error: could not rename routers.up.new"
+fi
 rm -f routers.db
 trap 'rm -fr $TMP;' 1 2 15
 
@@ -290,6 +304,7 @@ cd $DIR/configs
 
 # The number of processes running at any given time can be
 # tailored to the specific installation.
+echo ""
 echo "Trying to get all of the configs."
 par -q -n $PAR_COUNT -c "rancid-fe \{}" $devlistfile
 
@@ -331,18 +346,26 @@ do
 done
 echo
 
-# Make sure that all of the new configs are not empty.
-for config in *.new
-do
-    if [ ! -s $config ]
+# Make sure that no empty configs are accepted.  Those that are non-empty
+# are renamed from device_name.new -> device_name.
+for router in `cat $devlistfile`
+do 
+    OFS=$IFS
+    IFS=':'
+    set $router 
+    IFS=$OFS
+    router=$1;
+
+    if [ ! -s $router.new ]
     then
-	rm -f $config
+	rm -f $router.new
+    else
+	mv $router.new $router
+	if [ $? -ne 0 ]; then
+	    echo "Error: could not rename $router.new to $router"
+	fi
     fi
 done
-
-# Now that we have the new configs, rename them to their proper
-# name.
-rename 's/.new$//' *.new
 
 # This has been different for different machines...
 # Diff the directory and then checkin.
@@ -387,7 +410,7 @@ fi
 if [ -s $DIR/routers.failed ]
 then
 	(
-	  echo "To: @MAILPLUS@admin-$GROUP"
+	  echo "To: $adminmailrcpt"
 	  echo "Subject: config fetcher problems - $GROUP"
 	  echo "Precedence: bulk"
 	  echo ""

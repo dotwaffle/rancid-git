@@ -1,22 +1,25 @@
-#!@PERLV_PATH@
+#! @PERLV_PATH@
 ##
+## $Id: rancid-fe.in,v 1.36 2004/01/11 03:49:13 heas Exp $
 ##
-## Copyright (C) 1997-2001 by Henry Kilmer.
+## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
-## This software may be freely copied, modified and redistributed without
-## fee for non-commerical purposes provided that this copyright notice is
-## preserved intact on all copies and modified copies.
+## This software may be freely copied, modified and redistributed
+## without fee for non-commerical purposes provided that this license
+## remains intact and unmodified with any RANCID distribution.
 ##
 ## There is no warranty or other guarantee of fitness of this software.
-## It is provided solely "as is". The author(s) disclaim(s) all
+## It is provided solely "as is".  The author(s) disclaim(s) all
 ## responsibility and liability with respect to this software's usage
 ## or its effect upon hardware, computer systems, other software, or
 ## anything else.
 ##
+## Except where noted otherwise, rancid was written by and is maintained by
+## Henry Kilmer, John Heasley, Andrew Partan, Pete Whiting, and Austin Schutz.
 ##
 #
-#  rancid-FE - front-end to rancid/jrancid for use with par. 
+#  rancid-FE - front-end to rancid/jrancid/etc. for use with par. 
 #
 # usage: rancid-fe <router>:<vendor>
 #
@@ -25,18 +28,28 @@ require 5;
 
 ($router, $vendor) = split('\:', $ARGV[0]);
 
-   if ($vendor =~ /^alteon$/i)	{ exec('arancid', $router); }
-elsif ($vendor =~ /^baynet$/i)	{ exec('brancid', $router); }
-elsif ($vendor =~ /^cat5$/i)	{ exec('cat5rancid', $router); }
-elsif ($vendor =~ /^cisco$/i)	{ exec('rancid', $router); }
-elsif ($vendor =~ /^extreme$/i)	{ exec('xrancid', $router); }
-elsif ($vendor =~ /^ezt3$/i)	{ exec('erancid', $router); }
-elsif ($vendor =~ /^force10$/i)	{ exec('f10rancid', $router); }
-elsif ($vendor =~ /^foundry$/i)	{ exec('francid', $router); }
-elsif ($vendor =~ /^hp$/i)	{ exec('hrancid', $router); }
-elsif ($vendor =~ /^juniper$/i)	{ exec('jrancid', $router); }
-elsif ($vendor =~ /^mrtd$/i)	{ exec('mrancid', $router); }
-elsif ($vendor =~ /^redback$/i)	{ exec('rrancid', $router); }
+   if ($vendor =~ /^alteon$/i)		{ exec('arancid', $router); }
+elsif ($vendor =~ /^baynet$/i)		{ exec('brancid', $router); }
+elsif ($vendor =~ /^cat5$/i)		{ exec('cat5rancid', $router); }
+elsif ($vendor =~ /^cisco$/i)		{ exec('rancid', $router); }
+elsif ($vendor =~ /^css$/i)		{ exec('cssrancid', $router); }
+elsif ($vendor =~ /^enterasys$/i)	{ exec('rivrancid', $router); }
+elsif ($vendor =~ /^erx$/i)		{ exec('jerancid', $router); }
+elsif ($vendor =~ /^extreme$/i)		{ exec('xrancid', $router); }
+elsif ($vendor =~ /^ezt3$/i)		{ exec('erancid', $router); }
+elsif ($vendor =~ /^force10$/i)		{ exec('f10rancid', $router); }
+elsif ($vendor =~ /^foundry$/i)		{ exec('francid', $router); }
+elsif ($vendor =~ /^hitachi$/i)		{ exec('htrancid', $router); }
+elsif ($vendor =~ /^hp$/i)		{ exec('hrancid', $router); }
+elsif ($vendor =~ /^juniper$/i)		{ exec('jrancid', $router); }
+elsif ($vendor =~ /^mrtd$/i)		{ exec('mrancid', $router); }
+elsif ($vendor =~ /^netscaler$/i)	{ exec('nsrancid', $router); }
+elsif ($vendor =~ /^netscreen$/i)	{ exec('nrancid', $router); }
+elsif ($vendor =~ /^procket$/i)		{ exec('prancid', $router); }
+elsif ($vendor =~ /^redback$/i)		{ exec('rrancid', $router); }
+elsif ($vendor =~ /^riverstone$/i)	{ exec('rivrancid', $router); }
+elsif ($vendor =~ /^tnt$/i)		{ exec('tntrancid', $router); }
+elsif ($vendor =~ /^zebra$/i)		{ exec('zrancid', $router); }
 else {
     printf(STDERR "unknown router manufacturer for $router: $vendor\n");
     exit(-1);

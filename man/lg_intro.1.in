@@ -47,7 +47,7 @@ Besides
 .BR lg.conf (5),
 additional instructions for setting up the looking glass can be found
 in the README file under
-.IR @prefix@/util/lg .
+.IR @pkgdatadir@/README.lg .
 .PP
 Note that the looking glass scripts require a few perl modules not
 included with rancid.  Rancid's configure process does not check for

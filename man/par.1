@@ -1,6 +1,6 @@
 .\"
 .hys 50
-.TH "par" "1" "17 Nov 2001"
+.TH "par" "1" "9 Jan 2004"
 .SH NAME
 par \- parallel command processing
 .SH SYNOPSIS
@@ -22,14 +22,14 @@ file
 takes a list of files to run a command on.  The first line of each file begins
 with a colon (:) or a pound-sign (#).  If a colon, the remainder of the
 line is a command to run for each of the subsequent lines.  If a pound-sign,
-then each subsequent line is a command, unless the 
+then each subsequent line is a (self-contained) command, unless the 
 .B \-c
 option was specified, in which case it operates as if the argument to
 .B \-c
 had followed a colon on the first line.
 .PP
 In each of the cases where the lines of the file following the first are
-not commands (ie: colon or -c), instances of open-close braces ({}) in the
+not commands (i.e.: colon or -c), instances of open-close braces ({}) in the
 command will be replaced by these values.
 .PP
 For example, a inputfile whose contents is:
@@ -61,7 +61,7 @@ The command-line options are as follows:
 .TP
 .B \-c
 Command to be run on each of the arguments following the command-line
-options, when the first line of the input file(s) begin with a pound-sign
+options, where the first line of the input file(s) begins with a pound-sign
 (#).
 .\"
 .TP
@@ -70,7 +70,7 @@ Print debugging information on standard error (stderr).
 .\"
 .TP
 .B \-i
-Run commands interactively though (multiple) 
+Run commands interactively through (multiple) 
 .BR xterm (1)
 processes.
 .\"

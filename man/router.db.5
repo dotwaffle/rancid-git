@@ -1,6 +1,6 @@
 .\"
 .hys 50
-.TH "router.db" "5" "22 Jan 2001"
+.TH "router.db" "5" "7 Jan 2004"
 .SH NAME
 router.db \- rancid group configuration file
 .SH DESCRIPTION
@@ -55,12 +55,24 @@ An Alteon WebOS switches.
 A Bay Networks router.
 .TP
 .B cat5
-A cisco catalyst series 5000 and 4000 switches (ie: running the catalyst OS,
+A Cisco catalyst series 5000 and 4000 switches (i.e.: running the catalyst OS,
 not IOS).
 .TP
 .B cisco
-A cisco router, PIX, or switch such as the 3500XL or 6000 running IOS (or
+A Cisco router, PIX, or switch such as the 3500XL or 6000 running IOS (or
 IOS-like) OS.
+.TP
+.B css
+A Cisco content services switch.
+.TP
+.ID 15n
+.B enterasys
+An enterasys NAS.  This is currently an alias for the
+.B riverstone
+device type.
+.TP
+.B erx
+A Juniper E-series edge router.
 .TP
 .B extreme
 An Extreme switch.
@@ -76,6 +88,9 @@ A Foundry router, switch, or router-switch.  This includes HP
 Procurve switches that are OEMs of Foundry products, such as the
 HP9304M.
 .TP
+.B hitachi
+A Hitachi routers.
+.TP
 .B hp
 A HP Procurve switch such as the 2524 or 4108 procurve switches.  Also see the
 .B foundry
@@ -88,8 +103,28 @@ A Juniper router.
 A host running the (merit) MRTd daemon.
 .TP
 .ID 15n
+.B netscalar
+A Netscalar load balancer.
+.TP
+.ID 15n
+.B netscreen
+A Netscreen firewall.
+.TP
+.ID 15n
 .B redback
 A Redback router, NAS, etc.
+.TP
+.ID 15n
+.B riverstone
+A Riverstone NAS or Cabletron (starting with version ~9.0.3) router.
+.TP
+.ID 15n
+.B tnt
+A lucent TNT.
+.TP
+.ID 15n
+.B zebra
+Zebra routing software.
 .RE
 .\"
 .TP
@@ -119,7 +154,7 @@ Freeform string to describe the current state of the router.
 A ``#'' at the begining of a line is a comment; the entire line is
 ignored.
 .PP
-If you delete a device from the 
+If a device is deleted from the 
 .B router.db
 file, then
 .B rancid
@@ -139,9 +174,9 @@ Attic directory (using
 Configuration file described here, where <group> is a device group name
 defined in the variable
 .I LIST_OF_GROUPS
-within \fI$BASEDIR/bin/env\fR.
+within \fI$BASEDIR/etc/rancid.conf\fR.
 .El
-.SH SEE ALSO
+.SH "SEE ALSO"
 .BR control_rancid (1),
-.BR env (5),
-.BR rancid (1)
+.BR rancid (1),
+.BR rancid.conf (5)

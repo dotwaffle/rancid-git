@@ -1,0 +1,275 @@
+#! @PERLV_PATH@
+##
+## $Id: fnrancid.in,v 1.3 2004/01/11 03:49:13 heas Exp $
+##
+## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
+## All rights reserved.
+##
+## This software may be freely copied, modified and redistributed
+## without fee for non-commerical purposes provided that this license
+## remains intact and unmodified with any RANCID distribution.
+##
+## There is no warranty or other guarantee of fitness of this software.
+## It is provided solely "as is".  The author(s) disclaim(s) all
+## responsibility and liability with respect to this software's usage
+## or its effect upon hardware, computer systems, other software, or
+## anything else.
+##
+## Except where noted otherwise, rancid was written by and is maintained by
+## Henry Kilmer, John Heasley, Andrew Partan, Pete Whiting, and Austin Schutz.
+##
+#
+# A library built on Stephen Gill's Netscreen stuff to accomodate
+#  the Fortinet product line.  [d_pfleger@juniper.net] 
+#
+#  RANCID - Really Awesome New Cisco confIg Differ
+#
+# usage: rancid [-d] [-l] [-f filename | $host]
+#
+use Getopt::Std;
+getopts('dfl');
+$log = $opt_l;
+$debug = $opt_d;
+#$debug = 1;
+$file = $opt_f;
+$host = $ARGV[0];
+$found_end = 0;
+$timeo = 90;			# nlogin timeout in seconds
+
+my(%filter_pwds);		# password filtering mode
+
+# This routine is used to print out the router configuration
+sub ProcessHistory {
+    my($new_hist_tag,$new_command,$command_string,@string)=(@_);
+    if((($new_hist_tag ne $hist_tag) || ($new_command ne $command))
+       && defined %history) {
+	print eval "$command \%history";
+	undef %history;
+    }
+    if (($new_hist_tag) && ($new_command) && ($command_string)) {
+	if ($history{$command_string}) {
+	    $history{$command_string} = "$history{$command_string}@string";
+	} else {
+	    $history{$command_string} = "@string";
+	}
+    } elsif (($new_hist_tag) && ($new_command)) {
+	$history{++$#history} = "@string";
+    } else {
+	print "@string";
+    }
+    $hist_tag = $new_hist_tag;
+    $command = $new_command;
+    1;
+}
+
+sub numerically { $a <=> $b; }
+
+# This is a sort routing that will sort numerically on the
+# keys of a hash as if it were a normal array.
+sub keynsort {
+    local(%lines)=@_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $key (sort numerically keys(%lines)) {
+	$sorted_lines[$i] = $lines{$key};
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# This is a sort routing that will sort on the
+# keys of a hash as if it were a normal array.
+sub keysort {
+    local(%lines)=@_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $key (sort keys(%lines)) {
+	$sorted_lines[$i] = $lines{$key};
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# This is a sort routing that will sort on the
+# values of a hash as if it were a normal array.
+sub valsort{
+    local(%lines)=@_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $key (sort values %lines) {
+        $sorted_lines[$i] = $key;
+        $i++;
+    }
+    @sorted_lines;
+}
+
+# This is a numerical sort routing (ascending).
+sub numsort {
+    local(%lines)=@_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $num (sort {$a <=> $b} keys %lines) {
+	$sorted_lines[$i] = $lines{$num};
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# This is a sort routine that will sort on the
+# ip address when the ip address is anywhere in
+# the strings.
+sub ipsort {
+    local(%lines)=@_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $addr (sort sortbyipaddr keys %lines) {
+	$sorted_lines[$i] = $lines{$addr};
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# These two routines will sort based upon IP addresses
+sub ipaddrval {
+    my(@a) = ($_[0] =~ m#^(\d+)\.(\d+)\.(\d+)\.(\d+)$#);
+    $a[3]+256*($a[2]+256*($a[1]+256*$a[0]));
+}
+sub sortbyipaddr {
+    &ipaddrval($a) <=> &ipaddrval($b);
+}
+
+# This routine parses "get system"
+sub GetSystem {
+    print STDERR "    In GetSystem: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	next if /^\s*$/;
+	last if(/$prompt/);
+	ProcessHistory("","","","$_"); 
+	#print STDOUT "$_";
+    }
+    print STDOUT "Vendor: $vendor";
+    ProcessHistory("SYSTEM","","","\n");
+    return(0);
+}
+
+sub GetFile {
+    print STDERR "    In GetFile: $_" if ($debug);
+    while (<INPUT>) {
+	last if(/$prompt/);
+    }
+    ProcessHistory("FILE","","","\n");
+    return(0);
+}
+
+sub GetConf {
+    print STDERR "    In GetConf: $_" if ($debug);
+    while (<INPUT>) {
+	tr/\015//d;
+	next if /^\s*$/;
+	last if(/$prompt/);
+	if (/(^set.*)('Enc .*')(.*)/) {
+            ProcessHistory("ENC","","","!$1 'Enc **encoding removed**' $3\n");
+            next;
+        }
+	ProcessHistory("","","","$_");
+	#print STDOUT "$_";
+    }
+    $found_end=1;
+    return(1);
+}
+
+# dummy function
+sub DoNothing {print STDOUT;}
+
+# Main
+%commands=(
+	'get system status'	=> "GetSystem",
+	'get conf'		=> "GetConf"
+);
+# keys() doesnt return things in the order entered and the order of the
+# cmds is important. pita
+@commands=(
+	"get system status",
+	"get conf"
+);
+$cisco_cmds=join(";",@commands);
+$cmds_regexp=join("|",@commands);
+
+open(OUTPUT,">$host.new") || die "Can't open $host.new for writing: $!\n";
+select(OUTPUT);
+# make OUTPUT unbuffered if debugging
+if ($debug) { $| = 1; }
+
+if ($file) {
+    print STDERR "opening file $host\n" if ($debug);
+    print STDOUT "opening file $host\n" if ($log);
+    open(INPUT,"<$host") || die "open failed for $host: $!\n"; } else {
+    print STDERR "executing nlogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($debug);
+    print STDOUT "executing nlogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($log);
+    if (defined($ENV{NOPIPE})) {
+	system "nlogin -t $timeo -c \"$cisco_cmds\" $host </dev/null > $host.raw 2>&1" || die "nlogin failed for $host: $!\n";
+	open(INPUT, "< $host.raw") || die "nlogin failed for $host: $!\n";
+    } else {
+	open(INPUT,"nlogin -t $timeo -c \"$cisco_cmds\" $host </dev/null |") || die "nlogin failed for $host: $!\n";
+    }
+}
+
+# determine password filtering mode
+if ($ENV{"FILTER_PWDS"} =~ /no/i) {
+	$filter_pwds = 0;  
+} elsif ($ENV{"FILTER_PWDS"} =~ /all/i) {
+	$filter_pwds = 2;
+} else {
+	$filter_pwds = 1;
+}
+
+ProcessHistory("","","","!RANCID-CONTENT-TYPE: Fortigate\n\n");
+TOP: while(<INPUT>) {
+    tr/\015//d;
+    if (/^Error:/) {
+	print STDOUT ("$host nlogin error: $_");
+	print STDERR ("$host nlogin error: $_") if ($debug);
+	last;
+    }
+    while (/>\s*($cmds_regexp)\s*$/) {
+	$cmd = $1;
+	if (!defined($prompt)) { $prompt = " >\s*"; }
+	print STDERR ("HIT COMMAND:$_") if ($debug);
+	if (!defined($commands{$cmd})) {
+	    print STDERR "$host: found unexpected command - \"$cmd\"\n";
+	    last TOP;
+	}
+	$rval = &{$commands{$cmd}};
+	delete($commands{$cmd});
+	if ($rval == -1) {
+	    last TOP;
+	}
+    }
+}
+print STDOUT "Done $logincmd: $_\n" if ($log);
+# Flush History
+ProcessHistory("","","","");
+# Cleanup
+close(INPUT);
+close(OUTPUT);
+
+if (defined($ENV{NOPIPE})) {
+    unlink("$host.raw") if (! $debug);
+}
+
+# check for completeness
+if (scalar(%commands) || !$found_end) {
+    if (scalar(%commands)) {
+	printf(STDOUT "$host: missed cmd(s): %s\n", join(',', keys(%commands)));
+	printf(STDERR "$host: missed cmd(s): %s\n", join(',', keys(%commands))) if ($debug);
+    }
+    if (!$found_end) {
+	print STDOUT "$found_end: found end\n";
+	print STDOUT "$host: End of run not found\n";
+	print STDERR "$host: End of run not found\n" if ($debug);
+	system("/usr/bin/tail -1 $host.new");
+    }
+    unlink "$host.new" if (! $debug);
+}

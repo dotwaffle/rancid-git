@@ -1,0 +1,24 @@
+share/rancid includes some utilities that either don't seem to belong
+in <BINDIR> (i.e.: not part of the core pkg), contributed sources, or
+sources included for convenience/example.
+
+README.misc	This file.
+downreport	Daily report of routers not listed as up in router.db
+getipacctg	Get and sort show ip accounting output from cisco router
+rtrfilter	Procmail mail filter for diffs
+
+---------------
+rtrfilter can be used to filter rancid diffs to avoid sending unwanted
+diffs to certain recipient(s) or diffs which those recipient(s) should
+not see without the need to create separate or duplicate group(s).
+
+/etc/aliases e.g.:
+
+rancid-foo:	engineering,
+		customer-ops-foo
+#
+# only send diffs for the SJC routers (aka. *.sjc.shrubbery.net)
+customer-ops-foo:	"| /usr/local/rancid/share/rancid/rtrfilter -i '\.sjc\.' -s 'sjc router diffs' customer-ops"
+#
+customer-ops:	jimbob,
+		sally

@@ -1,26 +1,33 @@
-#!@EXPECT_PATH@ --
+#! @EXPECT_PATH@ --
 ##
+## $Id: blogin.in,v 1.22 2004/01/11 05:39:15 heas Exp $
 ##
-## Copyright (C) 1997-2001 by Henry Kilmer, Erik Sherk and Pete Whiting.
+## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
-## This software may be freely copied, modified and redistributed without
-## fee for non-commerical purposes provided that this copyright notice is
-## preserved intact on all copies and modified copies.
+## This software may be freely copied, modified and redistributed
+## without fee for non-commerical purposes provided that this license
+## remains intact and unmodified with any RANCID distribution.
 ##
 ## There is no warranty or other guarantee of fitness of this software.
-## It is provided solely "as is". The author(s) disclaim(s) all
+## It is provided solely "as is".  The author(s) disclaim(s) all
 ## responsibility and liability with respect to this software's usage
 ## or its effect upon hardware, computer systems, other software, or
 ## anything else.
 ##
+## Except where noted otherwise, rancid was written by and is maintained by
+## Henry Kilmer, John Heasley, Andrew Partan, Pete Whiting, and Austin Schutz.
 ##
+#
+# The login expect scripts were based on Erik Sherk's gwtn, by permission.
 #
 # blogin - Bay Networks(Nortel) login
 #
-# Unlike the Cisco's, there is no enable function on the Bay's.
-# Instead there are seperate User and Manager accounts.  A 'system' command
-# exists, which i am told does nothing.
+# Unlike the Cisco's, there is no enable function on the Bay's.  Instead
+# there are seperate User and Manager accounts.  A 'system' command exists,
+# which I am told does nothing.
+#
+# The "bcc>" prompt changes to "box#", not "bcc#" after the config command.
 #
 
 # Usage line
@@ -40,8 +47,9 @@ set do_command 0
 set do_script 0
 # The default is to automatically enable
 set enable 0
-# The default is that you login non-enabled (tacacs can have you login already enabled)
-set autoenable 0
+# The default is that you login non-enabled (tacacs can have you login already
+# enabled)
+set avautoenable 0
 # The default is to look in the password file to find the passwords.  This
 # tracks if we receive them on the command line.
 set do_passwd 1
@@ -52,6 +60,8 @@ if {[ info exists env(CISCO_USER) ] } {
     set default_user $env(CISCO_USER)
 } elseif {[ info exists env(USER) ]} {
     set default_user $env(USER)
+} elseif {[ info exists env(LOGNAME) ]} {
+    set default_user $env(LOGNAME)
 } else {
     # This uses "id" which I think is portable.  At least it has existed
     # (without options) on all machines/OSes I've been on recently -
@@ -107,7 +117,7 @@ for {set i 0} {$i < $argc} {incr i} {
 	    if {[ regexp .\[E\](.+)=(.+) $arg ignore varname varvalue]} {
 		set E$varname $varvalue
 	    } else {
-		send_user "Error: invalid format for -E in $arg\n"
+		send_user "\nError: invalid format for -E in $arg\n"
 		exit 1
 	    } 
 	# Enable Password
@@ -176,7 +186,7 @@ for {set i 0} {$i < $argc} {incr i} {
 	    set enable 0
 	# Does tacacs automatically enable us?
 	} -autoenable {
-	    set autoenable 1
+	    set avautoenable 1
 	    set enable 0
 	} -* {
 	    send_user "\nError: Unknown argument! $arg\n"
@@ -272,7 +282,7 @@ proc source_password_file { password_file } {
 # Log into the router.
 proc login { router user userpswd passwd enapasswd prompt cmethod cyphertype } {
     global spawn_id in_proc do_command do_script
-    global u_prompt p_prompt e_prompt
+    global u_prompt p_prompt e_prompt sshcmd
     set in_proc 1
 
     # try each of the connection methods in $cmethod until one is successful
@@ -290,8 +300,8 @@ proc login { router user userpswd passwd enapasswd prompt cmethod cyphertype } {
 		exit 1
 	    }
 	} elseif ![string compare $prog "ssh"] {
-	    if [ catch {spawn ssh -c $cyphertype -x -l $user $router} reason ] {
-		send_user "\nError: ssh failed: $reason\n"
+	    if [ catch {spawn $sshcmd -c $cyphertype -x -l $user $router} reason ] {
+		send_user "\nError: $sshcmd failed: $reason\n"
 		exit 1
 	    }
 	} elseif ![string compare $prog "rsh"] {
@@ -408,10 +418,13 @@ proc do_enable { enauser enapasswd } {
 	-re "$e_prompt"	{ send "$enapasswd\r"; exp_continue}
 	"#"		{ set prompt "#" }
 	"(enable)"	{ set prompt "> (enable) " }
-	denied		{ send_user "\nError: Check your Enable passwd\n"; return 1}
-	"% Bad passwords" { send_user "\nError: Check your Enable passwd\n"
-	    return 1
-	}
+	denied		{ send_user "\nError: Check your Enable passwd\n"
+			  return 1
+			}
+	"% Bad passwords" {
+			  send_user "\nError: Check your Enable passwd\n"
+	  		  return 1
+			}
     }
     # We set the prompt variable (above) so script files don't need
     # to know what it is.
@@ -440,7 +453,7 @@ proc run_commands { prompt command } {
 	    expect {
 		-re "^\[^\n\r *]*$reprompt"	{}
 		-re "^\[^\n\r]*$reprompt."	{ exp_continue }
-		-re "\[\n\r]"			{ exp_continue }
+		-re "\[\n\r]+"			{ exp_continue }
 	    }
 	}
     } else {
@@ -448,7 +461,7 @@ proc run_commands { prompt command } {
 	expect {
 		-re "^\[^\n\r *]*$reprompt"	{}
 		-re "^\[^\n\r]*$reprompt."	{ exp_continue }
-		-re "\[\n\r]"			{ exp_continue }
+		-re "\[\n\r]+"			{ exp_continue }
 	}
     }
     send "logout\r"
@@ -473,7 +486,9 @@ foreach router [lrange $argv $i end] {
     # Since autoenable is off by default, if we have it defined, it
     # was done on the command line. If it is not specifically set on the
     # command line, check the password file.
-    if $autoenable {
+    if $avautoenable {
+	set autoenable 1
+	set enable 0
 	set prompt "#"
     } else {
 	set ae [find autoenable $router]
@@ -496,15 +511,15 @@ foreach router [lrange $argv $i end] {
     if { $do_passwd || $do_enapasswd } {
       set pswd [find password $router]
       if { [llength $pswd] == 0 } {
-	send_user "Error - no password for $router in $password_file.\n"
+	send_user "\nError - no password for $router in $password_file.\n"
 	continue
       }
       if { $do_enapasswd && $autoenable == 0 && [llength $pswd] < 2 } {
-	send_user "Error - no enable password for $router in $password_file.\n"
+	send_user "\nError - no enable password for $router in $password_file.\n"
 	continue
       }
-      set passwd [lindex $pswd 0]
-      set enapasswd [lindex $pswd 1]
+      set passwd [join [lindex $pswd 0] ""]
+      set enapasswd [join [lindex $pswd 1] ""]
     }
 
     # Figure out username
@@ -512,7 +527,7 @@ foreach router [lrange $argv $i end] {
       # command line username
       set ruser $username
     } else {
-      set ruser [find user $router]
+      set ruser [join [find user $router] ""]
       if { "$ruser" == "" } { set ruser $default_user }
     }
 
@@ -521,7 +536,7 @@ foreach router [lrange $argv $i end] {
       # command line username
       set userpswd $userpasswd
     } else {
-      set userpswd [find userpassword $router]
+      set userpswd [join [find userpassword $router] ""]
       if { "$userpswd" == "" } { set userpswd $passwd }
     }
 
@@ -530,7 +545,7 @@ foreach router [lrange $argv $i end] {
       # command line enausername
       set enauser $enausername
     } else {
-      set enauser [find enauser $router]
+      set enauser [join [find enauser $router] ""]
       if { "$enauser" == "" } { set enauser $ruser }
     }
 
@@ -539,19 +554,19 @@ foreach router [lrange $argv $i end] {
     if { "$u_prompt" == "" } {
 	set u_prompt "(Username|login|user name):"
     } else {
-	set u_prompt [lindex $u_prompt 0]
+	set u_prompt [join [lindex $u_prompt 0] ""]
     }
     set p_prompt [find passprompt $router]
     if { "$p_prompt" == "" } {
 	set p_prompt "(\[Pp]assword|passwd):"
     } else {
-	set p_prompt [lindex $p_prompt 0]
+	set p_prompt [join [lindex $p_prompt 0] ""]
     }
     set e_prompt [find enableprompt $router]
     if { "$e_prompt" == "" } {
 	set e_prompt "\[Pp]assword:"
     } else {
-	set e_prompt [lindex $e_prompt 0]
+	set e_prompt [join [lindex $e_prompt 0] ""]
     }
 
     # Figure out cypher type
@@ -566,6 +581,10 @@ foreach router [lrange $argv $i end] {
     # Figure out connection method
     set cmethod [find method $router]
     if { "$cmethod" == "" } { set cmethod {{telnet}} }
+
+    # Figure out the SSH executable name
+    set sshcmd [find sshcmd $router]
+    if { "$sshcmd" == "" } { set sshcmd {ssh} }
 
     # Login to the router
     if {[login $router $ruser $userpswd $passwd $enapasswd $prompt $cmethod $cyphertype]} {

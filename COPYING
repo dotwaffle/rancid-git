@@ -1,18 +1,22 @@
 ##
-## Copyright (C) 1997-2001 by Henry Kilmer, Erik Sherk and Pete Whiting.
+## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
-## This software may be freely copied, modified and redistributed without
-## fee for non-commerical purposes provided that this copyright notice is
-## preserved intact on all copies and modified copies.
+## This software may be freely copied, modified and redistributed
+## without fee for non-commerical purposes provided that this license
+## remains intact and unmodified with any RANCID distribution.
 ##
 ## There is no warranty or other guarantee of fitness of this software.
-## It is provided solely "as is". The author(s) disclaim(s) all
+## It is provided solely "as is".  The author(s) disclaim(s) all
 ## responsibility and liability with respect to this software's usage
 ## or its effect upon hardware, computer systems, other software, or
 ## anything else.
 ##
-
-# bin/rename	- is from CPAN by lwall.
-# util/lg	- the original looking glass is by Ed Kern, provided by
-#		  permission and modified beyond recognition of the original
+## Except where noted otherwise, rancid was written by and is maintained by
+## Henry Kilmer, John Heasley, Andrew Partan, Pete Whiting, and Austin Schutz.
+##
+#
+# The login expect scripts were based on Erik Sherk's gwtn, by permission.
+#
+# bin/lg   - the original looking glass software was written by Ed Kern,
+#            provided by permission and modified beyond recognition.

@@ -1,28 +1,32 @@
-#!@PERLV_PATH@
+#! @PERLV_PATH@
 ##
-## This version of rancid tries to deal with Force10s.
+## $Id: f10rancid.in,v 1.11 2004/01/11 03:49:13 heas Exp $
 ##
-## Copyright (C) 1997-2001 by Henry Kilmer.
+## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
-## This software may be freely copied, modified and redistributed without
-## fee for non-commerical purposes provided that this copyright notice is
-## preserved intact on all copies and modified copies.
+## This software may be freely copied, modified and redistributed
+## without fee for non-commerical purposes provided that this license
+## remains intact and unmodified with any RANCID distribution.
 ##
 ## There is no warranty or other guarantee of fitness of this software.
-## It is provided solely "as is". The author(s) disclaim(s) all
+## It is provided solely "as is".  The author(s) disclaim(s) all
 ## responsibility and liability with respect to this software's usage
 ## or its effect upon hardware, computer systems, other software, or
 ## anything else.
 ##
+## Except where noted otherwise, rancid was written by and is maintained by
+## Henry Kilmer, John Heasley, Andrew Partan, Pete Whiting, and Austin Schutz.
 ##
+#
+# This version of rancid tries to deal with Force10s.
 #
 #  RANCID - Really Awesome New Cisco confIg Differ
 #
 # usage: rancid [-d] [-l] [-f filename | $host]
 #
 use Getopt::Std;
-getopts('dflm');
+getopts('dfl');
 $log = $opt_l;
 $debug = $opt_d;
 $file = $opt_f;
@@ -139,7 +143,6 @@ sub ShowVersion {
 
     while (<INPUT>) {
 	tr/\015//d;
-	study;
 	last if(/^$prompt/);
 	next if(/^(\s*|\s*$cmd\s*)$/);
 	return(-1) if (/command authorization failed/i);
@@ -479,7 +482,6 @@ sub ShowContAll {
 
     while (<INPUT>) {
 	tr/\015//d;
-	study;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	# return(1) if ($type =~ /^(12[40]|7[05])/);
@@ -583,7 +585,6 @@ sub ShowDiagbus {
 
     while (<INPUT>) {
 	tr/\015//d;
-	study;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	#return(1) if ($type !~ /^7[05]/);
@@ -670,7 +671,6 @@ sub ShowDiag {
 
     while (<INPUT>) {
 	tr/\015//d;
-	study;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	# return(1) if ($type !~ /^(12[40]|720|36|26)/);
@@ -882,7 +882,6 @@ sub WriteTerm {
 
     while (<INPUT>) {
 	tr/\015//d;
-	study;
 	last if(/^$prompt/);
 	return(-1) if (/command authorization failed/i);
 	# the pager can not be disabled per-session on the PIX
@@ -1216,7 +1215,11 @@ TOP: while(<INPUT>) {
     }
     while (/#\s*($cmds_regexp)\s*$/) {
 	$cmd = $1;
-	if (!defined($prompt)) {$prompt = ($_ =~ /^([^#]+#)/)[0]; }
+	if (!defined($prompt)) {
+	    $prompt = ($_ =~ /^([^#]+#)/)[0];
+	    $prompt =~ s/([][}{)(\\])/\\$1/g;
+	    print STDERR ("PROMPT MATCH: $prompt\n") if ($debug);
+	}
 	print STDERR ("HIT COMMAND:$_") if ($debug);
 	if (! defined($commands{$cmd})) {
 	    print STDERR "$host: found unexpected command - \"$cmd\"\n";

@@ -1,19 +1,34 @@
+- could the cloginrc match function do a longest-match search instead of
+  first match?
+- look at Andreas Dahl's Brocade switch collection scripts
+- noenable should handle a value properly.  i.e.: 1 == noenable, 0 == enable or
+  perhaps don't clear the -noenable cmd-line option.  the manpage needs to be
+  fixed as well.  see msg from fred jordan.
+- recent hp procurve s/w does not seem have show flash or show module
+- would like to have a "pre-login-sequence" cloginrc directive, see
+  rancid-disuss message from mike ethridge 16/may
+- would like to have a "timeout" cloginrc directive
+- would like to have a ssh "passphrase" cloginrc directive
+- would like to have a "login_option" cloginrc directive to specify arbitrary
+  command-line options
+- possibly a "debug" (exp_internal 1 ?) cloginrc directive?  *login -d flag
+  for same?  warning about filling logs?
+- on 6500, show boot and show bootvar produce the same output and both appear
+  in the crunched config.  should one be filtered?
 - fix varargs for knf in util.c
 - isis filtering for foundry?
-- extreme v6.2.x need 'show configuration detail' to get full config but
-  does not work on older vers
-- hlogin (hp procurve) needs to adjust it's PATH to find hpfilter
-- hlogin hangs when the procurve is does not ask for passwords
-- util/ tool to prune cvs versions, excluding those with tags, by (all but
+- hlogin hangs when the procurve does not ask for passwords
+- hlogin does not work with ssh, needs to alloc a pty?
+- share/ tool to prune cvs versions, excluding those with tags, by (all but
   latest | keep N versions | keep N days/months/years)
-- extreme collections lose when the config on the switch is in an unsaved
-  state, probably due to the prompt changing or rather how clogin formulates
-  the prompt used by expect{ -re }'s.
 - extreme collection fails for tacacs-enabled boxen due to diffs in UI - blech!
+- xrancid should collect both of these:
+	show configuration
+	show configuration detail
 - FILTER_PWDS knob is not implemented in alteon, bay, ezt3 or redback due to
   lack of h/w to test against.  need help from the community.
 - should par's -c override an input files' : cmd?
-- *login should emmit "clogin error:" or "*login error:" to make matches for
+- should *login emmit "clogin error:" or "*login error:" to make matches for
   login failures definitive?
 - would like hpfilter to be more friendly to interactive logins
 - rancid with zebra?  via vtysh?
@@ -34,6 +49,45 @@
 - rancid needs to treat the 3600s like the 7Ks and 12Ks...
   Also, need to allow 12012s, and force 700s to not be treated like 7Ks.
 - clogin/jlogin rsh is munged
-- LG {requested} additions
+- LG should sort routers
+- LG {requested} command additions
 	- show controllers T3 (data)
 	- handle redback in the looking glass
+	- show ip as-path-access-list
+	- show access-list
+	- show ip community-list
+	- show ip route-map
+- prancid - lots of GC'ing to be done
+- prancid - sort logging file by filename.  e.g.:
+	logging file messages facility kernel level debugging
+	logging file log facility any level debugging
+	logging file log archive files 10 size 10m
+	logging file messages archive files 10 size 10m
+  then, sort by facility,  e.g.:
+	logging file messages facility kernel level debugging
+	logging file messages facility authorization level debugging
+- should we add CVS ID header to saved configs?  configurable option? - idea
+  from andrew fort
+- cat 2900 extra info
+	<hostname> uptime is 3 weeks, 3 days, 14 hours, 17 minutes
+	System returned to ROM by power-on
+	System restarted at 15:21:54 UTC Mon Sep 30 2002
+	System image file is "flash:c2950-i6q4l2-mz.121-9.EA1d.bin"
+	
+	cisco WS-C2950-24 (RC32300) processor (revision B0) with 20821K bytes of memory.
+	Processor board ID FHK0619X2RN
+	Last reset from system-reset
+	Running Standard Image
+	24 FastEthernet/IEEE 802.3 interface(s)
+	
+	32K bytes of flash-simulated non-volatile configuration memory.
+	Base ethernet MAC Address: 00:09:B7:50:DE:C0
+	Motherboard assembly number: 73-5781-10
+	Power supply part number: 34-0965-01
+	Motherboard serial number: FOC061903JF
+	Power supply serial number: DAB061735H4
+	Model revision number: B0
+	Motherboard revision number: A0
+	Model number: WS-C2950-24
+	System serial number: FHK0619X2RN
+	Configuration register is 0xF

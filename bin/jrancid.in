@@ -1,22 +1,26 @@
-#!@PERLV_PATH@
+#! @PERLV_PATH@
 ##
-## Amazingly hacked version of Hank's rancid - this one tries to
-## deal with Junipers.
+## $Id: jrancid.in,v 1.58 2004/01/11 03:49:13 heas Exp $
 ##
-## Original Rancid: Copyright (C) 1997-2001 by Henry Kilmer.
+## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
-## This software may be freely copied, modified and redistributed without
-## fee for non-commerical purposes provided that this copyright notice is
-## preserved intact on all copies and modified copies.
+## This software may be freely copied, modified and redistributed
+## without fee for non-commerical purposes provided that this license
+## remains intact and unmodified with any RANCID distribution.
 ##
 ## There is no warranty or other guarantee of fitness of this software.
-## It is provided solely "as is". The author(s) disclaim(s) all
+## It is provided solely "as is".  The author(s) disclaim(s) all
 ## responsibility and liability with respect to this software's usage
 ## or its effect upon hardware, computer systems, other software, or
 ## anything else.
 ##
+## Except where noted otherwise, rancid was written by and is maintained by
+## Henry Kilmer, John Heasley, Andrew Partan, Pete Whiting, and Austin Schutz.
 ##
+#
+# Amazingly hacked version of Hank's rancid - this one tries to
+# deal with Junipers.
 #
 #  RANCID - Really Awesome New Cisco confIg Differ
 #
@@ -147,6 +151,8 @@ sub ShowChassisClocks {
     while (<INPUT>) {
 	tr/\015//d;
 	last if(/^$prompt/);
+	next if(/^system (shutdown message from|going down )/i);
+	next if(/^\{(master|backup)}/);
 
 	/error: the chassis subsystem is not running/ && return;
 	/Couldn\'t initiate connection/ && return;
@@ -171,6 +177,8 @@ sub ShowChassisEnvironment {
     while (<INPUT>) {
 	tr/\015//d;
 	last if(/^$prompt/);
+	next if(/^system (shutdown message from|going down )/i);
+	next if(/^\{(master|backup)}/);
 
 	/error: the chassis subsystem is not running/ && return;
 	/Couldn\'t initiate connection/ && return;
@@ -199,6 +207,8 @@ sub ShowChassisFirmware {
     while (<INPUT>) {
 	tr/\015//d;
 	last if(/^$prompt/);
+	next if(/^system (shutdown message from|going down )/i);
+	next if(/^\{(master|backup)}/);
 
 	/error: the chassis subsystem is not running/ && return;
 	/Couldn\'t initiate connection/ && return;
@@ -220,6 +230,8 @@ sub ShowChassisFpcDetail {
     while (<INPUT>) {
 	tr/\015//d;
 	last if(/^$prompt/);
+	next if(/^system (shutdown message from|going down )/i);
+	next if(/^\{(master|backup)}/);
 
 	/error: the chassis subsystem is not running/ && return;
 	/Couldn\'t initiate connection/ && return;
@@ -244,6 +256,8 @@ sub ShowChassisHardware {
     while (<INPUT>) {
 	tr/\015//d;
 	last if(/^$prompt/);
+	next if(/^system (shutdown message from|going down )/i);
+	next if(/^\{(master|backup)}/);
 
 	/error: the chassis subsystem is not running/ && return;
 	/Couldn\'t initiate connection/ && return;
@@ -266,6 +280,8 @@ sub ShowChassisRoutingEngine {
     while (<INPUT>) {
 	tr/\015//d;
 	last if(/^$prompt/);
+	next if(/^system (shutdown message from|going down )/i);
+	next if(/^\{(master|backup)}/);
 
 	/error: the chassis subsystem is not running/ && return;
 	/Couldn\'t initiate connection/ && return;
@@ -284,8 +300,8 @@ sub ShowChassisRoutingEngine {
     return;
 }
 
-# This routine parses "show chassis feb" "show chassis scb", "show
-# chassis sfm detail", and "show chassis ssb".
+# This routine parses "show chassis cfeb", "show chassis feb", "show
+# chassis scb", "show chassis sfm detail", and "show chassis ssb".
 # Only do this routine once.
 sub ShowChassisSCB {
     print STDERR "    In ShowChassisSCB: $_" if ($debug);
@@ -295,6 +311,8 @@ sub ShowChassisSCB {
     while (<INPUT>) {
 	tr/\015//d;
 	last if(/^$prompt/);
+	next if(/^system (shutdown message from|going down )/i);
+	next if(/^\{(master|backup)}/);
 
 	return if ($ShowChassisSCB);
 	/error: the chassis subsystem is not running/ && return;
@@ -316,6 +334,25 @@ sub ShowChassisSCB {
 }
 
 # This routine parses "show system boot-messages"
+sub ShowChassisAlarms {
+    print STDERR "    In ShowChassisAlarms: $_" if ($debug);
+
+    ProcessHistory("","","","# $_");
+    while (<INPUT>) {
+	tr/\015//d;
+	last if(/^$prompt/);
+	next if(/^system (shutdown message from|going down )/i);
+	next if(/^\{(master|backup)}/);
+
+	/Unrecognized command/ && return;
+	/^\s+\^/ && return;
+	/syntax error/ && return;
+	ProcessHistory("","","","# $_");
+    }
+    return;
+}
+
+# This routine parses "show system boot-messages"
 sub ShowSystemBootMessages {
     print STDERR "    In ShowSystemBootMessages: $_" if ($debug);
 
@@ -324,6 +361,8 @@ sub ShowSystemBootMessages {
     while (<INPUT>) {
 	tr/\015//d;
 	last if(/^$prompt/);
+	next if(/^system (shutdown message from|going down )/i);
+	next if(/^\{(master|backup)}/);
 
 	/Unrecognized command/ && return;
 	/^\s+\^/ && return;
@@ -347,10 +386,15 @@ sub ShowVersion {
     while (<INPUT>) {
 	tr/\015//d;
 	last if(/^$prompt/);
+	next if(/^\s*$/);
+	next if(/^system (shutdown message from|going down )/i);
+	next if(/^\{(master|backup)}/);
 
 	/^Juniper Networks is:/ && ProcessHistory("","","","# \n# $_") && next;
 	ProcessHistory("","","","# $_");
     }
+    ProcessHistory("","","","#\n");
+
     return;
 }
 
@@ -371,11 +415,14 @@ sub ShowConfiguration {
 	    $found_end++;
 	    last;
 	}
+	next if(/^system (shutdown message from|going down )/i);
+	next if(/^\{(master|backup)}/);
 	$lines++;
 
 	/^database header mismatch: / && return(-1);
 	/^version .*;\d+$/ && return(-1);
 
+	s/ # SECRET-DATA$//;
 	# filter snmp community, when in snmp { stanza }
 	/^snmp/ && $snmp++;
 	/^}/ && ($snmp = 0);
@@ -384,24 +431,30 @@ sub ShowConfiguration {
 		    $_ = "$1$2 \"<removed>\"$3\n";
 		}
 	}
-	if (/(\s*authentication-key ).*$/ && $filter_pwds >= 1) {
-	    s/(\s*authentication-key ).*$/#$1<removed>;/;
+	if (/(\s*authentication-key )[^ ;]+/ && $filter_pwds >= 1) {
+	    ProcessHistory("","","","#$1<removed>$'");
+	    next;
 	}
-	if (/(\s*hello-authentication-key ).*$/ && $filter_pwds >= 1) {
-	    s/(\s*hello-authentication-key ).*$/#$1<removed>;/;
+	if (/(\s*hello-authentication-key )[^ ;]+/ && $filter_pwds >= 1) {
+	    ProcessHistory("","","","#$1<removed>$'");
+	    next;
 	}
-	if (/^(.*\ssecret \")\$9\$.*(\".*)$/ && $filter_pwds >= 1) {
-	    s/^(.*\ssecret \")\$9\$.*(\".*)$/#$1<removed>$2/;
+	if (/^(.*\ssecret )[^ ;]+/ && $filter_pwds >= 1) {
+	    ProcessHistory("","","","#$1<removed>$'");
+	    next;
 	}
-	if (/(\s+encrypted-password ).*$/ && $filter_pwds >= 2) {
-	    ProcessHistory("","","","#$1<removed>;\n");
+	if (/(\s+encrypted-password )[^ ;]+/ && $filter_pwds >= 2) {
+	    ProcessHistory("","","","#$1<removed>$'");
 	    next;
 	}
 	if (/(\s+ssh-(rsa|dsa) )\"/ && $filter_pwds >= 2) {
 	    ProcessHistory("","","","#$1<removed>;\n");
 	    next;
 	}
-	s/ # SECRET-DATA$//;
+	if (/^(\s+(pre-shared-|)key (ascii-text|hexadecimal) )[^ ;]+/ && $filter_pwds >= 1) {
+	    ProcessHistory("","","","#$1<removed>$'");
+	    next;
+	}
 	ProcessHistory("","","","$_");
     }
 
@@ -433,8 +486,10 @@ sub DoNothing {print STDOUT;}
 	"show chassis sfm detail"	=> "ShowChassisSCB",
 	"show chassis ssb"		=> "ShowChassisSCB",
 	"show chassis feb"		=> "ShowChassisSCB",
+	"show chassis cfeb"		=> "ShowChassisSCB",
+	"show chassis alarms"		=> "ShowChassisAlarms",
 	"show system boot-messages"	=> "ShowSystemBootMessages",
-	"show version"			=> "ShowVersion",
+	"show version detail"		=> "ShowVersion",
 	"show configuration"		=> "ShowConfiguration"
 );
 @commands=(
@@ -448,8 +503,10 @@ sub DoNothing {print STDOUT;}
 	"show chassis sfm detail",
 	"show chassis ssb",
 	"show chassis feb",
+	"show chassis cfeb",
+	"show chassis alarms",
 	"show system boot-messages",
-	"show version",
+	"show version detail",
 	"show configuration"
 );
 
@@ -512,7 +569,8 @@ TOP: while(<INPUT>) {
 	$cmd = $1;
 	if (!defined($prompt)) {
 	    $prompt = ($_ =~ /^([^>]+>)/)[0];
-	    $prompt =~ s/([}{)(\\])/\\$1/g;
+	    $prompt =~ s/([][}{)(\\])/\\$1/g;
+	    print STDERR ("PROMPT MATCH: $prompt\n") if ($debug);
 	}
 	print STDERR ("HIT COMMAND:$_") if ($debug);
 	if (! defined($commands{$cmd})) {

@@ -1,14 +1,18 @@
 .\"
+.\" $Id: rancid_intro.1,v 1.27 2004/01/11 00:43:19 heas Exp $
+.\"
 .hys 50
-.TH "rancid_intro" "1" "22 Jan 2001"
+.TH "rancid_intro" "1" "7 Jan 2004"
 .SH NAME
 rancid_intro \- introduction to the Really Awesome New Cisco confIg Differ
 .SH INTRODUCTION
 .B rancid
 is really more than just a Cisco configuration differ.  It handles several
 different device's configurations; currently including Alteon, Bay Networks
-(Nortel), Cisco, Extreme, Force10, Foundry, HP Procurve switches,
-Juniper, Redback, MRTd daemon, and the ADC-Kentrox EZ-T3 mux.
+(Nortel), Cisco, Extreme, Force10, Foundry, HP Procurve switches, Juniper
+Routers and edge (ERX) routers, Redback, MRTd daemon, Lucent TNT, Netscalar
+load balancers, Netscreen firewalls, Zebra routing software, and the
+ADC-Kentrox EZ-T3 mux.
 .PP
 .B rancid
 uses an expect script to login to each of a list of devices and run a set of
@@ -18,15 +22,17 @@ unwanted or security related data such as chassis temperature and easily
 reverse-able passwords.
 .PP
 Named after the device's name in the group's configuration file (\c
-.B router.db\c
-), the resulting files are saved in the directory <group>/configs.  Except for
+.IR router.db ),
+the resulting files are saved in the directory <group>/configs.  Except for
 the data filtered from the configuration file for security reasons, such as
 reversable passwords, these files are suitable for loading directly to restore
 a lost configuration.  See
-.BR env (5)
-for more information on <group>'s.
+.BR rancid.conf (5)
+for more information on <group>s.
 .PP
-After filtering, a uni-diff (see diff(1)) of the result is produced
+After filtering, a uni-diff (see 
+.BR diff (1))
+of the result is produced
 for each of the devices in a group against that of the previous run of
 .B rancid
 and is e-mailed to that group's mail list, "rancid-<group>".  This e-mail
@@ -75,14 +81,12 @@ the router, it could just as easily be that the card crashed so the RP
 can not communicate with it to collect information.
 .SH "GETTING STARTED"
 Installation instructions are included in the distribution's top-level
-directory in the README file.  Once the installation is complete, start
-by reading the man pages listed below or follow the basic instructions
-included in the README file.
+directory in the README file (which will be installed in share/rancid).
+Once the installation is complete, start by reading the man pages listed
+below or follow the basic instructions included in the README file.
 .PP
 See http://www.shrubbery.net/rancid for information on new versions,
 mail lists, etc.
-.B rancid
-can be retrieved from ftp://ftp.shrubbery.net/pub/rancid.
 .SH "ADDING NEW GROUPS"
 Follow this procdure for adding new groups:
 .TP
@@ -90,26 +94,26 @@ o
 Update the
 .IR LIST_OF_GROUPS
 variable in
-.IR bin/env
+.IR etc/rancid.conf
 (see
-.BR env (5)).
+.BR rancid.conf (5)).
 .TP
 o
 Run
-.BR create_cvs (1).
+.BR rancid-cvs (1).
 .TP
 o
 Update the system's mail aliases file
-.IR /etc/aliases (
-see 
-.BR env (5)).
+.IR /etc/aliases
+(see 
+.BR rancid.conf (5)).
 .\"
 .SH "SEE ALSO"
-.BR cloginrc (5),
 .BR clogin (1),
+.BR cloginrc (5),
 .BR control_rancid (1),
-.BR env (5),
-.BR do-diffs (1),
 .BR lg_intro (1),
-.BR router.db (5) ,
-.BR rancid (1)
+.BR rancid (1),
+.BR rancid-run (1),
+.BR rancid.conf (5),
+.BR router.db (5)

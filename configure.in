@@ -10,17 +10,14 @@ PACKAGE=`sed -n 's/.*package.*"\(.*\)".*/\1/p' $srcdir/include/version.h.in|tr -
 AC_SUBST(VERSION)
 AC_SUBST(PACKAGE)
 
-AM_INIT_AUTOMAKE($PACKAGE, $VERSION)
-
-AM_CONFIG_HEADER(include/config.h)
+AM_INIT_AUTOMAKE($PACKAGE, $VERSION, rancid@shrubbery.net)
 
 dnl default install location
 AC_PREFIX_DEFAULT(/usr/local/rancid)
 
-AM_MAINTAINER_MODE()
+dnl AM_MAINTAINER_MODE()
 
-dnl AC_CONFIG_SUBDIRS(bin util)
-AC_CONFIG_SUBDIRS(util)
+dnl AC_CONFIG_SUBDIRS(util)
 
 # make sure MAKE sets ${MAKE}
 AC_PATH_PROG(MAKE,gmake,no)
@@ -60,11 +57,13 @@ dnl AC_FUNC_VPRINTF
 AC_TYPE_SIGNAL
 AC_TYPE_SIZE_T
 
-# Check for a preference for using mail addresses like rancid+admin-group
-# instead of the standard rancid-admin-group
+# Package-specific options/knobs
+#
+# Check for a preference for using mail addresses like rancid+group
+# instead of the standard rancid-group
 AC_MSG_CHECKING([whether mail addresses should be in the rancid+ form])
 AC_ARG_ENABLE(mail-plus,
-[  --enable-mail-plus      enable mail to rancid+ addresses, instead of rancid-],
+	AS_HELP_STRING([--enable-mail-plus], [enable mail to rancid+ addresses, instead of rancid-]),
 [if test "$enable_mail_plus" = yes; then
     AC_MSG_RESULT(yes)
     MAILPLUS="rancid+"
@@ -80,8 +79,28 @@ fi],
 ])
 rd_cv_MAILPLUS=$MAILPLUS
 
+# Check for a preference for using mail addresses like rancid+admin-group
+# instead of the standard rancid-admin-group
+AC_MSG_CHECKING([whether admin mail addresses should be in the rancid+ form])
+AC_ARG_ENABLE(adminmail-plus,
+	AS_HELP_STRING([--enable-adminmail-plus], [enable mail to rancid-admin+ addresses, instead of rancid-admin-]),
+[if test "$enable_adminmail_plus" = yes; then
+    AC_MSG_RESULT(yes)
+    ADMINMAILPLUS="rancid-admin+"
+    AC_SUBST(ADMINMAILPLUS)
+else
+    AC_MSG_RESULT(no)
+    ADMINMAILPLUS="${MAILPLUS}admin-"
+    AC_SUBST(ADMINMAILPLUS)
+fi],
+[AC_MSG_RESULT(no)
+    ADMINMAILPLUS="${MAILPLUS}admin-"
+    AC_SUBST(ADMINMAILPLUS)
+])
+rd_cv_ADMINMAILPLUS=$ADMINMAILPLUS
+
 AC_PATH_PROG(DIRNAME,dirname,no)
-# locate GNU diff (-u option)
+# locate GNU diff (one supporting the -u option)
 AC_PATH_PROG(DIFF,diff,no, /usr/local/bin:/usr/gnu/bin:/usr/bin:/usr/contrib/bin)
 if test $DIFF = no; then
     unset ac_cv_path_DIFF
@@ -168,36 +187,9 @@ else
 fi
 rd_cv_lg_ping_cmd=$LG_PING_CMD
 
-# RD_BIN_DATAS are bin/ .in's that need to be installed without execute
-# perms.
-RD_BIN_DATAS=""
-AC_SUBST(RD_BIN_DATAS)
-rd_cv_rd_bin_datas=$RD_BIN_DATAS
-
-# RD_BIN_PROGS are bin/ .in's that need to be installed with execute perms.
-RD_BIN_PROGS="cat5rancid control_rancid \
-alogin arancid clogin create_cvs blogin brancid do-diffs elogin erancid \
-f10rancid flogin francid jlogin jrancid hlogin hrancid mrancid par rancid-fe \
-rancid rename rrancid xrancid"
-AC_SUBST(RD_BIN_PROGS)
-rd_cv_rd_bin_progs=$RD_BIN_PROGS
-
-# RD_UTIL_PROGS are util/ .in's that need to be installed with execute perms.
-RD_UTIL_PROGS="rtrfilter downreport getipacctg"
-AC_SUBST(RD_UTIL_PROGS)
-rd_cv_rd_util_progs=$RD_UTIL_PROGS
-
-# RD_UTIL_LG_PROGS are util/lg .in's that need to be installed with execute
-# perms.
-RD_UTIL_LG_PROGS="lg.cgi lgform.cgi"
-AC_SUBST(RD_UTIL_LG_PROGS)
-rd_cv_rd_util_lg_progs=$RD_UTIL_LG_PROGS
-
-AC_SUBST(INST_PROGS)
-INST_PROGS=$progs
-
-# locate tools to build $PATH for env.  order is significant.  want to be
-# sure that we pick up the the proper diff and ucbmail in bin/env.
+# locate tools to build $PATH for rancid.conf.  order is significant.  want
+# to be sure that we pick up the the proper diff and ucbmail in
+# etc/rancid.conf.
 ENV_PATH="`dirname $PERLV_PATH`:`dirname $EXPECT_PATH`:`dirname $SENDMAIL`"
 ENV_PATH="$ENV_PATH:`dirname $DIRNAME`:`dirname $DIFF`"
 
@@ -233,18 +225,38 @@ ENV_PATH=`echo $ENV_PATH | $PERLV_PATH -e 'foreach $x(split(":",<>)){next unless
 ac_cv_env_path=$ENV_PATH
 AC_SUBST(ENV_PATH)
 
-AC_OUTPUT([ Makefile include/Makefile bin/Makefile util/Makefile \
-	bin/alogin bin/arancid bin/blogin bin/brancid bin/cat5rancid \
-	bin/clogin bin/control_rancid bin/create_cvs bin/do-diffs bin/elogin \
-	bin/env bin/erancid bin/f10rancid bin/flogin bin/francid bin/jlogin \
-	bin/jrancid bin/hlogin \
-	bin/hrancid bin/mrancid bin/par bin/rancid-fe bin/rancid bin/rename \
-	bin/rrancid bin/xrancid \
-	man/Makefile man/env.5 man/lg.conf.5 man/lg_intro.1 \
-	include/version.h \
-	util/rtrfilter util/downreport ], \
-	[ chmod a+x bin/*login bin/*rancid bin/par ]
-	)
 
-# fix permissions on scripts.
-for file in $progs; do chmod a+x $file; done
+AC_CONFIG_FILES(Makefile)
+AC_CONFIG_FILES(bin/Makefile)
+AC_CONFIG_FILES(etc/Makefile)
+AC_CONFIG_FILES(include/Makefile)
+AC_CONFIG_FILES(man/Makefile)
+AC_CONFIG_FILES(share/Makefile)
+AC_CONFIG_FILES(include/version.h)	# this is not a header in the sense of
+					# AC_CONFIG_HEADERS will cause
+					# autoheader to overwrite it, while all
+					# want is simple variable replacement
+AC_CONFIG_HEADERS(include/config.h)
+AC_CONFIG_FILES(bin/control_rancid bin/par bin/rancid-fe, [chmod a+x $ac_file])
+AC_CONFIG_FILES(bin/alogin bin/arancid, [chmod a+x $ac_file])
+AC_CONFIG_FILES(bin/blogin bin/brancid, [chmod a+x $ac_file])
+AC_CONFIG_FILES(bin/cat5rancid bin/clogin bin/rancid, [chmod a+x $ac_file])
+AC_CONFIG_FILES(bin/cssrancid, [chmod a+x $ac_file])
+AC_CONFIG_FILES(bin/elogin bin/erancid, [chmod a+x $ac_file])
+AC_CONFIG_FILES(bin/f10rancid, [chmod a+x $ac_file])
+AC_CONFIG_FILES(bin/flogin bin/francid, [chmod a+x $ac_file])
+AC_CONFIG_FILES(bin/fnrancid, [chmod a+x $ac_file])
+AC_CONFIG_FILES(bin/jlogin bin/jrancid bin/jerancid, [chmod a+x $ac_file])
+AC_CONFIG_FILES(bin/hlogin bin/hrancid, [chmod a+x $ac_file])
+AC_CONFIG_FILES(bin/htlogin bin/htrancid, [chmod a+x $ac_file])
+AC_CONFIG_FILES(bin/mrancid, [chmod a+x $ac_file])
+AC_CONFIG_FILES(bin/nlogin bin/nrancid, [chmod a+x $ac_file])
+AC_CONFIG_FILES(bin/nslogin bin/nsrancid, [chmod a+x $ac_file])
+AC_CONFIG_FILES(bin/prancid, [chmod a+x $ac_file])
+AC_CONFIG_FILES(bin/rivlogin bin/rivrancid, [chmod a+x $ac_file])
+AC_CONFIG_FILES(bin/rrancid, [chmod a+x $ac_file])
+AC_CONFIG_FILES(bin/tntlogin bin/tntrancid, [chmod a+x $ac_file])
+AC_CONFIG_FILES(bin/xrancid bin/zrancid, [chmod a+x $ac_file])
+AC_CONFIG_FILES(share/rtrfilter, [chmod a+x $ac_file])
+
+AC_OUTPUT()

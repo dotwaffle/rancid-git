@@ -1,3 +1,156 @@
+2.3.rc1
+	The following files have been moved to make rancid more
+	install/pkg/port/rpm friendly.
+		*** bin/env has been moved to etc/rancid.conf ***
+		*** bin/hpfilter has been renamed hpuifilter ***
+		*** util/lg/lg.conf has been moved to etc/lg.conf ***
+		*** util/lg/lg*.cgi have been moved to bin/lg*cgi ***
+	Note: existing configuration files are *NOT* copied/moved for you
+
+	bin/rename is no longer shipped with rancid
+
+	rancid.conf: add LOGDIR variable - see rancid.conf(5)
+
+	rancid: add show spe version and parse FRU show diag output
+	- from Yuval Ben-Ari.
+
+	add option --enable-adminmail-plus to configure
+
+	jrancid: collect show chassis alarms
+
+	rancid: skip show vlan for (3550|4500|7600) - from Andrew Fort
+
+	rancid: collect 6500 slave sup bootflash - from Andrew Fort
+
+	rancid: show diag updates for 1700, 3700, etc - help from Michael Haba
+
+	The Extreme does not have an 'enable' level, so make sure
+	you have 'set autoenable' for it in your .cloginrc so clogin
+	will work.
+
+	add Cisco CSS support - from Wedge Martin
+
+	*login: add cloginrc sshcmd directive - idea from steve neighorn
+
+	rancid: IOS show version changes w/ 12.3 - from Yuval Ben-Ari
+
+	support for hitachi routers - from Mohacsi Janos
+
+	strip WS around router.db fields - from Alastair Galloway
+
+	add goveling of 2600 mainboard port adapter info
+
+	*login: also check LOGNAME for default username - from Fredrik Thulin
+
+	jerancid: add matches for "Please wait" to all functions -
+	reported by Dave Mack
+
+	fnrancid: Fortigate support - from D. Pfleger
+
+	nlogin: Fix prompt groveling when running a cluster - from D. Pfleger
+
+	nrancid: filter "set admin user" - from D. Pfleger
+
+	rancid: do both 'write term' and 'show running-config' and
+	keep the output from the first one that works.  As cisco
+	phases out 'write term', this will keep things working.
+
+	jerancid: filter host ... ftp, encrypted passwords oscillate - reported
+	by Dave Mack.
+
+	rivlogin: add "User:" as a possible username prompt (u_prompt) for
+	some platforms - from Adam Rothschild
+
+	cat 3500 s/n and pix failover license - from Rob Evans
+
+	recognize cisco ContentEngine - from Rob Evans
+
+	Juniper ERX (jerancid) support, based on 5.0 - thanks to Dan Pfleger,
+	Richard Russman, Zaid, Mike Baker, and Mark Nguyen
+
+	rancid: drop the "suggested action" portion of GSR LC/RP ROM upgrade
+	warnings.  Cisco keeps changing the format; it just is not worth the
+	aggrevation.
+
+	study causes missed command somehow in redhat9 - from David King
+
+	filter port security mac entries, from Arnold Nipper
+
+	add Procket Networks support, "prancid"
+
+	filter ipsec keys in rancid & jrancid.
+
+	rancid: collect show idprom backplane (6500 cmd); this could collect
+	more - request from jared mauch
+
+	rancid: order all 'ip host' commands.
+
+	rancid: collect show rsp chassis-info
+
+	rancid: filter HSRP auth and SSA key-string reversable passwords
+
+	lg: set query/command list in lg.conf, thus allowing individual cmds
+	to {dis,en}abled, and add some multicast and ipv6 queries all of which
+	are disabled by default (for lack of testing) - from Janos Mohacsi
+
+	cat5rancid: collect 'write term all' for cats that support it - tested
+	by terry kennedy and joe rizzo
+
+	cat5rancid: regularize escaping of regex operators in switch prompt
+
+	nsrancid: include "get log setting", as suggested by gael canal.
+
+	add manpage note about log_user with -s, from mail list discussion
+
+	xrancid: Handle end of ssh connection a bit better.
+
+	jrancid: skip master/backup re msgs
+
+	*rancid: escape regex chars found in prompt
+
+	xrancid: also collect 'show configuration detail'
+
+	hlogin: allow the port to be specified for method ssh and
+	add path to hlogin to env(PATH) for locating hpfilter
+
+	hpfilter: allow >2 arguments so that telnet port number can be passed.
+
+	rancid: gsr RP slot warning is only 1 line - Russell Heilling
+
+	add zrancid to handle zebra routing s/w
+
+	add riverstone support - from Jim Meehan.  thanks to Hong Luo for
+	access to a riverstone to test.  Kevin Chan reports that this works
+	for Cabletron routers with more recent s/w (~v9.0.3).
+
+	jrancid: fix handling of reversible keys such that trailing text is
+	not removed
+
+	rancid: slave/redundancy stuff - from stephen griffin
+
+	rancid: show version bootstrap format changed in 12.0(23)S
+
+	rancid: make sure we filter PIX pager prompts
+
+	xrancid: make xrancid work when the extreme has pending changes.
+
+	netscaler support - from Anshuman Kanwar.
+
+	netscreen firewall support - from Stephen Gill
+
+	rancid: include additional cpu info from show version in !CPU: line.
+
+	lucent tnt support - from Richard Vander Reyden
+
+	rancid: skip consecutive comment lines.  on some access servers the
+	number of comment lines oscillate.
+
+	lg.conf: add LG_STYLE variable for style sheet - from Janos Mohacsi
+
+	also install the FAQ - good idea from Janos Mohacsi's freshport
+
+	rancid: filter 'cable shared-secret'
+
 2.2.2
 	*login: fix handling of userprompt et al so that {}'s are used in
 	.cloginrc as they are with every other .cloginrc directive.
@@ -77,7 +230,7 @@
 	alogin: misplaced brace caused improper return from proc login
 
 	relax the check ping and traceroute check of hostname arguments such
-	that non-fqdn hosts are allowed.  ie: just check that arg chars are
+	that non-fqdn hosts are allowed.  i.e.: just check that arg chars are
 	valid dns chars and leave the resolve errors to the router.
 
 	Add initial support for Force10.
@@ -217,9 +370,9 @@
 	can be used within configuration mode.  note: this turns $prompt into
 	a regexp, WRT -s scripts and -re option for expect's.
 
-	add -Evar=x option to pass variables to scripts.  eg:
+	add -Evar=x option to pass variables to scripts.  e.g.:
 		clogin -Evariable=something router...
-		clogin -Evariable=a,b,c [ie: an array/list which user splits]
+		clogin -Evariable=a,b,c [i.e.: an array/list which user splits]
 
 2.2b2
 	fix jlogin's password/userpassword functionality which broke when
@@ -277,7 +430,7 @@
 
 	add man pages
 
-	collect 'sh vlan' on cat 6000 - afort@staff.webcentral.com.au
+	collect 'sh vlan' on cat 6000 - afort@choqolat.org
 
 	Add 'show vtp status' for the 3500XLs as well.
 

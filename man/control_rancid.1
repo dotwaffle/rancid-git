@@ -1,10 +1,10 @@
 .\"
 .hys 50
-.TH "control_rancid" "1" "22 Jan 2001"
+.TH "control_rancid" "1" "7 Jan 2004"
 .SH NAME
 control_rancid \- run rancid for devices of a group
 .SH SYNOPSIS
-.B create_cvs
+.B control_rancid
 [\c
 .BI \-m\ \c
 mail_rcpt]\ \c
@@ -44,10 +44,10 @@ with <group name>/<device name> rather than just the group name alone.
 .PP
 .B control_rancid
 is normally (and best) run via
-.BR do-diffs (1)
+.BR rancid-run (1)
 which provides a locking mechanism on a group basis.
 .\"
-.SH SEE ALSO
-.BR do-diffs (1),
-.BR env (5),
+.SH "SEE ALSO"
+.BR rancid-run (1),
+.BR rancid.conf (5),
 .BR router.db (5)

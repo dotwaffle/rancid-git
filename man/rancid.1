@@ -1,6 +1,6 @@
 .\"
 .hys 50
-.TH "rancid" "1" "13 Jan 2001"
+.TH "rancid" "1" "6 Jan 2004"
 .SH NAME
 rancid \- Cisco configuration filter
 .SH SYNOPSIS
@@ -26,28 +26,48 @@ For example, hostname.new.
 There are complementary scripts for
 Alteon WebOS switches,
 Bay Networks (nortel),
-Cisco catalyst switch,
+Cisco catalyst switches,
+Cisco content services switches,
 ADC-kentrox EZ-T3 mux,
 Force10,
 Foundry,
 HP Procurve Switches,
-Juniper,
+Hitachi Routers,
+Juniper Networks E-series,
+Juniper Networks,
 MRTd,
+Procket Networks,
+Riverstone,
 Redback,
-and Extreme,
+Lucent TNT,
+Netscreen firewalls,
+Netscaler,
+Extreme,
+and Zebra routing software
 named 
 .B arancid,
 .B brancid,
 .B cat5rancid,
+.B cssrancid,
 .B erancid,
 .B f10rancid,
+.B fnrancid,
 .B francid,
 .B hrancid,
+.B htrancid,
+.B jerancid,
 .B jrancid,
 .B mrancid,
+.B nrancid,
+.B nsrancid,
+.B prancid,
+.B rivrancid,
 .B rrancid,
-and
+.B tntrancid,
+.B nrancid,
 .B xrancid,
+and
+.B zrancid,
 respectively.
 .PP
 The command-line options are as follows:
@@ -70,4 +90,20 @@ output it would normally collect from the device (
 .SH "SEE ALSO"
 .BR control_rancid (1),
 .BR clogin (1),
-.BR env (5)
+.BR rancid.conf (5)
+.\"
+.SH "CAVEATS"
+For Catalyst switches running CatOS, type
+.B cat5,
+the prompt must end with '>'.
+.BR clogin (1)
+looks for '>' to determine when a login is successful.  For example:
+.sp
+.in +1i
+.nf
+cat5k>
+cat5k> enable
+Password: 
+cat5k> (enable) 
+.fi
+.in -1i

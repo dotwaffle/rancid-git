@@ -1,20 +1,25 @@
-#!@EXPECT_PATH@ --
+#! @EXPECT_PATH@ --
 ##
+## $Id: alogin.in,v 1.22 2004/01/11 05:39:15 heas Exp $
 ##
-## Copyright (C) 1997-2001 by Henry Kilmer, Erik Sherk and Pete Whiting.
+## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
-## This software may be freely copied, modified and redistributed without
-## fee for non-commerical purposes provided that this copyright notice is
-## preserved intact on all copies and modified copies.
+## This software may be freely copied, modified and redistributed
+## without fee for non-commerical purposes provided that this license
+## remains intact and unmodified with any RANCID distribution.
 ##
 ## There is no warranty or other guarantee of fitness of this software.
-## It is provided solely "as is". The author(s) disclaim(s) all
+## It is provided solely "as is".  The author(s) disclaim(s) all
 ## responsibility and liability with respect to this software's usage
 ## or its effect upon hardware, computer systems, other software, or
 ## anything else.
 ##
+## Except where noted otherwise, rancid was written by and is maintained by
+## Henry Kilmer, John Heasley, Andrew Partan, Pete Whiting, and Austin Schutz.
 ##
+#
+# The login expect scripts were based on Erik Sherk's gwtn, by permission.
 #
 # alogin - Alteon WebOS switch login
 #
@@ -39,8 +44,9 @@ set do_command 0
 set do_script 0
 # The default is to automatically enable
 set enable 1
-# The default is that you login non-enabled (tacacs can have you login already enabled)
-set autoenable 0
+# The default is that you login non-enabled (tacacs can have you login already
+# enabled)
+set avautoenable 0
 # The default is to look in the password file to find the passwords.  This
 # tracks if we receive them on the command line.
 set do_passwd 1
@@ -50,12 +56,14 @@ if {[ info exists env(CISCO_USER) ] } {
     set default_user $env(CISCO_USER)
 } elseif {[ info exists env(USER) ]} {
     set default_user $env(USER)
+} elseif {[ info exists env(LOGNAME) ]} {
+    set default_user $env(LOGNAME)
 } else {
     # This uses "id" which I think is portable.  At least it has existed
     # (without options) on all machines/OSes I've been on recently -
     # unlike whoami or id -nu.
     if [ catch {exec id} reason ] {
-	send_error "Error: could not exec id: $reason\n"
+	send_error "\nError: could not exec id: $reason\n"
 	exit 1
     } 
     regexp {\(([^)]*)} "$reason" junk default_user
@@ -95,7 +103,7 @@ for {set i 0} {$i < $argc} {incr i} {
 		incr i
 		set E$varname $varvalue
 	    } else {
-		send_user "Error: invalid format for -E in $arg\n"
+		send_user "\nError: invalid format for -E in $arg\n"
 		exit 1
 	    }
 	# Enable Password
@@ -118,7 +126,7 @@ for {set i 0} {$i < $argc} {incr i} {
 		set sfile [ lindex $argv $i ]
 	    }
 	    if { ! [ file readable $sfile ] } {
-		send_user "Error: Can't read $sfile\n"
+		send_user "\nError: Can't read $sfile\n"
 		exit 1
 	    }
 	    set do_script 1
@@ -160,12 +168,12 @@ for {set i 0} {$i < $argc} {incr i} {
 	    set do_command 1
 	# Do we enable?
 	} -noenable {
-	# ignore -noenable
+	    # ignore -noenable
 	# Does tacacs automatically enable us?
 	} -autoenable {
-	# ignore -autoenable
+	    # ignore -autoenable
 	} -* {
-	    send_user "Error: Unknown argument! $arg\n"
+	    send_user "\nError: Unknown argument! $arg\n"
 	    send_user $usage
 	    exit 1
 	} default {
@@ -175,7 +183,7 @@ for {set i 0} {$i < $argc} {incr i} {
 }
 # Process routers...no routers listed is an error.
 if { $i == $argc } {
-    send_user "Error: $usage"
+    send_user "\nError: $usage"
 }
 
 # Only be quiet if we are running a script (it can log its output
@@ -241,16 +249,16 @@ proc find {var router} {
 proc source_password_file { password_file } {
     global env
     if { ! [file exists $password_file] } {
-	send_user "Error: password file ($password_file) does not exist\n"
+	send_user "\nError: password file ($password_file) does not exist\n"
 	exit 1
     }
     file stat $password_file fileinfo
     if { [expr ($fileinfo(mode) & 007)] != 0000 } {
-	send_user "Error: $password_file must not be world readable/writable\n"
+	send_user "\nError: $password_file must not be world readable/writable\n"
 	exit 1
     }
     if [ catch {source $password_file} reason ] {
-	send_user "Error: $reason\n"
+	send_user "\nError: $reason\n"
 	exit 1
     }
 }
@@ -258,7 +266,7 @@ proc source_password_file { password_file } {
 # Log into the router.
 proc login { router user userpswd passwd prompt cmethod cyphertype } {
     global spawn_id in_proc do_command do_script
-    global u_prompt p_prompt
+    global u_prompt p_prompt sshcmd
     set in_proc 1
     set uprompt_seen 0
 
@@ -277,17 +285,17 @@ proc login { router user userpswd passwd prompt cmethod cyphertype } {
 		exit 1
 	    }
         } elseif ![string compare $prog "ssh"] {
-            if [ catch {spawn ssh -c $cyphertype -x -l $user $router} reason ] {
-                send_user "Error: ssh failed: $reason\n"
+            if [ catch {spawn $sshcmd -c $cyphertype -x -l $user $router} reason ] {
+                send_user "\nError: $sshcmd failed: $reason\n"
                 exit 1
             }
         } elseif ![string compare $prog "rsh"] {
             if [ catch {spawn rsh -l $user $router} reason ] {
-                send_user "Error: rsh failed: $reason\n"
+                send_user "\nError: rsh failed: $reason\n"
                 exit 1
             }
         } else {
-            puts "ERROR: unknown connection method: $prog"
+            puts "\nError: unknown connection method: $prog"
             return 1
         }
         incr progs -1
@@ -319,17 +327,17 @@ proc login { router user userpswd passwd prompt cmethod cyphertype } {
 	    close; wait
 	    sleep 0.3
 		expect eof
-		send_user "Error: Connection Refused\n"; wait; return 1
-	} eof { send_user "Error: Couldn't login\n"; wait; return 1
+		send_user "\nError: Connection Refused\n"; wait; return 1
+	} eof { send_user "\nError: Couldn't login\n"; wait; return 1
 	} "Unknown host\r\n" {
 	    expect eof
-	    send_user "Error: Unknown host\n"; wait; return 1
+	    send_user "\nError: Unknown host\n"; wait; return 1
 	} "Host is unreachable" {
 	    expect eof
-	    send_user "Error: Host Unreachable!\n"; wait; return 1
+	    send_user "\nError: Host Unreachable!\n"; wait; return 1
 	} "No address associated with name" {
 	    expect eof
-	    send_user "Error: Unknown host\n"; wait; return 1
+	    send_user "\nError: Unknown host\n"; wait; return 1
 	}
 	-re "(Host key not found |The authenticity of host .* be established).*\(yes\/no\)\?" {
 	    send "yes\r"
@@ -362,10 +370,10 @@ proc login { router user userpswd passwd prompt cmethod cyphertype } {
 					  send "y\r"
 					  exp_continue
 					}
-	"Password incorrect"	{ send_user "Error: Check your password for $router\n";
+	"Password incorrect"	{ send_user "\nError: Check your password for $router\n";
 				  catch {close}; wait; return 1 }
 	-re "$prompt"	{ break; }
-	denied		{ send_user "Error: Check your passwd for $router\n"
+	denied		{ send_user "\nError: Check your passwd for $router\n"
 			  catch {close}; wait; return 1
 			}
 	"\r\n"		{ exp_continue; }
@@ -439,10 +447,10 @@ foreach router [lrange $argv $i end] {
     if { $do_passwd } {
       set pswd [find password $router]
       if { [llength $pswd] == 0 } {
-	send_user "Error - no password for $router in $password_file.\n"
+	send_user "\nError - no password for $router in $password_file.\n"
 	continue
       }
-      set passwd [lindex $pswd 0]
+      set passwd [join [lindex $pswd 0] ""]
     }
 
     # Figure out username
@@ -450,7 +458,7 @@ foreach router [lrange $argv $i end] {
       # command line username
       set ruser $username
     } else {
-      set ruser [find user $router]
+      set ruser [join [find user $router] ""]
       if { "$ruser" == "" } { set ruser $default_user }
     }
 
@@ -459,7 +467,7 @@ foreach router [lrange $argv $i end] {
       # command line username
       set userpswd $userpasswd
     } else {
-      set userpswd [find userpassword $router]
+      set userpswd [join [find userpassword $router] ""]
       if { "$userpswd" == "" } { set userpswd $passwd }
     }
 
@@ -468,13 +476,13 @@ foreach router [lrange $argv $i end] {
     if { "$u_prompt" == "" } {
 	set u_prompt "(Username|login|  Login):"
     } else {
-	set u_prompt [lindex $u_prompt 0]
+	set u_prompt [join [lindex $u_prompt 0] ""]
     }
     set p_prompt [find passprompt $router]
     if { "$p_prompt" == "" } {
 	set p_prompt "\[Pp]assword:"
     } else {
-	set p_prompt [lindex $p_prompt 0]
+	set p_prompt [join [lindex $p_prompt 0] ""]
     }
 
     # Figure out cypher type
@@ -489,6 +497,10 @@ foreach router [lrange $argv $i end] {
     # Figure out connection method
     set cmethod [find method $router]
     if { "$cmethod" == "" } { set cmethod {{telnet} {ssh}} }
+
+    # Figure out the SSH executable name
+    set sshcmd [find sshcmd $router]
+    if { "$sshcmd" == "" } { set sshcmd {ssh} }
 
     # Login to the router
     if {[login $router $ruser $userpswd $passwd $prompt $cmethod $cyphertype]} {

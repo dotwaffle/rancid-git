@@ -1,0 +1,1005 @@
+#! @EXPECT_PATH@ --
+##
+## $Id: rivlogin.in,v 1.15 2004/01/11 05:39:15 heas Exp $
+##
+## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
+## All rights reserved.
+##
+## This software may be freely copied, modified and redistributed
+## without fee for non-commerical purposes provided that this license
+## remains intact and unmodified with any RANCID distribution.
+##
+## There is no warranty or other guarantee of fitness of this software.
+## It is provided solely "as is".  The author(s) disclaim(s) all
+## responsibility and liability with respect to this software's usage
+## or its effect upon hardware, computer systems, other software, or
+## anything else.
+##
+## Except where noted otherwise, rancid was written by and is maintained by
+## Henry Kilmer, John Heasley, Andrew Partan, Pete Whiting, and Austin Schutz.
+##
+#
+# The login expect scripts were based on Erik Sherk's gwtn, by permission.
+#
+# rivlogin - Riverstone (and Enterasys SSR) login
+#
+# Based upon rscmd (see nmops.org)
+# rscmd - Riverstone Networks Automated login 
+# by Mike MacFaden, Kiran Addepalli 
+# Riverstone Networks, 2000
+#
+# Returned to the RANCID crowd by andrew fort
+
+# Global vars section
+
+# program diagnostics
+set verbose  0
+set success  1
+set config   0
+ 
+# in seconds to wait for data back from device
+set timeout 10
+set tempfile "/tmp/rivlogin.[exec date]"
+
+# cli command prompt 
+set my_prompt    ">"
+set enable_prompt "\#"
+
+set default_user ""
+set output_file  ""
+set conf_prompt  "*\(config\)# "
+set logging 0
+set config_mode 0
+
+# Password file for routers to access
+set password_file $env(HOME)/.cloginrc
+
+# If no -c or -s specified, just automate router login ala rsh
+set do_command 0
+set do_script  0
+set log_user   0
+
+# The default CLI mode to login to is "enable" mode
+set enable     1
+
+# The default is to look in the password file to find the passwords.  This
+# tracks if we receive them on the command line.
+set do_passwd    1
+set do_enapasswd 1
+
+# cmd usage
+set usage "Error: Usage: $argv0 \[-noenable\] \
+\[-f cloginrc-file\] \[-c command\] \[-Evar=x\] \[-s script-file\] \
+\[-x command-file\] \[-t timeout\] \[-o output-file\] \
+router \[router...\]\n"
+
+# Procedures Section
+
+
+#
+# Sets Xterm title if interactive...if its an xterm and the user cares
+#
+
+proc label { host } {
+
+    global env
+
+    # if CLOGIN has an 'x' in it, don't set the xterm name/banner
+    if [info exists env(CLOGIN)] {
+        if {[string first "x" $env(CLOGIN)] != -1} { return }
+    }
+
+    if [info exists env(TERM)] {
+        if [regexp \^(xterm|vs) $env(TERM) ignore ] {
+            send_user "\033]1;[lindex [split $host "."] 0]\a"
+            send_user "\033]2;$host\a"
+        }
+    }
+}
+
+
+# This is a helper function to make the password file easier to
+# maintain.
+# NOTES: Using this the password file has the form:
+# add password sl*      pete cow
+# add password at*      steve
+# add password *        hanky-pie
+
+proc add { var args } { 
+
+    global $var
+    lappend $var $args
+} 
+
+# Loads the password file.  Note that as this file is tcl, and that
+# it is sourced, the user better know what to put in there, as it
+# could install more than just password info...  I will assume however,
+# that a "bad guy" could just as easy put such code in the clogin
+# script, so I will leave .cloginrc as just an extention of that script 
+
+proc source_password_file { } {
+
+    global env password_file read_password_file
+
+    if { [info exists read_password_file] } { 
+        return  1
+    }
+
+    if { [info exists password_file] == 0 } { 
+        set password_file $env(HOME)/.cloginrc
+    }
+
+    set read_password_file 1
+    file stat $password_file fileinfo
+
+    if { [expr ($fileinfo(mode) & 007)] != 0000 } {
+        puts "ERROR: $password_file must not be group or world readable and writable\n"
+        return 1
+    }
+
+    source $password_file
+}
+
+# pre: var is x, router is y
+# post: return routerr entry from database else null string
+
+proc find { var router } {
+
+    if {[ source_password_file ] == 0 } {
+        return {}
+    }
+
+    upvar $var list 
+    if { [info exists list] } { 
+        foreach line $list {
+            if { [string match [lindex $line 0] $router ] } {
+                return [lrange $line 1 end]
+            }
+        }
+    }
+    return {}
+}
+
+
+# pre: login completed ok
+# post: terminate login session by closing tcp connection
+
+proc auto_exit  { } {
+
+    global telnet_id    
+
+    if { $verbose == 1 } {
+	puts "DEBUG: auto_exit closing connection to pid $telnet_id\n"
+    }
+    close -i telnet_id
+}
+
+# perform login basic to a router
+# pre: args are valid, router is reachable via network
+# post: return 0 on successful login, else 1
+#
+# NOTE: a number of globals are setup: my_prompt, telnet_id are key
+# and paging of cli output is disabled 
+
+proc login { router user userpswd passwd enapasswd } {
+
+    global login_array
+    global telnet_id
+    global expect_out
+    global spawn_id
+    global verbose
+    global config verbose my_prompt
+
+    if { $verbose == 1 } {
+        puts "DEBUG: login router = $router"
+        puts "DEBUG: login username = $user"
+        puts "DEBUG: login userpasswd = $userpswd"
+	puts "DEBUG: login passwd = $passwd"
+        puts "DEBUG: login enapasswd = $enapasswd"
+    }
+
+    spawn  -noecho telnet $router
+    set telnet_id $spawn_id
+
+    if { $telnet_id == 0 } {
+        puts "ERROR: login: spawn telnet session failed.\n"
+        return 1
+    }
+
+    # wait for initial 'Press RETURN to...' response
+    sleep 0.3
+
+    expect "*"
+    send "\r"
+
+    # If password fails 3 times then expect again   
+    set pass_attempt  0
+
+    expect  {
+
+        -re ".*> " { }
+
+        "Password:"  {
+            incr pass_attempt 
+            send "$passwd\r"
+            exp_continue
+        }
+
+        "Username: " {
+
+            set pattempt 0
+
+            send "$user\r"
+            expect {
+
+                "Password: "    { 
+
+                    incr pattempt
+                    if {$pattempt == 1} {
+                        send "$userpswd\r"; 
+                    } else { 
+                        send "$enapasswd\r"; 
+                    }
+                    exp_continue
+                }
+
+                -re ".*> " { exp_continue;}
+            }
+        }
+        
+	"%TELNETD-W-BADPASSWD" { 
+	    puts "ERROR: bad userid or password to telnet."
+	    return 1
+	}
+	"%CONS-W-AUTH_PASSWD" {
+	    exp_continue
+        }
+
+	"% Authentication failed." {
+	    puts "ERROR: bad userid or password to telnet."
+	    return 1
+	}
+
+
+	"Authentication Failed:" {
+	    puts "ERROR: bad userid or password to radius/tacacs+"
+	    return 1
+	}
+
+        "Connection closed *"   { 
+            if {$pass_attempt == 3} {
+                puts "ERROR: Maximum attempts for password reached. Check password. Exiting.";
+                puts $expect_out(0,string);
+		return 1
+            }
+        }
+
+        timeout {
+            puts "ERROR: Timeout on login. Exiting.";
+            return 1
+        }
+
+	eof { 
+	    puts "ERROR: device closed telnet connection during login"
+	    return 1
+	}
+    }
+
+    # save my_prompt for later use
+    send "\r"
+    expect -re ".*> "
+    set abc "$expect_out(buffer)"
+    set my_prompt "[lindex $abc 0]"
+   regexp {(.*[^>])} $my_prompt my
+
+    return 0;
+}
+
+
+# pre: login completed ok
+# post: turn off paging of commands
+
+proc disable_cli_paging { } {
+    global my_prompt
+
+    send "cli set terminal rows 0\r"
+
+    expect {
+        "$my_prompt"  {return 0 }
+    }
+    return 1
+}
+
+# pre: login returned 0, prompt at top level
+# post: turn off command completion return 0
+# on error, return 1
+
+proc disable_cmd_autocomplete { }  {
+    global my_prompt
+
+    send "cli set command completion off\r"
+    expect {
+
+        $my_prompt  { }
+
+        timeout { 
+            puts "ERROR:disable_cmd_autocomplete(TIMEOUT)";
+            return 0; 
+        }
+
+    }
+
+    return 0
+}
+
+# pre: login returned 0, do_enable returned 0, cli is in enable or config mode
+# post: issues logout cli to device, returns 0 
+
+proc logout { prompt } {
+    global config_mode enable_prompt
+
+    # in case of not being at root cmd...
+    # verify top level prompt state, move to it if necessary
+
+    if { $config_mode == 1 } {
+	
+	send "exit\r"
+
+	expect {
+	    "Do you want*" {
+		send "no\r"
+	    }
+
+	    "$enable_prompt" { }
+
+	    timeout { puts "ERROR: logout: timeout from config mode\n" }
+	    eof { puts "ERROR: device dropped connection\n" }
+	}
+	set config_mode 0
+    }
+
+    send "logout\r"
+    expect {
+
+        "Are you sure*"  {
+	    send "yes\r"
+	    return 0
+	}
+    }
+}
+
+# pre: current mode allows transition to enable mode
+# post: enable mode entered, my_prompt updated, return 0 else 1
+
+proc do_enable { enauser enapasswd userpswd } {
+    global expect_out verbose
+    global my_prompt enable_prompt
+    set enable_prompt [ string trimright $my_prompt ">" ]
+    set enable_prompt $enable_prompt\#
+
+    if { $verbose == 1 } {
+	puts "DEBUG: do_enable: my_prompt = $my_prompt ena_prompt = $enable_prompt"
+    }
+ 
+    send "enable\r"
+
+    expect {
+        Username:     { send "$enauser\r"; exp_continue }
+        Password:     { send "$userpswd\r"; exp_continue }
+
+        "$my_prompt"    {
+	    puts "ERROR: do_enable failed to gain enable mode."
+	    return 1
+	}
+
+	"CONS-W-AUTH_PASSWD" { send "$enapasswd\r"; } 
+
+        "$enable_prompt "  { }
+        "%SYS-W-NOPASSWD*" { }
+
+        "Authentication Failed: Access Denied" {
+	    puts "ERROR: Bad user or password for enable mode."
+	    return 1
+	}
+    }
+   
+   set my_prompt $enable_prompt
+   return 0
+}
+
+# pre: current mode allows transition to enable mode
+# post: enable mode entered, my_prompt updated, return 0 else 1
+
+proc do_configure { } {
+    global expect_out verbose config_mode
+    global my_prompt
+    set config_prompt [ string trimright $my_prompt "\#" ]
+    set config_prompt $config_prompt\(config\)\#
+
+    if { $verbose == 1 } {
+	puts "DEBUG: do_config: my_prompt = $my_prompt cfg_prompt = $config_prompt"
+    }
+ 
+    send "configure\r"
+    expect {
+        "$config_prompt "   { }
+        "$my_prompt"    {
+	}
+
+	eof { return 1}
+	timeout { return 1}
+    }
+
+    set config_mode 1
+    set my_prompt $config_prompt
+    return 0
+}
+
+# track sent/received from device to output_file
+# pre: outut_file is valid filename w/write access
+# post: logfile open, global var logging == 1, return 0 , else 1
+
+proc start_logfile { output_file } {
+    global logging 
+
+    if { [ string length $output_file ] != 0 } {
+	set rc [ catch  { 
+	    log_file -noappend $output_file
+	} errMsg ]
+	
+	if { $rc != 0 } {
+	    puts "ERROR: open file $output_file for write access failed. $errMsg\n"
+	    return 1
+	}
+	set logging 1
+    }
+
+    return 0
+}
+
+proc run_commands { prompt cmdstring } {
+    global sendstring 
+
+    set commands [split $cmdstring \;]
+    set num_commands [llength $cmdstring]
+
+    for {set i 0} {$i < $num_commands} { incr i} {
+        regsub -- {[ ]*([^\.]*)} [subst -nocommands [lindex $commands $i]] {\1} sendstring
+
+        if {[ run_single_command $prompt $sendstring ] == 1} {
+            puts "ERROR: command '$sendstring' not processed by device.  Check previous error messages."
+            return 1
+        }
+    }
+    return 0
+}
+
+
+# Run commands given on the command line
+# pre: prompt is current system cli prompt, cmdstring is command to execute
+# post: return 0 on success else 1
+#  NOTE: output from router ends up in output_file if specified
+#  expect internal input buffer is reset to "" after each command
+
+proc run_single_command { prompt cmdstring } {
+    global verbose
+    set rc 0
+    set seen_prompt 0
+    set seen_timeout 0
+    set need_ays 0
+    set delay 0
+
+    if {$verbose == 1} {
+        puts "DEBUG: run_commands: prompt=$prompt \"$cmdstring\" "
+    }
+
+    # ays == "are you sure" - must send back yes
+    if { [string compare $cmdstring "save startup" ]  == 0 } {
+	set need_ays 1
+        set delay 1
+        if {$verbose == 1} {
+          puts "DEBUG: save startup cmd seen, set need_ays = 1" 
+        }
+    }
+
+    # TODO: add case for copy command to startup, also prompts for ok
+
+    # TODO: if we see config command: system set name note it
+    # if we see a save active, then update system prompts as well
+
+    send "$cmdstring\r"
+
+    if { $delay == 1} {
+       sleep 1
+    } 
+
+    expect {
+
+        "%CLI-E-IVCMD*" {
+           puts "ERROR: run_commands(command rejected by device)\n"
+           set rc 1
+        }
+
+	"%CLI-E-FACUNKNWN*" {
+           puts "ERROR: run_commands(command rejected by device)\n"
+           set rc 1
+	}
+
+	"%SYS-I-ADDFAILED*" {
+           puts "ERROR: run_commands(command rejected by device)\n"
+           set rc 1
+	}
+	"%TFTP-E-REMOTE,*" {
+           puts "ERROR: run_commands(command rejected by device)\n"
+           set rc 1
+	}
+
+	"%SYS-E-PRIMARY_NO_SUCH_IMAGE*" {
+           puts "ERROR: run_commands(command rejected by device)\n"
+           set rc 1
+	}
+
+	"want to overwrite " {
+	    send "yes\r"
+	    if {$verbose == 1} {
+               puts "DEBUG: got overwrite question, set need_ays to 0" 
+            }
+	    set need_ays 0
+	}
+
+
+        "%CONFIG-E-DUPLICATE,*" {
+         }
+
+        "$prompt" { 
+	    if { $seen_prompt == 0 } {
+		set seen_prompt 1
+	    }
+
+	    if {$verbose == 1} {
+		puts "DEBUG: saw double prompt, exiting expect loop\n"
+	    }
+
+	    if { $need_ays == 1 } {
+		exp_continue
+	    }
+	}
+
+        -re ".* More: m,<space> --- Quit: q --- One line: <return> ---" {
+            send "q"
+            exp_continue
+        }
+
+
+        timeout { 
+	    if {$verbose == 1} {
+		puts "DEBUG: timeout occured for the $seen_time time\n"
+	    }
+
+	    if { $seen_timeout == 0 } {
+		set seen_timeout 1
+		send "\r\r"
+		exp_continue
+	    }
+
+            puts "ERROR:run_commands(TIMEOUT)"
+            set rc 1
+        }
+
+        eof { 
+	    puts "ERROR:run_commands(connection closed by device)\n" 
+	    set rc 1
+        }
+
+        "\n" { exp_continue }
+    }
+
+    # clear input buffer of any remaining data
+    expect "*"
+    return $rc
+}
+
+
+# pre: RSTONE_USER env var is set
+# post: update global "default_user" to this string
+
+proc init_userid { } {
+  global default_user
+
+    if {[ info exists env(RSTONE_USER) ] } {
+        set default_user $env(RSTONE_USER)
+    } else {
+        # This uses "id" which I think is portable.  At least it has existed 
+        # (without options) on all machines/OSes I've been on recently - 
+        # unlike whoami or id -nu.
+        regexp {\(([^)]*)} [exec id] junk default_user
+    }
+}
+
+proc source_script_file { filename } {
+	global my_prompt
+
+        expect -re "$my_prompt"      {}
+
+        source $filename
+
+}
+
+
+# pre: login completed ok, filename contains set of cli commands one per line
+# post: each command is extracted from filename and sent to device
+# return 0 on success, return 1 on error
+# NOTE: for scripts that begin with "configure", change the mode to configure
+# before executing the following commands
+
+proc process_script_file { filename } {
+
+    global my_prompt verbose
+    set rc 0
+    set ifile ""
+
+    set rc [ catch  { 
+	set ifile [ open $filename r]
+    } errMsg ]
+
+    if { $rc != 0 } {
+	puts "ERROR: process_script_file: open script file $filename for read access failed. $errMsg\n"
+	return 1
+    }
+
+    set line_cnt 0
+
+    while { [eof $ifile]  != 1 } {
+	
+	set bytes [ gets $ifile cmd ]
+	incr line_cnt
+
+	if { $bytes < 0  } { 
+	    break 
+	} elseif { $bytes == 0 } {
+	    continue
+	}
+	
+	if { $verbose == 1 } {
+	    puts "DEBUG: line:$line_cnt cmd = $cmd\n"
+	}
+
+	# skip comments in script files
+	if { [regexp "^\#" $cmd] != 1  } {
+
+	   # puts "$cmd rc = [string compare $cmd "configure" ]\n"
+
+	    if { [string compare $cmd "configure" ]  == 0 } {
+
+		do_configure
+
+	    } else {
+		if {[ run_commands $my_prompt $cmd ] == 1} {
+		    puts "ERROR: line $line_cnt in $filename not processed by device. Check previous error msgs."
+		    set rc 1
+		    break
+		}
+	    }
+	}
+    }
+
+    close $ifile
+    return $rc
+}
+
+
+
+#  pre: filename is valid file
+#  post: remove extended ascii sequences and other cruft
+#  and prepend a header: rscmd: ip-addr : date
+#  TODO: should watch all file commands more closely
+
+proc strip_log { filename router }  {
+
+    global tempfile
+
+    set rc [ catch  { 
+	set ifile [ open $filename r]
+    } errMsg ]
+
+    if { $rc != 0 } {
+	puts "ERROR: strip_log: open script file $filename for read access failed. $errMsg\n"
+	return 1
+    }
+    set rc [ catch  { 
+	set ofile [ open $tempfile w]
+    } errMsg ]
+
+    if { $rc != 0 } {
+	puts "ERROR: strip_log: open temp file $tempfile for write access failed. $errMsg\n"
+	return 1
+    }
+
+    set nl 0
+
+    puts $ofile "rscmd: $router : [exec date]"
+    
+    while { [eof $ifile]  != 1 } {
+	
+	set bytes [ gets $ifile cmd ]
+	if { $bytes <= 0  } { 
+	    break 
+	}
+	incr nl
+	if { $nl <= 2 } {
+	    continue
+	}
+
+	regsub -all -- "\r" $cmd "" newcmd
+	puts $ofile $newcmd
+    }
+
+    close $ifile
+    close $ofile
+    set rc 0
+    file copy -force $tempfile $filename
+    file delete $tempfile
+    return $rc
+}
+
+#
+# main section
+#
+
+
+if { $verbose == 1 } {
+    puts "\n\nrscmd: Version 1.1 started on [exec date]"
+    puts "[exec uname -a]"
+    puts "Expect Version: [exp_version]\n"
+}
+
+# send input like in a fast and consistent human style
+set send_human {.1 .3 1 .05 2}
+
+# initialize default_user variable
+init_userid
+
+# Parse Command Line
+
+for {set idx 0} {$idx < $argc} {incr idx} {
+
+    set arg [lindex $argv $idx]
+
+    switch  -glob -- $arg {
+
+        -c* -
+        -C* {
+            if {! [  regexp .\[cC\](.+) $arg ignore command]} {
+                incr idx
+                set command [ lindex $argv $idx ]
+            }
+            set do_command 1
+        # Environment variable to pass to -s scripts
+        } -E*
+        {
+            if {[ regexp .\[E\](.+)=(.+) $arg ignore varname varvalue]} {
+                set E$varname $varvalue
+            } else {
+                send_user "Error: invalid format for -E in $arg\n"
+                exit 1
+            }
+	# Expect script to run
+        } -s* -
+        -S* {
+            if {! [  regexp .\[sS\](.+) $arg ignore sfile]} {
+                incr idx
+                set sfile [ lindex $argv $idx ]
+            }
+
+            if { ! [ file exists $sfile ] } {
+                puts "ERROR: invalid argument script file \"$sfile\" does not exist.\n"
+		exit 1
+	    }
+            if { ! [ file readable $sfile ] } {
+                puts "ERROR: invalid argument script file \"$sfile\" permissions disallow read access.\n"
+		exit 1
+            }
+
+            set do_script 1
+        # Command file
+        } -x* -
+        -X {
+            if {! [  regexp .\[xX\](.+) $arg ignore cmd_file]} {
+                incr idx
+                set cmd_file [ lindex $argv $idx ]
+            }
+            if [ catch {set cmd_fd [open $cmd_file r]} reason ] {
+                send_user "\nError: $reason\n"
+                exit 1
+            }
+            set cmd_text [read $cmd_fd]
+            close $cmd_fd
+            set command [join [split $cmd_text \n] \;]
+            set do_command 1
+        } -f* -
+        -F* {
+            if {! [ regexp .\[fF\](.+) $arg ignore password_file]} {
+                incr idx
+                set password_file [ lindex $argv $idx ]
+            }
+
+        } -o* -
+        -O* {
+            if {! [ regexp .\[fF\](.+) $arg ignore password_file]} {
+                incr idx
+                set output_file [ lindex $argv $idx ]
+		if { $verbose == 1 } {
+		    puts "DEBUG: output file: $output_file"
+		}
+            }
+
+        } -t* -
+        -T* {
+            incr idx
+            set timeout [ lindex $argv $idx ]
+
+        } -noenable {
+            set enable 0
+        } -* {
+            puts "ERROR:unkown argument passed: $arg\n"
+            puts $usage
+	    exit 1
+
+        } default {
+	    break
+        }
+    }
+}
+
+# Verify at least one router is specified
+#
+if { $idx == $argc } {
+    puts "\n$usage"
+    exit 1
+}
+
+# main loop
+
+foreach router [lrange $argv $idx end] {
+set router [string tolower $router]
+
+# Figure out passwords
+if {$verbose == 1} {
+    puts "DEBUG: do_passwd = $do_passwd\n"
+    puts "DEBUG: do_enablepasswd = $do_enapasswd\n"
+}
+
+if { $do_passwd || $do_enapasswd } {
+    set pswd [find password $router]
+    if { [llength $pswd] == 0 } {
+        puts "ERROR: - no password for $router in $password_file.\n"
+        exit 1
+    } 
+    if { $do_enapasswd && [llength $pswd] < 2 } {
+        puts "ERROR: no enable password found for $router in $password_file."
+        exit 1
+    }
+    
+    set passwd [join [lindex $pswd 0] ""]
+    set enapasswd [join [lindex $pswd 1] ""]
+}
+
+
+# Figure out user to login with if necessary
+
+if {[info exists username]} {  
+    # command line username
+    set user $username
+} else {
+    set user [join [find user $router] ""]
+    if { "$user" == "" } { set user $default_user }
+} 
+
+# Figure out username's password
+
+if {[info exists userpasswd]} {
+    # command line username
+    set userpswd $userpasswd
+} else {
+    set userpswd [join [find userpassword $router] ""]
+    if { "$userpswd" == "" } { set userpswd $passwd } 
+} 
+
+# Figure out enable username
+
+if {[info exists enausername]} {  
+    # command line enausername
+    set enauser $enausername
+} else {
+    set enauser [join [find enauser $router] ""]
+    if { "$enauser" == "" } { set enauser $user } 
+} 
+
+# Login to the router, set my_prompt to router's cmd prompt
+
+if {[login $router $user $userpswd $passwd $enapasswd ]} {
+    if { $verbose == 1 } {
+	puts "DEBUG: login to $router failed\n"
+    }
+    exit 1
+}
+
+if {$verbose == 1 } {
+    puts "DEBUG: login completed ok\n"
+}
+
+if { $enable == 1 } {
+
+    if { [do_enable $enauser $enapasswd $userpswd] == 1} {
+	if { $verbose == 1 } {
+	    puts "DEBUG: switch to enable mode on $router failed\n"
+	}
+	exit 1
+    }
+}
+
+# run in one of three modes
+
+if { $do_command } {
+
+    disable_cmd_autocomplete
+    disable_cli_paging
+    
+    if {[ start_logfile $output_file] != 0 } {
+	exit 1
+    }
+
+    if {[ run_commands $my_prompt $command ]} {
+
+	log_file 
+        exit 1
+
+    } else {
+
+        logout $my_prompt
+
+    }
+    
+} elseif { $do_script } {
+    
+    disable_cmd_autocomplete
+    disable_cli_paging
+    
+    if {[ start_logfile $output_file] != 0 } {
+	exit 1
+    }
+
+    #if { [process_script_file $sfile] == 1}  {
+#	puts "DEBUG: logfile $output_file closed on error\n"
+#	logout $my_prompt
+#	exit 1
+#    }
+
+    source_script_file $sfile
+
+    logout $my_prompt
+
+} else {
+    
+    label $router 
+    log_user 1
+
+    if {[ start_logfile $output_file] != 0 } {
+	exit 1
+    }
+    interact
+    log_file 
+}
+
+if { $verbose == 1 } {
+    puts "DEBUG: exiting normally.\n"
+}
+
+if { $logging == 1} {
+    log_file 
+    strip_log $output_file $router
+}
+}
+
+# puts "\n"
+exit 0
