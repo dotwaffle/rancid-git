@@ -1,4 +1,6 @@
 - lg.conf(5) needs the query stuff documented.
+- subversion support in addition to CVS
+- configure OLDTIME per-group
 - could the cloginrc match function do a longest-match search instead of
   first match?
 - look at Andreas Dahl's Brocade switch collection scripts

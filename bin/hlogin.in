@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: hlogin.in,v 1.23 2004/04/09 00:06:44 heas Exp $
+## $Id: hlogin.in,v 1.24 2004/10/14 17:53:57 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -181,8 +181,8 @@ for {set i 0} {$i < $argc} {incr i} {
 	    }
 	    if [ catch {set cmd_fd [open $cmd_file r]} reason ] {
 		send_user "\nError: $reason\n"
-		exit 1 
-	    }  
+		exit 1
+	    }
 	    set cmd_text [read $cmd_fd]
 	    close $cmd_fd
 	    set command [join [split $cmd_text \n] \;]
@@ -244,25 +244,25 @@ proc label { host } {
 # add password *	hanky-pie
 proc add {var args} { global int_$var ; lappend int_$var $args}
 proc include {args} {
-    global env 
-    regsub -all "(^{|}$)" $args {} args 
+    global env
+    regsub -all "(^{|}$)" $args {} args
     if { [ regexp "^/" $args ignore ] == 0 } {
 	set args $env(HOME)/$args
-    } 
+    }
     source_password_file $args
-}   
-    
+}
+
 proc find {var router} {
-    upvar int_$var list 
+    upvar int_$var list
     if { [info exists list] } {
 	foreach line $list {
 	    if { [string match [lindex $line 0] $router ] } {
 		return [lrange $line 1 end]
-	    }     
-	}       
-    }     
-    return {} 
-}           
+	    }
+	}
+    }
+    return {}
+}
 
 # Loads the password file.  Note that as this file is tcl, and that
 # it is sourced, the user better know what to put in there, as it
@@ -308,7 +308,7 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 	    }
 	} elseif [string match "ssh*" $prog] {
 	    if {"$port" == ""} {
-		set retval [ catch {spawn hpuifilter -- '$sshcmd -c $cyphertype -x -l $user' $router} reason ]
+		set retval [ catch {spawn hpuifilter -- $sshcmd -c $cyphertype -x -l $user $router} reason ]
 	    } else {
 		set retval [ catch {spawn hpuifilter -- $sshcmd -c $cyphertype -p $port -x -l $user $router} reason ]
 	    }
@@ -655,9 +655,9 @@ foreach router [lrange $argv $i end] {
     set cmethod [find method $router]
     if { "$cmethod" == "" } { set cmethod {{telnet} {ssh}} }
 
-    # Figure out the SSH executable name  
-    set sshcmd [find sshcmd $router]  
-    if { "$sshcmd" == "" } { set sshcmd {ssh} }  
+    # Figure out the SSH executable name
+    set sshcmd [find sshcmd $router]
+    if { "$sshcmd" == "" } { set sshcmd {ssh} }
 
     # Adjust our path to find hpuifilter
     regexp {(.*)/[^/]+} $argv0 junk hpf_path
@@ -678,11 +678,11 @@ foreach router [lrange $argv $i end] {
 	}
     }
     # we are logged in, now figure out the full prompt
-    send "\r"   
-    expect {    
+    send "\r"
+    expect {
 	-re "\[\r\n]+"		{ exp_continue; }
 	-re "^.+$prompt"	{ set prompt $expect_out(0,string); }
-    }       
+    }
 
     if { $do_command } {
 	if {[run_commands $prompt $command]} {

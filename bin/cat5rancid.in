@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: cat5rancid.in,v 1.36 2004/01/11 03:49:13 heas Exp $
+## $Id: cat5rancid.in,v 1.37 2005/03/20 22:15:35 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -1003,7 +1003,8 @@ sub DoNothing {print STDOUT;}
 	'show module'		=> "ShowModule",
 	'show port ifindex'	=> "ShowPortIfindex",
 	'write term all'	=> "WriteTerm",
-	'write term'		=> "WriteTerm"
+	'write term'		=> "WriteTerm",
+	'show running-config'	=> "WriteTerm"
 );
 # keys() doesnt return things in the order entered and the order of the
 # cmds is important (show version first and write term last). pita
@@ -1019,7 +1020,8 @@ sub DoNothing {print STDOUT;}
 	"show module",
 	"show port ifindex",
 	"write term all",
-	"write term"
+	"write term",
+	"show running-config"
 );
 $cisco_cmds=join(";",@commands);
 $cmds_regexp=join("|",@commands);

@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: nlogin.in,v 1.17 2004/05/21 19:28:49 heas Exp $
+## $Id: nlogin.in,v 1.20 2004/12/24 21:00:32 tex Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -20,231 +20,22 @@
 ##
 #
 # The login expect scripts were based on Erik Sherk's gwtn, by permission.
+# Netscreen hacks implemented by Stephen Gill <gillsr@yahoo.com>.
 #
 # nlogin - netscreen login
 #
 # Most options are intuitive for logging into a netscreen firewall.
 #
+# Misc notes
+#	netscreen does not have the concept of "enable", once logged in, a
+#	users permissions can not change.
 
-# Usage line
-set usage "Usage: $argv0 \[-c command\] \[-Evar=x\] \[-f cloginrc-file\]
-\[-s script-file\] \[-t timeout\] \[-u user\] \
-\[-p user-password\] \[-y ssh_cypher_type\] firewall \[firewall...\]\n"
 
-# env(CLOGIN) may contain:
-#	x == do not set xterm banner or name
-
-# Password file
-set password_file $env(HOME)/.cloginrc
-# Default is to login to the firewall
-set do_command 0
-set do_script 0
-# The default is to automatically enable
-set avenable 0
-# The default is that you login non-enabled (tacacs can have you login already
-# enabled)
-set avautoenable 1
-# The default is to look in the password file to find the passwords.  This
-# tracks if we receive them on the command line.
-set do_passwd 1
-set do_enapasswd 1
-
-# Find the user in the ENV, or use the unix userid.
-if {[ info exists env(CISCO_USER) ] } {
-    set default_user $env(CISCO_USER)
-} elseif {[ info exists env(USER) ]} {
-    set default_user $env(USER)
-} elseif {[ info exists env(LOGNAME) ]} {
-    set default_user $env(LOGNAME)
-} else {
-    # This uses "id" which I think is portable.  At least it has existed
-    # (without options) on all machines/OSes I've been on recently -
-    # unlike whoami or id -nu.
-    if [ catch {exec id} reason ] {
-	send_error "\nError: could not exec id: $reason\n"
-	exit 1
-    } 
-    regexp {\(([^)]*)} "$reason" junk default_user
-}   
-
-# Sometimes firewall take awhile to answer (the default is 10 sec)
-set timeout 45
-
-# Process the command line
-for {set i 0} {$i < $argc} {incr i} {
-    set arg [lindex $argv $i]
-
-    switch  -glob -- $arg {
-	# Username
-	-u* -
-	-U* {
-	    if {! [  regexp .\[uU\](.+) $arg ignore user]} {
-		incr i
-		set username [ lindex $argv $i ]
-	    }
-	# VTY Password
-	} -p* -
-	-P* {
-	    if {! [  regexp .\[pP\](.+) $arg ignore userpasswd]} {
-		incr i
-		set userpasswd [ lindex $argv $i ]
-	    }
-	    set do_passwd 0
-	# Environment variable to pass to -s scripts
-	} -E*
-	{
-	    if {[ regexp .\[E\](.+)=(.+) $arg ignore varname varvalue]} {
-		set E$varname $varvalue
-	    } else {
-		send_user "\nError: invalid format for -E in $arg\n"
-		exit 1
-	    }
-	# Command to run.
-	} -c* -
-	-C* {
-	    if {! [  regexp .\[cC\](.+) $arg ignore command]} {
-		incr i
-		set command [ lindex $argv $i ]
-	    }
-	    set do_command 1
-	# Expect script to run.
-	} -s* -
-	-S* {
-	    if {! [  regexp .\[sS\](.+) $arg ignore sfile]} {
-		incr i
-		set sfile [ lindex $argv $i ]
-	    }
-	    if { ! [ file readable $sfile ] } {
-		send_user "\nError: Can't read $sfile\n"
-		exit 1
-	    }
-	    set do_script 1
-       # cypher type
-        } -y* -
-        -Y* {
-            if {! [  regexp .\[eE\](.+) $arg ignore cypher]} {
-                incr i
-                set cypher [ lindex $argv $i ]
-            }
-	# alternate cloginrc file
-	} -f* -
-	-F* {
-	    if {! [ regexp .\[fF\](.+) $arg ignore password_file]} {
-		incr i
-		set password_file [ lindex $argv $i ]
-	    }
-	} -t* -
-	-T* {
-	    incr i
-	    set timeout [ lindex $argv $i ]
-        } -x* -
-        -X {
-            if {! [  regexp .\[xX\](.+) $arg ignore cmd_file]} {
-                incr i
-                set cmd_file [ lindex $argv $i ]
-            }
-	    if [ catch {set cmd_fd [open $cmd_file r]} reason ] {
-		send_user "\nError: $reason\n"
-		exit 1
-	    }
-            set cmd_text [read $cmd_fd]
-            close $cmd_fd
-            set command [join [split $cmd_text \n] \;]
-            set do_command 1
-	# Does tacacs automatically enable us?
-        } -autoenable {
-	    # ignore autoenable
-	    #set avautoenable 1
-	} -* {
-	    send_user "\nError: Unknown argument! $arg\n"
-	    send_user $usage
-	    exit 1
-	} default {
-	    break
-	}
-    }
-}
-# Process firewalls...no firewalls listed is an error.
-if { $i == $argc } {
-    send_user "\nError: $usage"
-}
-
-# Only be quiet if we are running a script (it can log its output
-# on its own)
-if { $do_script } {
-    log_user 0
-} else {
-    log_user 1
-}
-
-#
-# Done configuration/variable setting.  Now run with it...
-#
-
-# Sets Xterm title if interactive...if its an xterm and the user cares
-proc label { host } {
-    global env
-    # if CLOGIN has an 'x' in it, don't set the xterm name/banner
-    if [info exists env(CLOGIN)] {
-	if {[string first "x" $env(CLOGIN)] != -1} { return }
-    }
-    # take host from ENV(TERM)
-    if [info exists env(TERM)] {
-	if [regexp \^(xterm|vs) $env(TERM) ignore ] {
-	    send_user "\033]1;[lindex [split $host "."] 0]\a"
-	    send_user "\033]2;$host\a"
-        }
-    }
-}
-
-# This is a helper function to make the password file easier to
-# maintain.  Using this the password file has the form:
-# add password sl* 	pete cow
-# add password at* 	steve
-# add password *	hanky-pie
-proc add {var args} { global int_$var ; lappend int_$var $args}
-proc include {args} {
-    global env
-    regsub -all "(^{|}$)" $args {} args
-    if { [ regexp "^/" $args ignore ] == 0 } {
-	set args $env(HOME)/$args
-    } 
-    source_password_file $args
-}   
-
-proc find {var firewall} {
-    upvar int_$var list
-    if { [info exists list] } {
-	foreach line $list {
-	    if { [string match [lindex $line 0] $firewall ] } {
-		return [lrange $line 1 end]
-	    }
-	}
-    }
-    return {}
-}
-
-# Loads the password file.  Note that as this file is tcl, and that
-# it is sourced, the user better know what to put in there, as it
-# could install more than just password info...  I will assume however,
-# that a "bad guy" could just as easy put such code in the clogin
-# script, so I will leave .cloginrc as just an extention of that script 
-proc source_password_file { password_file } {
-    global env
-    if { ! [file exists $password_file] } {
-	send_user "\nError: password file ($password_file) does not exist\n"
-	exit 1
-    }
-    file stat $password_file fileinfo
-    if { [expr ($fileinfo(mode) & 007)] != 0000 } {
-	send_user "\nError: $password_file must not be world readable/writable\n"
-	exit 1
-    }
-    if [ catch {source $password_file} reason ] {
-	send_user "\nError: $reason\n"
-	exit 1
-    }
-}
+@INCLUDE login.top@
+# Enable password isn't understood but is used in script.
+# enable settings mostly ignored, but set this:
+set do_enapasswd 0
+# just in case
 
 # Log into the firewall.
 proc login { firewall user userpswd passwd enapasswd prompt cmethod
@@ -347,7 +138,7 @@ cyphertype } {
 	                  catch {close}; wait; return 1
 	                }
 	" ### Login failed" {send_user "\nError: Check your passwd for $firewall\n"; return 1 }
-	-re "(login:)"	{
+	-re "(login:)"			{
 					  sleep 1;
 					  send "$user\r"
 					  set uprompt_seen 1
@@ -368,7 +159,7 @@ cyphertype } {
 					  }
 					  exp_continue
 					}
-	"$prompt"       { break; }
+	-- "$prompt"			{ break; }
      }
     }
     set in_proc 0
@@ -381,7 +172,7 @@ proc run_commands { prompt command } {
     set in_proc 1
 
     send "set console page 0\r"
-    expect $prompt {}
+    expect -re $prompt {}
 
     # Is this a multi-command?
     if [ string match "*\;*" "$command" ] {
@@ -391,26 +182,38 @@ proc run_commands { prompt command } {
 	for {set i 0} {$i < $num_commands} { incr i} {
 	    send "[subst [lindex $commands $i]]\r"
 	    expect {
-                -re "$prompt"	{}
+		-re "\[\n\r]+"		{ exp_continue }
+                -re "$prompt"		{}
+		-gl "--- more ---"	{
+					  send " "
+					  exp_continue
+					}
             }
 	}
     } else {
 	send "[subst $command]\r"
 	expect {
-                -re "$prompt"	{}
+		-re "\[\n\r]+"		{ exp_continue }
+                -re "$prompt"		{}
+		-gl "--- more ---"	{
+					  send " "
+					  exp_continue
+					}
 	}
     }
     send "exit\r"
     expect {
-	"\n" { exp_continue }
-	-re "$prompt" {
-		send "exit\r"
-		exp_continue }
-	-re "Configuration modified, save?" {
-		send "n\r"
-		exp_continue }
-	timeout { return 0 }
-	eof { return 0 }
+	-re "$prompt"			{
+					  send "exit\r"
+					  exp_continue
+					}
+	-re "\[\n\r]+"			{ exp_continue }
+	-gl "Configuration modified, save?" {
+					  send "n\r"
+					  exp_continue
+					}
+	timeout				{ return 0 }
+	eof				{ return 0 }
     }
     set in_proc 0
 }
@@ -424,7 +227,7 @@ foreach firewall [lrange $argv $i end] {
     set firewall [string tolower $firewall]
     send_user "$firewall\n"
 
-    set prompt ">"
+    set prompt {-> }
 
     # Figure out passwords
     if { $do_passwd || $do_enapasswd } {
@@ -455,14 +258,6 @@ foreach firewall [lrange $argv $i end] {
       if { "$userpswd" == "" } { set userpswd $passwd } 
     } 
     
-    # Figure out enable username
-    if {[info exists enausername]} {  
-      # command line enausername
-      set enauser $enausername
-    } else {
-      set enauser [join [find enauser $firewall] ""]
-      if { "$enauser" == "" } { set enauser $ruser } 
-    } 
 
     # Figure out cypher type
     if {[info exists cypher]} {
@@ -485,20 +280,15 @@ foreach firewall [lrange $argv $i end] {
     if {[login $firewall $ruser $userpswd $passwd $enapasswd $prompt $cmethod $cyphertype]} {
 	continue
     }
-    if { $enable } { 
-	if {[do_enable $enauser $enapasswd]} {
-	    if { $do_command || $do_script } {
-		close; wait
-		continue
-	    }
-	}
-    }
+
     # we are logged in, now figure out the full prompt
     send "\r"
     expect {
 	-re "\[\r\n]+"		{ exp_continue; }
-	-re "^.+$prompt"	{ set junk $expect_out(0,string);
-				  regsub -all "\[\]\(\)\[]" $junk {\\&} prompt;
+	-re "^(.+$prompt)"	{ set junk $expect_out(0,string);
+				  # if it has HA (high avail), the prompt will
+				  # be "something-(.)->"
+				  regsub -all "\[\]\)\(\[]" $junk {\\&} prompt;
 				}
     }
 
@@ -508,7 +298,7 @@ foreach firewall [lrange $argv $i end] {
 	}
     } elseif { $do_script } {
 	send "set console page 0\r"
-	expect $prompt	{}
+	expect -re $prompt	{}
 	source $sfile
 	close
     } else {

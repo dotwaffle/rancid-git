@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: nrancid.in,v 1.13 2004/01/11 03:49:13 heas Exp $
+## $Id: nrancid.in,v 1.17 2004/10/15 08:56:01 afort Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -147,6 +147,8 @@ sub GetSystem {
 	tr/\015//d;
 	next if /^\s*$/;
 	last if(/$prompt/);
+	# throw away the pager lines
+	next if /^--- more ---/;
 
         /^Serial Number: (\d+), Control Number: \d+$/ &&
                 ProcessHistory("SYSTEM","","", "!SN: $1\n") && next;
@@ -182,7 +184,10 @@ sub GetConf {
     while (<INPUT>) {
 	tr/\015//d;
 	next if /^\s*$/;
+	next if /^Total Config.+$/i;
 	last if(/$prompt/);
+	# throw away the pager lines
+	next if /^--- more ---/;
 
  	if (/^set admin name "(\S+)"$/ && $filter_pwds >= 1) {
             ProcessHistory("ADMIN","","","!set admin name <removed>\n");
@@ -197,6 +202,7 @@ sub GetConf {
             ProcessHistory("ADMIN","","",
 		"!set admin user $1 password <removed> privilege $3\n");
             next;
+	}
 	ProcessHistory("","","","$_");
     }
     $found_end=1;
@@ -242,11 +248,11 @@ if ($file) {
 
 # determine password filtering mode
 if ($ENV{"FILTER_PWDS"} =~ /no/i) {
-	$filter_pwds = 0;  
+    $filter_pwds = 0;  
 } elsif ($ENV{"FILTER_PWDS"} =~ /all/i) {
-	$filter_pwds = 2;
+    $filter_pwds = 2;
 } else {
-	$filter_pwds = 1;
+    $filter_pwds = 1;
 }
 
 ProcessHistory("","","","!RANCID-CONTENT-TYPE: netscreen\n!\n");
@@ -260,7 +266,8 @@ TOP: while(<INPUT>) {
     while (/>\s*($cmds_regexp)\s*$/) {
 	$cmd = $1;
 	if (!defined($prompt)) {
-	    $prompt = "\-\>\s*";
+	    $prompt = ($_ =~ /^([^>]+->)/)[0];
+	    $prompt =~ s/([][}{)(\\])/\\$1/g;
 	    print STDERR ("PROMPT MATCH: $prompt\n") if ($debug);
 	}
 	print STDERR ("HIT COMMAND:$_") if ($debug);

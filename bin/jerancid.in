@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: jerancid.in,v 1.26 2004/06/04 18:07:37 heas Exp $
+## $Id: jerancid.in,v 1.30 2004/10/15 21:20:49 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -263,7 +263,7 @@ sub DirSlotN {
 	next if (/^Please wait/i);
 	next if (/^system\.log/);
 	# fail if the RP is amid the auto-sync process
-	return(-1) if (/active\/standby/ && !/not sync/);
+	return(-1) if (/active\/standby/i && /not sync/);
 
 	ProcessHistory("FLASH","","","!Flash: $_");
     }
@@ -307,6 +307,8 @@ sub WriteTerm {
 	# skip the crap
 	/^! Configuration script /i && next;
 	/^! Copyright /i && next;
+	/^Please wait/i && next;
+	/^(\.+)$/ && next; # Skip variable length pausing dot lines
 
 	# Dog gone Cool matches to process the rest of the config
 	/^ntp clock-period /    && next; # kill ntp clock-period

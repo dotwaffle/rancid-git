@@ -1,8 +1,8 @@
 .\"
-.\" $Id: cloginrc.5,v 1.35 2004/05/12 23:35:48 heas Exp $
+.\" $Id: cloginrc.5,v 1.36 2004/06/24 16:03:24 heas Exp $
 .\"
 .hys 50
-.TH "cloginrc" "5" "11 May 2004"
+.TH "cloginrc" "5" "23 June 2004"
 .SH NAME
  \.cloginrc \- clogin configuration file
 .SH DESCRIPTION
@@ -101,6 +101,10 @@ the user is not automatically enabled and
 .IR clogin
 should execute the enable command to gain enable privileges, unless
 negated by the noenable directive or \-noenable command\-line option.
+.sp
+Also see the
+.B noenable
+directive.
 .\"
 .TP
 .B add cyphertype <router name glob> {<ssh encryption type>}
@@ -172,8 +176,17 @@ Default: {telnet} {ssh}
 will not try to gain enable privileges when noenable is matched for a
 device.  This is equivalent to
 .IR "clogin" 's
--noenable command-line option.  This does not apply to
-.BR jlogin (1).
+-noenable command-line option.
+.sp
+Note that this directive is meaningless for
+.BR jlogin (1),
+.BR nlogin (1)
+and
+.BR clogin (1)
+[for Extreme]
+which do not have the concept of "enabled" and/or no way to elevate
+privleges once logged in; a user either has the necessary privleges or
+doesn't.
 .\"
 .TP
 .B add passphrase <router name glob> {"<SSH passphrase>"}

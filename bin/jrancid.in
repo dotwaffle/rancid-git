@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: jrancid.in,v 1.61 2004/06/05 04:02:08 asp Exp $
+## $Id: jrancid.in,v 1.63 2004/12/08 00:31:46 asp Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -186,6 +186,7 @@ sub ShowChassisEnvironment {
 	/command is not valid/ && return;
 	/^\s+\^/ && return;
 	/syntax error/ && return;
+
 	/ backplane temperature/ && next;
 	/(\s*Power supply.*), temperature/ &&
 		ProcessHistory("","","","# $1\n") && next;
@@ -216,6 +217,7 @@ sub ShowChassisFirmware {
 	/command is not valid/ && return;
 	/^\s+\^/ && return;
 	/syntax error/ && return;
+
 	ProcessHistory("","","","# $_");
     }
     return;
@@ -239,6 +241,7 @@ sub ShowChassisFpcDetail {
 	/command is not valid/ && return;
 	/^\s+\^/ && return;
 	/syntax error/ && return;
+
 	/ Temperature/ && next;
 	/ Start time/ && next;
 	/ Uptime/ && next;
@@ -265,6 +268,7 @@ sub ShowChassisHardware {
 	/command is not valid/ && return;
 	/^\s+\^/ && return;
 	/syntax error/ && return;
+
 	ProcessHistory("","","","# $_");
     }
     return;
@@ -289,11 +293,13 @@ sub ShowChassisRoutingEngine {
 	/command is not valid/ && return;
 	/^\s+\^/ && return;
 	/syntax error/ && return;
+
 	/^Routing Engine status:/ && ProcessHistory("","","","# $_") && next;
 	/ Slot / && ProcessHistory("","","","# $_") && next;
 	/ Current state/ && ProcessHistory("","","","# $_") && next;
 	/ Election priority/ && ProcessHistory("","","","# $_") && next;
 	/ DRAM/ && ProcessHistory("","","","# $_") && next;
+	/ Model/ && ProcessHistory("","","","# $_") && next;
 	/ Serial ID/ && ProcessHistory("","","","# $_") && next;
 	/^\s*$/ && ProcessHistory("","","","# $_") && next;
     }
@@ -321,6 +327,7 @@ sub ShowChassisSCB {
 	/command is not valid/ && return;
 	/^\s+\^/ && return;
 	/syntax error/ && return;
+
 	/ Temperature/ && next;
 	/ temperature/ && next;
 	/ utilization/ && next;
@@ -334,7 +341,7 @@ sub ShowChassisSCB {
     return;
 }
 
-# This routine parses "show system boot-messages"
+# This routine parses "show chassis alarms"
 sub ShowChassisAlarms {
     print STDERR "    In ShowChassisAlarms: $_" if ($debug);
 
@@ -347,8 +354,76 @@ sub ShowChassisAlarms {
 	next if(/^\{(master|backup)}/);
 
 	/Unrecognized command/ && return;
+	/command is not valid/ && return;
 	/^\s+\^/ && return;
 	/syntax error/ && return;
+
+	ProcessHistory("","","","# $_");
+    }
+    return;
+}
+
+# This routine parses "show system autoinstallation status"
+sub ShowSystemAutoinstall {
+    print STDERR "    In ShowSystemAutoinstall: $_" if ($debug);
+
+    s/^[a-z]+@//;
+    ProcessHistory("","","","# $_");
+    while (<INPUT>) {
+	tr/\015//d;
+	last if(/^$prompt/);
+	next if(/^system (shutdown message from|going down )/i);
+	next if(/^\{(master|backup)}/);
+
+	/Unrecognized command/ && return;
+	/command is not valid/ && return;
+	/^\s+\^/ && return;
+	/syntax error/ && return;
+
+	ProcessHistory("","","","# $_");
+    }
+    return;
+}
+
+# This routine parses "show system license"
+sub ShowSystemLicense {
+    print STDERR "    In ShowSystemLicense: $_" if ($debug);
+
+    s/^[a-z]+@//;
+    ProcessHistory("","","","# $_");
+    while (<INPUT>) {
+	tr/\015//d;
+	last if(/^$prompt/);
+	next if(/^system (shutdown message from|going down )/i);
+	next if(/^\{(master|backup)}/);
+
+	/Unrecognized command/ && return;
+	/command is not valid/ && return;
+	/^\s+\^/ && return;
+	/syntax error/ && return;
+
+	ProcessHistory("","","","# $_");
+    }
+    return;
+}
+
+# This routine parses "show system license keys"
+sub ShowSystemLicenseKeys {
+    print STDERR "    In ShowSystemLicenseKeys: $_" if ($debug);
+
+    s/^[a-z]+@//;
+    ProcessHistory("","","","# $_");
+    while (<INPUT>) {
+	tr/\015//d;
+	last if(/^$prompt/);
+	next if(/^system (shutdown message from|going down )/i);
+	next if(/^\{(master|backup)}/);
+
+	/Unrecognized command/ && return;
+	/command is not valid/ && return;
+	/^\s+\^/ && return;
+	/syntax error/ && return;
+
 	ProcessHistory("","","","# $_");
     }
     return;
@@ -367,8 +442,10 @@ sub ShowSystemBootMessages {
 	next if(/^\{(master|backup)}/);
 
 	/Unrecognized command/ && return;
+	/command is not valid/ && return;
 	/^\s+\^/ && return;
 	/syntax error/ && return;
+
 	/^JUNOS / && <INPUT> && next;
 	/^Timecounter "TSC" / && next;
 	/^real memory / && next;
@@ -495,6 +572,9 @@ sub DoNothing {print STDOUT;}
 	"show chassis feb"		=> "ShowChassisSCB",
 	"show chassis cfeb"		=> "ShowChassisSCB",
 	"show chassis alarms"		=> "ShowChassisAlarms",
+#	"show system autoinstallation status" => "ShowSystemAutoinstall",
+	"show system license"		=> "ShowSystemLicense",
+#	"show system license keys"	=> "ShowSystemLicenseKeys",
 	"show system boot-messages"	=> "ShowSystemBootMessages",
 	"show version detail"		=> "ShowVersion",
 	"show configuration"		=> "ShowConfiguration"
@@ -512,6 +592,9 @@ sub DoNothing {print STDOUT;}
 	"show chassis feb",
 	"show chassis cfeb",
 	"show chassis alarms",
+#	"show system autoinstallation status",
+	"show system license",
+#	"show system license keys",
 	"show system boot-messages",
 	"show version detail",
 	"show configuration"

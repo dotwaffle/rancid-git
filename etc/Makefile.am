@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 ## A Makefile.in is supplied, in case you do not have automake.
 
-## $Id: Makefile.am,v 1.11 2004/01/13 18:02:00 heas Exp $
+## $Id: Makefile.am,v 1.12 2005/02/12 00:08:18 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -34,23 +34,23 @@ endif
 
 install-data-local: all
 	@if test "$(DO_CONF_INSTALL)" = "yes"; then \
-	if test -f $(sysconfdir)/rancid.conf ; then \
+	if test -f $(DESTDIR)$(sysconfdir)/rancid.conf ; then \
 	    echo ""; \
-	    echo "WARNING: *** $(sysconfdir)/rancid.conf exists.  See "; \
+	    echo "WARNING: *** $(DESTDIR)$(sysconfdir)/rancid.conf exists.  See "; \
 	    echo "         *** $(pkgdatadir)/rancid.conf.sample for new"; \
 	    echo "         *** examples."; \
 	    echo ""; \
 	else \
-	    $(INSTALL_DATA) rancid.conf.sample $(sysconfdir)/rancid.conf; \
+	    $(INSTALL_DATA) rancid.conf.sample $(DESTDIR)$(sysconfdir)/rancid.conf; \
 	fi; \
-	if test -f $(sysconfdir)/lg.conf ; then \
+	if test -f $(DESTDIR)$(sysconfdir)/lg.conf ; then \
 	    echo ""; \
-	    echo "WARNING: *** $(sysconfdir)/lg.conf exists.  See "; \
+	    echo "WARNING: *** $(DESTDIR)$(sysconfdir)/lg.conf exists.  See "; \
 	    echo "         *** $(pkgdatadir)/lg.conf.sample for new"; \
 	    echo "         *** examples."; \
 	    echo ""; \
 	else \
-	    $(INSTALL_DATA) lg.conf.sample $(sysconfdir)/lg.conf; \
+	    $(INSTALL_DATA) lg.conf.sample $(DESTDIR)$(sysconfdir)/lg.conf; \
 	fi; \
 	fi
 

@@ -212,6 +212,9 @@ Quick Installation Guide (an example):
     Subscribe by sending an email whose body contains "subscribe
     rancid-<announce or discuss>" to majordomo@shrubbery.net.
 
+    If you are reporting problems, please include the version of rancid,
+    expect, and your OS in the email.
+
 
 Problem with clogin/telnet hanging within rancid or scripts?
 
@@ -231,7 +234,13 @@ Synopsis: SunOS 5.6: /kernel/drv/ip patch
 Another possibile contributor is expect/tcl.  We've noticed that expect
 5.24.1 (possibly 5.28.*) and whatever tcl happens to compile with it, 
 seems to not exhibit this problem, while 5.32.* appears to on linux and
-solaris but not on netbsd 1.5.  See www.shrubbery.net/rancid for additional
-notes on this.
+solaris but not on netbsd 1.5.
+
+Also, for rancid 2.3 and later, changes were made to the login scripts
+which use some more elaborate regexes that have failed with expect versions
+prior to 5.40.  While 5.40 works, it still seems to need the patch offered
+on the rancid web page.
+
+See www.shrubbery.net/rancid for additional notes on this.
 
 -Hank

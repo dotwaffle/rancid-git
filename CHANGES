@@ -1,3 +1,49 @@
+2.3.2a
+	rancid: correct handling of SNMPv3 host configs - Patrick Adlam
+
+	rancid: filter nv_hdr file seen on sup720 - Bill Ouchark
+
+	etc/Makefile.am: support DESTDIR - from Michael Shields
+
+	rancid: add IOX/CRS support.
+
+	hrancid: show stack does not apply to all procurves - Eugene Zagrebelny
+
+	flogin: older foundry o/s has misc spaces preceeding : in username
+	prompt - from mike ethridge
+
+	A better nlogin & nrancid for NetScreens - help from Stephen Gill
+
+	jerancid: case fluctuates in "active/standby" - from David Gethings
+
+	jerancid: filter "please wait" from config - from David Gethings
+
+	jerancid: filter consecutive periods at top of write term - mark cooper
+
+	jerancid: fix check for slave RE sync in DirSlotN - from Mark Lovely
+
+	rancid: collect 6500's sub-module info from show modules
+
+	jrancid: collect license info & RE Model.  Don't collect
+	the license keys as this is only supported on the jseries
+	and running 'show system license keys' on other junipers
+	produces output from *two* commands - 'show system license'
+	AND 'show system licensekeys'.
+
+	rancid: erroneous space in shared-secret match - from Blaz Zupan
+
+	nrancid: fix missing brace - from David King
+
+	lgform: need strftime from POSIX - from Joao Frade
+
+	rancid: filter multiple-fs file - from Yuval Ben-Ari
+
+	cssrancid: make this parse the collected output properly
+
+	rancid: filter & sort IOS AP username passwords - noted by Stafford Rau
+
+	rancid: parse more variants of 'show diag' output.
+
 2.3.1
 	jerancid: fail/retry if the RP is syncing to the backup - Dave Mack
 

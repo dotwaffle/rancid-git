@@ -1,5 +1,5 @@
 /*
- * $Id: hpuifilter.c,v 1.17 2004/01/11 03:49:13 heas Exp $
+ * $Id: hpuifilter.c,v 1.20 2005/03/30 07:27:15 heas Exp $
  *
  * Copyright (C) 1997-2004 by Terrapin Communications, Inc.
  * All rights reserved.
@@ -25,8 +25,8 @@
 
 #define DFLT_TO	60				/* default timeout */
 
-#include <config.h>
-#include <version.h>
+#include "config.h"
+#include "version.h"
 
 #include <stdio.h>
 #include <limits.h>
@@ -36,6 +36,8 @@
 #include <regex.h>
 
 #include <termios.h>
+
+#define	BUFSZ	(LINE_MAX * 2)
 
 char		*progname;
 int		debug = 0;
@@ -51,9 +53,9 @@ main(int argc, char **argv)
     extern char		*optarg;
     extern int		optind;
     char		ch,
-			hbuf[LINE_MAX * 2],	/* hlogin buffer */
+			hbuf[BUFSZ],		/* hlogin buffer */
 			*hbufp,
-			tbuf[LINE_MAX * 2],	/* telnet buffer */
+			tbuf[BUFSZ],		/* telnet/ssh buffer */
 			*tbufp;
     int			bytes,			/* bytes read/written */
 			child,
@@ -99,7 +101,7 @@ main(int argc, char **argv)
     signal(SIGINT, (void *) reapchild);
     signal(SIGTERM, (void *) reapchild);
 
-    /* create 2 pipes for send/recv and then fork and exec telnet */
+    /* create 2 pipes for send/recv and then fork and exec telnet/ssh */
     for (child = 3; child < 10; child++)
 	close(child);
     if (pipe(s) || pipe(r)) {
@@ -137,8 +139,8 @@ main(int argc, char **argv)
     }
 
     /* zero the buffers */
-    bzero(hbuf, LINE_MAX * 2);
-    bzero(tbuf, LINE_MAX * 2);
+    bzero(hbuf, BUFSZ);
+    bzero(tbuf, BUFSZ);
 
     if (child == 0) {
 	/* close the parent's side of the pipes; we write r[1], read s[0] */
@@ -152,7 +154,7 @@ main(int argc, char **argv)
 	}
 	close(s[0]);
 	close(r[1]);
-	/* exec telnet */
+	/* exec telnet/ssh */
 	if (execvp(argv[optind], argv + optind)) {
 	    fprintf(stderr, "%s: execlp() failed: %s\n", progname,
 		strerror(errno));
@@ -196,7 +198,7 @@ main(int argc, char **argv)
 	    switch (select(r[1], &rfds, &wfds, NULL, &to)) {
 	    case 0:
 		/* timeout */
-			/* HEAS: what do i do here? */
+			/* XXX what do i do here? */
 		break;
 	    case -1:
 		switch (errno) {
@@ -241,9 +243,8 @@ main(int argc, char **argv)
 		}
 		if (FD_ISSET(0, &rfds)) {
 		    /* read stdin into hbuf */
-		    if (LINE_MAX * 2 - hlen > 1) {
-			hlen += read(0, hbuf + hlen,
-				(LINE_MAX * 2 - 1) - hlen);
+		    if (BUFSZ - hlen > 1) {
+			hlen += read(0, hbuf + hlen, (BUFSZ - 1) - hlen);
 			if (hlen > 0) {
 			    hbuf[hlen] = '\0';
 			} else if (hlen == 0 || errno != EAGAIN)
@@ -253,10 +254,9 @@ main(int argc, char **argv)
 			hlen = strlen(hbuf);
 		    }
 		} else if (FD_ISSET(r[0], &rfds)) {
-		    /* read telnet into tbuf, then filter */
-		    if (LINE_MAX * 2 - tlen > 1) {
-			tlen += read(r[0], tbuf + tlen,
-				(LINE_MAX * 2 - 1) - tlen);
+		    /* read telnet/ssh into tbuf, then filter */
+		    if (BUFSZ - tlen > 1) {
+			tlen += read(r[0], tbuf + tlen, (BUFSZ - 1) - tlen);
 			if (tlen > 0) {
 			    tbuf[tlen] = '\0';
 			    tlen = filter(tbuf, tlen);
@@ -372,7 +372,7 @@ reapchild(void)
     int         status;
     pid_t       pid;
     
-    /* HEAS: this needs to deal with/without wait3 via HAVE_WAIT3 */
+    /* XXX this needs to deal with/without wait3 via HAVE_WAIT3 */
     while ((pid = wait3(&status, WNOHANG, 0)) > 0)
 	if (debug)
             fprintf(stderr, "reap child %d\n", pid);

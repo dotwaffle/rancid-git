@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: cssrancid.in,v 1.4 2004/01/11 03:49:13 heas Exp $
+## $Id: cssrancid.in,v 1.5 2004/08/02 15:56:27 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -141,7 +141,6 @@ sub ShowVersion {
 
     while (<INPUT>) {
 	tr/\015//d;
-	study;
 	last if(/^$prompt/);
 	next if(/^(\s*|\s*$cmd\s*)$/);
 	return(-1) if (/command authorization failed/i);
@@ -254,6 +253,8 @@ sub ShowVersion {
 sub TermLength {
     # Dummy subroutine.. need to set term length differently for CSS
     # boxes as term length 0 doesnt work correctly. POS.
+    print STDERR "    In TermLength: $_" if ($debug);
+    $_ = <INPUT>;
     return(0);
 }
 
@@ -264,6 +265,8 @@ sub CopyProfile {
     ##  of couse breaks the interaction... strangely enough tho
     ##  in a failover environment, only the secondary behaves this
     ##  way.. the primary lets you log out and does not complain.
+    print STDERR "    In CopyProfile: $_" if ($debug);
+    $_ = <INPUT>;
     return(0);
 }
 
@@ -283,6 +286,7 @@ sub ShowBoot {
 	return(1) if /Ambiguous command/i;
 	# return(1) if /(Invalid input detected|Type help or )/;
 	return(1) if /(Open device \S+ failed|Error opening \S+:)/;
+	next if (/\*\* BOOT CONFIG /);
 	next if /CONFGEN variable/;
 	if (!defined($H0)) {
 	    $H0=1; ProcessHistory("COMMENTS","keysort","H0","!\n");
@@ -305,17 +309,18 @@ sub ShowBoot {
 # This routine processes a "show run"
 sub ShowRun {
     print STDERR "    In ShowRun: $_" if ($debug);
-    my($lineauto) = 0;
+    my($lines) = 0;
 
     while (<INPUT>) {
 	tr/\015//d;
-	study;
-	last if(/^$prompt/);
+	if(/^$prompt/) {
+	    $found_end = 1 if ($lines > 4);
+	    return(1);
+	}
 	return(-1) if (/command authorization failed/i);
 	# the pager can not be disabled per-session on the PIX
 	s/^<-+ More -+>\s*//;
 	/Non-Volatile memory is in use/  && return(-1); # NvRAM is locked
-	$lineauto = 0 if (/^[^ ]/);
 	# skip the crap
 	if (/^(##+$|(Building|Current) configuration)/i) {
 	    while (<INPUT>) {
@@ -335,14 +340,14 @@ sub ShowRun {
 	/^! (Last configuration|NVRAM config last)/ && next;
 	##  CSS specific....
 	/Generated on/ && next;
+	$lines++;
 
 	# Dog gone Cool matches to process the rest of the config
 	/^tftp-server flash /   && next; # kill any tftp remains
 	/^ntp clock-period /    && next; # kill ntp clock-period
 	/^ length /		&& next; # kill length on serial lines
 	/^ width /		&& next; # kill width on serial lines
-	$lineauto = 1 if /^ modem auto/;
-	/^ speed / && $lineauto	&& next; # kill speed on serial lines
+	/^ speed /		&& next; # kill speed on serial lines
 	/^ clockrate /		&& next; # kill clockrate on serial interfaces
 	if (/^(enable )?(password|passwd) / && $filter_pwds >= 1) {
 	    ProcessHistory("ENABLE","","","!$1$2 <removed>\n");
@@ -360,11 +365,9 @@ sub ShowRun {
 	    }
 	    next;
 	}
-	if (/^username (\S+)(\s.*)? password ((\d) \S+|\S+)/) {
-	    if ($filter_pwds == 2) {
-		ProcessHistory("USER","keysort","$1","!username $1$2 password <removed>\n");
-	    } elsif ($filter_pwds == 1 && $4 ne "5"){
-		ProcessHistory("USER","keysort","$1","!username $1$2 password <removed>\n");
+	if (/\s*username (\S+)(\s.*)? (des-password|password) (\S+|\S+)/) {
+	    if ($filter_pwds >= 1) {
+		ProcessHistory("USER","keysort","$1","! username $1$2 $3 <removed>$'\n");
 	    } else {
 		ProcessHistory("USER","keysort","$1","$_");
 	    }
@@ -537,11 +540,6 @@ sub ShowRun {
 
 	# catch anything that wasnt matched above.
 	ProcessHistory("","","","$_");
-	# end of config.  the ": " game is for the PIX
-	if (/^(: +)?end$/ || /CSS.*#/ || /$prompt/ ) {
-	    $found_end = 1;
-	    return(1);
-	}
     }
     return(0);
 }
@@ -599,11 +597,12 @@ if ($ENV{"FILTER_PWDS"} =~ /no/i) {
 }
 
 ProcessHistory("","","","!RANCID-CONTENT-TYPE: cisco-css\n!\n");
-ProcessHistory("COMMENTS","keysort","B0","!\n");
-ProcessHistory("COMMENTS","keysort","F0","!\n");
-ProcessHistory("COMMENTS","keysort","G0","!\n");
+#ProcessHistory("COMMENTS","keysort","B0","!\n");
+#ProcessHistory("COMMENTS","keysort","F0","!\n");
+#ProcessHistory("COMMENTS","keysort","G0","!\n");
 
 TOP: while(<INPUT>) {
+NEXT:
     tr/\015//d;
     if (/\#\s?exit/) {
 	$clean_run=1;
@@ -615,23 +614,27 @@ TOP: while(<INPUT>) {
 	$clean_run=0;
 	last;
     }
-    while (/#\s*($cmds_regexp)\s*$/) {
+    if (/#\s*($cmds_regexp)\s*$/) {
 	$cmd = $1;
-	if (!defined($prompt)) {$prompt = ($_ =~ /^([^#]+#)/)[0]; }
+	if (!defined($prompt)) {
+	    $prompt = ($_ =~ /^([^#]+#)/)[0];
+	    $prompt =~ s/([][}{)(\\])/\\$1/g;
+	    print STDERR ("PROMPT MATCH: $prompt\n") if ($debug);
+	}
 	print STDERR ("HIT COMMAND:$_") if ($debug);
 	if (! defined($commands{$cmd})) {
 	    print STDERR "$host: found unexpected command - \"$cmd\"\n";
-	    # $clean_run = 0;
-	    # last TOP;
-	    next TOP;
-	} else {
-	   $rval = &{$commands{$cmd}};
-	   delete($commands{$cmd});
-	   if ($rval == -1) {
-	       $clean_run = 0;
-	       last TOP;
-	   }
+	    $clean_run = 0;
+	    last TOP;
 	}
+	$rval = &{$commands{$cmd}};
+	delete($commands{$cmd});
+	if ($rval == -1) {
+	    $clean_run = 0;
+	    last TOP;
+	}
+	# the function may have read the next prompt/cmd line
+	goto NEXT;
     }
 }
 print STDOUT "Done $logincmd: $_\n" if ($log);

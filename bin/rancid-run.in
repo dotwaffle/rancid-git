@@ -1,6 +1,6 @@
 #! /bin/sh
 ##
-## $Id: rancid-run.in,v 1.30 2004/03/12 23:17:28 heas Exp $
+## $Id: rancid-run.in,v 1.31 2004/12/24 00:55:26 tex Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -23,9 +23,8 @@
 # @sysconfdir@/rancid.conf or those specified on the command-line.
 #
 
+# Default ENVFILE, overrideable with -f flag.
 ENVFILE="@sysconfdir@/rancid.conf"
-
-. $ENVFILE
 
 TMPDIR=${TMPDIR:=/tmp}; export TMPDIR
 
@@ -34,7 +33,7 @@ CR_ARGV=""; export CR_ARGV
 
 # print a usage message to stderr
 pr_usage() {
-    echo "usage: $0 [-r device_name] [-m mail rcpt] [group [group ...]]" >&2;
+    echo "usage: $0 [-f config_file] [-r device_name] [-m mail rcpt] [group [group ...]]" >&2;
 }
 
 # command-line options
@@ -43,6 +42,16 @@ if [ $# -ge 1 ] ; then
 
     while [ 1 ] ; do
 	case $1 in
+      -f)
+          shift
+          # next arg is the device name
+          ENVFILE="$1"
+          if [ -z $ENVFILE ]; then
+              pr_usage
+              exit 1
+          fi
+          shift
+          ;;
 	-r)
 	    shift
 	    # next arg is the device name
@@ -73,6 +82,9 @@ if [ $# -ge 1 ] ; then
 	esac
     done
 fi
+
+. $ENVFILE
+
 
 if [ $# -ge 1 ] ; then
     LIST_OF_GROUPS="$*"; export LIST_OF_GROUPS
