@@ -329,6 +329,7 @@ sub ShowSystemBootMessages {
 	/^\s+\^/ && return;
 	/syntax error/ && return;
 	/^JUNOS / && <INPUT> && next;
+	/^Timecounter "TSC" / && next;
 	/^real memory / && next;
 	/^avail memory / && next;
 	/^\/dev\// && next;
@@ -385,6 +386,9 @@ sub ShowConfiguration {
 	}
 	if (/(\s*authentication-key ).*$/ && $filter_pwds >= 1) {
 	    s/(\s*authentication-key ).*$/#$1<removed>;/;
+	}
+	if (/(\s*hello-authentication-key ).*$/ && $filter_pwds >= 1) {
+	    s/(\s*hello-authentication-key ).*$/#$1<removed>;/;
 	}
 	if (/^(.*\ssecret \")\$9\$.*(\".*)$/ && $filter_pwds >= 1) {
 	    s/^(.*\ssecret \")\$9\$.*(\".*)$/#$1<removed>$2/;

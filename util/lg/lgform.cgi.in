@@ -20,7 +20,41 @@ use CGI qw/:standard/;
 my(@rtrlist, %rtrlabels);
 my($BASEDIR) = "@prefix@";
 
+# note: the following functions are duplicated between lgform.cgi and lg.cgi
+# to avoid the need for module inclusion headaches from within a httpd context.
+# it is just easier to be self-contained.
+# SO, ANY CHANGES HERE SHOULD BE REFLECTED IN THE OTHER .cgi.
 
+# logging
+sub dolog
+{
+    my($level, $msg) = @_;
+
+    if (defined($LG_LOG) && $LG_LOG !~ /\//) {
+	openlog($me, "pid", $LG_LOG);
+	syslog($level, "%s", $msg);
+	closelog;
+    } else {
+	local(*LOG);
+	my($file);
+	if (defined($LG_LOG)) {
+	    $file = $LG_LOG;
+	} else {
+	    $file = "$cache_dir/lg.log";
+	}
+	#  log date, hostname, query, addr
+	if (open(LOG, ">>$file") == 0) {
+	    # stderr, if all else fails
+	    printf(STDERR "[" . strftime("%a %b %e %H:%M:%S %Y", gmtime) .
+			"] could not open log file $file: $!\n");
+	    printf(STDERR $msg);
+	} else {
+	    printf(LOG $msg);
+	    close(LOG); 
+	}
+    }
+    return;
+}
 # read LG configuration file
 sub readconf
 {
@@ -47,7 +81,7 @@ sub readconf
 	eval $cmds;
     } else {
 	printf(STDERR "ERROR: couldn\'t open the configuration file: $conffile: $!\n");
-	exit(255);
+	exit(1);
     }
 
     return;
@@ -66,11 +100,11 @@ sub readrouters
 
     if (! -f $rtrdb) {
 	my(@dirs, $dir);
-	# if the router.db file does not exist, try to compile from
-	# the rancid group's router.db files.
+	# if the router.db file does not exist, try to compile the list from
+	# the rancid group router.db files.
 	local(*DIR);
 	if (! opendir(DIR, $BASEDIR)) {
-	    printf(STDERR "ERROR: couldn\'t read $BASEDIR: $!\n");
+	    dolog(LOG_ERR, "ERROR: couldn\'t read $BASEDIR: $!\n");
 	} else {
 	    while ($dir = readdir(DIR)) {
 		next if ($dir =~ /^(\.|\.\.|CVS|bin|logs|util)$/);
@@ -80,7 +114,7 @@ sub readrouters
 
 	    foreach $dir (@dirs) {
 		if (! opendir(DIR, "$BASEDIR/$dir")) {
-		    printf(STDERR "ERROR: couldn\'t read $BASEDIR/$dir: $!\n");
+		    dolog(LOG_ERR, "ERROR: couldn\'t read $BASEDIR/$dir: $!\n");
 		    next;
 		}
 		closedir(DIR);
@@ -96,7 +130,7 @@ sub readrouters
 		    }
 		    close(RTR);
 		} else {
-		    printf(STDERR "ERROR: couldn\'t open the router.db file: $BASEDIR/$dir/router.db: $!\n");
+		    dolog(LOG_ERR, "ERROR: couldn\'t open the router.db file: $BASEDIR/$dir/router.db: $!\n");
 		}
 	    }
 	}
@@ -112,14 +146,15 @@ sub readrouters
 	    }
 	    close(RTR);
 	} else {
-	    printf(STDERR "ERROR: couldn\'t open the router.db file: $rtrdb: $!\n");
-	    exit(255);
+	    dolog(LOG_ERR, "ERROR: couldn\'t open the router.db file: $rtrdb: $!\n");
+	    exit(1);
 	}
     }
 
     return;
 }
 
+# Main()
 # read the configuration file if it exists.
 readconf();
 
@@ -207,4 +242,4 @@ TAIL
 
 print $query->end_html;
 
-exit 0;
+exit(0);

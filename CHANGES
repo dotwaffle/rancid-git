@@ -1,3 +1,42 @@
+2.2.2
+	*login: fix handling of userprompt et al so that {}'s are used in
+	.cloginrc as they are with every other .cloginrc directive.
+
+	f10rancid: Fix to pick up new info in show version output.
+
+	jrancid: Ignore Timecounter "TSC" in show system boot-messages output.
+
+	rancid: filter tty line speed when configured for auto-configure
+
+	flogin: bring login() and do_enable() in-line with [cj]login.  also
+	match "telnet server disabled" - from brad volz.
+
+	control_rancid: report devices added to router.db - from Fredrik Thulin
+	also eliminate empty up/down lists.
+
+	rancid/jrancid: filter isis passwords - partial from Janos Mohacsi
+
+	lg: make o/p from the lg stream (unbuffered), so one doesnt have
+	to wait for entire o/p from the router in a failing traceroute, for
+	example.  suggestion and clues from alexander koch.  while here, fix
+	cache handling so 1) it doesnt cache cmds that resulted in an error or
+	otherwise failed and 2) log and run the cmd as normal if there are
+	problems opening a cache file.
+
+	lg: make logging more consistent.  log as defined by LG_LOG if
+	possible and stderr as last resort.  it was logging largely to stderr.
+	and make exit-code small (instead of 255); some wait()s only look at
+	the first 3 bits
+
+	lg: add check in lg.cgi that router name appears in the router.db
+	and is thus accessible.  from richard doty.  also fix-up a few
+	comments and such.
+
+	rancid: GSR LC PCA h/w revision now called "design release" on
+	some platforms.  CSCdw13295
+
+	add util/getipacctg example script - contrib from steve neighorn
+
 2.2.1
 	rancid: npe400 cpu eeprom info o/p format changed in 12.0.21S1 -
 	spotted by tom campbell

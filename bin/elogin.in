@@ -439,9 +439,17 @@ foreach router [lrange $argv $i end] {
 
     # Figure out prompts
     set u_prompt [find userprompt $router]
-    if { "$u_prompt" == "" } { set u_prompt "(Username|login|  Login):" }
+    if { "$u_prompt" == "" } {
+	set u_prompt "(Username|login|  Login):"
+    } else {
+	set u_prompt [lindex $u_prompt 0]
+    }
     set p_prompt [find passprompt $router]
-    if { "$p_prompt" == "" } { set p_prompt "\[Pp]assword:" }
+    if { "$p_prompt" == "" } {
+	set p_prompt "\[Pp]assword:"
+    } else {
+	set p_prompt [lindex $p_prompt 0]
+    }
 
     # Figure out cypher type
     if {[info exists cypher]} {

@@ -1,3 +1,5 @@
+- fix varargs for knf in util.c
+- isis filtering for foundry?
 - extreme v6.2.x need 'show configuration detail' to get full config but
   does not work on older vers
 - hlogin (hp procurve) needs to adjust it's PATH to find hpfilter

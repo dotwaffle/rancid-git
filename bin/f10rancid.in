@@ -242,10 +242,12 @@ sub ShowVersion {
 	    ProcessHistory("COMMENTS","keysort","A3","!CPU:$slave $cpu\n");
 	    next;
 	}
-	if (/^(.*)\s+processor .*with (\d+[kK]?) bytes/) {
-	    my($cpu) = $1;
-	    my($mem) = $2;
-	    my($type) = "Buffy";
+	if (/^Chassis Type: (.*)$/) {
+	    $type = $1;
+	}
+	if (/^(.*\s+Processor)( \d)?:(.*) with (\d+[kK]?) bytes/) {
+	    my($cpu) = "$1$2:$3";
+	    my($mem) = $4;
 	    my($device) = "Force10";
 	    ProcessHistory("COMMENTS","keysort","A1",
 		"!Chassis type:$slave - a $device $type\n");

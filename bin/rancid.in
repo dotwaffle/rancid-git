@@ -671,9 +671,9 @@ sub ShowDiag {
 	if (/^\s+PCA:\s+(.*)/) {
 	    local($part) = $1;
 	    $_ = <INPUT>;
-	    /^\s+HW version (\S+)\s+S\/N (\S+)/ &&
-		ProcessHistory("SLOT","keysort","C1","!Slot $slot/PCA: part $part, serial $2\n") &&
-		ProcessHistory("SLOT","keysort","C2","!Slot $slot/PCA: hvers $1\n");
+	    /^\s+(HW version|design release) (\S+)\s+S\/N (\S+)/i &&
+		ProcessHistory("SLOT","keysort","C1","!Slot $slot/PCA: part $part, serial $3\n") &&
+		ProcessHistory("SLOT","keysort","C2","!Slot $slot/PCA: hvers $2\n");
 	    next;
 	}
 	if (/^\s+MBUS: .*\)\s+(.*)/) {
@@ -869,6 +869,7 @@ sub ShowVLAN {
 # This routine processes a "write term"
 sub WriteTerm {
     print STDERR "    In WriteTerm: $_" if ($debug);
+    my($lineauto) = 0;
 
     while (<INPUT>) {
 	tr/\015//d;
@@ -878,6 +879,7 @@ sub WriteTerm {
 	# the pager can not be disabled per-session on the PIX
 	s/^<-+ More -+>\s*//;
 	/Non-Volatile memory is in use/  && return(-1); # NvRAM is locked
+	$lineauto = 0 if (/^[^ ]/);
 	# skip the crap
 	if (/^(##+$|(Building|Current) configuration)/i) {
 	    while (<INPUT>) {
@@ -901,6 +903,8 @@ sub WriteTerm {
 	/^ntp clock-period /    && next; # kill ntp clock-period
 	/^ length /		&& next; # kill length on serial lines
 	/^ width /		&& next; # kill width on serial lines
+	$lineauto = 1 if /^ modem auto/;
+	/^ speed / && $lineauto	&& next; # kill speed on serial lines
 	/^ clockrate /		&& next; # kill clockrate on serial interfaces
 	if (/^(enable )?(password|passwd) / && $filter_pwds >= 1) {
 	    ProcessHistory("ENABLE","","","!$1$2 <removed>\n");
@@ -944,6 +948,14 @@ sub WriteTerm {
 	}
 	if (/^( ip ospf authentication-key) / && $filter_pwds >= 1) {
 	    ProcessHistory("","","","!$1 <removed>\n"); next;
+	}
+	# isis passwords appear to be completely plain-text
+	if (/^\s+isis password (\S+)( .*)?/ && $filter_pwds >= 1) {
+	    ProcessHistory("","","","!isis password <removed>$2\n"); next;
+	}
+	if (/^\s+(domain-password|area-password) (\S+)( .*)?/
+							&& $filter_pwds >= 1) {
+	    ProcessHistory("","","","!$1 <removed>$2\n"); next;
 	}
 	# this is reversable, despite 'md5' in the cmd
 	if (/^( ip ospf message-digest-key \d+ md5) / && $filter_pwds >= 1) {

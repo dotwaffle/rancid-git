@@ -299,7 +299,6 @@ distdir: $(DISTFILES)
 	    || cp -p $$d/$$file $(distdir)/$$file || :; \
 	  fi; \
 	done
-hpfilter.o: hpfilter.c ../include/config.h ../include/version.h
 
 info-am:
 info: info-am

@@ -92,7 +92,6 @@ main(int argc, char **argv)
     signal(SIGCHLD, (void *) reapchild);
     signal(SIGHUP, (void *) reapchild);
     signal(SIGINT, (void *) reapchild);
-    signal(SIGKILL, (void *) reapchild);
     signal(SIGTERM, (void *) reapchild);
 
     /* create 2 pipes for send/recv and then fork and exec telnet */

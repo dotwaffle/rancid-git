@@ -27,6 +27,10 @@
 #   -x = view par logs as they run through xterms
 #   -i = run commands through interactive xterms
 #   -d = print debugging to stderr
+#   -p # = pause # seconds between forks, default 0.
+#   -f = no file or STDIN, just run a quantity of $command.
+#                This precludes passing different args to each process.
+#   -e = exec args split by spaces rather than use sh -c
 #
 # par takes a list of items to run a command on.  If the list entry begins
 # with a ":" the remainder of the line is the command to run ("{}" will be
@@ -37,15 +41,17 @@
 # line is assumed to be a command to be run.
 #
 use Getopt::Std;
-getopts('n:l:c:xidq');
+getopts('p:n:l:c:fixedq');
 $procs=$opt_n;  $procs=3 if(!$procs);
-$command=$opt_c;$command="{}" if(!$command);
-$parlog=$opt_l; $parlog="par.log.".time if(!$parlog);
+$command=$opt_c;   #$command="{}" if(!$command);
+$parlog=$opt_l; $parlog="par.log.".time() if(!$parlog);
 $debug=$opt_d;
+$no_file=$opt_f ? 1 : 0;
+$pause_time = $opt_p ? $opt_p : 0;
 
 if ($opt_q && ($opt_x || $opt_l)) {
     print STDERR "-q nullifies -x and -l\n";
-    exit 1;
+    exit(1);
 }
 
 $signalled=0;
@@ -54,7 +60,7 @@ sub handler {
     $signalled++;
     print STDERR "Received signal - ending run ($signalled).\n";
     if($signalled>1) {
-	printf STDERR "Ok - killing $id!\n";
+	printf(STDERR "Ok - killing $id!\n");
 	kill 9, 0;
         exit(1);
     }
@@ -74,6 +80,10 @@ sub start {
 	    close(LOG);
 	    exec "($cmd) >>$logfile";
 	} else {
+            if($opt_e) {
+                # Don't use sh -c.
+	        exec split(/\s+/, $cmd);
+            }
 	    exec "($cmd)";
 	}
         exit 0;
@@ -95,13 +105,19 @@ sub watchf {
     unless(fork) { exec "xterm -e tail -f $log" ; exit 1; }
 }
 
-for($i=0;<>;$i++) {
+# this does not work, $_ doesnt end up with <>
+#for($i=0; ($no_file && $i<$procs) || (! $no_file && <> ) ;$i++) {
+for($i=0; ($no_file || ($_=<>)) ;$i++) {
     chop;
     if (/^\#/){$i--;next;}
-    if(/^:(.*)$/){$command=$1;$i--;next;}
+    if ($opt_c == "" && /^:(.*)$/) {
+	$command=$1;$i--;next;
+    }
     if ($i<$procs) {
 	$logfile="running.$i"; $logfile="$parlog.$i" if (!$opt_q);
-    } else { $logfile=finish; }
+    } else {
+	$logfile=finish;
+    }
     last if $signalled;
     if ($logfile) {
         $cmd = $command;
@@ -109,9 +125,10 @@ for($i=0;<>;$i++) {
 	$cmd = "xterm -e $cmd" if ($opt_i);
         $id=start($cmd,$logfile);
 	watchf($logfile) if($opt_x);
-        $log{$id}=$logfile;
+        $log{$id} = $logfile;
     }
     print STDERR "$i/$procs: $_: id=$id, log=$log{$id}\n" if ($debug);
+    sleep($pause_time) if ($pause_time);
 }
 
 if($signalled && !eof) {

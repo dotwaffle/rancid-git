@@ -183,7 +183,7 @@ AC_SUBST(RD_BIN_PROGS)
 rd_cv_rd_bin_progs=$RD_BIN_PROGS
 
 # RD_UTIL_PROGS are util/ .in's that need to be installed with execute perms.
-RD_UTIL_PROGS="rtrfilter downreport"
+RD_UTIL_PROGS="rtrfilter downreport getipacctg"
 AC_SUBST(RD_UTIL_PROGS)
 rd_cv_rd_util_progs=$RD_UTIL_PROGS
 

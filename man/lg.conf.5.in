@@ -9,7 +9,8 @@ contains configuration for the looking glass scripts.
 .PP
 The syntax is that of
 .IR perl (1).
-It is used to set variables to affect run-time behavior or to locate resources.
+It is used to set variables to affect run-time behavior and/or to locate
+resources.
 .\"
 .SH VARIABLES
 The following variables are used (alphabetically):
@@ -67,7 +68,7 @@ Defines a html image tag (<img>) which, if defined, will be included at
 the top of the looking glass pages.  It may contain any html as it is
 simply handed off to print().
 .sp
-Example: $LG_IMAGE="<img src=/icons/rancid.gif hspace=0>\n <font size=+2>FOO</font>";
+Example: $LG_IMAGE="<img src=/icons/rancid.gif hspace=0>\\n <font size=+2>FOO</font>";
 .\"
 .TP
 .B LG_INFO
@@ -79,7 +80,8 @@ Example: $LG_INFO="For Support contact <a href=mailto:webmaster\@localhost>webma
 .\"
 .TP
 .B LG_LOG
-Defines the fully qualified path name for the log file or the
+Defines the fully qualified path name (ie: begins with '/') for the log file
+or the
 .BR syslog (3)
 facility to use for logging.  For syslog, the argument is the lowercase name
 of a syslog facility (see syslog.h) without the 'LOG_' prefix.
@@ -98,12 +100,12 @@ format.  It lists the devices that should be available to the looking glass
 users.  Only those devices of supported types and with state 'up' are made
 available.  If not defined and the default file does not exist, the looking
 glass will compile a list from the router.db files of all the groups present
-in rancid, that is a concatenation of $BASEDIR/*/router.db.
+in rancid, that is, the list will be a concatenation of $BASEDIR/*/router.db.
 .sp
 Default: @prefix@/util/lg/router.db
 .sp
 Note that if the concatenation method is used, it may be necessary to alter
-the mode of the router.db files in the rancid group directories, since the
+the mode of the router.db files in the rancid group directories, since rancid's
 default umask is 027 (see
 .BR env (5)).
 .\"
@@ -128,22 +130,35 @@ note that it must include $BASEDIR/bin (see above).
 .\"
 .El
 .\"
+.SH ENVIRONMENT
+.Bl -tag -width LG_CONF -compact
+.TP
+.B LG_CONF
+Location of
+.B lg.conf
+file.  See the
+.IR FILES
+section for more information.
+.El
+.\"
 .SH ERRORS
 .B lg.conf
 is interpreted directly by 
 .IR perl (1),
-so its syntax follows that of perl.  Errors may produce quite unexpected
+so its syntax follows that of perl.  Syntax errors may produce quite unexpected
 results.
 .SH FILES
 .Bl -tag -width .BASEDIR/bin/ENV -compact
 .TP
 .B $BASEDIR/util/lg/lg.conf
 Configuration file described here, where $BASEDIR is set at the time that
-the rancid package was configured.  In this case, $BASEDIR is
+the rancid package was configured.  In this installation, $BASEDIR is
 .IR @prefix@ .
+.sp
 .B lg.conf
 is located by the value of the environment variable LG_CONF, in the CWD
-(current working directory), or rancid install directory ($BASEDIR/util/lg).
+(current working directory), or rancid install directory ($BASEDIR/util/lg),
+in that order.
 .El
 .SH SEE ALSO
 .BR cloginrc (5),

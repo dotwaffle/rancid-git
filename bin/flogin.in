@@ -275,12 +275,13 @@ proc source_password_file { password_file } {
 }
 
 # Log into the router.
-proc login { router user userpswd passwd enapasswd prompt cmethod cyphertype } {
-    global spawn_id in_proc do_command do_script
+proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
+    global spawn_id in_proc do_command do_script platform
+    global prompt u_prompt p_prompt e_prompt
     set in_proc 1
     set uprompt_seen 0
 
-    # Telnet to the router & try to login.
+    # try each of the connection methods in $cmethod until one is successful
     set progs [llength $cmethod]
     foreach prog [lrange $cmethod 0 end] {
 	if [string match "telnet*" $prog] {
@@ -297,8 +298,8 @@ proc login { router user userpswd passwd enapasswd prompt cmethod cyphertype } {
 	} elseif ![string compare $prog "ssh"] {
 	    if [ catch {spawn ssh -c $cyphertype -x -l $user $router} reason ] {
 		send_user "\nError: ssh failed: $reason\n"
-		exit 1 
-	    }  
+		exit 1
+	    }
 	} elseif ![string compare $prog "rsh"] {
 	    if [ catch {spawn rsh -l $user $router} reason ] {
 		send_user "\nError: rsh failed: $reason\n"
@@ -309,29 +310,28 @@ proc login { router user userpswd passwd enapasswd prompt cmethod cyphertype } {
 	    return 1
 	}
 	incr progs -1
+	sleep 0.3
 
-    sleep 0.3
-
-    # This helps cleanup each expect clause.
-    expect_after {
-	timeout {
-	    send_user "\nError: TIMEOUT reached\n"
-	    catch {close}; wait
-	    if { $in_proc} {
-	        return 1
-	    } else {
-	        continue
+	# This helps cleanup each expect clause.
+	expect_after {
+	    timeout {
+		send_user "\nError: TIMEOUT reached\n"
+		catch {close}; wait
+		if { $in_proc} {
+		    return 1
+		} else {
+		    continue
+		}
+	    } eof {
+		send_user "\nError: EOF received\n"
+		catch {close}; wait
+		if { $in_proc} {
+		    return 1
+		} else {
+		    continue
+		}
 	    }
-        } eof {
-	    send_user "\nError: EOF received\n"
-	    catch {close}; wait
-	    if { $in_proc} {
-	        return 1
-	    } else {
-	        continue
-	    }
-        }
-    }
+	}
 
     # Here we get a little tricky.  There are several possibilities:
     # the router can ask for a username and passwd and then
@@ -341,71 +341,77 @@ proc login { router user userpswd passwd enapasswd prompt cmethod cyphertype } {
     # then it will just send the passwd.
     # if telnet fails with connection refused, try ssh
     expect {
-	"Connection refused" { 
-	    close; wait
-	    if { $tryssh } {
-            if [ catch {spawn ssh -c $cyphertype -x -l $user $router} reason ] {
-                send_user "\nError: failed to ssh: $reason\n"
-                exit 1
-            }
-	    set tryssh 0
-            sleep 0.3
-	    exp_continue
-	    } else {
-                expect eof
-	        send_user "\nError: Connection Refused\n"; wait; return 1
+	-re "(Connection refused|Secure connection \[^\n\r]+ refused|Connection closed by|Telnet server disabled)" {
+	    catch {close}; wait
+	    if !$progs {
+		send_user "\nError: Connection Refused ($prog)\n"; return 1
 	    }
-        } eof { send_user "\nError: Couldn't login\n"; wait; return 1
-	} "Unknown host\r\n" { 
-	    expect eof
-	    send_user "\nError: Unknown host\n"; wait; return 1
-	} "Host is unreachable" {
-	    expect eof
-	    send_user "\nError: Host Unreachable!\n"; wait; return 1
-	} "No address associated with name" {
-	    expect eof
+	}
+	eof { send_user "\nError: Couldn't login\n"; wait; return 1 }
+	-nocase "unknown host\r" {
+	    catch {close};
 	    send_user "\nError: Unknown host\n"; wait; return 1
 	}
-	-re "Host key not found .* \(yes\/no\)\?"       {
-            send "yes\r"
-            send_user "Host $router added to the list of known hosts.\n"
-            exp_continue }
-        -re "HOST IDENTIFICATION HAS CHANGED.* \(yes\/no\)\?"   {
-            send "no\r"
-            send_user "\nError: The host key for $router has changed.  Update the SSH known_hosts file accordingly.\n"
-            return 1 }
+	"Host is unreachable" {
+	    catch {close};
+	    send_user "\nError: Host Unreachable!\n"; wait; return 1
+	}
+	"No address associated with name" {
+	    catch {close};
+	    send_user "\nError: Unknown host\n"; wait; return 1
+	}
+	-re "(Host key not found |The authenticity of host .* be established).*\(yes\/no\)\?" {
+	    send "yes\r"
+	    send_user "\nHost $router added to the list of known hosts.\n"
+	    exp_continue }
+	-re "HOST IDENTIFICATION HAS CHANGED.* \(yes\/no\)\?"   {
+	    send "no\r"
+	    send_user "\nError: The host key for $router has changed.  Update the SSH known_hosts file accordingly.\n"
+	    return 1 }
 	-re "Offending key for .* \(yes\/no\)\?"   {
 	    send "no\r"
 	    send_user "\nError: host key mismatch for $router.  Update the SSH known_hosts file accordingly.\n"
 	    return 1 }
-	denied		{ send_user "\nError: Check your passwd for $router\n" 
-	                  catch {close}; wait; return 1
-	                }
-	"% Bad passwords" {send_user "\nError: Check your passwd for $router\n"; return 1 }
-	-re "(Username:|login:|Name  :)"	{
-					  sleep 1;
-					  send "$user\r"
-					  set uprompt_seen 1
-					  exp_continue
-					}
-	"@\[^\r\n]+\[Pp]assword:"	{
+	-re "(denied|Sorry)"	{
+				  send_user "\nError: Check your passwd for $router\n"
+				  catch {close}; wait; return 1
+				}
+	"Login failed"		{
+				  send_user "\nError: Check your passwd for $router\n"
+				  return 1
+				}
+	-re "% (Bad passwords|Authentication failed)"	{
+				  send_user "\nError: Check your passwd for $router\n"
+				  return 1
+				}
+	-re "@\[^\r\n]+ $p_prompt"	{
 					  # ssh pwd prompt
 					  sleep 1
 					  send "$userpswd\r"
 					  exp_continue
 					}
-	"\[Pp]assword:"			{
-					  sleep 1;
-					  if {$uprompt_seen == 1} {
-						send "$userpswd\r"
-					  } else {
-						send "$passwd\r"
-					  }
-					  exp_continue
-					}
-	"$prompt"       { break; }
+	-re "$u_prompt"		{
+				  send "$user\r"
+				  set uprompt_seen 1
+				  exp_continue
+				}
+	-re "$p_prompt"		{
+				  sleep 1
+				  if {$uprompt_seen == 1} {
+					send "$userpswd\r"
+				  } else {
+					send "$passwd\r"
+				  }
+				  exp_continue
+				}
+	"$prompt"		{ break; }
+	"Login invalid"		{
+				  send_user "\nError: Invalid login\n";
+				  catch {close}; wait; return 1
+				}
      }
     }
+
     set in_proc 0
     return 0
 }
@@ -413,21 +419,25 @@ proc login { router user userpswd passwd enapasswd prompt cmethod cyphertype } {
 # Enable
 proc do_enable { enauser enapasswd } {
     global prompt in_proc
+    global u_prompt e_prompt
     set in_proc 1
 
-    sleep 1;  # dont go too fast for it now...
+    sleep 1;		# dont go too fast for it now...
     send "enable\r"
     expect {
-	-re "(Username|User Name):"	{ send "$enauser\r"; exp_continue}
-	"Password:"	{ send "$enapasswd\r"; exp_continue}
-	"#"		{ }
-	denied		{ send_user "\nError: Check your Enable passwd\n"; return 1}
-	"% Bad passwords" { send_user "\nError: Check your Enable passwd\n"
-	    return 1
-	}
+	-re "$u_prompt"	{ send "$enauser\r"; exp_continue}
+	-re "$e_prompt"	{ send "$enapasswd\r"; exp_continue}
+	"#"		{ set prompt "#" }
+	"(enable)"	{ set prompt "> (enable) " }
+	denied		{ send_user "\nError: Check your Enable passwd\n";
+			  return 1
+			}
+	"% Bad passwords" { send_user "\nError: Check your Enable passwd\n";
+			  return 1
+			}
     }
-    # Set the prompt variable so script files don't need to know what it is.
-    set prompt "#"
+    # We set the prompt variable (above) so script files don't need
+    # to know what it is.
     set in_proc 0
     return 0
 }
@@ -542,6 +552,26 @@ foreach router [lrange $argv $i end] {
       if { "$enauser" == "" } { set enauser $ruser } 
     } 
 
+    # Figure out prompts
+    set u_prompt [find userprompt $router]
+    if { "$u_prompt" == "" } {
+	set u_prompt "(Username|login|Name|User Name):"
+    } else {
+	set u_prompt [lindex $u_prompt 0]
+    }
+    set p_prompt [find passprompt $router]
+    if { "$p_prompt" == "" } {
+	set p_prompt "(\[Pp]assword):"
+    } else {
+	set p_prompt [lindex $p_prompt 0]
+    }
+    set e_prompt [find enableprompt $router]
+    if { "$e_prompt" == "" } {
+	set e_prompt "\[Pp]assword:"
+    } else {
+	set e_prompt [lindex $e_prompt 0]
+    }
+
     # Figure out cypher tpye
     if {[info exists cypher]} {
       # command line cypher type
@@ -556,7 +586,7 @@ foreach router [lrange $argv $i end] {
     if { "$cmethod" == "" } { set cmethod {{telnet} {ssh}} }
 
     # Login to the router
-    if {[login $router $ruser $userpswd $passwd $enapasswd $prompt $cmethod $cyphertype]} {
+    if {[login $router $ruser $userpswd $passwd $enapasswd $cmethod $cyphertype]} {
 	continue
     }
     if { $enable } { 

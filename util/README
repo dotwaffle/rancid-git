@@ -1,8 +1,9 @@
 rancid/util includes some utilities that either don't seem to belong
 in rancid/bin (ie: not part of the core pkg), contributed sources, or
-sources included for convenience.
+sources included for convenience/example.
 
 README		This file.
+downreport	Daily report of routers not listed as up in router.db
+getipacctg	get and sort show ip accounting o/p from cisco router
 lg		looking glass pkg
 rtrfilter	mail filter for diffs
-downreport	Daily report of routers not listed as up in router.db

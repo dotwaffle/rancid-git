@@ -67,7 +67,26 @@ A. This is most likely either a CVS or filesystem permissions problem.  Check
    the directory and files should be writable by the rancid user.  Group and
    world permissions will determined by the umask (default 027), which is set
    in /usr/local/rancid/bin/env.  Likely the easiest way to fix the ownership
-   on the cvs repository is chmod -R <rancid user> /usr/local/rancid/CVS
+   on the cvs repository is chown -R <rancid user> /usr/local/rancid/CVS
+
+Q. I am renaming a device but would like the retain the history in CVS.  How
+   is this done?
+A. CVS does not provide a way (AFAIK) to rename files or to rename or delete
+   directories.  The best way is to copy the CVS repository file manually
+   like this (disclaimer: BE VERY CAREFUL mucking around with the repository):
+	% su - rancid_user
+	% cd /usr/local/rancid
+	% echo "new_device_name:device_type:up" >> GROUP/router.db
+	% cp -p CVS/GROUP/configs/old_device_name,v \
+		CVS/GROUP/configs/new_device_name,v
+   where GROUP is the name of the rancid group the device is a member of.
+   Rancid will pick-up the new file with a CVS update the next time it runs.
+   Once the renaming is complete, remove the old name from the router.db file
+   and leave the CVS clean-up of the old filename to rancid.
+
+   If one wanted to move a device to a different group and maintain the
+   history, the same procedure would work.  Substituting the new group name
+   appropriately.
 
 
 3) General
@@ -94,7 +113,7 @@ A. Our usual diagnostic procedure for this is:
      Should login to cisco_router, run show version and show diag, then
      disconnect and exit.  The output will be displayed on your terminal.
 
-   - The see if the correct rancid commands work against the router.  For
+   - Then see if the correct rancid commands work against the router.  For
      example:
 
         rancid cisco_router

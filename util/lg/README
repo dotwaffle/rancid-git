@@ -1,4 +1,4 @@
-This is a looking glass based on Ed Kern's which can be found on
+This is a looking glass based on Ed Kern's which used to be available on
 http://nitrous.digex.net/.  This version supports cisco, juniper, and
 foundry, using rancid's [cfj]login to login (so rcmd is not necessary,
 it can use telnet, ssh, or rsh), and has some additional commands
@@ -18,7 +18,7 @@ the looking glass requires the CGI and LockFile-Simple perl modules.
 these can be retrieved from CPAN, http://www.cpan.org/.  CGI's home is
 ftp://ftp-genome.wi.mit.edu/pub/software/WWW/.  it also requires
 the POSIX module (for strftime) and Sys::Syslog, which i believe come
-with perl5.
+with perl5 and/or are converted with h2ph(1).
 
 basic installation instructions:
 
@@ -54,11 +54,13 @@ and install bits in /usr/local/rancid/util/lg (or <prefix>/util/lg).
 	DirectoryIndex lgform.cgi
 
 2) the LG needs to be able to find and read lg.conf.  by default this
-   is installed as <PREFIX>/util/lg/lg.conf and the LG will look there.
-   however, LG_CONF environment variable can be used to move it elsewhere.
+   is installed as <PREFIX>/util/lg/lg.conf and the LG will first look in
+   its CWD (current working directory) and then <PREFIX>/util/lg/lg.conf if
+   it does not exist in the CWD.  However the LG_CONF environment variable can
+   be used to move it elsewhere.
 
-   to get LG_CONF into the enviroment, you can SetEnvIf in apache's
-   httpd.conf like this for example:
+   to get LG_CONF into the enviroment, you can use SetEnvIf in apache's
+   httpd.conf.  for example:
 	SetEnvIf Request_URI "\/lg/.*.cgi" LG_CONF=/usr/local/util/lg/lg.conf
 
 3) edit <PREFIX>/util/lg/lg.conf.
