@@ -16,7 +16,7 @@
 ##
 ##
 #
-# clogin - Cisco login
+# hlogin - hp login
 #
 # Most options are intuitive for logging into a Cisco router.
 # The default is to enable (thus -noenable).  Some folks have
@@ -184,8 +184,9 @@ for {set i 0} {$i < $argc} {incr i} {
 	    set enable 0
 	# Does tacacs automatically enable us?
 	} -autoenable {
-	    set autoenable 1
-	    set enable 0
+	    # hp does not autoenable
+	    #set autoenable 1
+	    #set enable 0
 	} -* {
 	    send_user "\nError: Unknown argument! $arg\n"
 	    send_user $usage
@@ -337,6 +338,10 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
     # then it will just send the passwd.
     # if telnet fails with connection refused, try ssh
     expect {
+	"Press any key to continue" {
+	    send " "
+	    exp_continue
+	}
 	-re "(Connection refused|Secure connection \[^\n\r]+ refused|Connection closed by)" {
 	    catch {close}; wait
 	    if !$progs {
@@ -386,7 +391,13 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 	"$prompt"	{ break; }
 	denied		{ send_user "\nError: Check your passwd for $router\n"
 			    if { $do_command || $do_script } {
-			      send "exit\r"
+				send "exit\r"
+				expect {
+				     "Do you want to log out" {
+						  send "y\r"
+						  exp_continue
+						}
+				}
 			      wait
 			      return 1
 			  } else {
@@ -432,20 +443,12 @@ proc run_commands { prompt command } {
     # If the prompt is (enable), then we are on a switch and the
     # command is "set length 0"; otherwise its "term length 0".
     # skip if its and extreme.
-    if { [ string compare "extreme" "$platform" ] } {
-	if [ regexp -- ".*> .*enable" "$prompt" ] {
-	    send "set length 0\r"
-	} else {
-	    send "term length 0\r"
-	}
-	regsub -all "\[)(]" $prompt {\\&} reprompt
+    send "no page\r"
+    regsub -all "\[)(]" $prompt {\\&} reprompt
 	expect {
 	    -re $reprompt	{}
 	    -re "\[\n\r]+"	{ exp_continue }
 	}
-    } else {
-	regsub -all "\[)(]" $prompt {\\&} reprompt
-    }
     # this is the only way i see to get rid for more prompts in o/p..grrrrr
     log_user 0
     # Is this a multi-command?
@@ -501,14 +504,13 @@ proc run_commands { prompt command } {
 	}
     }
     log_user 1
-
-    if { [ string compare "extreme" "$platform" ] } {
-	send "exit\r"
-    } else {
-	send "quit\r"
-    }
+    send "exit\r"
     expect {
-	"Do you wish to save your configuration changes" {
+	"Do you want to log out" {
+						  send "y\r"
+						  exp_continue
+						}
+	"Do you wish to save " {
 						  send "n\r"
 						  exp_continue
 						}

@@ -101,7 +101,6 @@ for($i=0;<>;$i++) {
     if(/^:(.*)$/){$command=$1;$i--;next;}
     if ($i<$procs) {
 	$logfile="running.$i"; $logfile="$parlog.$i" if (!$opt_q);
-	watchf($logfile) if($opt_x);
     } else { $logfile=finish; }
     last if $signalled;
     if ($logfile) {
@@ -109,6 +108,7 @@ for($i=0;<>;$i++) {
         $cmd =~ s/\{\}/$_/g;
 	$cmd = "xterm -e $cmd" if ($opt_i);
         $id=start($cmd,$logfile);
+	watchf($logfile) if($opt_x);
         $log{$id}=$logfile;
     }
     print STDERR "$i/$procs: $_: id=$id, log=$log{$id}\n" if ($debug);

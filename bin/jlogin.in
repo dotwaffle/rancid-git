@@ -333,6 +333,7 @@ proc login { router user passwd cmethod cyphertype identfile} {
 	    }
 	    -re "Enter passphrase for RSA key '\[^'\]*': " {
 		send_user "\nKey has passphrase!\n"
+		sleep 1
 		send "$passphrase\r"
 		exp_continue }
 	    -re "(Host key not found |The authenticity of host .* be established).*\(yes\/no\)\?" {
@@ -347,12 +348,12 @@ proc login { router user passwd cmethod cyphertype identfile} {
 		expect {
 		    eof             	{ send_user "\nError: Couldn't login\n";
 					  wait; return 1 }
-		    -re "\[Pp]assword:"	{ send "$passwd\r" }
+		    -re "\[Pp]assword:"	{ sleep 1; send "$passwd\r" }
 		    -re "$prompt"	{ break; }
 		}
 		exp_continue
 	    }
-	    "\[Pp]assword:"	{ send "$passwd\r"
+	    "\[Pp]assword:"	{ sleep 1; send "$passwd\r"
 		expect {
 		eof             { send_user "\nError: Couldn't login\n"; wait; return 1 }
 		-re "$prompt"   { break; }

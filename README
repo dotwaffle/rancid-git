@@ -14,12 +14,17 @@ control_rancid.in
 		handles cvs routines.
 rancid-fe.in	chooses between rancid/[efjr]rancid/cat5rancid.
 rancid.in	Runs commands on cisco routers and processes the output.
+brancid.in	Runs commands on baynet/nortel routers and processes the output.
 erancid.in	Runs commands on ADC EZ-T3 muxes and processes the output.
 francid.in	Runs commands on foundry switches and processes the output.
+hrancid.in	Runs commands on hp procurve switches and processes the output.
 jrancid.in	Runs commands on juniper routers and processes the output.
 rrancid.in	Runs commands on redback routers and processes the output.
 xancid.in	Runs commands on extreme switches and processes the output.
 cat5rancid.in	Runs commands on cisco cat5 switches and processes the output.
+blogin.in	Expect script that logs into baynet/nortel routers either
+		interactively, runs a set of commands, or runs another expect
+		script.
 clogin.in	Expect script that logs into routers either interactively,
 		runs a set of commands, or runs another expect script.
 elogin.in	Expect script that logs into ADC EZ-T3 muxes either
@@ -27,6 +32,9 @@ elogin.in	Expect script that logs into ADC EZ-T3 muxes either
 		script.
 flogin.in	Expect script that logs into foundry switches.  Once foundry
 		cleans up their bloody UI, clogin should do the job.
+blogin.in	Expect script that logs into hp procurve switches either
+		interactively, runs a set of commands, or runs another expect
+		script.
 jlogin.in	Expect script that logs into juniper routers similarly to
 		clogin.  It is not terribly robust, but mainly used for it's
 		-c and -s options.
@@ -43,8 +51,8 @@ The following are included as part of the installation tools:
 
 Makefile.in	processed by configure to produce Makefiles
 configure	GNU autoconf script
-install-sh	shell script to simulate BSD style install
-mkinstalldirs	shell script to make installation directories
+install-sh	GNU autoconf shell script to simulate BSD style install
+mkinstalldirs	GNU autoconf shell script to make installation directories
 
 rancid will also need to have the following packages:
 cvs		code revision system available from prep.ai.mit.edu:/pub/gnu
@@ -118,7 +126,8 @@ Quick Installation Guide (an example):
 7) Run create_cvs.
    This creates all of the necessary directories and config files for
    each of the groups in LIST_OF_GROUPS and imports them into CVS.  This
-   will also be run each time a new group is added.  Also see
+   will also be run each time a new group is added.  Do not create the
+   directories or CVS repository manually, allow create_cvs do it.  Also see
    'man -M <basedir>/man create_cvs'.
 
 8) For each "group", modify the router.db file in the group directory.
@@ -185,7 +194,8 @@ Synopsis: SunOS 5.6: /kernel/drv/ip patch
 
 another possibile contributor is expect/tcl.  we've noticed that expect
 5.24.1 (possibly 5.28.*) and whatever tcl happens to compile with it, 
-eems to not exhibit this problem, while 5.32.* appears to on linux and
-solaris but not on netbsd 1.5.
+seems to not exhibit this problem, while 5.32.* appears to on linux and
+solaris but not on netbsd 1.5.  see www.shrubbery.net/rancid for additional
+notes on this.
 
 -Hank

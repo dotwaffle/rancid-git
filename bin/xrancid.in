@@ -140,13 +140,17 @@ sub ShowVersion {
 	next if(/^(\s*|\s*$cmd\s*)$/);
 
 	/^\S+ Serial Number:/i &&
-	    ProcessHistory("COMMENTS","keysort","A0","#$_") && next;
+	    ProcessHistory("COMMENTS","keysort","B0","#$_") && next;
 	/^(\S+) Power Supply ([^:]+):\s+(.*)/i &&
-	    ProcessHistory("COMMENTS","keysort","B0","#Power: $1 $2 $3\n")
+	    ProcessHistory("COMMENTS","keysort","C0","#Power: $1 $2 $3\n")
 	    && next;
-	/^Image\s*:\s*(.*)/i &&
-	    ProcessHistory("COMMENTS","keysort","C0","#Image: $1\n")
+	/^image\s*:\s*(.*)\s+by\s+/i &&
+	    ProcessHistory("COMMENTS","keysort","D0","#Image: $1\n")
 	    && next;
+	/^bootrom\s+:\s+(.*)/i &&
+	    ProcessHistory("COMMENTS","keysort","D1","#\n#Bootrom: $1\n")
+	    && next;
+
 #heas: need to collect this from show vers for ShowSlot where rev #s are excluded
 #SLOT 1 :  702005-06  0025S-00877 CPLD Rev <FF>
 #SLOT 2 :  702005-06  0021S-00131 CPLD Rev 02
@@ -166,12 +170,37 @@ sub ShowMemory {
 	next if(/^(\s*|\s*$cmd\s*)$/);
 
 	/^Total DRAM Size: (.*)/ &&
-	    ProcessHistory("COMMENTS","keysort","A0","#\n#Memory: $1\n")
+	    ProcessHistory("COMMENTS","keysort","B1","#\n#Memory: $1\n")
     }
     return(0);
 }
 
-# This routine parses "show install active"
+# This routine parses "show diagnostics"
+sub ShowDiag {
+    print STDERR "    In ShowDiag: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+
+	/platform\s+:\s+(.*)$/i &&
+	    ProcessHistory("COMMENTS","keysort","A0","#Chassis type: $1\n") &&
+	    next;
+	/(\S+) part no\s+:\s+(.*)$/i &&
+	    ProcessHistory("COMMENTS","keysort","E0","#$1 PN: $2\n") &&
+	    next;
+	/(\S+ \S+) no\s+:\s+(.*)$/i &&
+	    ProcessHistory("COMMENTS","keysort","E0","#$1 PN: $2\n") &&
+	    next;
+	/(mac address)\s+:\s+(.*)$/i &&
+	    ProcessHistory("COMMENTS","keysort","B0","#$1: $2\n") &&
+	    next;
+    }
+    return(0);
+}
+
+# This routine parses "show slot"
 sub ShowSlot {
     print STDERR "    In ShowSlot: $_" if ($debug);
 
@@ -183,7 +212,7 @@ sub ShowSlot {
 	if (/^Slot\s+(\d+)\s+/i) {
 	    my($slot) = $1;
 	    my($hwtype, $conftype, $sn, $state);
-	    ProcessHistory("SLOT","keysort","$slot","#\n");
+	    ProcessHistory("COMMENTS","keysort","F$slot","#\n");
 	    while (<INPUT>) {
 		tr/\015//d;
 		last if (/^$prompt/ || /^\s*$/);
@@ -192,7 +221,8 @@ sub ShowSlot {
 		if (/hw module type:\s+(.*)$/i) { $hwtype = $1; }
 		if (/configured type:\s+(.*)$/i) { $conftype = $1; }
 	    }
-	    ProcessHistory("SLOT","keysort","$slot","#Slot $slot: type $hwtype,"
+	    ProcessHistory("COMMENTS","keysort","F$slot","#Slot $slot: type "
+		. "$hwtype,"
 		. " $conftype\n#Slot $slot: serial $sn\n#Slot $slot: state "
 		. " $state\n");
 	    return if (/^$prompt/);
@@ -202,9 +232,38 @@ sub ShowSlot {
     return(0);
 }
 
+# This routine parses "show switch"
+sub ShowSwitch {
+    print STDERR "    In ShowSwitch: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	last if(/^$prompt/);
+	next if(/^(\s*|\s*$cmd\s*)$/);
+
+	/^\s*$/i && next;
+	/^(primary|secondary) configuration:/i && next;
+	/^(boot |next reboot)/i && next;
+	/^(auto |qos mode|sys\S*:|temperature|time)/i && next;
+
+	/^power supply: (.*)/i &&
+		ProcessHistory("COMMENTS","keysort","C0","#$1") && next;
+	/^license/i && ProcessHistory("COMMENTS","keysort","D0","#Image: $_")
+		&& next;
+	s/^software image (\S+):/Image: $1:/i &&
+		ProcessHistory("COMMENTS","keysort","D0","#$_") && next;
+	/^\S+ software version:/i &&
+		ProcessHistory("COMMENTS","keysort","D0","#Image: $_") && next;
+	/^(\S+ )?software/i && ProcessHistory("COMMENTS","keysort","D0","# $_");
+
+    }
+    return(0);
+}
+
 # This routine processes a "write term"
 sub WriteTerm {
     print STDERR "    In WriteTerm: $_" if ($debug);
+    my($comment) = 1;	# strip extra comments, esp to preserve chassis type
 
     while (<INPUT>) {
 	tr/\015//d;
@@ -213,52 +272,45 @@ sub WriteTerm {
 	# the pager can not be disabled per-session on the PIX
 	s/^<-+ More -+>\s*//;
 
+	s/^\s*$/#/;
+	# filter extra comments and lead comments in config so we can preserve
+	# the chassis type at the top of muched o/p before the processhistory
+	# key changes.
+	if (/^#\s*$/) {
+ 	   if ($comment) {
+		next;
+	   } else {
+		$comment++;
+	   }
+	} else {
+	   $comment = 0;
+	}
+
 	# Dog gone Cool matches to process the rest of the config
-	/^(# \S+ Configuration) generated/i &&
-	    ProcessHistory("","","","$1\n") && next;
+	# some chassis report their chassis type in show diag...oh, but
+	# other noooo.  grab it here, if available.  so, nothing else
+	# can change the keysort key until this is grabbed.  sigh.
+	/# (\S+) configuration generated/i &&
+	    ProcessHistory("COMMENTS","keysort","A0","#Chassis type: $1\n") &&
+	    ($comment = 0) && next;
+	/configuration generated/i && next;
+	/# system name/i && next;
+	/# software version/i && next;
+
+	if (/configure ssh2 key/) {
+	    ProcessHistory("","","","# $_# <key removed>\n");
+	    while (<INPUT>) {
+		if (/^(#|enable|conf|disable|unconf)/) {
+		    last;
+		}
+	    }
+	}
+
+	# filter out any RCS/CVS tags to avoid confusing local CVS storage
+	s/\$(Revision|Id):/ $1:/;
 	/^(config bgp (neighbor|peer-group) \S+ password encrypted)/i &&
 	    ProcessHistory("","","","# $1 <removed>\n") &&
 	    next;
-#	/^( ip ospf authentication-key) / &&
-#	    ProcessHistory("","","","!$1 <removed>\n") && next;
-#	/^( ip ospf message-digest-key \d+ md5) / &&
-#	    ProcessHistory("","","","!$1 <removed>\n") && next;
-#	# sort route-maps
-#	if (/^route-map (\S+)/) {
-#	    my($key) = $1;
-#	    my($routemap) = $_;
-#	    while (<INPUT>) {
-#		tr/\015//d;
-#		last if (/^$prompt/ || ! /^(route-map |[ !])/);
-#		if (/^route-map (\S+)/) {
-#		    ProcessHistory("ROUTEMAP","keysort","$key","$routemap");
-#		    $key = $1;
-#		    $routemap = $_;
-#		} else  {
-#		    $routemap .= $_;
-#		}
-#	    }
-#	    ProcessHistory("ROUTEMAP","keysort","$key","$routemap");
-#	}
-	# filter out any RCS/CVS tags to avoid confusing local CVS storage
-	s/\$(Revision|Id):/ $1:/;
-
-#	# order access-lists
-#	/^access-list\s+(\d\d?)\s+(\S+)\s+(\S+)/ &&
-#	    ProcessHistory("ACL $1 $2","ipsort","$3","$_") && next;
-#	# order extended access-lists
-#	/^access-list\s+(\d\d\d)\s+(\S+)\s+ip\s+host\s+(\S+)/ &&
-#	    ProcessHistory("EACL $1 $2","ipsort","$3","$_") && next;
-#	/^access-list\s+(\d\d\d)\s+(\S+)\s+ip\s+(\d\S+)/ &&
-#	    ProcessHistory("EACL $1 $2","ipsort","$3","$_") && next;
-#	/^access-list\s+(\d\d\d)\s+(\S+)\s+ip\s+any/ &&
-#	    ProcessHistory("EACL $1 $2","ipsort","0.0.0.0","$_") && next;
-#	# order arp lists
-#	/^arp\s+(\d+\.\d+\.\d+\.\d+)\s+/ &&
-#	    ProcessHistory("ARP","ipsort","$1","$_") && next;
-#	/^ip prefix-list\s+(\S+)\s+seq\s+(\d+)\s+(permit|deny)\s+(\d\S+)(\/.*)$/ &&
-#	    ProcessHistory("PACL $1 $3","ipsort","$4","ip prefix-list $1 $3 $4$5\n")
-#	    && next;
 
 	# order logging statements
 	/^configure syslog add logging (\d+\.\d+\.\d+\.\d+)/ &&
@@ -267,15 +319,15 @@ sub WriteTerm {
 	# we only prune lines of the form
 
 	# configure snmp add trapreceiver a.b.c.d <community>
-	if (/^(configure snmp add trapreceiver )(\d+\.\d+\.\d+\.\d+) (community) \S+ (.*)/) {
+	if (/^(configure snmp add trapreceiver )(\d+\.\d+\.\d+\.\d+) (community) \S+/) {
 	    if (defined($ENV{'NOCOMMSTR'})) {
-		ProcessHistory("SNMPSVRHOST","ipsort","$2","# $1$2 $3 <removed> $4\n");
+		ProcessHistory("SNMPSVRHOST","ipsort","$2","# $1$2 $3 <removed> $'\n");
 	    } else {
 		ProcessHistory("SNMPSVRHOST","ipsort","$2","$_\n");
 	    }
 	    next;
 	}
-	if (/^(configure snmp add community (readonly|readwrite) \S+) (\S+)/) {
+	if (/^(configure snmp community (readonly|readwrite)) (\S+)/) {
 	    if (defined($ENV{'NOCOMMSTR'})) {
 		ProcessHistory("SNMPSVRCOMM","keysort","$_","#$1 <removed>$'");
 		next;
@@ -306,6 +358,8 @@ sub DoNothing {print STDOUT;}
 %commands=(
 	'show version'		=> "ShowVersion",
 	'show memory'		=> "ShowMemory",
+	'show diagnostics'	=> "ShowDiag",
+	'show switch'		=> "ShowSwitch",
 	'show slot'		=> "ShowSlot",
 	'show configuration'	=> "WriteTerm"
 );
@@ -314,6 +368,8 @@ sub DoNothing {print STDOUT;}
 @commands=(
 	"show version",
 	"show memory",
+	"show diagnostics",
+	"show switch",
 	"show slot",
 	"show configuration"
 );
@@ -330,23 +386,26 @@ if ($file) {
     print STDOUT "opening file $host\n" if ($log);
     open(INPUT,"<$host") || die "open failed for $host: $!\n";
 } else {
-    print STDERR "executing clogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($debug);
-    print STDOUT "executing clogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($log);
+    print STDERR "executing clogin -t $timeo -autoenable -c\"$cisco_cmds\" $host\n" if ($debug);
+    print STDOUT "executing clogin -t $timeo -autoenable -c\"$cisco_cmds\" $host\n" if ($log);
     if (defined($ENV{NOPIPE})) {
-	system "clogin -t $timeo -c \"$cisco_cmds\" $host </dev/null > $host.raw 2>&1" || die "clogin failed for $host: $!\n";
+	system "clogin -t $timeo -autoenable -c \"$cisco_cmds\" $host </dev/null > $host.raw 2>&1" || die "clogin failed for $host: $!\n";
 	open(INPUT, "< $host.raw") || die "clogin failed for $host: $!\n";
     } else {
-	open(INPUT,"clogin -t $timeo -c \"$cisco_cmds\" $host </dev/null |") || die "clogin failed for $host: $!\n";
+	open(INPUT,"clogin -t $timeo -autoenable -c \"$cisco_cmds\" $host </dev/null |") || die "clogin failed for $host: $!\n";
     }
 }
 
 ProcessHistory("","","","#RANCID-CONTENT-TYPE: extreme\n#\n");
-ProcessHistory("COMMENTS","keysort","B0","#\n");	# power supply info
-ProcessHistory("COMMENTS","keysort","C0","#\n");	# image name
-#ProcessHistory("COMMENTS","keysort","G0","#\n");
+ProcessHistory("COMMENTS","keysort","B0","#\n");	# chassis info
+ProcessHistory("COMMENTS","keysort","C0","#\n");	# power supply info
+ProcessHistory("COMMENTS","keysort","D0","#\n");	# image name
+ProcessHistory("COMMENTS","keysort","E0","#\n");	# h/w info
+ProcessHistory("COMMENTS","keysort","F0","#\n");	# slot info
+ProcessHistory("COMMENTS","keysort","X0","#\n");
 TOP: while(<INPUT>) {
     tr/\015//d;
-    # note: this match sucks rocks, but the currently the extreme bits are
+    # note: this match sucks rocks, but currently the extreme bits are
     # unreliable about echoing the 'exit\n' command.  this match might really
     # be a bad idea, but instead rely upon WriteTerm's found_end?
     if (/$prompt\s?(exit$|Connection closed)/ && $found_end) {
@@ -396,7 +455,9 @@ if (defined($ENV{NOPIPE})) {
 if (scalar(%commands) || !$clean_run || !$found_end) {
     if (scalar(%commands)) {
 	printf(STDOUT "missed cmd(s): %s\n", join(',', keys(%commands)));
-	printf(STDERR "missed cmd(s): %s\n", join(',', keys(%commands))) if ($debug);
+	if ($debug) {
+	    printf(STDERR "missed cmd(s): %s\n", join(',', keys(%commands)))
+	}
     }
     if (!$clean_run || !$found_end) {
 	print STDOUT "End of run not found\n";

@@ -152,6 +152,9 @@ sub ShowChassisClocks {
 	/command is not valid/ && return;
 	/^\s+\^/ && return;
 	/syntax error/ && return;
+
+	# filter decimal places of m160 measured clock MHz
+	/Measured frequency/ && s/\..*MHz/ MHz/;
 	ProcessHistory("","","","# $_");
     }
     return;

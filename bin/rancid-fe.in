@@ -33,6 +33,8 @@ if ($vendor =~ /^baynet$/i) {
     exec('cat5rancid', $router);
 } elsif ($vendor =~ /^ezt3$/i) {
     exec('erancid', $router);
+} elsif ($vendor =~ /^hp$/i) {
+    exec('hrancid', $router);
 } elsif ($vendor =~ /^juniper$/i) {
     exec('jrancid', $router);
 } elsif ($vendor =~ /^foundry$/i) {

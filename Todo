@@ -1,17 +1,18 @@
-- extreme (xrancid)
-	- collect show switch
-	- filter ssh host private key
-	- ??? separate module p/n and s/n or collect from sh ver instead of
-	  show slot?
-- rancid should filter pap pwds, as in:
-	 ppp pap sent-username AS3727 password 7 10581C17581043
+- extreme collections loses when the config on the switch is in an unsaved
+  state, probably due to the prompt changing or rather the regex clogin
+  formulates for the prompt.
+- cat4 support?
+- would be nice if it were possible to add additional commands to be run
+  per-platform as a user desires.  how could the user also provide a
+  filtering routine?
+- need par.1 manpage
 - need to make sure the following patch was applied to the lookingglass
 	All routers not listed as 'up' in router.db are considered down.
 	This allows values other than down to mean 'not up'.  for use
 	by util/downreport.
 - a format such as {<user>} as the pwd in .cloginrc to indicate *login should
   prompt the user for the password
-- handle reback in the looking glass
+- handle redback in the looking glass
 - implement the bits marked unimplemented in lg.conf
 - detect 'same' vty configs
 	- ignoring length/width/passwd is a start, but need more

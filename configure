@@ -792,7 +792,7 @@ PACKAGE=rancid
 # VERSION needs to be updated such that 'make dist' uses the correct
 # filename for the directory name and tarball.
 
-VERSION=2.2b7
+VERSION=2.2b8
 
 echo $ac_n "checking whether to enable maintainer-specific portions of Makefiles""... $ac_c" 1>&6
 echo "configure:799: checking whether to enable maintainer-specific portions of Makefiles" >&5
@@ -1420,7 +1420,7 @@ rd_cv_rd_bin_datas=$RD_BIN_DATAS
 # RD_BIN_PROGS are bin/ .in's that need to be installed with execute perms.
 RD_BIN_PROGS="cat5rancid control_rancid \
 alogin arancid clogin create_cvs blogin brancid do-diffs elogin erancid \
-flogin francid jlogin jrancid par rancid-fe \
+flogin francid jlogin jrancid hlogin hrancid par rancid-fe \
 rancid rename rrancid xrancid"
 
 rd_cv_rd_bin_progs=$RD_BIN_PROGS

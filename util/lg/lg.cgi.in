@@ -363,7 +363,7 @@ if ($mfg =~ /juniper/) {
 	$results[0] = "$cmdDisp{$type} not implemented for junipers.  sorry.\n";
 	&print_results;
     }
-    $cmd = $foundryCmd{$type};
+    $cmd = $juniperCmd{$type};
 } elsif ($mfg =~ /foundry/) {
     if(! defined($foundryCmd{$type})) {
 	$results[0] = "$cmdDisp{$type} not implemented for foundrys.  sorry.\n";

@@ -1,7 +1,7 @@
 #!@EXPECT_PATH@ --
 ##
 ##
-## Copyright (C) 1997 by Henry Kilmer, Erik Sherk and Pete Whiting.
+## Copyright (C) 1997-2001 by Henry Kilmer, Erik Sherk and Pete Whiting.
 ## All rights reserved.
 ##
 ## This software may be freely copied, modified and redistributed without
@@ -19,7 +19,8 @@
 # blogin - Bay Networks(Nortel) login
 #
 # Unlike the Cisco's, there is no enable function on the Bay's.
-# Instead there are seperate User and Manager accounts.
+# Instead there are seperate User and Manager accounts.  A 'system' command
+# exists, which i am told does nothing.
 #
 
 # Usage line

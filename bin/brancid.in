@@ -2,7 +2,7 @@
 ##
 ## hacked version of Hank's rancid - this one tries to deal with Bay's.
 ##
-## Copyright (C) 1997 by Henry Kilmer.
+## Copyright (C) 1997-2001 by Henry Kilmer.
 ## All rights reserved.
 ##
 ## This software may be freely copied, modified and redistributed without
@@ -140,6 +140,8 @@ sub ShowConfig {
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	next if (/^Reading configuration information/);
+	next if (/^Can\'t find object or class named \"\-all\"\s*$/);
+	next if (/^\# *uptime +\d+\s*$/);
 	if (/community label /) {
 	    if (defined($ENV{'NOCOMMSTR'})) {
 		$_ =~ s/community label .*$/community label <removed>/;
@@ -178,15 +180,17 @@ sub DoNothing {print STDOUT;}
 
 # Main
 %commands=(
-	'bcc'		=> "RunCommand",
-	'show config'	=> "ShowConfig",
-	'exit'		=> "RunCommand"
+	'bcc'			=> "RunCommand",
+	'show config'		=> "ShowConfig",
+	'show config -all'	=> "ShowConfig",
+	'exit'			=> "RunCommand"
 );
 # keys() doesnt return things in the order entered and the order of the
 # cmds is important (show version first and write term last). pita
 @commands=(
 	"bcc",
 	"show config",
+	"show config -all",
 	"exit"
 );
 $cisco_cmds=join(";",@commands);

@@ -1,3 +1,23 @@
+2.2b8
+	add PAR_COUNT variable to bin/env for adjusting the number of
+	simultaneous collections.  see bin/env (or bin/env.new for those with
+	previous installation) and the env(5) manpage.
+
+	more work on extreme switch bits + fixes from Alex Bochannek.
+
+	jlogin: add 1s sleeps to avoid passwords being echo'd before tty noecho
+	is set.  richard doty
+
+	few looking glass fixes
+
+	brancid: filter uptime and add -all option to config for bayrs version
+	14.  from mordechai abzug
+
+	jrancid: m160 measured chassis clock MHz fluctuates, trim the
+	decimal places.  from Mark A Gebert.
+
+	par: -x fix for log file monitoring killing xterms.  from rdrake.
+
 2.2b7
 	brancid: patch to filter community strings from Mark Cooper
 

@@ -20,7 +20,7 @@
 #
 
 # Number of things par should run in parallel.
-PAR_COUNT=5
+PAR_COUNT=${PAR_COUNT:-5}
 
 # Must specify a group to run rancid
 if [ $# -lt 1 ]; then

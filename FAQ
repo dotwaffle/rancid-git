@@ -1,4 +1,4 @@
-Frequently Asked Questions about rancid - last updated 20010730
+Frequently Asked Questions about rancid - last updated 20010926
 
 1) Platform specific
 
@@ -19,6 +19,17 @@ Q. I am new to cvs, where can i find additional information?
 A. The manual page for cvs is quite complete, but can be be overwhelming even
    for someone familiar with rcs.  There are some excellent resources on the
    pages http://www.loria.fr/~molli/cvs-index.html
+
+Q. Errors are showing up in the logs like:
+	cvs [diff aborted]: there is no version here; run 'cvs checkout' first
+A. The directory was not imported into CVS properly or was not properly checked
+   out afterward, so CVS control files or directories do not exist.  create_cvs
+   should always be used to create the directories and perform the CVS work.
+   If it is just the directories have been created manually, save a copy of
+   the router.db file, then remove the group's directory, use create_cvs, and
+   replace the router.db file.  If the CVS import was also performed manually,
+   cd to <BASEDIR> and use 'cvs co <rancid group>' to create all the CVS
+   control bits.
 
 Q. I keep receiving the same diff for a (or set of) devices, but I know the
    data is not changing repeatedly.  Why?
