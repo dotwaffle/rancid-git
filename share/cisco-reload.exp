@@ -1,5 +1,5 @@
 ##
-## $Id: cisco-reload.exp,v 1.9 2004/01/11 03:43:50 heas Exp $
+## $Id: cisco-reload.exp,v 1.10 2005/06/14 23:06:27 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -29,14 +29,14 @@
 # e.g. usage:
 # % clogin -s cisco-reload.exp -Ereload_arg='at 01:00' router
 # router
-#        Reload scheduled for 01:00:00 UTC Sat Jun 23 2001 (in 7 hours and 16 minutes)
+#	Reload scheduled for 01:00:00 UTC Sat Jun 23 2001 (in 7 hours and 16 minutes)
 # % clogin -s cisco-reload.exp -Ereload_arg='at cancel' router
 # router
-#        % Ambiguous command:  "reload at cancel"
+#	% Ambiguous command:  "reload at cancel"
 #
 # % clogin -s cisco-reload.exp -Ereload_arg='cancel' router
 # router
-#        SHUTDOWN ABORTED
+#	SHUTDOWN ABORTED
 #
 #
 # keep in mind that it is important to NOT polute the global variable space.
@@ -49,8 +49,8 @@
 #	prompt		cmd-line prompt as determined by clogin
 #
 # note: the tcl/expect parser is extremely stoopid.  comment lines are NOT
-#       completely ignored!!  so, a '{' or '}' in a comment might produce
-#       unexpected results.
+#	completely ignored!!  so, a '{' or '}' in a comment might produce
+#	unexpected results.
 ##
 # exp_internal 1
 # log_user 1
@@ -68,7 +68,7 @@ if ([info exists Ereload_arg]) {
 
 send "\r"
 expect {
-     timeout 			{ send_error "Error: did not receive prompt\n"
+    timeout 			{ send_error "Error: did not receive prompt\n"
 				  exit }
     -re "^.*$prompt"		{ send "$reloadcmd\r"
 				  expect * {} }
@@ -133,15 +133,15 @@ expect {
 ## Proceed with reload? [confirm]
 ## ultra#reload can
 ## ultra#
-## 
-## 
+##
+##
 ## ***
 ## *** --- SHUTDOWN ABORTED ---
 ## ***
 ## ultra# reload at 8:10 10 dec
-## 
+##
 ## System configuration has been modified. Save? [yes/no]: no
 ## Reload scheduled for 08:10:00 PST Thu Dec 10 1998 (in 296 hours and 17 minutes)
 ## Proceed with reload? [confirm]
 ## ultra#
-## 
+##

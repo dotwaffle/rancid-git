@@ -1,6 +1,6 @@
 #! /bin/sh
 ##
-## $Id: control_rancid.in,v 1.64 2004/03/12 23:13:09 heas Exp $
+## $Id: control_rancid.in,v 1.69 2005/07/07 01:09:08 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -81,13 +81,23 @@ DIR=$BASEDIR/$GROUP
 TMP=${TMPDIR:=/tmp}/rancid.$GROUP.$$
 trap 'rm -fr $TMP;' 1 2 15
 
-# the receipient(s) of diffs
+# the receipient(s) of diffs & mail options
 mailrcpt=${mailrcpt:-"@MAILPLUS@${GROUP}${MAILDOMAIN}"}; export mailrcpt
-adminmailrcpt=${mailrcpt:-"@ADMINMAILPLUS@${GROUP}${MAILDOMAIN}"};
+adminmailrcpt=${adminmailrcpt:-"@ADMINMAILPLUS@${GROUP}${MAILDOMAIN}"};
 export adminmailrcpt
+set | grep MAILHEADERS= > /dev/null 2>&1
+if [ $? -ne 0 ] ; then
+    MAILHEADERS="Precedence: bulk\n"; export MAILHEADERS
+fi
 
 # Number of things par should run in parallel.
 PAR_COUNT=${PAR_COUNT:-5}
+# Number of times failed collections should be retried.  Minimum 1.
+MAX_ROUNDS=${MAX_ROUNDS:-4}
+if [ $MAX_ROUNDS -lt 1 ] ; then
+    echo "Error: MAX_ROUNDS must be at least 1."
+    MAX_ROUNDS=1
+fi
 
 # Bail if we do not have the necessary info to run
 if [ ! -d $DIR ]
@@ -97,7 +107,7 @@ then
     (
 	echo "To: $adminmailrcpt"
 	echo "Subject: no $GROUP directory"
-	echo "Precedence: bulk"
+	echo "$MAILHEADERS" | awk '{gsub(/\\n/,"\n");print;}'
 	echo ""
 	echo "$DIR does not exist."
 	echo "Run bin/rancid-cvs $GROUP to make all of the needed directories."
@@ -123,7 +133,7 @@ then
     (
 	echo "To: $adminmailrcpt"
 	echo "Subject: no $GROUP/router.db file"
-	echo "Precedence: bulk"
+	echo "$MAILHEADERS" | awk '{gsub(/\\n/,"\n");print;}'
 	echo ""
 	echo "$DIR/router.db does not exist."
     ) | sendmail -t
@@ -134,7 +144,7 @@ fi
 cd $DIR
 trap 'rm -fr routers.db routers.all.new routers.down.new routers.up.new \
 	routers.mail routers.added routers.deleted $TMP;' 1 2 15
-sed -e '/^#/d' -e 's/^ *//' -e 's/ *$//' -e 's/ *: */:/g' router.db | 
+sed -e '/^#/d' -e 's/^ *//' -e 's/ *$//' -e 's/ *: */:/g' router.db |
 	sort -u > routers.db
 cut -d: -f1,2 routers.db > routers.all.new
 if [ ! -f routers.all ] ; then touch routers.all; fi
@@ -175,10 +185,10 @@ then
 		WCDOWN=`comm -13 routers.down routers.down.new | wc -l | \
 			sed -e 's/^ *\([^ ]*\)/\1/'`
 		if [ $WCDOWN -eq 1 ] ; then
-	            echo Routers changed to down:
-	            comm -13 routers.down routers.down.new | \
+		    echo Routers changed to down:
+		    comm -13 routers.down routers.down.new | \
 			sed -e 's/^/        /'
-	            echo
+		    echo
 		fi
 	    fi
 	fi
@@ -193,14 +203,14 @@ then
 
 	    if [ $WCADDED -gt 0 ]
 	    then
-	        echo Added routers:
-	        cat routers.added
+		echo Added routers:
+		cat routers.added
 		echo
 	    fi
 	    if [ $WCDELETED -gt 0 ]
 	    then
-	        echo Deleted routers:
-	        cat routers.deleted
+		echo Deleted routers:
+		cat routers.deleted
 		echo
 	    fi
 
@@ -212,7 +222,7 @@ then
 	(
 	  echo "To: $adminmailrcpt"
 	  echo "Subject: changes in $GROUP routers"
-	  echo "Precedence: bulk"
+	  echo "$MAILHEADERS" | awk '{gsub(/\\n/,"\n");print;}'
 	  echo ""
 	  cat routers.mail
 	) | sendmail -t
@@ -309,7 +319,7 @@ par -q -n $PAR_COUNT -c "rancid-fe \{}" $devlistfile
 # This section will generate a list of missed routers
 # and try to grab them again.  It will run through
 # $pass times.
-pass=4
+pass=$MAX_ROUNDS
 round=1
 if [ -f $DIR/routers.up.missed ]; then
     rm -f $DIR/routers.up.missed
@@ -347,10 +357,10 @@ echo
 # Make sure that no empty configs are accepted.  Those that are non-empty
 # are renamed from device_name.new -> device_name.
 for router in `cat $devlistfile`
-do 
+do
     OFS=$IFS
     IFS=':'
-    set $router 
+    set $router
     IFS=$OFS
     router=$1;
 
@@ -386,14 +396,15 @@ else
 fi
 
 # Mail out the diffs (if there are any).
-if [ -s $TMP.diff ]; then
-    sendmail -t <<EMAIL
-To: $mailrcpt
-Subject: $subject
-Precedence: bulk
-
-`cat $TMP.diff`
-EMAIL
+if [ -s $TMP.diff ]
+then
+	(
+	  echo "To: $mailrcpt"
+	  echo "Subject: $subject"
+	  echo "$MAILHEADERS" | awk '{gsub(/\\n/,"\n");print;}'
+	  echo ""
+	  cat $TMP.diff
+	) | sendmail -t
 fi
 
 # If any machines have not been reached within the last $OLDTIME
@@ -410,7 +421,7 @@ then
 	(
 	  echo "To: $adminmailrcpt"
 	  echo "Subject: config fetcher problems - $GROUP"
-	  echo "Precedence: bulk"
+	  echo "$MAILHEADERS" | awk '{gsub(/\\n/,"\n");print;}'
 	  echo ""
 	  echo "The following routers have not been successfully contacted for"
 	  echo "more than $OLDTIME hours."

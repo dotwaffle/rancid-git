@@ -1,5 +1,5 @@
 /*
- * $Id: hpuifilter.c,v 1.20 2005/03/30 07:27:15 heas Exp $
+ * $Id: hpuifilter.c,v 1.21 2005/06/14 20:20:43 heas Exp $
  *
  * Copyright (C) 1997-2004 by Terrapin Communications, Inc.
  * All rights reserved.
@@ -296,7 +296,7 @@ filter(buf, len)
     static char		reg[N_REG][50] = {	/* vt100/220 escape codes */
 				"\e7\e\\[1;24r\e8",		/* ds */
 				"\e8",				/* fs */
-	
+
 				"\e\\[2J",
 				"\e\\[2K",			/* kE */
 
@@ -366,22 +366,22 @@ filter(buf, len)
     return(strlen(buf));
 }
 
-RETSIGTYPE 
+RETSIGTYPE
 reapchild(void)
 {
     int         status;
     pid_t       pid;
-    
+
     /* XXX this needs to deal with/without wait3 via HAVE_WAIT3 */
     while ((pid = wait3(&status, WNOHANG, 0)) > 0)
 	if (debug)
             fprintf(stderr, "reap child %d\n", pid);
-    
+
     /*exit(1);*/
 return;
 
     /* not reached */
-}   
+}
 
 void
 usage(void)

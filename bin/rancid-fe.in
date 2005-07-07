@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: rancid-fe.in,v 1.36 2004/01/11 03:49:13 heas Exp $
+## $Id: rancid-fe.in,v 1.37 2005/06/14 20:20:44 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -19,7 +19,7 @@
 ## Henry Kilmer, John Heasley, Andrew Partan, Pete Whiting, and Austin Schutz.
 ##
 #
-#  rancid-FE - front-end to rancid/jrancid/etc. for use with par. 
+#  rancid-FE - front-end to rancid/jrancid/etc. for use with par.
 #
 # usage: rancid-fe <router>:<vendor>
 #

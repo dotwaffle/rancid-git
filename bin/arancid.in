@@ -1,8 +1,8 @@
 #! @PERLV_PATH@
 ##
-## $Id: arancid.in,v 1.14 2004/01/11 03:49:13 heas Exp $
+## $Id: arancid.in,v 1.19 2005/06/15 20:55:12 heas Exp $
 ##
-## Hacked version of rancid for Alteon WebOS switches 
+## Hacked version of rancid for Alteon WebOS switches
 ## tested with: ad3 v8.1.18
 ## afort@choqolat.org (andrew fort)
 ##
@@ -24,7 +24,7 @@
 ##
 #
 #  RANCID - Really Awesome New Cisco confIg Differ
-#           
+#
 # arancid - Alteon WebOS plugin for rancid
 #
 # usage: arancid [-d] [-l] [-f filename | $host]
@@ -38,13 +38,16 @@ $host = $ARGV[0];
 $clean_run = 0;
 $found_end = 0;
 $prompt = "#";
-$timeo = 90;			# clogin timeout in seconds
+$timeo = 90;				# alogin timeout in seconds
+
+my(@commandtable, %commands, @commands);# command lists
+my(%filter_pwds);			# password filtering mode
 
 # This routine is used to print out the router configuration
 sub ProcessHistory {
-    my($new_hist_tag,$new_command,$command_string,@string)=(@_);
-    if((($new_hist_tag ne $hist_tag) || ($new_command ne $command))
-       && defined %history) {
+    my($new_hist_tag,$new_command,$command_string,@string) = (@_);
+    if ((($new_hist_tag ne $hist_tag) || ($new_command ne $command))
+	&& defined %history) {
 	print eval "$command \%history";
 	undef %history;
     }
@@ -66,10 +69,10 @@ sub ProcessHistory {
 
 sub numerically { $a <=> $b; }
 
-# This is a sort routing that will sort numerically on the
+# This is a sort routine that will sort numerically on the
 # keys of a hash as if it were a normal array.
 sub keynsort {
-    local(%lines)=@_;
+    local(%lines) = @_;
     local($i) = 0;
     local(@sorted_lines);
     foreach $key (sort numerically keys(%lines)) {
@@ -79,10 +82,10 @@ sub keynsort {
     @sorted_lines;
 }
 
-# This is a sort routing that will sort on the
+# This is a sort routine that will sort on the
 # keys of a hash as if it were a normal array.
 sub keysort {
-    local(%lines)=@_;
+    local(%lines) = @_;
     local($i) = 0;
     local(@sorted_lines);
     foreach $key (sort keys(%lines)) {
@@ -92,10 +95,10 @@ sub keysort {
     @sorted_lines;
 }
 
-# This is a sort routing that will sort on the
+# This is a sort routine that will sort on the
 # values of a hash as if it were a normal array.
 sub valsort{
-    local(%lines)=@_;
+    local(%lines) = @_;
     local($i) = 0;
     local(@sorted_lines);
     foreach $key (sort values %lines) {
@@ -105,9 +108,9 @@ sub valsort{
     @sorted_lines;
 }
 
-# This is a numerical sort routing (ascending).
+# This is a numerical sort routine (ascending).
 sub numsort {
-    local(%lines)=@_;
+    local(%lines) = @_;
     local($i) = 0;
     local(@sorted_lines);
     foreach $num (sort {$a <=> $b} keys %lines) {
@@ -121,7 +124,7 @@ sub numsort {
 # ip address when the ip address is anywhere in
 # the strings.
 sub ipsort {
-    local(%lines)=@_;
+    local(%lines) = @_;
     local($i) = 0;
     local(@sorted_lines);
     foreach $addr (sort sortbyipaddr keys %lines) {
@@ -134,7 +137,7 @@ sub ipsort {
 # These two routines will sort based upon IP addresses
 sub ipaddrval {
     my(@a) = ($_[0] =~ m#^(\d+)\.(\d+)\.(\d+)\.(\d+)$#);
-    $a[3]+256*($a[2]+256*($a[1]+256*$a[0]));
+    $a[3] + 256 * ($a[2] + 256 * ($a[1] +256 * $a[0]));
 }
 sub sortbyipaddr {
     &ipaddrval($a) <=> &ipaddrval($b);
@@ -142,23 +145,23 @@ sub sortbyipaddr {
 
 # This routine parses "/info/sys" (cf. show version)
 sub ShowVersion {
-	print STDERR "    In ShowVersion: $_" if ($debug);
+    print STDERR "    In ShowVersion: $_" if ($debug);
 
-	while (<INPUT>)  {
-	    tr/\015//d;
-	    last if (/^>>.*$prompt/);
-	    next if(/^(\s*|\s*$cmd\s*)$/);  
-		
-	/^(ACEdirector.*|ACEswitch.*|Alteon.*)/i && 
+    while (<INPUT>)  {
+	tr/\015//d;
+	last if (/^>>.*$prompt/);
+	next if(/^(\s*|\s*$cmd\s*)$/);
+
+	/^(ACEdirector.*|ACEswitch.*|Alteon.*)/i &&
 	  ProcessHistory("COMMENTS","keysort","A1", "\/\*Model: $1\n") && next;
 	/^Software Version\s+(.*?)\s\((.*)\)/i &&
 	  ProcessHistory("COMMENTS","keysort","B1", "\/\*Image: Software: $1 ($2)\n") && next;
 	/^Hardware Part No:\s+(.*?)\s+/i &&
 	  ProcessHistory("COMMENTS","keysort","A2", "\/\*Hardware part no: $1\n") && next;
 	/^MAC address:\s+([0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2})/i &&
-	  ProcessHistory("COMMENTS","keysort","C1", "\/\*Base MAC address: $1\n") && next; 
-	}
-	return(0);
+	  ProcessHistory("COMMENTS","keysort","C1", "\/\*Base MAC address: $1\n") && next;
+    }
+    return(0);
 }
 
 # This routine processes a "/cfg/dump"
@@ -170,10 +173,10 @@ sub WriteTerm {
 
     # now just copy it verbatim to the history file
     while (<INPUT>) {
-        tr/\015//d;
-        last if(/^>>.*$prompt/);
+	tr/\015//d;
+	last if(/^>>.*$prompt/);
 	chop;
-	if (/(rcomm|wcomm|t1com|t2com)(\s+)(.*)/ && 
+	if (/(rcomm|wcomm|t1com|t2com)(\s+)(.*)/ &&
 		defined($ENV{'NOCOMMSTR'})) {
 	    ProcessHistory("","","","\/\*\t$1$2\"<removed>\"\n") && next;
 	}
@@ -183,8 +186,8 @@ sub WriteTerm {
 	next if (/^\/\* Configuration dump taken/i);
 	next if (/^\/\* Version.*Base MAC.*/i);
 
-		if (/^\/?script end/) { 
-		$found_end = 1; 
+		if (/^\/?script end/) {
+		$found_end = 1;
 		ProcessHistory("","","","$_\n");
 		return(1);
 		}
@@ -198,16 +201,15 @@ sub WriteTerm {
 sub DoNothing {print STDOUT;}
 
 # Main
-%commands=(
-	'/info/sys'		=> "ShowVersion",
-	'/cfg/dump'		=> "WriteTerm",
+@commandtable = (
+	{'/info/sys'		=> 'ShowVersion'},
+	{'/cfg/dump'		=> 'WriteTerm'}
 );
-# keys() doesnt return things in the order entered and the order of the
-# cmds is important (show version first and write term last). pita
-@commands=(
-	"/info/sys",
-	"/cfg/dump",
-);
+# Use an array to preserve the order of the commands and a hash for mapping
+# commands to the subroutine and track commands that have been completed.
+@commands = map(keys(%$_), @commandtable);
+%commands = map(%$_, @commandtable);
+
 $cisco_cmds=join(";",@commands);
 $cmds_regexp=join("|",@commands);
 
@@ -237,13 +239,13 @@ ProcessHistory("COMMENTS","keysort","F0","\/\*\n");
 TOP: while(<INPUT>) {
     tr/\015//d;
     if (/^>>.*$prompt exit/) {
-      $clean_run=1;
-      last;
+	$clean_run=1;
+	last;
     }
 
     while (/>>.*$prompt\s*($cmds_regexp)\s*$/) {
-        $cmd = $1;
-        if (!defined($prompt)) {
+	$cmd = $1;
+	if (!defined($prompt)) {
 	    $prompt = ($_ =~ /^([^#]+#)/)[0];
 	    $prompt =~ s/([][}{)(\\])/\\$1/g;
 	    print STDERR ("PROMPT MATCH: $prompt\n") if ($debug);
@@ -252,7 +254,7 @@ TOP: while(<INPUT>) {
 	if (!defined($commands{$cmd})) {
 	    print STDERR "$host: found unexpected command - \"$cmd\"\n";
 	    $clean_run = 0;
-            last TOP;
+	    last TOP;
 	}
 	$rval = &{$commands{$cmd}};
 	delete($commands{$cmd});

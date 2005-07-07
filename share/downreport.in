@@ -1,6 +1,6 @@
 #! /bin/sh
 ##
-## $Id: downreport.in,v 1.9 2004/01/11 03:43:50 heas Exp $
+## $Id: downreport.in,v 1.11 2005/07/07 01:09:14 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -40,19 +40,23 @@ elif [ "$LIST_OF_GROUPS" = "" ] ; then
     exit 1
 fi
 
+# mail variables
+set | grep MAILHEADERS= > /dev/null 2>&1
+if [ $? -ne 0 ] ; then
+    MAILHEADERS="Precedence: bulk\n"; export MAILHEADERS
+fi
 
 for GROUP in $LIST_OF_GROUPS; do
   (
     echo "To: @MAILPLUS@admin-$GROUP"
     echo "Subject: Down router report - $GROUP"
-    echo "Precedence: bulk"
+    echo "$MAILHEADERS" | awk '{gsub(/\\n/,"\n");print;}'
     echo ""
     DIR=$BASEDIR/$GROUP
     if [ -s $DIR/routers.down ]; then
       (
-  
-      cat  << EOM
-  
+	cat  << EOM
+
 	The following $GROUP routers are listed as other than up.
 
 	Routers listed as "up" in rancid's router.db are polled several
@@ -61,20 +65,17 @@ not polled.
 
 EOM
 
-      cat $DIR/routers.down;
-
+	cat $DIR/routers.down;
       )
-
     else
       (
+	cat  << EOM
 
-      cat  << EOM
-
-        No routers are down/ticketed for router group $GROUP (yay).
+	No routers are down/ticketed for router group $GROUP (yay).
 
 EOM
 
-      ) 
+      )
     fi
   ) | sendmail -t
 

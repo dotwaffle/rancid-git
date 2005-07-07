@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: blogin.in,v 1.23 2004/02/02 17:38:36 heas Exp $
+## $Id: blogin.in,v 1.28 2005/06/14 20:20:43 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -56,7 +56,7 @@ set do_passwd 1
 set do_enapasswd 0
 
 # Find the user in the ENV, or use the unix userid.
-if {[ info exists env(CISCO_USER) ] } {
+if {[ info exists env(CISCO_USER) ]} {
     set default_user $env(CISCO_USER)
 } elseif {[ info exists env(USER) ]} {
     set default_user $env(USER)
@@ -112,14 +112,14 @@ for {set i 0} {$i < $argc} {incr i} {
 		set enausername [ lindex $argv $i ]
 	    }
         # Environment variable to pass to -s scripts
-	} -E*  
+	} -E*
 	{
 	    if {[ regexp .\[E\](.+)=(.+) $arg ignore varname varvalue]} {
 		set E$varname $varvalue
 	    } else {
 		send_user "\nError: invalid format for -E in $arg\n"
 		exit 1
-	    } 
+	    }
 	# Enable Password
 	} -e*
 	{
@@ -237,25 +237,25 @@ proc label { host } {
 # add password *	hanky-pie
 proc add {var args} { global int_$var ; lappend int_$var $args}
 proc include {args} {
-    global env 
-    regsub -all "(^{|}$)" $args {} args 
+    global env
+    regsub -all "(^{|}$)" $args {} args
     if { [ regexp "^/" $args ignore ] == 0 } {
 	set args $env(HOME)/$args
-    } 
+    }
     source_password_file $args
-}   
-    
+}
+
 proc find {var router} {
-    upvar int_$var list 
+    upvar int_$var list
     if { [info exists list] } {
 	foreach line $list {
 	    if { [string match [lindex $line 0] $router ] } {
 		return [lrange $line 1 end]
-	    }     
-	}       
-    }     
-    return {} 
-}           
+	    }
+	}
+    }
+    return {}
+}
 
 # Loads the password file.  Note that as this file is tcl, and that
 # it is sourced, the user better know what to put in there, as it
@@ -280,6 +280,7 @@ proc source_password_file { password_file } {
 }
 
 # Log into the router.
+# returns: 0 on success, 1 on failure
 proc login { router user userpswd passwd enapasswd prompt cmethod cyphertype } {
     global spawn_id in_proc do_command do_script
     global u_prompt p_prompt e_prompt sshcmd
@@ -288,6 +289,7 @@ proc login { router user userpswd passwd enapasswd prompt cmethod cyphertype } {
     # try each of the connection methods in $cmethod until one is successful
     set progs [llength $cmethod]
     foreach prog [lrange $cmethod 0 end] {
+	incr progs -1
 	if [string match "telnet*" $prog] {
 	    regexp {telnet(:([^[:space:]]+))*} $prog command suffix port
 	    if {"$port" == ""} {
@@ -297,23 +299,23 @@ proc login { router user userpswd passwd enapasswd prompt cmethod cyphertype } {
 	    }
 	    if { $retval } {
 		send_user "\nError: telnet failed: $reason\n"
-		exit 1
+		return 1
 	    }
 	} elseif ![string compare $prog "ssh"] {
 	    if [ catch {spawn $sshcmd -c $cyphertype -x -l $user $router} reason ] {
 		send_user "\nError: $sshcmd failed: $reason\n"
-		exit 1
+		return 1
 	    }
 	} elseif ![string compare $prog "rsh"] {
-	    if [ catch {spawn rsh -l $user $router} reason ] {
-		send_user "\nError: rsh failed: $reason\n"
-		exit 1
+	    send_error "\nError: unsupported method: rsh\n"
+	    if { $progs == 0 } {
+		return 1
 	    }
+	    continue;
 	} else {
-	    puts "\nError: unknown connection method: $prog"
+	    send_user "\nError: unknown connection method: $prog\n"
 	    return 1
 	}
-	incr progs -1
 	sleep 0.3
 
 	# This helps cleanup each expect clause.

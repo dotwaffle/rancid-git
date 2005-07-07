@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: jrancid.in,v 1.63 2004/12/08 00:31:46 asp Exp $
+## $Id: jrancid.in,v 1.68 2005/06/15 20:54:41 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -36,13 +36,14 @@ $host = $ARGV[0];
 $clean_run = 0;
 $found_end = 0;
 
-my(%filter_pwds);		# password filtering mode
+my(@commandtable, %commands, @commands);# command lists
+my(%filter_pwds);			# password filtering mode
 
 # This routine is used to print out the router configuration
 sub ProcessHistory {
-    my($new_hist_tag,$new_command,$command_string,@string)=(@_);
-    if((($new_hist_tag ne $hist_tag) || ($new_command ne $command))
-       && defined %history) {
+    my($new_hist_tag,$new_command,$command_string,@string) = (@_);
+    if ((($new_hist_tag ne $hist_tag) || ($new_command ne $command))
+	&& defined %history) {
 	print eval "$command \%history";
 	undef %history;
     }
@@ -64,10 +65,10 @@ sub ProcessHistory {
 
 sub numerically { $a <=> $b; }
 
-# This is a sort routing that will sort numerically on the
+# This is a sort routine that will sort numerically on the
 # keys of a hash as if it were a normal array.
 sub keynsort {
-    local(%lines)=@_;
+    local(%lines) = @_;
     local($i) = 0;
     local(@sorted_lines);
     foreach $key (sort numerically keys(%lines)) {
@@ -77,10 +78,10 @@ sub keynsort {
     @sorted_lines;
 }
 
-# This is a sort routing that will sort on the
+# This is a sort routine that will sort on the
 # keys of a hash as if it were a normal array.
 sub keysort {
-    local(%lines)=@_;
+    local(%lines) = @_;
     local($i) = 0;
     local(@sorted_lines);
     foreach $key (sort keys(%lines)) {
@@ -90,22 +91,22 @@ sub keysort {
     @sorted_lines;
 }
 
-# This is a sort routing that will sort on the
+# This is a sort routine that will sort on the
 # values of a hash as if it were a normal array.
 sub valsort{
-    local(%lines)=@_;
+    local(%lines) = @_;
     local($i) = 0;
     local(@sorted_lines);
     foreach $key (sort values %lines) {
-        $sorted_lines[$i] = $key;
-        $i++;
+	$sorted_lines[$i] = $key;
+	$i++;
     }
     @sorted_lines;
 }
 
-# This is a numerical sort routing (ascending).
+# This is a numerical sort routine (ascending).
 sub numsort {
-    local(%lines)=@_;
+    local(%lines) = @_;
     local($i) = 0;
     local(@sorted_lines);
     foreach $num (sort {$a <=> $b} keys %lines) {
@@ -119,7 +120,7 @@ sub numsort {
 # ip address when the ip address is anywhere in
 # the strings.
 sub ipsort {
-    local(%lines)=@_;
+    local(%lines) = @_;
     local($i) = 0;
     local(@sorted_lines);
     foreach $addr (sort sortbyipaddr keys %lines) {
@@ -132,7 +133,7 @@ sub ipsort {
 # These two routines will sort based upon IP addresses
 sub ipaddrval {
     my(@a) = ($_[0] =~ m#^(\d+)\.(\d+)\.(\d+)\.(\d+)$#);
-    $a[3]+256*($a[2]+256*($a[1]+256*$a[0]));
+    $a[3] + 256 * ($a[2] + 256 * ($a[1] +256 * $a[0]));
 }
 sub sortbyipaddr {
     &ipaddrval($a) <=> &ipaddrval($b);
@@ -488,7 +489,7 @@ sub ShowConfiguration {
     while (<INPUT>) {
 	tr/\015//d;
 	next if (/^\s*$/);
-        # end of config - hopefully.  juniper does not have a reliable
+	# end of config - hopefully.  juniper does not have a reliable
 	# end-of-config tag.  appears to end with "\nPROMPT>", but not sure.
 	if(/^$prompt/) {
 	    $found_end++;
@@ -559,46 +560,30 @@ sub ShowConfiguration {
 sub DoNothing {print STDOUT;}
 
 # Main
-%commands=(
-	"show chassis clocks"		=> "ShowChassisClocks",
-	"show chassis environment"	=> "ShowChassisEnvironment",
-	"show chassis firmware"		=> "ShowChassisFirmware",
-	"show chassis fpc detail"	=> "ShowChassisFpcDetail",
-	"show chassis hardware detail"	=> "ShowChassisHardware",
-	"show chassis routing-engine"	=> "ShowChassisRoutingEngine",
-	"show chassis scb"		=> "ShowChassisSCB",
-	"show chassis sfm detail"	=> "ShowChassisSCB",
-	"show chassis ssb"		=> "ShowChassisSCB",
-	"show chassis feb"		=> "ShowChassisSCB",
-	"show chassis cfeb"		=> "ShowChassisSCB",
-	"show chassis alarms"		=> "ShowChassisAlarms",
-#	"show system autoinstallation status" => "ShowSystemAutoinstall",
-	"show system license"		=> "ShowSystemLicense",
-#	"show system license keys"	=> "ShowSystemLicenseKeys",
-	"show system boot-messages"	=> "ShowSystemBootMessages",
-	"show version detail"		=> "ShowVersion",
-	"show configuration"		=> "ShowConfiguration"
+@commandtable = (
+	{'show chassis clocks'		=> 'ShowChassisClocks'},
+	{'show chassis environment'	=> 'ShowChassisEnvironment'},
+	{'show chassis firmware'	=> 'ShowChassisFirmware'},
+	{'show chassis fpc detail'	=> 'ShowChassisFpcDetail'},
+	{'show chassis hardware detail'	=> 'ShowChassisHardware'},
+	{'show chassis routing-engine'	=> 'ShowChassisRoutingEngine'},
+	{'show chassis scb'		=> 'ShowChassisSCB'},
+	{'show chassis sfm detail'	=> 'ShowChassisSCB'},
+	{'show chassis ssb'		=> 'ShowChassisSCB'},
+	{'show chassis feb'		=> 'ShowChassisSCB'},
+	{'show chassis cfeb'		=> 'ShowChassisSCB'},
+	{'show chassis alarms'		=> 'ShowChassisAlarms'},
+#	{'show system autoinstallation status' => 'ShowSystemAutoinstall'},
+	{'show system license'		=> 'ShowSystemLicense'},
+#	{'show system license keys'	=> 'ShowSystemLicenseKeys'},
+	{'show system boot-messages'	=> 'ShowSystemBootMessages'},
+	{'show version detail'		=> 'ShowVersion'},
+	{'show configuration'		=> 'ShowConfiguration'}
 );
-@commands=(
-	"show chassis clocks",
-	"show chassis environment",
-	"show chassis firmware",
-	"show chassis fpc detail",
-	"show chassis hardware detail",
-	"show chassis routing-engine",
-	"show chassis scb",
-	"show chassis sfm detail",
-	"show chassis ssb",
-	"show chassis feb",
-	"show chassis cfeb",
-	"show chassis alarms",
-#	"show system autoinstallation status",
-	"show system license",
-#	"show system license keys",
-	"show system boot-messages",
-	"show version detail",
-	"show configuration"
-);
+# Use an array to preserve the order of the commands and a hash for mapping
+# commands to the subroutine and track commands that have been completed.
+@commands = map(keys(%$_), @commandtable);
+%commands = map(%$_, @commandtable);
 
 $jnx_commands=join(";",@commands);
 $cmds_regexp=join("|",@commands);
@@ -627,7 +612,7 @@ if ($file) {
 
 # determine password filtering mode
 if ($ENV{"FILTER_PWDS"} =~ /no/i) {
-	$filter_pwds = 0;  
+	$filter_pwds = 0;
 } elsif ($ENV{"FILTER_PWDS"} =~ /all/i) {
 	$filter_pwds = 2;
 } else {

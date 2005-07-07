@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: rtrfilter.in,v 1.13 2004/01/11 03:43:50 heas Exp $
+## $Id: rtrfilter.in,v 1.14 2005/06/14 23:06:27 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -43,7 +43,7 @@
 #
 # exclusion takes precedence and defaults to nothing.  inclusion defaults to
 # everything.
-#	
+#
 # this program requires the Mail::Mailer module which can be found on CPAN.
 ##
 BEGIN {

@@ -1,6 +1,6 @@
 #! /bin/sh
 ##
-## $Id: rancid-run.in,v 1.31 2004/12/24 00:55:26 tex Exp $
+## $Id: rancid-run.in,v 1.32 2005/06/14 20:20:44 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -143,5 +143,5 @@ END
 
 	echo
 	echo ending: `date`
-    ) >$LOGDIR/$GROUP.`date +%Y%m%d.%H%M%S` 2>&1 
+    ) >$LOGDIR/$GROUP.`date +%Y%m%d.%H%M%S` 2>&1
 done

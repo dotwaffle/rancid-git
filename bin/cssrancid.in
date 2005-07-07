@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: cssrancid.in,v 1.5 2004/08/02 15:56:27 heas Exp $
+## $Id: cssrancid.in,v 1.10 2005/06/15 20:55:13 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -31,15 +31,16 @@ $file = $opt_f;
 $host = $ARGV[0];
 $clean_run = 0;
 $found_end = 0;
-$timeo = 90;			# clogin timeout in seconds
+$timeo = 90;				# clogin timeout in seconds
 
-my(%filter_pwds);		# password filtering mode
+my(@commandtable, %commands, @commands);# command lists
+my(%filter_pwds);			# password filtering mode
 
 # This routine is used to print out the router configuration
 sub ProcessHistory {
-    my($new_hist_tag,$new_command,$command_string,@string)=(@_);
-    if((($new_hist_tag ne $hist_tag) || ($new_command ne $command))
-       && defined %history) {
+    my($new_hist_tag,$new_command,$command_string,@string) = (@_);
+    if ((($new_hist_tag ne $hist_tag) || ($new_command ne $command))
+	&& defined %history) {
 	print eval "$command \%history";
 	undef %history;
     }
@@ -64,7 +65,7 @@ sub numerically { $a <=> $b; }
 # This is a sort routine that will sort numerically on the
 # keys of a hash as if it were a normal array.
 sub keynsort {
-    local(%lines)=@_;
+    local(%lines) = @_;
     local($i) = 0;
     local(@sorted_lines);
     foreach $key (sort numerically keys(%lines)) {
@@ -77,7 +78,7 @@ sub keynsort {
 # This is a sort routine that will sort on the
 # keys of a hash as if it were a normal array.
 sub keysort {
-    local(%lines)=@_;
+    local(%lines) = @_;
     local($i) = 0;
     local(@sorted_lines);
     foreach $key (sort keys(%lines)) {
@@ -90,7 +91,7 @@ sub keysort {
 # This is a sort routine that will sort on the
 # values of a hash as if it were a normal array.
 sub valsort{
-    local(%lines)=@_;
+    local(%lines) = @_;
     local($i) = 0;
     local(@sorted_lines);
     foreach $key (sort values %lines) {
@@ -102,7 +103,7 @@ sub valsort{
 
 # This is a numerical sort routine (ascending).
 sub numsort {
-    local(%lines)=@_;
+    local(%lines) = @_;
     local($i) = 0;
     local(@sorted_lines);
     foreach $num (sort {$a <=> $b} keys %lines) {
@@ -116,7 +117,7 @@ sub numsort {
 # ip address when the ip address is anywhere in
 # the strings.
 sub ipsort {
-    local(%lines)=@_;
+    local(%lines) = @_;
     local($i) = 0;
     local(@sorted_lines);
     foreach $addr (sort sortbyipaddr keys %lines) {
@@ -129,7 +130,7 @@ sub ipsort {
 # These two routines will sort based upon IP addresses
 sub ipaddrval {
     my(@a) = ($_[0] =~ m#^(\d+)\.(\d+)\.(\d+)\.(\d+)$#);
-    $a[3]+256*($a[2]+256*($a[1]+256*$a[0]));
+    $a[3] + 256 * ($a[2] + 256 * ($a[1] +256 * $a[0]));
 }
 sub sortbyipaddr {
     &ipaddrval($a) <=> &ipaddrval($b);
@@ -293,9 +294,9 @@ sub ShowBoot {
 	}
 	if ($type !~ /^(12[04]|7)/) {
 	    if ($type !~ /^(29|35)00/) {
-	        ProcessHistory("COMMENTS","keysort","H2","!BootFlash: $_");
+		ProcessHistory("COMMENTS","keysort","H2","!BootFlash: $_");
 	    } else {
-	        ProcessHistory("COMMENTS","keysort","H1","!Variable: $_");
+		ProcessHistory("COMMENTS","keysort","H1","!Variable: $_");
 	    }
 	} elsif (/variable/) {
 	    ProcessHistory("COMMENTS","keysort","H1","!Variable: $_");
@@ -548,22 +549,18 @@ sub ShowRun {
 sub DoNothing {print STDOUT;}
 
 # Main
-%commands=(
-	'term length 65535'		=> "TermLength",
-	'copy profile user-profile'	=> "CopyProfile",
-	'show version'			=> "ShowVersion",
-	'show boot'			=> "ShowBoot",
-	'show run'			=> "ShowRun"
+@commandtable = (
+	{'term length 65535'		=> 'TermLength'},
+	{'copy profile user-profile'	=> 'CopyProfile'},
+	{'show version'			=> 'ShowVersion'},
+	{'show boot'			=> 'ShowBoot'},
+	{'show run'			=> 'ShowRun'}
 );
-# keys() doesnt return things in the order entered and the order of the
-# cmds is important (show version first and show run last). pita
-@commands=(
-	"term length 65535",
-	"copy profile user-profile",
-	"show version",
-	"show boot",
-	"show run"
-);
+# Use an array to preserve the order of the commands and a hash for mapping
+# commands to the subroutine and track commands that have been completed.
+@commands = map(keys(%$_), @commandtable);
+%commands = map(%$_, @commandtable);
+
 $cisco_cmds=join(";",@commands);
 $cmds_regexp=join("|",@commands);
 
@@ -588,7 +585,7 @@ if ($file) {
 }
 
 # determine password filtering mode
-if ($ENV{"FILTER_PWDS"} =~ /no/i) {  
+if ($ENV{"FILTER_PWDS"} =~ /no/i) {
 	$filter_pwds = 0;
 } elsif ($ENV{"FILTER_PWDS"} =~ /all/i) {
 	$filter_pwds = 2;

@@ -1,4 +1,20 @@
-2.3.2a
+2.3.2
+	Add a MAILHEADERS configuration variable for user-defined mail headers 
+
+	rancid: match HSRP group numbers greater than 1 char wide - Ed Ravin
+
+	nrancid: filter radius secrest - Jee Kay
+
+	*rancid: collapse the two command list definitions to an array of
+	hashrefs and build the lists from it - Ed Ravin
+
+	*login: ignore rsh on platforms that do not support it and on those
+	that do (eg: cisco), skip rsh for interactive and script (-s) logins.
+
+	add MAX_ROUNDS rancid.conf knob - Mardechai Abzug
+
+	control_rancid: fix adminmailrcpt default - Danny Thomas
+
 	rancid: correct handling of SNMPv3 host configs - Patrick Adlam
 
 	rancid: filter nv_hdr file seen on sup720 - Bill Ouchark

@@ -1,5 +1,5 @@
 ##
-## $Id: cisco-load.exp,v 1.10 2004/01/11 03:43:50 heas Exp $
+## $Id: cisco-load.exp,v 1.11 2005/06/14 23:06:26 heas Exp $
 ##
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
@@ -46,8 +46,8 @@
 #	prompt		cmd-line prompt as determined by clogin
 #
 # note: the tcl/expect parser is extremely stoopid.  comment lines are NOT
-#       completely ignored!!  so, a '{' or '}' in a comment might produce
-#       unexpected results.
+#	completely ignored!!  so, a '{' or '}' in a comment might produce
+#	unexpected results.
 ##
 # log_user 1
 # exp_internal 1
@@ -72,11 +72,12 @@ proc logout { ecode } {
 
     send "quit\r"
     expect {
-	"$prompt"       { logout $ecode }
+	"$prompt"	{ logout $ecode }
 	timeout { send_error "Error: timeout waiting for EOF after quit\n"}
-	eof     {
-		send_user "\n"
-		exit $ecode }
+	eof		{
+			  send_user "\n"
+			  exit $ecode
+			}
     }
 }
 
@@ -91,13 +92,15 @@ proc erase { } {
     send "write erase\r"
     expect {
 	-re " Continue\[^\n\]\*confirm\]" {
-		send	"\r"
-		exp_continue }
-	"$prompt"       { }
-	timeout {
-		send_error "Error: timeout waiting for write erase.\n"
-		logout 1 }
-	eof     { logout 1 }
+			  send "\r"
+			  exp_continue
+			}
+	"$prompt"	{ }
+	timeout		{
+			  send_error "Error: timeout waiting for write erase.\n"
+			  logout 1
+			}
+	eof		{ logout 1 }
     }
 }
 
@@ -165,10 +168,10 @@ proc doload { confghost routername config retry } {
 		send_error "Error: timeout exceeded while loading config\n"
 		logout 1 }
 	-re "\[^\n\]*Connection refused" {
-		send_error "Error: $expect_out(0,string)\n" 
+		send_error "Error: $expect_out(0,string)\n"
 		logout 1 }
 	-re "\[^\n\]*Destination unreachable" {
-		send_error "Error: $expect_out(0,string)\n" 
+		send_error "Error: $expect_out(0,string)\n"
 		logout 1 }
 	-re "\[^\n\]*Permission denied" {
 		send_error "Error: $expect_out(0,string)\n"
@@ -203,9 +206,10 @@ proc doload { confghost routername config retry } {
 	-re "\[^\n]*Error (opening|copying).*\r" {
 		send_error "Error: $expect_out(0,string)\n"
 		logout 1 }
-        -nocase -re "\[^\n]* error\[^a-z\n]+\[^\n]*" {
-                send_error "$expect_out(0,string)\n"
-                logout 1 }
+	-nocase -re "\[^\n]* error\[^a-z\n]+\[^\n]*" {
+			  send_error "$expect_out(0,string)\n"
+			  logout 1
+			}
 	"\n"		{ exp_continue }
 	-re "^\[^ ]*\#"	{
 		send_user "load successful.\n"
@@ -245,25 +249,25 @@ logout 0
 # these were my original transcripts of performing loads.  it is a useful
 # example of info you may collect to get an idea of what needs to be handled
 # in the expect{}s
-#  
+#
 #  pdx-oob#
 #  pdx-oob#copy rcp start
 #  Address of remote host [255.255.255.255]? 205.238.52.35
 #  Name of configuration file [a]? pdx-oob-confg
 #  Configure using pdx-oob-confg from 205.238.52.35? [confirm]
-#  
+#
 #  Connected to 205.238.52.35
 #  Loading 8131 byte file pdx-oob-confg: !!!! [OK]
 #  Compressing configuration from 8131 bytes to 3886 bytes
 #  [OK]
 #  pdx-oob#
-#  
+#
 
 #  12.0S-isms
 #  pao2#cop rcp sta
 #  Address or name of remote host []? eng0
 #  Translating "eng0"...domain server (205.238.52.46) [OK]
-#  
+#
 #  Source username [pao2]? 
 #  Source filename []? pao2-confg
 #  Destination filename [startup-config]? 
@@ -274,7 +278,7 @@ logout 0
 #  Accessing rcp://pao2@eng0/pao2-confg...
 #  Connected to 205.238.52.35
 #  Loading 30138 byte file pao2-confg: !!!!!! [OK]
-#  
+#
 #  30138 bytes copied in 2.576 secs (15069 bytes/sec)
 #  pao2#
 # OR IS IT
@@ -292,7 +296,7 @@ logout 0
 #  Address of remote host [255.255.255.255]? 205.238.52.35
 #  Name of configuration file [a]? pdx-oob-confg
 #  Configure using pdx-oob-confg from 205.238.52.35? [confirm]
-#  
+#
 #  Connected to 205.238.52.35
 #  Loading 8131 byte file pdx-oob-confg: !!!! [OK]
 #  Compressing configuration from 8131 bytes to 3886 bytes
@@ -301,17 +305,17 @@ logout 0
 #  Address of remote host [205.238.52.35]? 205.238.52.35
 #  Name of configuration file [pdx-oob-confg]? pdx-oob-confg
 #  Configure using pdx-oob-confg from 205.238.52.35? [confirm]
-#  
+#
 #  Connected to 205.238.52.35
 #  %rcp: /tftpboot/pdx-oob-confg: No such file or directory
 #  pdx-oob#
-#  
+#
 
 #  pdx-oob#copy rcp start
 #  Address of remote host [205.238.52.35]? 205.238.52.35 
 #  Name of configuration file [pdx-oob-confg]? pdx-oob-confg 
 #  Configure using pdx-oob-confg from 205.238.52.35? [confirm]
-#  
+#
 #  Connected to 205.238.52.35
 #  %rcp: /tftpboot/pdx-oob-confg: Permission denied
 #  pdx-oob#
@@ -323,9 +327,9 @@ logout 0
 #  Name of configuration file [pdx-oob-confg]? 
 #  Configure using pdx-oob-confg from 205.238.1.94? [confirm]
 #  % Destination unreachable; gateway or host down
-#  
+#
 #  pdx-oob#
-#  
+#
 
 #  *** response from host w/o rcp daemon
 #  pdx-oob#cop rcp sta 
@@ -333,6 +337,6 @@ logout 0
 #  Name of configuration file [pdx-oob-confg]? 
 #  Configure using pdx-oob-confg from 205.238.1.66? [confirm]
 #  % Connection refused by remote host
-#  
+#
 #  pdx-oob#
-#  
+#

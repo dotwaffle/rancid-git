@@ -1,7 +1,7 @@
 # configuration file for the looking glass
 #
 # note: these are perl statements!  Mind the syntax.  "perl -c lg.conf"
-#       should succeed.
+#	should succeed.
 #
 # adjust the path to find [cfj]login, telnet, ssh, rsh, etc.
 #
@@ -126,8 +126,8 @@ $queries = {};
 #
 # Interface queries
 $queries->{"interface"} = {
-        framerelay => "show frame-relay PVC [DLCI]",
-        interface => "show interface [interface]"
+	framerelay => "show frame-relay PVC [DLCI]",
+	interface => "show interface [interface]"
 };
 #
 # Routing queries

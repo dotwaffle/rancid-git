@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: rivlogin.in,v 1.18 2004/07/19 00:06:08 afort Exp $
+## $Id: rivlogin.in,v 1.19 2005/06/14 20:20:44 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -24,8 +24,8 @@
 # rivlogin - Riverstone (and Enterasys SSR) login
 #
 # Based upon rscmd (see nmops.org)
-# rscmd - Riverstone Networks Automated login 
-# by Mike MacFaden, Kiran Addepalli 
+# rscmd - Riverstone Networks Automated login
+# by Mike MacFaden, Kiran Addepalli
 # Riverstone Networks, 2000
 #
 # Returned to the RANCID crowd by andrew fort
@@ -36,12 +36,12 @@
 set verbose  0
 set success  1
 set config   0
- 
+
 # in seconds to wait for data back from device
 set timeout 10
 set tempfile "/tmp/rivlogin.[exec date]"
 
-# cli command prompt 
+# cli command prompt
 set my_prompt    ">"
 set enable_prompt "\#"
 
@@ -105,27 +105,27 @@ proc label { host } {
 # add password at*      steve
 # add password *        hanky-pie
 
-proc add { var args } { 
+proc add { var args } {
 
     global $var
     lappend $var $args
-} 
+}
 
 # Loads the password file.  Note that as this file is tcl, and that
 # it is sourced, the user better know what to put in there, as it
 # could install more than just password info...  I will assume however,
 # that a "bad guy" could just as easy put such code in the clogin
-# script, so I will leave .cloginrc as just an extention of that script 
+# script, so I will leave .cloginrc as just an extention of that script
 
 proc source_password_file { } {
 
     global env password_file read_password_file
 
-    if { [info exists read_password_file] } { 
+    if { [info exists read_password_file] } {
         return  1
     }
 
-    if { [info exists password_file] == 0 } { 
+    if { [info exists password_file] == 0 } {
         set password_file $env(HOME)/.cloginrc
     }
 
@@ -149,8 +149,8 @@ proc find { var router } {
         return {}
     }
 
-    upvar $var list 
-    if { [info exists list] } { 
+    upvar $var list
+    if { [info exists list] } {
         foreach line $list {
             if { [string match [lindex $line 0] $router ] } {
                 return [lrange $line 1 end]
@@ -166,7 +166,7 @@ proc find { var router } {
 
 proc auto_exit  { } {
 
-    global telnet_id    
+    global telnet_id
 
     if { $verbose == 1 } {
 	puts "DEBUG: auto_exit closing connection to pid $telnet_id\n"
@@ -179,7 +179,7 @@ proc auto_exit  { } {
 # post: return 0 on successful login, else 1
 #
 # NOTE: a number of globals are setup: my_prompt, telnet_id are key
-# and paging of cli output is disabled 
+# and paging of cli output is disabled
 
 proc login { router user userpswd passwd enapasswd } {
 
@@ -212,7 +212,7 @@ proc login { router user userpswd passwd enapasswd } {
     expect "*"
     send "\r"
 
-    # If password fails 3 times then expect again   
+    # If password fails 3 times then expect again
     set pass_attempt  0
 
     expect  {
@@ -220,7 +220,7 @@ proc login { router user userpswd passwd enapasswd } {
         -re ".*> " { }
 
         "Password:"  {
-            incr pass_attempt 
+            incr pass_attempt
             send "$passwd\r"
             exp_continue
         }
@@ -232,13 +232,13 @@ proc login { router user userpswd passwd enapasswd } {
             send "$user\r"
             expect {
 
-                "Password: "    { 
+                "Password: "    {
 
                     incr pattempt
                     if {$pattempt == 1} {
-                        send "$userpswd\r"; 
-                    } else { 
-                        send "$enapasswd\r"; 
+                        send "$userpswd\r";
+                    } else {
+                        send "$enapasswd\r";
                     }
                     exp_continue
                 }
@@ -246,8 +246,8 @@ proc login { router user userpswd passwd enapasswd } {
                 -re ".*> " { exp_continue;}
             }
         }
-        
-	"%TELNETD-W-BADPASSWD" { 
+
+	"%TELNETD-W-BADPASSWD" {
 	    puts "ERROR: bad userid or password to telnet."
 	    return 1
 	}
@@ -266,7 +266,7 @@ proc login { router user userpswd passwd enapasswd } {
 	    return 1
 	}
 
-        "Connection closed *"   { 
+        "Connection closed *"   {
             if {$pass_attempt == 3} {
                 puts "ERROR: Maximum attempts for password reached. Check password. Exiting.";
                 puts $expect_out(0,string);
@@ -279,7 +279,7 @@ proc login { router user userpswd passwd enapasswd } {
             return 1
         }
 
-	eof { 
+	eof {
 	    puts "ERROR: device closed telnet connection during login"
 	    return 1
 	}
@@ -322,9 +322,9 @@ proc disable_cmd_autocomplete { }  {
 
         $my_prompt  { }
 
-        timeout { 
+        timeout {
             puts "ERROR:disable_cmd_autocomplete(TIMEOUT)";
-            return 0; 
+            return 0;
         }
 
     }
@@ -333,7 +333,7 @@ proc disable_cmd_autocomplete { }  {
 }
 
 # pre: login returned 0, do_enable returned 0, cli is in enable or config mode
-# post: issues logout cli to device, returns 0 
+# post: issues logout cli to device, returns 0
 
 proc logout { prompt } {
     global config_mode enable_prompt
@@ -342,7 +342,7 @@ proc logout { prompt } {
     # verify top level prompt state, move to it if necessary
 
     if { $config_mode == 1 } {
-	
+
 	send "exit\r"
 
 	expect {
@@ -382,22 +382,22 @@ proc do_enable { enauser enapasswd userpswd } {
     }
 
     set uses_username 0;
- 
+
     send "enable\r"
 
     expect {
-        Username:     { 
+        Username:     {
 	    set uses_username 1;
-	    send "$enauser\r"; 
-	    exp_continue 
+	    send "$enauser\r";
+	    exp_continue
 	}
-        Password:     { 
+        Password:     {
 	    if {$uses_username == 1} {
 		send "$userpswd\r";
 	    } else {
 		send "$enapasswd\r";
 	    }
-	    exp_continue 
+	    exp_continue
 	}
 
         "$my_prompt"    {
@@ -405,7 +405,7 @@ proc do_enable { enauser enapasswd userpswd } {
 	    return 1
 	}
 
-	"CONS-W-AUTH_PASSWD" { send "$enapasswd\r"; } 
+	"CONS-W-AUTH_PASSWD" { send "$enapasswd\r"; }
 
         "$enable_prompt "  { }
         "%SYS-W-NOPASSWD*" { }
@@ -415,7 +415,7 @@ proc do_enable { enauser enapasswd userpswd } {
 	    return 1
 	}
     }
-   
+
    set my_prompt $enable_prompt
    return 0
 }
@@ -432,7 +432,7 @@ proc do_configure { } {
     if { $verbose == 1 } {
 	puts "DEBUG: do_config: my_prompt = $my_prompt cfg_prompt = $config_prompt"
     }
- 
+
     send "configure\r"
     expect {
         "$config_prompt "   { }
@@ -453,13 +453,13 @@ proc do_configure { } {
 # post: logfile open, global var logging == 1, return 0 , else 1
 
 proc start_logfile { output_file } {
-    global logging 
+    global logging
 
     if { [ string length $output_file ] != 0 } {
-	set rc [ catch  { 
+	set rc [ catch  {
 	    log_file -noappend $output_file
 	} errMsg ]
-	
+
 	if { $rc != 0 } {
 	    puts "ERROR: open file $output_file for write access failed. $errMsg\n"
 	    return 1
@@ -471,7 +471,7 @@ proc start_logfile { output_file } {
 }
 
 proc run_commands { prompt cmdstring } {
-    global sendstring 
+    global sendstring
 
     set commands [split $cmdstring \;]
     set num_commands [llength $cmdstring]
@@ -511,7 +511,7 @@ proc run_single_command { prompt cmdstring } {
 	set need_ays 1
         set delay 1
         if {$verbose == 1} {
-          puts "DEBUG: save startup cmd seen, set need_ays = 1" 
+          puts "DEBUG: save startup cmd seen, set need_ays = 1"
         }
     }
 
@@ -524,7 +524,7 @@ proc run_single_command { prompt cmdstring } {
 
     if { $delay == 1} {
        sleep 1
-    } 
+    }
 
     expect {
 
@@ -555,7 +555,7 @@ proc run_single_command { prompt cmdstring } {
 	"want to overwrite " {
 	    send "yes\r"
 	    if {$verbose == 1} {
-               puts "DEBUG: got overwrite question, set need_ays to 0" 
+               puts "DEBUG: got overwrite question, set need_ays to 0"
             }
 	    set need_ays 0
 	}
@@ -564,7 +564,7 @@ proc run_single_command { prompt cmdstring } {
         "%CONFIG-E-DUPLICATE,*" {
          }
 
-        "$prompt" { 
+        "$prompt" {
 	    if { $seen_prompt == 0 } {
 		set seen_prompt 1
 	    }
@@ -584,7 +584,7 @@ proc run_single_command { prompt cmdstring } {
         }
 
 
-        timeout { 
+        timeout {
 	    if {$verbose == 1} {
 		puts "DEBUG: timeout occured for the $seen_time time\n"
 	    }
@@ -599,8 +599,8 @@ proc run_single_command { prompt cmdstring } {
             set rc 1
         }
 
-        eof { 
-	    puts "ERROR:run_commands(connection closed by device)\n" 
+        eof {
+	    puts "ERROR:run_commands(connection closed by device)\n"
 	    set rc 1
         }
 
@@ -622,8 +622,8 @@ proc init_userid { } {
     if {[ info exists env(RSTONE_USER) ] } {
         set default_user $env(RSTONE_USER)
     } else {
-        # This uses "id" which I think is portable.  At least it has existed 
-        # (without options) on all machines/OSes I've been on recently - 
+        # This uses "id" which I think is portable.  At least it has existed
+        # (without options) on all machines/OSes I've been on recently -
         # unlike whoami or id -nu.
         regexp {\(([^)]*)} [exec id] junk default_user
     }
@@ -651,7 +651,7 @@ proc process_script_file { filename } {
     set rc 0
     set ifile ""
 
-    set rc [ catch  { 
+    set rc [ catch  {
 	set ifile [ open $filename r]
     } errMsg ]
 
@@ -663,16 +663,16 @@ proc process_script_file { filename } {
     set line_cnt 0
 
     while { [eof $ifile]  != 1 } {
-	
+
 	set bytes [ gets $ifile cmd ]
 	incr line_cnt
 
-	if { $bytes < 0  } { 
-	    break 
+	if { $bytes < 0  } {
+	    break
 	} elseif { $bytes == 0 } {
 	    continue
 	}
-	
+
 	if { $verbose == 1 } {
 	    puts "DEBUG: line:$line_cnt cmd = $cmd\n"
 	}
@@ -711,7 +711,7 @@ proc strip_log { filename router }  {
 
     global tempfile
 
-    set rc [ catch  { 
+    set rc [ catch  {
 	set ifile [ open $filename r]
     } errMsg ]
 
@@ -719,7 +719,7 @@ proc strip_log { filename router }  {
 	puts "ERROR: strip_log: open script file $filename for read access failed. $errMsg\n"
 	return 1
     }
-    set rc [ catch  { 
+    set rc [ catch  {
 	set ofile [ open $tempfile w]
     } errMsg ]
 
@@ -731,12 +731,11 @@ proc strip_log { filename router }  {
     set nl 0
 
     puts $ofile "rscmd: $router : [exec date]"
-    
+
     while { [eof $ifile]  != 1 } {
-	
 	set bytes [ gets $ifile cmd ]
-	if { $bytes <= 0  } { 
-	    break 
+	if { $bytes <= 0  } {
+	    break
 	}
 	incr nl
 	if { $nl <= 2 } {
@@ -894,24 +893,24 @@ set router [string tolower $router]
 	if { [llength $pswd] == 0 } {
 	    puts "ERROR: - no password for $router in $password_file.\n"
 	    exit 1
-	} 
+	}
 	if { $do_enapasswd && [llength $pswd] < 2 } {
 	    puts "ERROR: no enable password found for $router in $password_file."
 	    exit 1
 	}
-    
+
 	set passwd [join [lindex $pswd 0] ""]
 	set enapasswd [join [lindex $pswd 1] ""]
     }
 
     # Figure out user to login with if necessary
-    if {[info exists username]} {  
+    if {[info exists username]} {
 	# command line username
 	set user $username
     } else {
 	set user [join [find user $router] ""]
 	if { "$user" == "" } { set user $default_user }
-    } 
+    }
 
     # Figure out username's password
     if {[info exists userpasswd]} {
@@ -919,17 +918,17 @@ set router [string tolower $router]
 	set userpswd $userpasswd
     } else {
 	set userpswd [join [find userpassword $router] ""]
-	if { "$userpswd" == "" } { set userpswd $passwd } 
-    } 
+	if { "$userpswd" == "" } { set userpswd $passwd }
+    }
 
     # Figure out enable username
-    if {[info exists enausername]} {  
+    if {[info exists enausername]} {
 	# command line enausername
 	set enauser $enausername
     } else {
 	set enauser [join [find enauser $router] ""]
-	if { "$enauser" == "" } { set enauser $user } 
-    } 
+	if { "$enauser" == "" } { set enauser $user }
+    }
 
     # Login to the router, set my_prompt to router's cmd prompt
     if {[login $router $user $userpswd $passwd $enapasswd ]} {
@@ -956,13 +955,13 @@ set router [string tolower $router]
     if { $do_command } {
 	disable_cmd_autocomplete
 	disable_cli_paging
-    
+
 	if { [start_logfile $output_file] != 0 } {
     	    exit 1
 	}
 
 	if {[ run_commands $my_prompt $command ]} {
-	    log_file 
+	    log_file
 	    exit 1
 	} else {
 	    logout $my_prompt
@@ -970,7 +969,7 @@ set router [string tolower $router]
     } elseif { $do_script } {
 	disable_cmd_autocomplete
 	disable_cli_paging
-    
+
 	if {[ start_logfile $output_file] != 0 } {
 	    exit 1
 	}
@@ -985,14 +984,14 @@ set router [string tolower $router]
 
 	logout $my_prompt
     } else {
-	label $router 
+	label $router
 	log_user 1
 
 	if {[ start_logfile $output_file] != 0 } {
 	    exit 1
 	}
 	interact
-	log_file 
+	log_file
     }
 
     if { $verbose == 1 } {
@@ -1000,7 +999,7 @@ set router [string tolower $router]
     }
 
     if { $logging == 1} {
-	log_file 
+	log_file
 	strip_log $output_file $router
     }
 }

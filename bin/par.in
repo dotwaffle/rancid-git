@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: par.in,v 1.10 2004/01/11 03:49:13 heas Exp $
+## $Id: par.in,v 1.11 2005/06/14 20:20:44 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -59,7 +59,7 @@ if ($opt_q && ($opt_x || $opt_l)) {
 
 $signalled=0;
 
-sub handler { 
+sub handler {
     $signalled++;
     print STDERR "Received signal - ending run ($signalled).\n";
     if($signalled>1) {
@@ -145,4 +145,4 @@ $procs=$i if ($i<$procs);
 while($procs) {
     $procs-- if(finish);
 }
-print STDERR "Complete\n" if ($debug); 
+print STDERR "Complete\n" if ($debug);

@@ -1,8 +1,8 @@
 .\"
-.\" $Id: rancid.conf.5.in,v 1.11 2004/03/12 23:13:09 heas Exp $
+.\" $Id: rancid.conf.5.in,v 1.14 2005/07/07 01:09:13 heas Exp $
 .\"
 .hys 50
-.TH "rancid.conf" "5" "12 Mar 2004"
+.TH "rancid.conf" "5" "5 July 2005"
 .SH NAME
 rancid.conf \- rancid environment configuration file
 .SH DESCRIPTION
@@ -121,6 +121,23 @@ The value of this variable is simply appended to the normal mail addresses.
 For example @MAILPLUS@usfs@example.com, if
 .B MAILDOMAIN
 had been set to "@example.com".
+.\"
+.TP
+.B MAILHEADERS
+Define additional mail headers to be added to rancid mail, such as Precedence
+or X- style headers.
+Individual headers must be separated by a \\n (new line).
+.sp
+Default: Precedence: bulk
+.sp
+Example: Precedence: bulk\\nX-clamation: beef cake
+.\"
+.TP
+.B MAX_ROUNDS
+Defines how many times rancid should retry collection of devices that fail.
+The minimum is 1.
+.sp
+Default: 4.
 .\"
 .TP
 .B NOCOMMSTR

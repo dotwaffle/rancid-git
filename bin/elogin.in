@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: elogin.in,v 1.28 2004/02/02 17:38:36 heas Exp $
+## $Id: elogin.in,v 1.33 2005/06/14 20:20:43 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -49,7 +49,7 @@ set avautoenable 0
 set do_passwd 1
 
 # Find the user in the ENV, or use the unix userid.
-if {[ info exists env(CISCO_USER) ] } {
+if {[ info exists env(CISCO_USER) ]} {
     set default_user $env(CISCO_USER)
 } elseif {[ info exists env(USER) ]} {
     set default_user $env(USER)
@@ -62,9 +62,9 @@ if {[ info exists env(CISCO_USER) ] } {
     if [ catch {exec id} reason ] {
 	send_error "\nError: could not exec id: $reason\n"
 	exit 1
-    } 
+    }
     regexp {\(([^)]*)} "$reason" junk default_user
-}   
+}
 
 # Sometimes routers take awhile to answer (the default is 10 sec)
 set timeout 45
@@ -268,31 +268,44 @@ proc source_password_file { password_file } {
 }
 
 # Log into the router.
+# returns: 0 on success, 1 on failure
 proc login { router user userpswd passwd prompt cmethod cyphertype } {
     global spawn_id in_proc do_command do_script
     global u_prompt p_prompt
     set in_proc 1
-    set uprompt_seen 0 
+    set uprompt_seen 0
 
     # try each of the connection methods in $cmethod until one is successful
     set progs [llength $cmethod]
     foreach prog [lrange $cmethod 0 end] {
+	incr progs -1
 	if [string match "telnet*" $prog] {
 	    regexp {telnet(:([^[:space:]]+))*} $prog command suffix port
 	    if {"$port" == ""} {
-		set retval [ catch {spawn telnet $router} reason ]  
-	    } else { 
+		set retval [ catch {spawn telnet $router} reason ]
+	    } else {
 		set retval [ catch {spawn telnet $router $port} reason ]
 	    }
 	    if { $retval } {
 		send_user "\nError: telnet failed: $reason\n"
-		exit 1 
+		return 1
 	    }
+	} elseif ![string compare $prog "ssh"] {
+	    send_error "\nError: unsupported method: ssh\n"
+	    if { $progs == 0 } {
+		return 1
+	    }
+	    continue
+	} elseif ![string compare $prog "rsh"] {
+	    send_error "\nError: unsupported method: rsh\n"
+	    if { $progs == 0 } {
+		return 1
+	    }
+	    continue
 	} else {
-	    puts "\nError: unknown connection method: $prog"
+	    send_user "\nError: unknown connection method: $prog\n"
 	    return 1
 	}
-	incr progs -1
 	sleep 0.3
 
     # This helps cleanup each expect clause.

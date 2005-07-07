@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: hlogin.in,v 1.24 2004/10/14 17:53:57 heas Exp $
+## $Id: hlogin.in,v 1.28 2005/06/13 03:11:45 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -59,7 +59,7 @@ set do_enapasswd 1
 set platform ""
 
 # Find the user in the ENV, or use the unix userid.
-if {[ info exists env(CISCO_USER) ] } {
+if {[ info exists env(CISCO_USER) ]} {
     set default_user $env(CISCO_USER)
 } elseif {[ info exists env(USER) ]} {
     set default_user $env(USER)
@@ -287,6 +287,7 @@ proc source_password_file { password_file } {
 }
 
 # Log into the router.
+# returns: 0 on success, 1 on failure
 proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
     global spawn_id in_proc do_command do_script platform
     global prompt u_prompt p_prompt e_prompt sshcmd
@@ -295,6 +296,7 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
     # try each of the connection methods in $cmethod until one is successful
     set progs [llength $cmethod]
     foreach prog [lrange $cmethod 0 end] {
+	incr progs -1
 	regexp {(telnet|ssh)(:([^[:space:]]+))*} $prog command suffix junk port
 	if [string match "telnet*" $prog] {
 	    if {"$port" == ""} {
@@ -304,7 +306,7 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 	    }
 	    if { $retval } {
 		send_user "\nError: telnet failed: $reason\n"
-		exit 1
+		return 1
 	    }
 	} elseif [string match "ssh*" $prog] {
 	    if {"$port" == ""} {
@@ -314,18 +316,18 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 	    }
 	    if { $retval } {
 		send_user "\nError: $sshcmd failed: $reason\n"
-		exit 1
+		return 1
 	    }
 	} elseif ![string compare $prog "rsh"] {
-	    if [ catch {spawn hpuifilter rsh -l $user $router} reason ] {
-		send_user "\nError: rsh failed: $reason\n"
-		exit 1
+	    send_error "\nError: unsupported method: rsh\n"
+	    if { $progs == 0 } {
+		return 1
 	    }
+	    continue;
 	} else {
-	    puts "\nError: unknown connection method: $prog"
+	    send_user "\nError: unknown connection method: $prog\n"
 	    return 1
 	}
-	incr progs -1
 	sleep 0.3
 
 	# This helps cleanup each expect clause.
