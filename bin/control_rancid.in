@@ -1,6 +1,6 @@
 #! /bin/sh
 ##
-## $Id: control_rancid.in,v 1.69 2005/07/07 01:09:08 heas Exp $
+## $Id: control_rancid.in,v 1.71 2005/08/15 00:42:50 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -81,6 +81,13 @@ DIR=$BASEDIR/$GROUP
 TMP=${TMPDIR:=/tmp}/rancid.$GROUP.$$
 trap 'rm -fr $TMP;' 1 2 15
 
+# RCS system
+RCSSYS=${RCSSYS:=cvs};
+if [ $RCSSYS != "cvs" -a $RCSSYS != "svn" ] ; then
+    echo "$RCSSYS is not a valid value for RCSSYS."
+    exit 1
+fi
+
 # the receipient(s) of diffs & mail options
 mailrcpt=${mailrcpt:-"@MAILPLUS@${GROUP}${MAILDOMAIN}"}; export mailrcpt
 adminmailrcpt=${adminmailrcpt:-"@ADMINMAILPLUS@${GROUP}${MAILDOMAIN}"};
@@ -117,10 +124,10 @@ fi
 
 # do cvs update of router.db in case anyone has fiddled.
 cd $DIR
-cvs update router.db > $TMP 2>&1
+$RCSSYS update router.db > $TMP 2>&1
 grep "^C" $TMP > /dev/null
 if [ $? -eq 0 ] ; then
-    echo "There were CVS conflicts during update."
+    echo "There were $RCSSYS conflicts during update."
     echo ""
     cat $TMP
     rm -f $TMP
@@ -241,8 +248,12 @@ then
 	router=$1
 
 	touch $router
-	cvs add -ko $router
-	cvs commit -m 'new router' $router
+	if [ $RCSSYS = cvs ] ; then
+	    cvs add -ko $router
+	else
+	    svn add $router
+	fi
+	$RCSSYS commit -m 'new router' $router
 	echo "Added $router"
     done
     echo
@@ -265,23 +276,31 @@ rm -f routers.db
 trap 'rm -fr $TMP;' 1 2 15
 
 cd $DIR/configs
-# check for 'up' routers missing in cvs.  no idea how this happens to some folks
+# check for 'up' routers missing in RCS.  no idea how this happens to some folks
 for router in `cut -d: -f1 ../routers.up` ; do
-    cvs status $router | grep -i 'status: unknown' > /dev/null 2>&1
+    if [ $RCSSYS = cvs ] ; then
+	cvs status $router | grep -i 'status: unknown' > /dev/null 2>&1
+    else
+	svn status $router | grep '^?' > /dev/null 2>&1
+    fi
     if [ $? -eq 0 ]; then
 	touch $router
-	cvs add -ko $router
-	echo "CVS added missing router $router"
+	if [ $RCSSYS = cvs ] ; then
+	    cvs add -ko $router
+	else
+	    svn add $router
+	fi
+	echo "$RCSSYS added missing router $router"
     fi
 done
 echo
-# cvs delete configs for routers not listed in routers.up.
-for router in `find . \( -name \*.new -prune -o -name CVS -prune \) -o -type f -print | sed -e 's/^.\///'` ; do
+# delete configs from RCS for routers not listed in routers.up.
+for router in `find . \( -name \*.new -prune -o -name CVS -prune -o -name .svn -prune \) -o -type f -print | sed -e 's/^.\///'` ; do
     grep -i "^$router:" ../router.db > /dev/null 2>&1
     if [ $? -eq 1 ]; then
 	rm -f $router
-	cvs delete $router
-	cvs commit -m 'deleted router' $router
+	$RCSSYS delete $router
+	$RCSSYS commit -m 'deleted router' $router
 	echo "Deleted $router"
     fi
 done
@@ -291,7 +310,7 @@ cd $DIR
 if [ ! -s routers.up ]
 then
     # commit router.db
-    cvs commit -m updates router.db > /dev/null
+    $RCSSYS commit -m updates router.db > /dev/null
     exit;
 fi
 
@@ -379,8 +398,12 @@ done
 # Diff the directory and then checkin.
 trap 'rm -fr $TMP $TMP.diff $DIR/routers.single;' 1 2 15
 cd $DIR
-cvs -f @DIFF_CMD@ | sed -e '/^RCS file: /d' -e '/^--- /d' \
+if [ $RCSSYS = "cvs" ] ; then
+    cvs -f @DIFF_CMD@ -ko | sed -e '/^RCS file: /d' -e '/^--- /d' \
 	-e '/^+++ /d' -e 's/^\([-+ ]\)/\1 /' >$TMP.diff
+else
+    svn diff | sed -e '/^+++ /d' -e 's/^\([-+ ]\)/\1 /' >$TMP.diff
+fi
 
 if [ $alt_mailrcpt -eq 1 ] ; then
     subject="router config diffs - courtesy of $mailrcpt"
@@ -388,10 +411,10 @@ else
     subject="router config diffs"
 fi
 if [ "X$device" != "X" ] ; then
-    cvs commit -m "updates - courtesy of $mailrcpt"
+    $RCSSYS commit -m "updates - courtesy of $mailrcpt"
     subject="$GROUP/$device $subject"
 else
-    cvs commit -m updates
+    $RCSSYS commit -m updates
     subject="$GROUP $subject"
 fi
 

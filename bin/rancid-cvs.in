@@ -1,6 +1,6 @@
 #! /bin/sh
 ##
-## $Id: rancid-cvs.in,v 1.16 2004/01/11 03:49:13 heas Exp $
+## $Id: rancid-cvs.in,v 1.17 2005/08/15 00:42:50 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -20,7 +20,7 @@
 ##
 #
 # Create all of the misc files & dirs needed for each group and import them
-# into CVS.
+# into CVS or Subversion.
 #
 # rancid-cvs
 #
@@ -38,9 +38,20 @@ fi
 
 cd $BASEDIR
 
+# RCS system
+RCSSYS=${RCSSYS:=cvs};
+if [ $RCSSYS != "cvs" -a $RCSSYS != "svn" ] ; then
+    echo "$RCSSYS is not a valid value for RCSSYS."
+    exit 1
+fi
+
 # Top level CVS stuff
 if [ ! -d $CVSROOT ]; then
-    cvs init
+    if [ $RCSSYS = cvs ]; then
+	cvs -d $CVSROOT init
+    else
+	svnadmin create $CVSROOT
+    fi
 fi
 
 # Log dir
@@ -65,15 +76,21 @@ do
     if [ ! -d $DIR ]; then
 	mkdir -p $DIR
 	cd $DIR
-	cvs import -m "$GROUP" $GROUP new rancid
-	cd $BASEDIR
-	cvs co $GROUP
+	if [ $RCSSYS = cvs ]; then
+	    cvs import -m "$GROUP" $GROUP new rancid
+	    cd $BASEDIR
+	    cvs checkout $GROUP
+	else
+	    svn import -m "$GROUP" . file://$CVSROOT/$GROUP
+	    cd $BASEDIR
+	    svn checkout file://$CVSROOT/$GROUP $GROUP
+	fi
     fi
     cd $DIR
     if [ ! -d configs ]; then
 	mkdir configs
-	cvs add configs
-	cvs commit -m 'new' configs
+	$RCSSYS add configs
+	$RCSSYS commit -m 'new' configs
     fi
 
     # main files
@@ -88,7 +105,7 @@ do
     fi
     if [ ! -f router.db ]; then
 	touch router.db
-	cvs add router.db
-	cvs commit -m 'new' router.db
+	$RCSSYS add router.db
+	$RCSSYS commit -m 'new' router.db
     fi
 done

@@ -74,8 +74,7 @@ fi],
 ])
 AM_CONDITIONAL([MK_LCLSTATEDIR], [test "${enable_mk_localstatedir}" = yes])
 
-# Check if user wants us to create LOCALSTATEDIR.  If it's a package-system,
-# they might create it themselves for book-keeping sake; eg: NetBSD
+# Check if user wants us to install sample configurations into the sysconfdir.
 AC_MSG_CHECKING([whether to install sample .conf files in sysconfdir])
 AC_ARG_ENABLE(conf-install,
 	AS_HELP_STRING([--enable-conf-install], [enable install of sample .conf files in sysconfdir (default: yes)]),
@@ -88,6 +87,23 @@ fi],
     enable_conf_install="yes"
 ])
 AM_CONDITIONAL([CONF_INSTALL], [test "${enable_conf_install}" = yes])
+
+# Configure for subversion revision control system instead of CVS.
+AC_MSG_CHECKING([whether subversion])
+AC_ARG_ENABLE(svn,
+	AS_HELP_STRING([--enable-svn], [enable use of subversion instead of cvs]),
+[if test "$enable_svn" = yes; then
+    AC_MSG_RESULT(yes)
+    RCSSYS="svn"
+else
+    AC_MSG_RESULT(no)
+    RCSSYS="cvs"
+fi],
+[AC_MSG_RESULT(no)
+    RCSSYS="cvs"
+])
+AC_SUBST(RCSSYS)
+rd_cv_RCSSYS=$RCSSYS
 
 # Check for a preference for using mail addresses like rancid+group
 # instead of the standard rancid-group
@@ -238,8 +254,13 @@ rd_cv_lg_ping_cmd=$LG_PING_CMD
 ENV_PATH="`dirname $PERLV_PATH`:`dirname $EXPECT_PATH`:`dirname $SENDMAIL`"
 ENV_PATH="$ENV_PATH:`dirname $DIRNAME`:`dirname $DIFF`"
 
-AC_PATH_PROG(CVS,cvs,no)
-ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_CVS`"
+if test $RCSSYS = "cvs" ; then
+    AC_PATH_PROG(CVS,cvs,no)
+    ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_CVS`"
+else
+    AC_PATH_PROG(SVN,svn,no)
+    ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_SVN`"
+fi
 AC_PATH_PROG(COMM,comm,no)
 ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_COMM`"
 AC_PATH_PROG(FIND,find,no)

@@ -80,6 +80,9 @@ perl5		perl version 5 or greater available from www.cpan.org
 expect		http://expect.nist.gov/  We highly suggest that you stick to
 		expect 5.24.1 (or so).  This seems to work best.  Note that
 		you need to have the accompanying tcl &/ tk.
+svn		Code revision system, an alternative to cvs.  Available from
+		http://subversion.tigris.org/tarballs/.  Use the configure
+		option --enable-svn to configure for Subversion.
 tcl		Required by expect.
 
 Bill Fenner (now maintained by others) has a cgi script for interacting
@@ -99,10 +102,10 @@ Quick Installation Guide (an example):
 	./configure --prefix=/home/rancid
 
    Rancid uses autoconf's "localstatedir" as the location of it's logs,
-   CVS respository, and directories where it's groups are placed.  The user
-   who will run rancid (from cron, etc) will need write access to these
-   directories.  By default, this is <prefix>/var, or /home/rancid/var
-   following the example above.
+   CVS or Subversion respository, and directories where it's groups are
+   placed.  The user who will run rancid (from cron, etc) will need write
+   access to these directories.  By default, this is <prefix>/var, or
+   /home/rancid/var following the example above.
 
    We realize that this is not optimal, but it follows the standards.  We
    suggest that this be altered to include the package name, like so:
@@ -160,10 +163,10 @@ Quick Installation Guide (an example):
 
 7) Run rancid-cvs.
    This creates all of the necessary directories and config files for
-   each of the groups in LIST_OF_GROUPS and imports them into CVS.  This
-   will also be run each time a new group is added.  Do not create the
-   directories or CVS repository manually, allow rancid-cvs do it.  Also see
-   'man -M <basedir>/man rancid-cvs'.
+   each of the groups in LIST_OF_GROUPS and imports them into CVS (or
+   Subversion).  This will also be run each time a new group is added.  Do
+   not create the directories or CVS repository manually, allow rancid-cvs
+   do it.  Also see 'man -M <basedir>/man rancid-cvs'.
 
 8) For each "group", modify the router.db file in the group directory.
    The file is of the form "router:mfg:state" where "router" is

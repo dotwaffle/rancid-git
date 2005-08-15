@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: rancid.in,v 1.190 2005/06/24 16:07:00 heas Exp $
+## $Id: rancid.in,v 1.193 2005/08/14 22:29:29 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -148,6 +148,7 @@ sub ShowVersion {
 	tr/\015//d;
 	if (/^$prompt/) { $found_version=1; last};
 	next if(/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
 	return(-1) if (/command authorization failed/i);
 	return(0) if ($found_version);		# Only do this routine once
@@ -360,6 +361,7 @@ sub ShowRedundancy {
 	tr/\015//d;
 	last if(/^$prompt/);
 	next if(/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
 	# the pager can not be disabled per-session on the PIX
 	s/^<-+ More -+>\s*//;
@@ -384,6 +386,7 @@ sub ShowIDprom {
 	tr/\015//d;
 	last if(/^$prompt/);
 	next if(/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
 	# the pager can not be disabled per-session on the PIX
 	s/^<-+ More -+>\s*//;
@@ -413,6 +416,7 @@ sub ShowInstallActive {
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if /^\s*\^\s*$/;
+	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
 	return(-1) if (/command authorization failed/i);
 	# the pager can not be disabled per-session on the PIX
@@ -432,6 +436,7 @@ sub ShowEnv {
 	if (/^$prompt/) { $found_env=1; last};
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	#return(1) if ($type !~ /^7/);
+	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
 	return(-1) if (/command authorization failed/i);
 	return(0) if ($found_env);		# Only do this routine once
@@ -539,6 +544,7 @@ sub ShowBoot {
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if /^\s*\^\s*$/;
+	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
 	return(1) if /Ambiguous command/i;
 	return(1) if /(Open device \S+ failed|Error opening \S+:)/;
@@ -575,6 +581,7 @@ sub ShowFlash {
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if ($type =~ /^(12[40]|7)/);
 	return(1) if /^\s*\^\s*$/;
+	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
 	return(-1) if (/command authorization failed/i);
 	# the pager can not be disabled per-session on the PIX
@@ -599,6 +606,7 @@ sub DirSlotN {
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	# return(1) if ($type !~ /^(12[40]|7|36)/);
 	return(1) if /^\s*\^\s*$/;
+	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
 	return(1) if /(No such device|Error Sending Request)/i;
 	return(1) if /\%Error: No such file or directory/;
@@ -732,6 +740,7 @@ sub ShowDiagbus {
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	#return(1) if ($type !~ /^7[05]/);
+	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
 	return(-1) if (/command authorization failed/i);
 	# the pager can not be disabled per-session on the PIX
@@ -821,6 +830,7 @@ REDUX:	tr/\015//d;
 	if (/^$prompt/) { $found_diag=1; last};
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	# return(1) if ($type !~ /^(12[40]|720|36|26)/);
+	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
 	return(-1) if (/command authorization failed/i);
 	return(0) if ($found_diag);		# Only do this routine once
@@ -1022,6 +1032,38 @@ PerlSucks:
     return(0);
 }
 
+# This routine parses "show inventory".
+sub ShowInventory {
+    print STDERR "    In ShowInventory: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	return if (/^\s*\^$/);
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(-1) if (/command authorization failed/i);
+	# the pager can not be disabled per-session on the PIX
+	s/^<-+ More -+>\s*//;
+
+	chomp;
+
+	# split PID/VID line
+	if (/^(NAME: ".*,) (DESCR: .*)/) {
+	    ProcessHistory("INVENTORY","","", sprintf("!%-30s%s\n", $1, $2));
+	    next;
+	}
+	if (/^(PID: \w?) *, (VID: .*), (SN: .*)$/) {
+	    ProcessHistory("INVENTORY","","", "!$1\n!$2\n!$3\n");
+	    next;
+	}
+
+	ProcessHistory("INVENTORY","","","!$_");
+    }
+    ProcessHistory("INVENTORY","","","!\n");
+
+    return(0);
+}
+
 # This routine parses "show module".
 sub ShowModule {
     print STDERR "    In ShowModule: $_" if ($debug);
@@ -1081,6 +1123,7 @@ sub ShowSpeVersion {
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if /^\s*\^\s*$/;
+	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
 	return(-1) if (/command authorization failed/i);
 
@@ -1145,6 +1188,7 @@ sub ShowVTP {
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if /^\s*\^\s*$/;
+	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
 	#return(1) if ($type !~ /^(2900XL|3500XL|6000)$/);
 	return(-1) if (/command authorization failed/i);
@@ -1170,6 +1214,7 @@ sub ShowVLAN {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
 	# newer releases (~12.1(9)) place the vlan config in the normal
 	# configuration (write term).
@@ -1192,6 +1237,7 @@ sub WriteTerm {
     while (<INPUT>) {
 	tr/\015//d;
 	last if(/^$prompt/);
+	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
 	return(-1) if (/command authorization failed/i);
 	# the pager can not be disabled per-session on the PIX
@@ -1552,6 +1598,7 @@ sub DoNothing {print STDOUT;}
 	{'show module'			=> 'ShowModule'},	# cat 6500-ios
 	{'show spe version'		=> 'ShowSpeVersion'},
 	{'show c7200'			=> 'ShowC7200'},
+	{'show inventory raw'		=> 'ShowInventory'},
 	{'show vtp status'		=> 'ShowVTP'},
 	{'show vlan'			=> 'ShowVLAN'},
 	{'show running-config'		=> 'WriteTerm'},

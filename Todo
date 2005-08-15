@@ -54,7 +54,6 @@
   this is clouded by the UI mess.
 - rancid needs to treat the 3600s like the 7Ks and 12Ks...
   Also, need to allow 12012s, and force 700s to not be treated like 7Ks.
-- clogin rsh is munged
 - LG should sort routers
 - LG {requested} command additions
 	- show controllers T3 (data)

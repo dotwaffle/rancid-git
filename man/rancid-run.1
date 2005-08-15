@@ -1,6 +1,6 @@
 .\"
 .hys 50
-.TH "rancid-run" "1" "7 Jan 2004"
+.TH "rancid-run" "1" "13 August 2005"
 .SH NAME
 rancid-run \- run rancid for each of the groups
 .SH SYNOPSIS
@@ -107,13 +107,12 @@ Directory to hold temporary and lock files.
 .SH ERRORS
 If rancid fails to run or collect a device's configuration, the particular
 group's log file (mentioned above) should be consulted.  Any errors produced
-by
-.BR cvs (1)
-or any of the rancid scripts should be included there, whether they be a
-botched cvs tree, login authentication failure, rancid configuration error,
-etc.  If the log file produces no clues, the next debugging step should be
-run the commands manually.  For example, can the user who runs rancid login
-to the device with 'clogin hostname', and so on.
+by the revision control system (CVS or Subversion) or any of the rancid
+scripts should be included there, whether they be a botched cvs tree, login
+authentication failure, rancid configuration error, etc.
+If the log file produces no clues, the next debugging step should be run the
+commands manually.  For example, can the user who runs rancid login to the
+device with 'clogin hostname', and so on.
 .BR 
 .SH FILES
 .TP

@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: clogin.in,v 1.85 2005/06/14 20:20:43 heas Exp $
+## $Id: clogin.in,v 1.89 2005/08/14 20:18:19 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -286,7 +286,7 @@ proc source_password_file { password_file } {
 }
 
 # Log into the router.
-# returns: 0 on success, 1 on failure
+# returns: 0 on success, 1 on failure, -1 if rsh was used successfully
 proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
     global spawn_id in_proc do_command do_script platform
     global prompt u_prompt p_prompt e_prompt sshcmd
@@ -321,16 +321,79 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 		return 1
 	    }
 	} elseif ![string compare $prog "rsh"] {
+	    global command
+
 	    if { ! $do_command } {
+		if { [llength $cmethod] == 1 } {
+		    send_user "\nError: rsh is an invalid method for -x and "
+		    send_user "interactive logins\n"
+		}
 		if { $progs == 0 } {
 		    return 1
 		}
 		continue;
 	    }
-	    if [ catch {spawn rsh -l $user $router} reason ] {
-		send_user "\nError: rsh failed: $reason\n"
-		return 1
+
+	    set commands [split $command \;]
+	    set num_commands [llength $commands]
+	    set rshfail 0
+	    for {set i 0} {$i < $num_commands && !$rshfail} { incr i} {
+		log_user 0
+		set retval [ catch {spawn rsh $user@$router [lindex $commands $i] } reason ]
+		if { $retval } {
+		    send_user "\nError: rsh failed: $reason\n"
+		    log_user 1; return 1
+		}
+		send_user "$router# [lindex $commands $i]\n"
+
+		# rcmd does not get a pager and no prompts, so we just have to
+		# look for failures & lines.
+		expect {
+		  "Connection refused"	{ catch {close}; wait;
+					  send_user "\nError: Connection\
+						    Refused ($prog): $router\n"
+					  set rshfail 1
+					}
+		  -re "(Connection closed by|Connection to \[^\n\r]+ closed)" {
+					  catch {close}; wait;
+					  send_user "\nError: Connection\
+						    closed ($prog): $router\n"
+					  set rshfail 1
+					}
+		  "Host is unreachable"	{ catch {close}; wait;
+					  send_user "\nError: Host Unreachable:\
+						    $router\n"
+					  set rshfail 1
+					}
+		  "No address associated with" {
+					  catch {close}; wait;
+					  send_user "\nError: Unknown host\
+						    $router\n"
+					  set rshfail 1
+					}
+		  -re "\b+"		{ exp_continue }
+		  -re "\[\n\r]+"	{ send_user -- "$expect_out(buffer)"
+					  exp_continue
+					}
+		  timeout		{ catch {close}; wait
+					  send_user "\nError: TIMEOUT reached\n"
+					  set rshfail 1
+					}
+		  eof			{ catch {close}; wait }
+		}
+		log_user 1
 	    }
+	    if { $rshfail } {
+		if { !$progs } {
+		    return 1
+		} else {
+		    continue
+		}
+	    }
+	    # fake the end of the session for rancid.
+	    send_user "$router# exit\n"
+	    # return rsh "success"
+	    return -1
 	} else {
 	    send_user "\nError: unknown connection method: $prog\n"
 	    return 1
@@ -731,6 +794,7 @@ foreach router [lrange $argv $i end] {
 
     # Login to the router
     if {[login $router $ruser $userpswd $passwd $enapasswd $cmethod $cyphertype]} {
+	# if login failed or rsh was successful, move on to the next device
 	continue
     }
     if { $enable } {

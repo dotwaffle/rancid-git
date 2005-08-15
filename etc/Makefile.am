@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 ## A Makefile.in is supplied, in case you do not have automake.
 
-## $Id: Makefile.am,v 1.12 2005/02/12 00:08:18 heas Exp $
+## $Id: Makefile.am,v 1.13 2005/08/14 23:35:13 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -70,7 +70,8 @@ auto_edit = sed \
 	-e 's,@sysconfdir\@,$(sysconfdir),g' \
 	-e 's,@EXPECT_PATH\@,$(EXPECT_PATH),g' \
 	-e 's,@PERLV_PATH\@,$(PERLV_PATH),g' \
-	-e 's,@ENV_PATH\@,$(ENV_PATH),g'
+	-e 's,@ENV_PATH\@,$(ENV_PATH),g' \
+	-e 's,@RCSSYS\@,$(RCSSYS),g'
 
 lg.conf.sample: Makefile $(srcdir)/lg.conf.sample.in
 	rm -f lg.conf.sample lg.conf.sample.tmp; \

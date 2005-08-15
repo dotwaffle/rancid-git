@@ -12,19 +12,23 @@ umask 027
 # Under BASEDIR (i.e.: --localstatedir), there will be a "logs" directory for
 # the logs from rancid and a directory for each group of routers defined in
 # LIST_OF_GROUPS (below).  In addition to these, there will be a "CVS"
-# directory which is the cvs repository.
+# directory which is the cvs (or Subversion) repository.
 #
-# Use a full path (no sym-links) for BASEDIR.  Some versions of CVS seem to
-# dislike sym-links.
+# Use a full path (no sym-links) for BASEDIR.
 #
 TMPDIR=/tmp; export TMPDIR
 # Be careful changing this, it affects CVSROOT below.
 BASEDIR=@localstatedir@; export BASEDIR
 PATH=@bindir@:@ENV_PATH@; export PATH
-# Location of the CVS repository.  Be careful changing this.
+# Location of the CVS/SVN repository.  Be careful changing this.
 CVSROOT=$BASEDIR/CVS; export CVSROOT
 # Location of log files produced by rancid-run(1).
 LOGDIR=$BASEDIR/logs; export LOGDIR
+#
+# Select which RCS system to use, "cvs" (default) or "svn".  Do not change
+# this after CVSROOT has been created with rancid-cvs.  Changing between these
+# requires manual conversions.
+RCSSYS=@RCSSYS@; export RCSSYS
 #
 # if NOPIPE is set, temp files will be used instead of a cmd pipe during
 # collection from the router(s).

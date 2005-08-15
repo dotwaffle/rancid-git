@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: cat5rancid.in,v 1.43 2005/06/20 21:24:30 heas Exp $
+## $Id: cat5rancid.in,v 1.44 2005/08/14 01:04:07 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -666,6 +666,38 @@ sub ShowDiag {
     return(0);
 }
 
+# This routine parses "show inventory".
+sub ShowInventory {
+    print STDERR "    In ShowInventory: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	return if (/^\s*\^$/);
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(-1) if (/command authorization failed/i);
+	# the pager can not be disabled per-session on the PIX
+	s/^<-+ More -+>\s*//;
+
+	chomp;
+
+	# split PID/VID line
+	if (/^(NAME: ".*,) (DESCR: .*)/) {
+	    ProcessHistory("INVENTORY","","", sprintf("!%-30s%s\n", $1, $2));
+	    next;
+	}
+	if (/^(PID: \w?) *, (VID: .*), (SN: .*)$/) {
+	    ProcessHistory("INVENTORY","","", "!$1\n!$2\n!$3\n");
+	    next;
+	}
+
+	ProcessHistory("INVENTORY","","","!$_");
+    }
+    ProcessHistory("INVENTORY","","","");
+
+    return(0);
+}
+
 # This routine parses "show module"
 sub ShowModule {
     my($slot);
@@ -1005,6 +1037,7 @@ sub DoNothing {print STDOUT;}
 	{'dir sup-bootflash:'	=> 'DirSlotN'},
 	{'dir sup-microcode:'	=> 'DirSlotN'},
 	{'show module'		=> 'ShowModule'},
+	{'show inventory raw'	=> 'ShowInventory'},
 	{'show port ifindex'	=> 'ShowPortIfindex'},
 	{'write term all'	=> 'WriteTerm'},
 	{'write term'		=> 'WriteTerm'},

@@ -1,4 +1,4 @@
-Frequently Asked Questions about rancid - last updated 20040107.
+Frequently Asked Questions about rancid - last updated 20050813.
 
 This FAQ contains information that may not apply directly to versions of
 rancid prior to 2.3.  It also contains paths containing tags such as
@@ -234,6 +234,50 @@ A. Certainly, but rancid does not provide such a mechanism natively.  Two
 
    Obviously, the first option is the cleanest and most featureful, which is
    why the script mention in the second option is not provided.
+
+Q. For approximately X hosts (configs) what size server should we be
+   considering - speed and data storage?
+A. On modern machines it is unlikely you will have issues with disk space or
+   memory - A heavily laden access router with a complex config won't consume
+   more than a few megabytes of disk space for its configs over several
+   years time (roughly 3 times the sum of all the config or */configs/* over
+   2 years is a decent approximation).
+
+   Rancid is typically CPU bound if you have adequate network bandwidth.
+   Experience shows rancid takes around 50 Mhz * minutes / device of processing
+   power. This means that a 1Ghz machine can poll:
+
+      1000 Mhz * 60 (min/hour) / 50(Mhz min / device) = 1200 devices/hour
+
+   That's obviously a ball park estimate which varies with many different
+   factors such as the CPU type and the types of devices on your network.
+
+
+Q. How can I run rancid to make the most efficient use of resources (i.e.
+   run in the shortest amount of time)?
+
+A. You can adjust PAR_COUNT in rancid.conf to achieve maximum efficiency
+   during polling. You can watch the output of the standard unix command
+   vmstat command during polling to determine whether or not the cpu is being
+   wholly utilized - there should be little idle time and no process blocking.
+
+   Another simpler method is to look at the time stamps on the rancid log
+   files, and adjust PAR_COUNT until the least amount of time is taken
+   during polling. Make sure all devices are being polled by rancid before
+   using this method - failing devices can extend the amount of time rancid
+   takes to finish by a *LONG* period and throw your times way off.
+
+   It may help to run rancid niced (man nice) if it will be sharing
+   resources with other processes, as it may eat whatever is available if
+   PAR_COUNT is set high. This is done by changing the crontab to be
+   something like:
+
+      5 * * * * nice -19 /usr/local/rancid/bin/rancid-run
+
+   If you _do_ share resources with other processes but want rancid to
+   run efficiently, probably the vmstat method above will work better -
+   rancid may take a little longer to run but you won't be stepping on
+   other people's toes.
 
 Q. I'm still stuck on this problem.  Where can I get more help?
 A. A discussion list is available, rancid-discuss@shrubbery.net.  You must

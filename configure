@@ -310,7 +310,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS VERSION PACKAGE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar MAKE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE CPP EGREP U ANSI2KNR MK_LCLSTATEDIR_TRUE MK_LCLSTATEDIR_FALSE CONF_INSTALL_TRUE CONF_INSTALL_FALSE MAILPLUS ADMINMAILPLUS DIRNAME DIFF DIFF_CMD SENDMAIL TAR PERLV_PATH PERLV EXPECT_PATH PING_PATH LG_PING_CMD CVS COMM FIND GREP ID MKDIR RSH SORT SSH TELNET TOUCH ENV_PATH LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS VERSION PACKAGE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar MAKE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE CPP EGREP U ANSI2KNR MK_LCLSTATEDIR_TRUE MK_LCLSTATEDIR_FALSE CONF_INSTALL_TRUE CONF_INSTALL_FALSE RCSSYS MAILPLUS ADMINMAILPLUS DIRNAME DIFF DIFF_CMD SENDMAIL TAR PERLV_PATH PERLV EXPECT_PATH PING_PATH LG_PING_CMD CVS SVN COMM FIND GREP ID MKDIR RSH SORT SSH TELNET TOUCH ENV_PATH LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -853,6 +853,7 @@ Optional Features:
                           install time (default: yes)
   --enable-conf-install   enable install of sample .conf files in sysconfdir
                           (default: yes)
+  --enable-svn            enable use of subversion instead of cvs
   --enable-mail-plus      enable mail to rancid+ addresses, instead of rancid-
   --enable-adminmail-plus enable mail to rancid-admin+ addresses, instead of
                           rancid-admin-
@@ -4997,8 +4998,7 @@ else
 fi
 
 
-# Check if user wants us to create LOCALSTATEDIR.  If it's a package-system,
-# they might create it themselves for book-keeping sake; eg: NetBSD
+# Check if user wants us to install sample configurations into the sysconfdir.
 echo "$as_me:$LINENO: checking whether to install sample .conf files in sysconfdir" >&5
 echo $ECHO_N "checking whether to install sample .conf files in sysconfdir... $ECHO_C" >&6
 # Check whether --enable-conf-install or --disable-conf-install was given.
@@ -5027,6 +5027,30 @@ else
   CONF_INSTALL_FALSE=
 fi
 
+
+# Configure for subversion revision control system instead of CVS.
+echo "$as_me:$LINENO: checking whether subversion" >&5
+echo $ECHO_N "checking whether subversion... $ECHO_C" >&6
+# Check whether --enable-svn or --disable-svn was given.
+if test "${enable_svn+set}" = set; then
+  enableval="$enable_svn"
+  if test "$enable_svn" = yes; then
+    echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+    RCSSYS="svn"
+else
+    echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+    RCSSYS="cvs"
+fi
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+    RCSSYS="cvs"
+
+fi;
+
+rd_cv_RCSSYS=$RCSSYS
 
 # Check for a preference for using mail addresses like rancid+group
 # instead of the standard rancid-group
@@ -5595,7 +5619,8 @@ rd_cv_lg_ping_cmd=$LG_PING_CMD
 ENV_PATH="`dirname $PERLV_PATH`:`dirname $EXPECT_PATH`:`dirname $SENDMAIL`"
 ENV_PATH="$ENV_PATH:`dirname $DIRNAME`:`dirname $DIFF`"
 
-# Extract the first word of "cvs", so it can be a program name with args.
+if test $RCSSYS = "cvs" ; then
+    # Extract the first word of "cvs", so it can be a program name with args.
 set dummy cvs; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
 echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
@@ -5635,7 +5660,50 @@ else
 echo "${ECHO_T}no" >&6
 fi
 
-ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_CVS`"
+    ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_CVS`"
+else
+    # Extract the first word of "svn", so it can be a program name with args.
+set dummy svn; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_SVN+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $SVN in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_SVN="$SVN" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_SVN="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_SVN" && ac_cv_path_SVN="no"
+  ;;
+esac
+fi
+SVN=$ac_cv_path_SVN
+
+if test -n "$SVN"; then
+  echo "$as_me:$LINENO: result: $SVN" >&5
+echo "${ECHO_T}$SVN" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+    ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_SVN`"
+fi
 # Extract the first word of "comm", so it can be a program name with args.
 set dummy comm; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
@@ -6858,6 +6926,7 @@ s,@MK_LCLSTATEDIR_TRUE@,$MK_LCLSTATEDIR_TRUE,;t t
 s,@MK_LCLSTATEDIR_FALSE@,$MK_LCLSTATEDIR_FALSE,;t t
 s,@CONF_INSTALL_TRUE@,$CONF_INSTALL_TRUE,;t t
 s,@CONF_INSTALL_FALSE@,$CONF_INSTALL_FALSE,;t t
+s,@RCSSYS@,$RCSSYS,;t t
 s,@MAILPLUS@,$MAILPLUS,;t t
 s,@ADMINMAILPLUS@,$ADMINMAILPLUS,;t t
 s,@DIRNAME@,$DIRNAME,;t t
@@ -6871,6 +6940,7 @@ s,@EXPECT_PATH@,$EXPECT_PATH,;t t
 s,@PING_PATH@,$PING_PATH,;t t
 s,@LG_PING_CMD@,$LG_PING_CMD,;t t
 s,@CVS@,$CVS,;t t
+s,@SVN@,$SVN,;t t
 s,@COMM@,$COMM,;t t
 s,@FIND@,$FIND,;t t
 s,@GREP@,$GREP,;t t

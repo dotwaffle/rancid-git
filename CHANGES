@@ -1,4 +1,12 @@
 2.3.2
+	add subversion support - mostly from Justin Grote
+
+	clogin: support rsh method - partly from James Stahr
+
+	collect show inventory raw on rancid and cat5rancid
+
+	add -ko to cvs diff commands - Michael Shields
+
 	Add a MAILHEADERS configuration variable for user-defined mail headers 
 
 	rancid: match HSRP group numbers greater than 1 char wide - Ed Ravin

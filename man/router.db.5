@@ -1,6 +1,6 @@
 .\"
 .hys 50
-.TH "router.db" "5" "7 Jan 2004"
+.TH "router.db" "5" "13 August 2005"
 .SH NAME
 router.db \- rancid group configuration file
 .SH DESCRIPTION
@@ -160,12 +160,9 @@ file, then
 .B rancid
 will clean up by removing the device's config file from
 \fI$BASEDIR/<group>/configs\fR.
-The
-.IR cvs (1)
-information for the device will be moved to 
-.IR cvs (1)'s
-Attic directory (using
-.IR "cvs delete").
+The device will be removed from the revision control system.
+It is possible, in most cases, to resurrect or check-out copies of
+deleted device configurations.
 .PP
 .SH FILES
 .ta \w'xBASEDIR/<group>/router.db  'u
