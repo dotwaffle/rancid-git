@@ -144,6 +144,16 @@ A. As far as I know, CVS does not provide a way to remove directories.  First,
 	% cd <LOCALSTATEDIR>
 	% rm -rf fubar CVS/fubar
 
+Q. I would like to place my CVS repository on a remote machine.  How do I do
+   that?
+A. Assuming that you're starting fresh, its quite simply.  Before running
+   rancid-cvs for the first time, adjust CVS_RSH & CVSROOT in rancid.conf
+   similar to the following:
+	CVS_RSH=ssh; export CVS_RSH
+	CVSROOT="myhost:/fqpn/CVS"; export CVSROOT
+   Note that CVS_RSH is not found in the rancid.conf sample that is distributed
+   with rancid.
+
 Q. I need a web interface to the rancid CVS repository, for the CVS unsavvy.
 A. cvsweb works with rancid.  Other similar software may as well.
 	http://www.freebsd.org/projects/cvsweb.html
@@ -151,6 +161,7 @@ A. cvsweb works with rancid.  Other similar software may as well.
 	@CVSrepositories = (
 		'rancid' => ['RANCID CVS, '/full_path_to_the_RANCID_CVS'],
    where the path will be <LOCALSTATEDIR>/CVS.
+
 
 3) General
 
@@ -215,6 +226,7 @@ A. Two methods will work.  Write an expect script to be used with clogin's
    The specific return (\n) will be entered after 'clear counters' followed
    by the normal return after the command.
 
+
 Q. I would like to collect device configurations every hour, but only receive
    diffs every Nth collection or every N hours.  Is this possible?
 A. Certainly, but rancid does not provide such a mechanism natively.  Two
@@ -234,6 +246,31 @@ A. Certainly, but rancid does not provide such a mechanism natively.  Two
 
    Obviously, the first option is the cleanest and most featureful, which is
    why the script mention in the second option is not provided.
+
+
+Q. I would like to limit the permissions of the rancid user on my devices.  Is
+   this possible?
+A. Strictly speaking, no.  Rancid needs permission to read device configuration
+   and other data which is often not available to underprivileged users.
+   However, if you use TACACS+, you can limit the commands that are available
+   to a user.
+
+   For example, to allow ping and show, but not "show tcp", and nothing else:
+
+	user = rancid {
+		cmd = "ping" {
+			permit .*
+		}
+		cmd = "show" {
+			deny tcp.*
+			permit .*
+		}
+		# the default is to deny other commands
+	}
+
+   For RADIUS, Justin Grote suggested privilege levels:
+   http://www.cisco.com/univercd/cc/td/doc/product/software/ios122/122newft/122t/122t13/ftprienh.htm
+
 
 Q. For approximately X hosts (configs) what size server should we be
    considering - speed and data storage?

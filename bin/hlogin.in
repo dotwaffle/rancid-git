@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: hlogin.in,v 1.28 2005/06/13 03:11:45 heas Exp $
+## $Id: hlogin.in,v 1.31 2006/02/07 19:06:55 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -369,11 +369,6 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 		send_user "\nError: Connection Refused ($prog)\n"; return 1
 	    }
 	}
-	eof { send_user "\nError: Couldn't login\n"; wait; return 1 }
-	-nocase "unknown host\r" {
-	    catch {close};
-	    send_user "\nError: Unknown host\n"; wait; return 1
-	}
 	"Host is unreachable" {
 	    catch {close};
 	    send_user "\nError: Host Unreachable!\n"; wait; return 1
@@ -394,12 +389,21 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 	    send "no\r"
 	    send_user "\nError: host key mismatch for $router.  Update the SSH known_hosts file accordingly.\n"
 	    return 1 }
+	eof { send_user "\nError: Couldn't login\n"; wait; return 1 }
+	-nocase "unknown host\r" {
+	    catch {close};
+	    send_user "\nError: Unknown host\n"; wait; return 1
+	}
 	-re "$u_prompt"	{ send "$user\r"
 	    expect {
 		eof			{ send_user "\nError: Couldn't login\n"; wait; return 1 }
 		"Login invalid"		{ send_user "\nError: Invalid login\n"; vatch {close}; wait; return 1 }
 		-re "$p_prompt"		{ send "$userpswd\r" }
 		"$prompt"		{ set in_proc 0; return 0 }
+		"Press any key to continue" {
+					  send " "
+					  exp_continue
+					}
 	    }
 	    exp_continue
 	}
@@ -410,9 +414,18 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 		send "$passwd\r"
 	    }
 	    expect {
-		eof		{ send_user "\nError: Couldn't login\n"; wait; return 1 }
+		eof		{ send_user "\nError: Couldn't login\n";
+				  wait;
+				  return 1
+				}
+		"Press any key to continue" {
+				  send " ";
+				  exp_continue
+				}
 		-re "$e_prompt"	{ send "$enapasswd\r" }
-		"$prompt"	{ set in_proc 0; return 0 }
+		"$prompt"	{ set in_proc 0;
+				  return 0
+				}
 	    }
 	    exp_continue
 	}

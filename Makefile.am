@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 ## A Makefile.in is supplied, in case you do not have automake.
 
-## $Id: Makefile.am,v 1.20 2004/01/13 17:24:49 heas Exp $
+## $Id: Makefile.am,v 1.21 2005/09/29 01:14:59 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -37,9 +37,9 @@ SUBDIRS = . include etc bin man share
 
 # sysconfdir is here because etc/Makefile uses a script to be careful about
 # installing rancid.conf, not over-writing an existing one.
-DIRS2_CREATE=$(prefix) $(sysconfdir)
+DIRS2_CREATE=$(DESTDIR)$(prefix) $(DESTDIR)$(sysconfdir)
 if MK_LCLSTATEDIR
-DIRS2_CREATE+=$(localstatedir)
+DIRS2_CREATE+=$(DESTDIR)$(localstatedir)
 endif
 install-data-hook:
 	$(mkinstalldirs) $(DIRS2_CREATE);

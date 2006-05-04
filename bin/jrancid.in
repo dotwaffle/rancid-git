@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: jrancid.in,v 1.68 2005/06/15 20:54:41 heas Exp $
+## $Id: jrancid.in,v 1.70 2005/09/28 22:07:57 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -24,7 +24,7 @@
 #
 #  RANCID - Really Awesome New Cisco confIg Differ
 #
-# usage: jrancid [-d] [-l] [-f filename | $host]
+# usage: jrancid [-d] [-l] [-f filename | hostname]
 #
 use Getopt::Std;
 getopts('dfl');
@@ -35,6 +35,7 @@ $host = $ARGV[0];
 
 $clean_run = 0;
 $found_end = 0;
+$timeo = 120;				# clogin timeout in seconds
 
 my(@commandtable, %commands, @commands);# command lists
 my(%filter_pwds);			# password filtering mode
@@ -588,6 +589,15 @@ sub DoNothing {print STDOUT;}
 $jnx_commands=join(";",@commands);
 $cmds_regexp=join("|",@commands);
 
+if (length($host) == 0) {
+    if ($file) {
+	print(STDERR "Too few arguments: file name required\n");
+	exit(1);
+    } else {
+	print(STDERR "Too few arguments: host name required\n");
+	exit(1);
+    }
+}
 open(OUTPUT,">$host.new") || die "Can't open $host.new for writing: $!\n";
 select(OUTPUT);
 # make OUTPUT unbuffered
@@ -598,14 +608,14 @@ if ($file) {
     print STDOUT "opening file $host\n" if ($log);
     open(INPUT,"< $host") || die "open failed for $host: $!\n";
 } else {
-    print(STDERR "executing echo jlogin -c\"$jnx_commands\" $host\n") if ($debug);
-    print(STDOUT "executing echo jlogin -c\"$jnx_commands\" $host\n") if ($debug);
+    print(STDERR "executing echo jlogin -t $timeo -c\"$jnx_commands\" $host\n") if ($debug);
+    print(STDOUT "executing echo jlogin -t $timeo -c\"$jnx_commands\" $host\n") if ($debug);
 
     if (defined($ENV{NOPIPE})) {
-	system "jlogin -c \"$jnx_commands\" $host </dev/null > $host.raw" || die "jlogin failed for $host: $!\n";
+	system "jlogin -t $timeo -c \"$jnx_commands\" $host </dev/null > $host.raw" || die "jlogin failed for $host: $!\n";
 	open(INPUT, "< $host.raw") || die "jlogin failed for $host: $!\n";
     } else {
-	open(INPUT,"jlogin -c \"$jnx_commands\" $host </dev/null |") || die "jlogin failed for $host: $!\n";
+	open(INPUT,"jlogin -t $timeo -c \"$jnx_commands\" $host </dev/null |") || die "jlogin failed for $host: $!\n";
     }
 
 }

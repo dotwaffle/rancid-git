@@ -41,16 +41,54 @@ AC_C_STRINGIZE
 
 # check includes/headers
 AC_HEADER_STDC
-AC_CHECK_HEADERS(limits.h memory.h siginfo.h string.h strings.h unistd.h)
-
-AC_CHECK_HEADERS(errno.h fcntl.h sys/types.h sys/wait.h)
-dnl AC_CHECK_HEADERS(errno.h stdlib.h sys/types.h sys/wait.h)
-dnl AC_CHECK_HEADERS(malloc.h)
+AC_CHECK_HEADERS(errno.h fcntl.h limits.h pty.h malloc.h memory.h siginfo.h \
+		 string.h strings.h stropts.h sys/types.h sys/wait.h unistd.h \
+		 util.h)
 AC_CHECK_HEADERS(sysexits.h)
 
 # check functions
-AC_CHECK_FUNCS(memcpy memmove memset bcopy bzero strerror strchr strrchr \
-	strstr strtok strrtok index rindex)
+AC_CHECK_FUNCS(memcpy memmove memset strerror strchr \
+		strrchr strstr strtok strrtok index rindex unsetenv)
+AC_CHECK_FUNCS(openpty, openpty=1, openpty=0)
+# openlog() is not in the default libraries.  See if it is in some other lib.
+if test $openpty = 0; then
+  for lib in util; do
+    AC_CHECK_LIB($lib, openpty, [AC_DEFINE(HAVE_OPENPTY)
+		 LIBS="$LIBS -l$lib"; openpty=1; break])
+  done
+fi
+# If we dont have openpty, then look for /dev/ptmx for use by our own
+# openpty().
+if test $openpty = 0; then
+    # This check (partially) comes from expect's configure
+    AC_MSG_CHECKING([for SVR4 style pty allocation])
+    AH_TEMPLATE(HAVE_PTMX, "define this if your o/s has /dev/ptmx")
+    if test -r /dev/ptmx ; then
+	AC_MSG_RESULT(yes)
+	AC_DEFINE(HAVE_PTMX)
+	# Some systems need libpt.a to use /dev/ptmx
+	AC_CHECK_FUNCS(ptsname)
+	if test $ac_cv_func_ptsname+set != set; then
+	    # ptsname is not in the default libraries.
+	    for lib in pt; do
+		AC_CHECK_LIB($lib, ptsname, [LIBS="$LIBS -l$lib"; break])
+	    done
+	fi
+    else
+	AC_MSG_RESULT(no)
+    fi
+    # In OSF/1 case, SVR4 are somewhat different.
+    # Gregory Depp <depp@osf.org> 17Aug93
+    AC_MSG_CHECKING([for OSF/1 style pty allocation])
+    AH_TEMPLATE(HAVE_PTMX_OSF, "define this for OSF/1 ptmx")
+    if test -r /dev/ptmx_bsd ; then
+	AC_DEFINE(HAVE_PTMX_OSF) 
+	AC_MSG_RESULT(yes)
+    else
+	AC_MSG_RESULT(no)
+    fi  
+fi
+
 dnl AC_FUNC_VPRINTF
 
 # type checks
@@ -299,7 +337,90 @@ AC_CONFIG_FILES(include/version.h)	# this is not a header in the sense of
 					# AC_CONFIG_HEADERS will cause
 					# autoheader to overwrite it, while all
 					# want is simple variable replacement
+# autoheader bits
+AH_TOP([
+#ifndef	CONFIG_H
+#define	CONFIG_H	1
+])
+AH_BOTTOM([
+
+/* damned linux... */
+#ifdef LINUX
+# define _GNU_SOURCE
+#endif
+
+#ifndef __P
+# if STDC_HEADERS
+#  define __P(a)	a
+# else
+#  define __P(a)	()
+# endif
+#endif
+
+#if HAVE_STDLIB_H
+# include <stdlib.h>
+#endif
+
+#if HAVE_UNISTD_H       
+# include <unistd.h>    
+# include <sys/types.h>
+#elif HAVE_SYS_TYPES_H 
+# include <sys/types.h>
+#endif  
+
+#if HAVE_ERRNO_H
+# include <errno.h>
+#endif
+extern int		errno;
+
+#if HAVE_STRING_H
+# include <string.h>    
+#endif
+#if HAVE_STRINGS_H      
+# include <strings.h>
+#endif 
+
+#if ! HAVE_STRERROR
+# define strerror(n)	sys_errlist[n];
+#endif
+
+#if HAVE_SYS_WAIT_H 
+# include <sys/wait.h>
+#endif  
+#ifndef WEXITSTATUS
+# define WEXITSTATUS(stat_val) ((unsigned)(stat_val) >> 8)
+#endif
+#ifndef WIFEXITED
+# define WIFEXITED(stat_val) (((stat_val) & 255) == 0)
+#endif  
+
+#if HAVE_MEMSET
+# define bzero(p,s)	memset(p, 0, s)
+# define bcopy(s,d,l)	memcpy(d, s, l)
+#endif
+
+#if HAVE_INDEX && ! HAVE_STRCHR
+# define index(s,c)	strchr(s,c)
+#endif
+
+#if HAVE_SYSEXITS_H
+# include <sysexits.h>
+#else
+					/* missing sysexits.h */
+# define EX_OK		0
+# define EX_USAGE	64		/* command line usage error */
+# define EX_NOINPUT	66		/* cannot open input */
+# define EX_TEMPFAIL	75		/* temp failure */
+# define EX_OSERR	71		/* system error */
+# define EX_CANTCREAT	73		/* can't create (user) output file */
+# define EX_IOERR	74		/* input/output error */
+# define EX_CONFIG	78		/* configuration error */
+#endif
+
+#endif	/* CONFIG_H */
+])
 AC_CONFIG_HEADERS(include/config.h)
+
 AC_CONFIG_FILES(bin/control_rancid bin/par bin/rancid-fe, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/alogin bin/arancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/blogin bin/brancid, [chmod a+x $ac_file])

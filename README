@@ -13,58 +13,76 @@ NetBSD pkgsrc, FreeBSD port, Linux RPM, etc.
 Please please please please read the UPGRADING file for more information.
 **********
 
-The following is the packing list for Rancid.  .in is stripped from
-the files below by configure with substitutions completed:
+The following is the packing list for Rancid, excluding files supporting
+configure (autoconf) and make.  .in is stripped from the files below by
+configure as substitutions are completed:
 
 README		This file.
+README.lg	Information about the Looking Glass.
 CHANGES		List of changes to Rancid.
+COPYING		RANCID license.
+FAQ		Frequently Asked Questions
 Todo		Partial list of what needs to be done.
-rancid.conf.in	Environment settings needed.
-rancid-run.in	Script designed to be run from cron calling control_rancid.
-control_rancid.in
-		Builds router list, calls rancid on each router and
-		handles cvs routines.
-rancid-fe.in	chooses between rancid/[abefhjrx]rancid/cat5rancid.
-rancid.in	Runs commands on cisco routers and processes the output.
-brancid.in	Runs commands on baynet/nortel routers and processes the output.
-erancid.in	Runs commands on ADC EZ-T3 muxes and processes the output.
-f10rancid.in	Runs commands on Force10 routers and processes the output.
-francid.in	Runs commands on foundry switches and processes the output.
-hrancid.in	Runs commands on hp procurve switches and processes the output.
-jrancid.in	Runs commands on juniper routers and processes the output.
-mrancid.in	Runs commands on MRT daemons and processes the output.
-nrancid.in	Runs commands on netscreen routers and processes the output.
-rrancid.in	Runs commands on redback routers and processes the output.
-xrancid.in	Runs commands on extreme switches and processes the output.
-cat5rancid.in	Runs commands on cisco Cat switches and processes the output.
-blogin.in	Expect script that logs into baynet/nortel routers either
-		interactively, runs a set of commands, or runs another expect
-		script.
-clogin.in	Expect script that logs into routers either interactively,
-		runs a set of commands, or runs another expect script.
-elogin.in	Expect script that logs into ADC EZ-T3 muxes either
-		interactively, runs a set of commands, or runs another expect
-		script.
-flogin.in	Expect script that logs into foundry switches.  Once foundry
-		cleans up their bloody UI, clogin should do the job.
-hlogin.in	Expect script that logs into hp procurve switches either
-		interactively, runs a set of commands, or runs another expect
-		script.
-jlogin.in	Expect script that logs into juniper routers similarly to
-		clogin.  It is not terribly robust, but mainly used for it's
-		-c and -s options.
-.cloginrc	TCL commands to set passwords, usernames etc. used by clogin
-		and jlogin.
-par.in		Parallel processing of commands - any commands.
-rancid-cvs.in	Creates all of the CVS and config directories.
-hpuifilter.c	HP procurve login filter - see end of hlogin(1).
-etc/		Configuration file samples
-etc/lg.conf.sample
-etc/rancid.conf.sample
+cloginrc.sample	TCL commands to set passwords, usernames etc. used by clogin
+		and jlogin.  See cloginrc(5)
+etc/
+	lg.conf.sample		Sample Looking Glass configuration
+	rancid.conf.sample	Sample RANCID configuration
+bin/
+	clogin.in	Expect script that logs into routers and either presents
+			an interactive shell, runs a set of commands, or runs
+			another expect script.  It handles Cisco, Extreme,
+			Force10, Juniper E-series, Procket, Redback, Zebra/MRT.
+	control_rancid.in
+			Builds router list, calls rancid on each router and
+			handles cvs routines.
+	hpuifilter.c	HP procurve login filter - see hlogin(1).
+	par.in		Parallel processing of commands - any commands.
+	rancid-cvs.in	Creates all of the CVS and config directories.
+	rancid-run.in	Script designed to be run from cron.
+	rancid-fe.in	Chooses between rancid/[abefhjrx]rancid/cat5rancid.
+	rancid.in	Runs commands on cisco routers and processes the output.
+
+	arancid.in	Version of rancid.in for Alteon switches.
+	brancid.in	Version of rancid.in for baynet/nortel routers.
+	cat5rancid.in	Version of rancid.in for Cisco Catalyst switches.
+	cssrancid.in	Version of rancid.in for Cisco CSS switches.
+	erancid.in	Version of rancid.in for ADC EZ-T3 muxes.
+	f10rancid.in	Version of rancid.in for Force10 routers.
+	francid.in	Version of rancid.in for Foundry switches.
+	hrancid.in	Version of rancid.in for HP Procurve switches.
+	htrancid.in	Version of rancid.in for Hitatchi routers.
+	jerancid.in	Version of rancid.in for Juniper E-series routers.
+	jrancid.in	Version of rancid.in for Juniper routers.
+	mrancid.in	Version of rancid.in for MRT daemons.
+	nrancid.in	Version of rancid.in for Netscreen firewalls.
+	nsrancid.in	Version of rancid.in for Netscalars.
+	prancid.in	Version of rancid.in for Procket routers.
+	rivancid.in	Version of rancid.in for Riverstone routers.
+	rrancid.in	Version of rancid.in for Redback routers.
+	tntrancid.in	Version of rancid.in for TNT access servers.
+	xrancid.in	Version of rancid.in for Extreme switches.
+	zrancid.in	Version of rancid.in for Zebra routers.
+
+	alogin.in	Version of clogin.in for Alteon switches.
+	blogin.in	Version of clogin.in for baynet/Nortel routers.
+	elogin.in	Version of clogin.in for ADC EZ-T3 muxes.
+	flogin.in	Version of clogin.in for Foundry switches.  If foundry
+			cleaned-up their bloody UI, clogin should do the job.
+	hlogin.in	Version of clogin.in for HP procurve switches.
+	htlogin.in	Version of clogin.in for Hitatchi routers.
+	jlogin.in	Version of clogin.in for Juniper routers.
+	nlogin.in	Version of clogin.in for Netscreen firewalls.
+	nslogin.in	Version of clogin.in for Netscalars.
+	rivlogin.in	Version of clogin.in for Riverstone routers.
+	tntlogin.in	Version of clogin.in for TNT access servers.
 man/		man pages
 share/		Readmes, samples, utilities, contribs, etc
 
-The following are included as part of the installation tools:
+Also see rancid_intro(1), rancid(1), and clogin(1).
+
+The following (non-exhaustive list) are included as part of the installation
+and configuration tools:
 
 Makefile.in	processed by configure to produce Makefiles
 configure	GNU autoconf script
@@ -222,7 +240,7 @@ Quick Installation Guide (an example):
 Problem with clogin/telnet hanging within rancid or scripts?
 
 If you have experienced rancid (or more precisely, telnet) hanging on a
-solaris 2.6 box; check to be sure you have the following two patches
+solaris 2.6 box; check to be sure you have the following two o/s patches
 installed (see showrev -p).  There may be more recent versions of these
 patches and they are likely included with 2.7 and 2.8: 
 
@@ -234,16 +252,15 @@ Patch-ID# 105786-11
 Keywords: security ip tcp_priv_stream routing ip_enable_group_ifs ndd
 Synopsis: SunOS 5.6: /kernel/drv/ip patch
 
-Another possibile contributor is expect/tcl.  We've noticed that expect
-5.24.1 (possibly 5.28.*) and whatever tcl happens to compile with it, 
-seems to not exhibit this problem, while 5.32.* appears to on linux and
-solaris but not on netbsd 1.5.
+Another contributor to rancid "hanging", with or without the o/s patches
+mentioned above, is a bug in expect/tcl.  We've noticed that expect (from
+5.24.1 forward), and whatever tcl happens to compile with it, exhibits a
+problem on Linux and Solaris where rancid's scripts hang waiting for input
+from the device.  Patches to expect are available on the rancid web page.
 
 Also, for rancid 2.3 and later, changes were made to the login scripts
 which use some more elaborate regexes that have failed with expect versions
 prior to 5.40.  While 5.40 works, it still seems to need the patch offered
-on the rancid web page.
+on the rancid web page for Linux and Solaris.
 
 See www.shrubbery.net/rancid for additional notes on this.
-
--Hank

@@ -1,6 +1,12 @@
-- jrancid doesnt use $timeo
+- why does hlogin fail when the host key is not yet known?  eg:
+  unix% ./hlogin procurve
+  procurve
+  spawn hpuifilter -- ssh -c 3des -x -l user procurve
+  Host key verification failed.
+
+  Error: Couldn't login
+  This happens on solaris only; linux and netbsd seem to be ok.
 - lg.conf(5) needs the query stuff documented.
-- subversion support in addition to CVS
 - configure OLDTIME per-group
 - could the cloginrc match function do a longest-match search instead of
   first match?
@@ -22,7 +28,6 @@
 - fix varargs for knf in util.c
 - isis filtering for foundry?
 - hlogin hangs when the procurve does not ask for passwords
-- hlogin does not work with ssh, needs to alloc a pty?
 - share/ tool to prune cvs versions, excluding those with tags, by (all but
   latest | keep N versions | keep N days/months/years)
 - extreme collection fails for tacacs-enabled boxen due to diffs in UI - blech!

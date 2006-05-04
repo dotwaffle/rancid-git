@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: nrancid.in,v 1.23 2005/06/24 16:01:19 heas Exp $
+## $Id: nrancid.in,v 1.25 2005/10/12 01:35:31 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -26,7 +26,7 @@
 #
 #  RANCID - Really Awesome New Cisco confIg Differ
 #
-# usage: rancid [-d] [-l] [-f filename | $host]
+# usage: rancid [-d] [-l] [-f filename | hostname]
 #
 use Getopt::Std;
 getopts('dfl');
@@ -152,22 +152,22 @@ sub GetSystem {
 	next if /^--- more ---/;
 
 	/^Serial Number: (\d+), Control Number: \d+$/ &&
-		ProcessHistory("SYSTEM","","", "!SN: $1\n") && next;
+		ProcessHistory("SYSTEM","","", "#SN: $1\n") && next;
 	/^Product Name: (\S+)$/ &&
-		ProcessHistory("SYSTEM","","", "!Product: $1\n") && next;
+		ProcessHistory("SYSTEM","","", "#Product: $1\n") && next;
 	/^Hardware Version: (\S+), / &&
-		ProcessHistory("SYSTEM","","", "!HW: $1\n") && next;
+		ProcessHistory("SYSTEM","","", "#HW: $1\n") && next;
 	/^Software Version: (\S+), Type: (\S+)$/ &&
-		ProcessHistory("SYSTEM","","", "!Netscreen Type: $2\n!Software Version: $1\n") && next;
+		ProcessHistory("SYSTEM","","", "#Netscreen Type: $2\n#Software Version: $1\n") && next;
 	/^Image: (\S+), / &&
-		ProcessHistory("SYSTEM","","", "!Image: $1\n") && next;
+		ProcessHistory("SYSTEM","","", "#Image: $1\n") && next;
 	/^Feature: (\S+)$/ &&
-		ProcessHistory("SYSTEM","","", "!Feature: $1\n") && next;
+		ProcessHistory("SYSTEM","","", "#Feature: $1\n") && next;
 	/^File Name: (\S+), Checksum: (\S+)$/ &&
-		ProcessHistory("SYSTEM","","", "!File Name: $1, Checksum: $2\n") && next;
+		ProcessHistory("SYSTEM","","", "#File Name: $1, Checksum: $2\n") && next;
 
     }
-    ProcessHistory("SYSTEM","","","!\n");
+    ProcessHistory("SYSTEM","","","#\n");
     return(0);
 }
 
@@ -176,7 +176,7 @@ sub GetFile {
     while (<INPUT>) {
 	last if(/$prompt/);
     }
-    ProcessHistory("FILE","","","!\n");
+    ProcessHistory("FILE","","","#\n");
     return(0);
 }
 
@@ -191,22 +191,40 @@ sub GetConf {
 	next if /^--- more ---/;
 
  	if (/^set admin name "(\S+)"$/ && $filter_pwds >= 1) {
-	    ProcessHistory("ADMIN","","","!set admin name <removed>\n");
+	    ProcessHistory("ADMIN","","","#set admin name <removed>\n");
 	    next;
 	}
  	if (/^set admin password (\S+)$/ && $filter_pwds >= 1) {
-	    ProcessHistory("ADMIN","","","!set admin password <removed>\n");
+	    ProcessHistory("ADMIN","","","#set admin password <removed>\n");
 	    next;
 	}
  	if (/^set admin user (\S+) password (\S+) privilege (\S+)$/ &&
 							$filter_pwds >= 1) {
 	    ProcessHistory("ADMIN","","",
-		"!set admin user $1 password <removed> privilege $3\n");
+		"#set admin user $1 password <removed> privilege $3\n");
 	    next;
 	}
 	if (/^set auth-server (\S+) radius secret / && $filter_pwds >= 1 ) {
 	    ProcessHistory("ADMIN","","",
-			   "!set auth-server $1 radius secret <removed>\n");
+			   "#set auth-server $1 radius secret <removed>\n");
+	    next;
+	}
+	if (/^set ike gateway (.*) username (\S+)(.*) password (\S+)(.*)$/ &&
+							$filter_pwds >= 1) {
+	    ProcessHistory("ADMIN","","",
+		"#set ike gateway $1 username <removed>$3 password <removed>$5\n");
+	    next;
+	}
+	if (/^set ike gateway (.*) preshare "(\S+)"(.*)$/ &&
+							$filter_pwds >= 1) {
+	    ProcessHistory("ADMIN","","",
+		"#set ike gateway $1 preshare <removed>$3\n");
+	    next;
+	}
+	if (/^set auth-server (.*) secret "(\S+)"(.*)$/ &&
+							$filter_pwds >= 1) {
+	    ProcessHistory("ADMIN","","",
+		"#set auth-server $1 secret <removed>$3\n");
 	    next;
 	}
 	ProcessHistory("","","","$_");
@@ -231,6 +249,15 @@ sub DoNothing {print STDOUT;}
 $cisco_cmds=join(";",@commands);
 $cmds_regexp=join("|",@commands);
 
+if (length($host) == 0) {
+    if ($file) {
+	print(STDERR "Too few arguments: file name required\n");
+	exit(1);
+    } else {
+	print(STDERR "Too few arguments: host name required\n");
+	exit(1);
+    }
+}
 open(OUTPUT,">$host.new") || die "Can't open $host.new for writing: $!\n";
 select(OUTPUT);
 # make OUTPUT unbuffered if debugging
@@ -260,7 +287,7 @@ if ($ENV{"FILTER_PWDS"} =~ /no/i) {
     $filter_pwds = 1;
 }
 
-ProcessHistory("","","","!RANCID-CONTENT-TYPE: netscreen\n!\n");
+ProcessHistory("","","","#RANCID-CONTENT-TYPE: netscreen\n#\n");
 TOP: while(<INPUT>) {
     tr/\015//d;
     if (/^Error:/) {

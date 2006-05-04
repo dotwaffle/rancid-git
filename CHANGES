@@ -1,4 +1,49 @@
 2.3.2
+	rancid: new format for PIX 7.0 license string - Aaron Gee-clough
+
+	clogin: older CatOS for 1900s has a CR after the pager prompt
+
+	clogin & xrancid: Extreme XOS prompt format changed - Tore Anderson
+
+	User a .cvsignore file to prevent non-cvs'd control files from appearing
+	in cvs update output.
+
+	rancid: include _ in IOS version strings
+
+	clogin: reduce the number of leading prompt characters used in
+		run_commands to accomodate change seen in cat6500
+		12.1(13)E14 - Charles Aresenault
+
+	hlogin: fix ssh hanging on press any key prompt - Ryan Mooney
+
+	rancid: more support for HFRs
+
+	nlogin: fix missing -re option for password matching - Jee Kay
+
+	lg: fix quoting of juniper command arguments - Richard Doty
+
+	rancid: also match _ in software image names - Stafford A. Rau
+
+	nrancid: fix config comment character & more filtering - Stoned Elipot
+
+	hlogin: look for the 'press any key' prompt after ssh authentication,
+	unlike telnet, where it appears before authentication.
+
+	hpuifilter: allocate a pty to interact with ssh/telnet, so that we
+	interact with ssh for the password exchange.
+	WARNING: repeated ssh login failures to HP Procurves cause the switch's
+	management interface to lock-up (this includes snmp, ping) and sometimes
+	it will crash.  This is with the latest firmware; 5.33 at the time of
+	this writing.
+
+	*rancid: check hostname, or filename, before opening the output file.
+
+	rancid: better filtering of {tacacs,radius}-server - Patrick Adlam
+
+	rancid: better filtering of PIX pager prompt - Aaron Gee-clough
+
+	rancid: collect show debug - Ed Ravin
+
 	add subversion support - mostly from Justin Grote
 
 	clogin: support rsh method - partly from James Stahr

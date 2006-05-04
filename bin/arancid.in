@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: arancid.in,v 1.19 2005/06/15 20:55:12 heas Exp $
+## $Id: arancid.in,v 1.20 2005/09/25 17:48:28 heas Exp $
 ##
 ## Hacked version of rancid for Alteon WebOS switches
 ## tested with: ad3 v8.1.18
@@ -27,7 +27,7 @@
 #
 # arancid - Alteon WebOS plugin for rancid
 #
-# usage: arancid [-d] [-l] [-f filename | $host]
+# usage: arancid [-d] [-l] [-f filename | hostname]
 #
 use Getopt::Std;
 getopts('dfl');
@@ -213,6 +213,15 @@ sub DoNothing {print STDOUT;}
 $cisco_cmds=join(";",@commands);
 $cmds_regexp=join("|",@commands);
 
+if (length($host) == 0) {
+    if ($file) {
+	print(STDERR "Too few arguments: file name required\n");
+	exit(1);
+    } else {
+	print(STDERR "Too few arguments: host name required\n");
+	exit(1);
+    }
+}
 open(OUTPUT,">$host.new") || die "Can't open $host.new for writing: $!\n";
 select(OUTPUT);
 # make OUTPUT unbuffered if debugging

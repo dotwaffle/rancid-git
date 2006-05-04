@@ -1,6 +1,6 @@
 .\"
 .hys 50
-.TH "clogin" "1" "6 Jan 2004"
+.TH "clogin" "1" "26 September 2005"
 .SH NAME
 clogin \- Cisco/Foundry login script
 .SH SYNOPSIS
@@ -262,3 +262,7 @@ there are side effects for interactive logins via hlogin; most of which are
 formatting annoyances that may be remedied by typing CTRL-R to reprint the
 current line.
 .PP
+WARNING: repeated ssh login failures to HP Procurves cause the switch's
+management interface to lock-up (this includes snmp, ping) and sometimes
+it will crash.  This is with the latest firmware; 5.33 at the time of this
+writing.

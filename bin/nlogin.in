@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: nlogin.in,v 1.26 2005/06/14 20:20:44 heas Exp $
+## $Id: nlogin.in,v 1.27 2006/01/26 22:14:28 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -355,7 +355,7 @@ cyphertype } {
 					  set uprompt_seen 1
 					  exp_continue
 					}
-	"@\[^\r\n]+\[Pp]assword:"	{
+	-re "@\[^\r\n]+\[Pp]assword:"	{
 					  # ssh pwd prompt
 					  sleep 1
 					  send "$userpswd\r"

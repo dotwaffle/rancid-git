@@ -1,14 +1,9 @@
 /* include/config.h.in.  Generated from configure.in by autoheader.  */
-#ifndef CONFIG_H
-#define CONFIG_H        1
 
 
+#ifndef	CONFIG_H
+#define	CONFIG_H	1
 
-/* Define to 1 if you have the `bcopy' function. */
-#undef HAVE_BCOPY
-
-/* Define to 1 if you have the `bzero' function. */
-#undef HAVE_BZERO
 
 /* Define to 1 if you have the <errno.h> header file. */
 #undef HAVE_ERRNO_H
@@ -25,6 +20,9 @@
 /* Define to 1 if you have the <limits.h> header file. */
 #undef HAVE_LIMITS_H
 
+/* Define to 1 if you have the <malloc.h> header file. */
+#undef HAVE_MALLOC_H
+
 /* Define to 1 if you have the `memcpy' function. */
 #undef HAVE_MEMCPY
 
@@ -36,6 +34,21 @@
 
 /* Define to 1 if you have the `memset' function. */
 #undef HAVE_MEMSET
+
+/* Define to 1 if you have the `openpty' function. */
+#undef HAVE_OPENPTY
+
+/* "define this if your o/s has /dev/ptmx" */
+#undef HAVE_PTMX
+
+/* "define this for OSF/1 ptmx" */
+#undef HAVE_PTMX_OSF
+
+/* Define to 1 if you have the `ptsname' function. */
+#undef HAVE_PTSNAME
+
+/* Define to 1 if you have the <pty.h> header file. */
+#undef HAVE_PTY_H
 
 /* Define to 1 if you have the `rindex' function. */
 #undef HAVE_RINDEX
@@ -64,6 +77,9 @@
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
 
+/* Define to 1 if you have the <stropts.h> header file. */
+#undef HAVE_STROPTS_H
+
 /* Define to 1 if you have the `strrchr' function. */
 #undef HAVE_STRRCHR
 
@@ -90,6 +106,12 @@
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
+
+/* Define to 1 if you have the `unsetenv' function. */
+#undef HAVE_UNSETENV
+
+/* Define to 1 if you have the <util.h> header file. */
+#undef HAVE_UTIL_H
 
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
@@ -130,6 +152,13 @@
 /* Define to `unsigned' if <sys/types.h> does not define. */
 #undef size_t
 
+
+
+/* damned linux... */
+#ifdef LINUX
+# define _GNU_SOURCE
+#endif
+
 #ifndef __P
 # if STDC_HEADERS
 #  define __P(a)	a
@@ -137,8 +166,6 @@
 #  define __P(a)	()
 # endif
 #endif
-
-#define BUF_SZ		LINE_MAX	/* (increments of) size of bufs */
 
 #if HAVE_STDLIB_H
 # include <stdlib.h>
@@ -200,4 +227,5 @@ extern int		errno;
 # define EX_CONFIG	78		/* configuration error */
 #endif
 
-#endif /* CONFIG_H */
+#endif	/* CONFIG_H */
+

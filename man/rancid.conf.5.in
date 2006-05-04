@@ -1,8 +1,8 @@
 .\"
-.\" $Id: rancid.conf.5.in,v 1.15 2005/08/15 00:41:51 heas Exp $
+.\" $Id: rancid.conf.5.in,v 1.16 2005/09/27 16:39:27 heas Exp $
 .\"
 .hys 50
-.TH "rancid.conf" "5" "13 August 2005"
+.TH "rancid.conf" "5" "23 September 2005"
 .SH NAME
 rancid.conf \- rancid environment configuration file
 .SH DESCRIPTION
@@ -10,10 +10,10 @@ rancid.conf \- rancid environment configuration file
 contains environment configuration information for
 .BR rancid-run (1)
 and
-.BR rancid (1)
-including shell PATH, list of rancid groups, etc. and is read by several
-scripts at run-time, including
-.BR rancid-run (1).
+.BR rancid-cvs (1),
+including shell PATH, list of rancid groups, etc.
+It is read by several scripts at run-time and others inherit the
+configration from a parent process which has read it.
 .PP
 The syntax of
 .B rancid.conf

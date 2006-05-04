@@ -1,8 +1,8 @@
 .\"
-.\" $Id: cloginrc.5,v 1.36 2004/06/24 16:03:24 heas Exp $
+.\" $Id: cloginrc.5,v 1.37 2005/09/12 18:48:19 heas Exp $
 .\"
 .hys 50
-.TH "cloginrc" "5" "23 June 2004"
+.TH "cloginrc" "5" "12 September 2005"
 .SH NAME
  \.cloginrc \- clogin configuration file
 .SH DESCRIPTION
@@ -218,6 +218,16 @@ to the router.  The last argument is the enable password and need not be
 specified if the device also has a matching noenable or autoenable
 directive or the corresponding command-line options are used.
 .\"
+.TP
+.B add sshcmd <router name glob> {<ssh>}
+<ssh> is the name of the ssh executable.  OpenSSH uses a command-line
+option to specify the protocol version, but other implementations use
+a separate binary such as "ssh1".
+.B sshcmd
+allows this to be adjusted as necessary for the local environment.
+.sp
+Default: ssh
+.\"
 .\" .TP
 .\" .B add rc <router name glob> {<cmd;cmd>}
 .\" rc is used to specifies a command that will be run by
@@ -270,16 +280,6 @@ file that is shared among a group of folks.
 If <file> is not a full pathname, $HOME/ will be prepended.
 .sp
 Example: include {.cloginrc.group}
-.\"
-.TP
-.B add sshcmd {<ssh>}
-<ssh> is the name of the ssh executable.  OpenSSH uses a command-line
-option to specify the protocol version, but other implementations use
-a separate binary such as "ssh1".
-.B sshcmd
-allows this to be adjusted as necessary for the local environment.
-.sp
-Default: ssh
 .El
 .SH FILES
 .br

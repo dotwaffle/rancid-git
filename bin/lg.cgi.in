@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: lg.cgi.in,v 1.51 2004/05/19 22:59:18 heas Exp $
+## $Id: lg.cgi.in,v 1.52 2005/12/07 19:19:46 heas Exp $
 ##
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -680,7 +680,7 @@ if ($type eq "prefix" || $type eq "mbgp" || $type eq "route" ) {
 	if ($mfg =~ /cisco/i) {
 	    $arg = " | include " . join(' ', @arg);
 	} elsif ($mfg =~ /juniper/i) {
-	    $arg = " | match \"" . join(' ', @arg) . "\"";
+	    $arg = " | match \\\"" . join(' ', @arg) . "\\\"";
 	} else {
 	    undef($arg);
 	}
@@ -738,7 +738,7 @@ if ($type eq "prefix" || $type eq "mbgp" || $type eq "route" ) {
 	} else {
 	    $arg =~ s/[\$^]/ /g;
 	}
-	$arg = "\"$arg\"";
+	$arg = "\\\"$arg\\\"";
     }
     # escape any ()s
     $arg =~ s/([\(\)])/\\$1/g;
