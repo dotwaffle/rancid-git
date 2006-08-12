@@ -1,4 +1,30 @@
 2.3.2
+	*login: If we timeout while trying to quit in run_commands(), close the
+	connection (ie: file descriptor/tty) gracefully.  - from Ed Ravin,
+	adjusted to catch the close.
+
+	jrancid: Adapt M160 PCG freq rounding to new format - noted by Mark
+		 Davis
+
+	rancid: collect flash size on the FWSM - from Aaron Gee-clough
+
+	francid: Fix temperature/show chassis filtering for newer Foundry boxes
+		 - noted and tested by Gary Roberts
+
+	rancid: fix Cisco 3825,3845 show version parsing - Michael Stefaniuc
+
+	clogin/hlogin: use send -h for exit command - Michael Stefaniuc
+
+	clogin: Answer F10's "unsaved changes" logout prompt - Colin Corbett
+
+	f10rancid: "Current Conf" begins with ! in recent code - Colin Corbett
+
+	francid: sort intf "secure" MACs, order fluctuates - noted by Brad Volz
+
+	francid: filter tempurature o/p on the SuperX - Brad Volz
+
+	convert rancid-fe vendor list to a hash - suggested by Ed Ravin.
+
 	rancid: new format for PIX 7.0 license string - Aaron Gee-clough
 
 	clogin: older CatOS for 1900s has a CR after the pager prompt

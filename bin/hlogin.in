@@ -1,8 +1,8 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: hlogin.in,v 1.31 2006/02/07 19:06:55 heas Exp $
+## $Id: hlogin.in,v 1.35 2006/08/10 07:00:31 heas Exp $
 ##
-## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
+## Copyright (C) 1997-2006 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This software may be freely copied, modified and redistributed
@@ -57,6 +57,8 @@ set do_passwd 1
 set do_enapasswd 1
 # attempt at platform switching.
 set platform ""
+#
+set send_human {.4 .4 .7 .3 5}
 
 # Find the user in the ENV, or use the unix userid.
 if {[ info exists env(CISCO_USER) ]} {
@@ -469,16 +471,14 @@ proc run_commands { prompt command } {
     global in_proc platform
     set in_proc 1
 
-    # If the prompt is (enable), then we are on a switch and the
-    # command is "set length 0"; otherwise its "term length 0".
-    # skip if its and extreme.
+    # Turn off the pager and escape regex meta characters in the $prompt
     send "no page\r"
     regsub -all "\[)(]" $prompt {\\&} reprompt
-	expect {
-	    -re $reprompt	{}
-	    -re "\[\n\r]+"	{ exp_continue }
-	}
-    # this is the only way i see to get rid for more prompts in o/p..grrrrr
+    expect {
+	-re $reprompt	{}
+	-re "\[\n\r]+"	{ exp_continue }
+    }
+    # this is the only way i see to get rid of more prompts in o/p..grrrrr
     log_user 0
     # Is this a multi-command?
     if [ string match "*\;*" "$command" ] {
@@ -506,6 +506,10 @@ proc run_commands { prompt command } {
 						}
 		-re "^<-+ More -+>\[^\n\r]*"	{ send " "
 						  exp_continue }
+		-re "^-+ MORE -+\[^\n\r]*"	{ send " "
+						  exp_continue }
+		-re "^-+More-+\[^\n\r]*"	{ send " "
+						  exp_continue }
 		-re "\b+"			{ exp_continue }
 	    }
 	}
@@ -531,11 +535,13 @@ proc run_commands { prompt command } {
 						  exp_continue }
 		-re "^-+ MORE -+\[^\n\r]*"	{ send " "
 						  exp_continue }
+		-re "^-+More-+\[^\n\r]*"	{ send " "
+						  exp_continue }
 		-re "\b+"			{ exp_continue }
 	}
     }
     log_user 1
-    send "exit\r"
+    send -h "exit\r"
     expect {
 	"Do you want to save current configuration"	{
 						  send "n\r"
@@ -551,10 +557,12 @@ proc run_commands { prompt command } {
 						}
 	-re "\[\r\n]+"				{ exp_continue }
 	-re "^.+>"				{
-						  send "exit\r"
+						  send -h "exit\r"
 						  exp_continue
 						}
-	timeout					{ return 0 }
+	timeout					{ catch {close}; wait
+						  return 0
+						}
 	eof					{ return 0 }
     }
     set in_proc 0

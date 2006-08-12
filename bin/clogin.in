@@ -1,8 +1,8 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: clogin.in,v 1.94 2006/04/28 15:37:40 heas Exp $
+## $Id: clogin.in,v 1.99 2006/08/10 07:00:30 heas Exp $
 ##
-## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
+## Copyright (C) 1997-2006 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This software may be freely copied, modified and redistributed
@@ -55,6 +55,8 @@ set avautoenable 0
 # tracks if we receive them on the command line.
 set do_passwd 1
 set do_enapasswd 1
+#
+set send_human {.4 .4 .7 .3 5}
 
 # Find the user in the ENV, or use the unix userid.
 if {[ info exists env(CISCO_USER) ]} {
@@ -659,24 +661,30 @@ proc run_commands { prompt command } {
     log_user 1
 
     if { [ string compare "extreme" "$platform" ] } {
-	send "exit\r"
+	send -h "exit\r"
     } else {
-	send "quit\r"
+	send -h "quit\r"
     }
     expect {
 	-re "^\[^\n\r *]*$reprompt"		{
 						  # the Cisco CE and Jnx ERX
 						  # return to non-enabled mode
 						  # on exit in enabled mode.
-						  send "exit\r"
+						  send -h "exit\r"
 						  exp_continue;
+						}
+	"Would you like to save them now"	{ # Force10
+						  send "n\r"
+						  exp_continue
 						}
 	"Do you wish to save your configuration changes" {
 						  send "n\r"
 						  exp_continue
 						}
 	-re "\[\n\r]+"				{ exp_continue }
-	timeout					{ return 0 }
+	timeout					{ catch {close}; wait
+						  return 0
+						}
 	eof					{ return 0 }
     }
     set in_proc 0
@@ -815,7 +823,7 @@ foreach router [lrange $argv $i end] {
     send "\r"
     expect {
 	-re "\[\r\n]+"		{ exp_continue; }
-	-re "^(.+\[:.])1 $prompt" { # stoopid extreme cmd-line numbers and
+	-re "^(.+\[:.])1 ($prompt)" { # stoopid extreme cmd-line numbers and
 				  # prompt based on state of config changes,
 				  # which may have an * at the beginning.
 				  set junk $expect_out(1,string)

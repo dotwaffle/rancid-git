@@ -1,8 +1,8 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: nlogin.in,v 1.27 2006/01/26 22:14:28 heas Exp $
+## $Id: nlogin.in,v 1.30 2006/08/10 07:00:31 heas Exp $
 ##
-## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
+## Copyright (C) 1997-2006 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This software may be freely copied, modified and redistributed
@@ -393,38 +393,38 @@ proc run_commands { prompt command } {
 	for {set i 0} {$i < $num_commands} { incr i} {
 	    send "[subst [lindex $commands $i]]\r"
 	    expect {
-		-re "\[\n\r]+"		{ exp_continue }
-                -re "$prompt"		{}
-		-gl "--- more ---"	{
-					  send " "
-					  exp_continue
-					}
+		-re "\[\n\r]+"			{ exp_continue }
+                -re "$prompt"			{}
+		-gl "--- more ---"		{ send " "
+						  exp_continue
+						}
             }
 	}
     } else {
 	send "[subst $command]\r"
 	expect {
-		-re "\[\n\r]+"		{ exp_continue }
-                -re "$prompt"		{}
-		-gl "--- more ---"	{
-					  send " "
-					  exp_continue
-					}
+		-re "\[\n\r]+"			{ exp_continue }
+                -re "$prompt"			{}
+		-gl "--- more ---"		{ send " "
+						  exp_continue
+						}
 	}
     }
     send "exit\r"
     expect {
-	-re "$prompt"			{
-					  send "exit\r"
-					  exp_continue
-					}
-	-re "\[\n\r]+"			{ exp_continue }
-	-gl "Configuration modified, save?" {
-					  send "n\r"
-					  exp_continue
-					}
-	timeout				{ return 0 }
-	eof				{ return 0 }
+	-re "$prompt"				{
+						  send "exit\r"
+						  exp_continue
+						}
+	-re "\[\n\r]+"				{ exp_continue }
+	-gl "Configuration modified, save?"	{
+						  send "n\r"
+						  exp_continue
+						}
+	timeout					{ catch {close}; wait
+						  return 0
+						}
+	eof					{ return 0 }
     }
     set in_proc 0
 }

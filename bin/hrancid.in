@@ -1,8 +1,8 @@
 #! @PERLV_PATH@
 ##
-## $Id: hrancid.in,v 1.23 2005/09/25 17:48:29 heas Exp $
+## $Id: hrancid.in,v 1.25 2006/07/10 21:35:39 heas Exp $
 ##
-## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
+## Copyright (C) 1997-2006 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This software may be freely copied, modified and redistributed
@@ -189,8 +189,14 @@ sub ShowSystem {
 	return(-1) if (/command authorization failed/i);
 	return(-1) if /^(Invalid|Ambiguous) input:/i;
 
-	/memory\s+-\s+total\s+:\s+(\S+)/i &&
-	    ProcessHistory("COMMENTS","keysort","B0",";Memory: $1\n");
+	if (/memory\s+-\s+total\s+:\s+(\S+)/i) {
+	    my($mem) = $1;
+	    $mem =~ s/,//g;
+	    $mem /= (1024 * 1024);
+	    ProcessHistory("COMMENTS","keysort","B0",";Memory: " . int($mem) .
+			   "M\n");
+	    next;
+	}
 	/serial\s+number\s+:\s+(\S+)/i &&
 	    ProcessHistory("COMMENTS","keysort","A1",";Serial Number: $1\n");
 	/firmware\s+revision\s+:\s+(\S+)/i &&

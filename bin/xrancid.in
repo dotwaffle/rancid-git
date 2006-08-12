@@ -1,8 +1,8 @@
 #! @PERLV_PATH@
 ##
-## $Id: xrancid.in,v 1.39 2006/03/23 18:43:01 heas Exp $
+## $Id: xrancid.in,v 1.40 2006/05/28 16:38:53 heas Exp $
 ##
-## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
+## Copyright (C) 1997-2006 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This software may be freely copied, modified and redistributed

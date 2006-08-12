@@ -1,8 +1,8 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: htlogin.in,v 1.13 2005/06/14 20:20:43 heas Exp $
+## $Id: htlogin.in,v 1.16 2006/08/10 07:00:31 heas Exp $
 ##
-## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
+## Copyright (C) 1997-2006 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This software may be freely copied, modified and redistributed
@@ -389,7 +389,7 @@ proc run_commands { prompt command } {
 	for {set i 0} {$i < $num_commands} { incr i} {
 	    send "[lindex $commands $i]\r"
 	    expect {
-		-re "^\[^\n\r]*$prompt"	{}
+		-re "^\[^\n\r]*$prompt"		{}
 		-re "^\[^\n\r *]*$prompt"	{}
 		-re "\[\n\r]"			{ exp_continue }
 	    }
@@ -397,16 +397,18 @@ proc run_commands { prompt command } {
     } else {
 	send "$command\r"
 	expect {
-		-re "^\[^\n\r]*$prompt"	{}
+		-re "^\[^\n\r]*$prompt"		{}
 		-re "^\[^\n\r *]*$prompt"	{}
 		-re "\[\n\r]"			{ exp_continue }
 	}
     }
     send "exit\r"
     expect {
-	"\n" { exp_continue }
-	timeout { return 0 }
-	eof { return 0 }
+	"\n"					{ exp_continue }
+	timeout					{ catch {close}; wait
+						  return 0
+						}
+	eof					{ return 0 }
     }
     set in_proc 0
 }

@@ -1,9 +1,9 @@
 #! @PERLV_PATH@
 ##
-## $Id: brancid.in,v 1.22 2005/09/25 17:48:28 heas Exp $
+## $Id: brancid.in,v 1.23 2006/05/28 16:38:50 heas Exp $
 ## hacked version of Hank's rancid - this one tries to deal with Bay's.
 ##
-## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
+## Copyright (C) 1997-2006 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This software may be freely copied, modified and redistributed

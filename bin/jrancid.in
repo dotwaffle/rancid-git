@@ -1,8 +1,8 @@
 #! @PERLV_PATH@
 ##
-## $Id: jrancid.in,v 1.70 2005/09/28 22:07:57 heas Exp $
+## $Id: jrancid.in,v 1.72 2006/07/28 16:57:57 heas Exp $
 ##
-## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
+## Copyright (C) 1997-2006 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This software may be freely copied, modified and redistributed
@@ -164,7 +164,17 @@ sub ShowChassisClocks {
 	/syntax error/ && return;
 
 	# filter decimal places of m160 measured clock MHz
-	/Measured frequency/ && s/\..*MHz/ MHz/;
+	if (/Measured frequency/) {
+	    s/\..*MHz/ MHz/;
+	} elsif (/^.+\.[0-9]+ MHz$/) {
+	    # filter for the m160 (newer format)
+	    s/\.[0-9]+ MHz/ MHz/;
+	} elsif (/^(.+)(\.[0-9]+) MHz/) {
+	    # filter for T series
+	    my($leadlen) = length($1);
+	    $x = sprintf(" MHz%".length($2)."s", " ");
+	    substr($_, $leadlen, length($2)+4, $x);
+	}
 	ProcessHistory("","","","# $_");
     }
     return;

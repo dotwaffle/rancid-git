@@ -1,8 +1,8 @@
 #! /bin/sh
 ##
-## $Id: rancid-run.in,v 1.32 2005/06/14 20:20:44 heas Exp $
+## $Id: rancid-run.in,v 1.33 2006/05/28 16:38:52 heas Exp $
 ##
-## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
+## Copyright (C) 1997-2006 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This software may be freely copied, modified and redistributed

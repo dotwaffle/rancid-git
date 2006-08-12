@@ -1,12 +1,12 @@
 #! @PERLV_PATH@
 ##
-## $Id: arancid.in,v 1.20 2005/09/25 17:48:28 heas Exp $
+## $Id: arancid.in,v 1.21 2006/05/28 16:38:50 heas Exp $
 ##
 ## Hacked version of rancid for Alteon WebOS switches
 ## tested with: ad3 v8.1.18
 ## afort@choqolat.org (andrew fort)
 ##
-## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
+## Copyright (C) 1997-2006 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This software may be freely copied, modified and redistributed

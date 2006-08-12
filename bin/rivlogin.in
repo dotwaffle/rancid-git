@@ -1,8 +1,8 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: rivlogin.in,v 1.19 2005/06/14 20:20:44 heas Exp $
+## $Id: rivlogin.in,v 1.21 2006/07/17 20:39:42 heas Exp $
 ##
-## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
+## Copyright (C) 1997-2006 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This software may be freely copied, modified and redistributed
@@ -79,7 +79,6 @@ router \[router...\]\n"
 #
 # Sets Xterm title if interactive...if its an xterm and the user cares
 #
-
 proc label { host } {
 
     global env
@@ -97,14 +96,12 @@ proc label { host } {
     }
 }
 
-
 # This is a helper function to make the password file easier to
 # maintain.
 # NOTES: Using this the password file has the form:
 # add password sl*      pete cow
 # add password at*      steve
 # add password *        hanky-pie
-
 proc add { var args } {
 
     global $var
@@ -116,7 +113,6 @@ proc add { var args } {
 # could install more than just password info...  I will assume however,
 # that a "bad guy" could just as easy put such code in the clogin
 # script, so I will leave .cloginrc as just an extention of that script
-
 proc source_password_file { } {
 
     global env password_file read_password_file
@@ -142,7 +138,6 @@ proc source_password_file { } {
 
 # pre: var is x, router is y
 # post: return routerr entry from database else null string
-
 proc find { var router } {
 
     if {[ source_password_file ] == 0 } {
@@ -160,10 +155,8 @@ proc find { var router } {
     return {}
 }
 
-
 # pre: login completed ok
 # post: terminate login session by closing tcp connection
-
 proc auto_exit  { } {
 
     global telnet_id
@@ -180,7 +173,6 @@ proc auto_exit  { } {
 #
 # NOTE: a number of globals are setup: my_prompt, telnet_id are key
 # and paging of cli output is disabled
-
 proc login { router user userpswd passwd enapasswd } {
 
     global login_array
@@ -298,7 +290,6 @@ proc login { router user userpswd passwd enapasswd } {
 
 # pre: login completed ok
 # post: turn off paging of commands
-
 proc disable_cli_paging { } {
     global my_prompt
 
@@ -313,7 +304,6 @@ proc disable_cli_paging { } {
 # pre: login returned 0, prompt at top level
 # post: turn off command completion return 0
 # on error, return 1
-
 proc disable_cmd_autocomplete { }  {
     global my_prompt
 
@@ -334,7 +324,6 @@ proc disable_cmd_autocomplete { }  {
 
 # pre: login returned 0, do_enable returned 0, cli is in enable or config mode
 # post: issues logout cli to device, returns 0
-
 proc logout { prompt } {
     global config_mode enable_prompt
 
@@ -370,7 +359,6 @@ proc logout { prompt } {
 
 # pre: current mode allows transition to enable mode
 # post: enable mode entered, my_prompt updated, return 0 else 1
-
 proc do_enable { enauser enapasswd userpswd } {
     global expect_out verbose
     global my_prompt enable_prompt
@@ -422,7 +410,6 @@ proc do_enable { enauser enapasswd userpswd } {
 
 # pre: current mode allows transition to enable mode
 # post: enable mode entered, my_prompt updated, return 0 else 1
-
 proc do_configure { } {
     global expect_out verbose config_mode
     global my_prompt
@@ -451,7 +438,6 @@ proc do_configure { } {
 # track sent/received from device to output_file
 # pre: outut_file is valid filename w/write access
 # post: logfile open, global var logging == 1, return 0 , else 1
-
 proc start_logfile { output_file } {
     global logging
 
@@ -487,13 +473,11 @@ proc run_commands { prompt cmdstring } {
     return 0
 }
 
-
 # Run commands given on the command line
 # pre: prompt is current system cli prompt, cmdstring is command to execute
 # post: return 0 on success else 1
 #  NOTE: output from router ends up in output_file if specified
 #  expect internal input buffer is reset to "" after each command
-
 proc run_single_command { prompt cmdstring } {
     global verbose
     set rc 0
@@ -615,7 +599,6 @@ proc run_single_command { prompt cmdstring } {
 
 # pre: RSTONE_USER env var is set
 # post: update global "default_user" to this string
-
 proc init_userid { } {
   global default_user
 
@@ -644,7 +627,6 @@ proc source_script_file { filename } {
 # return 0 on success, return 1 on error
 # NOTE: for scripts that begin with "configure", change the mode to configure
 # before executing the following commands
-
 proc process_script_file { filename } {
 
     global my_prompt verbose
@@ -706,7 +688,6 @@ proc process_script_file { filename } {
 #  post: remove extended ascii sequences and other cruft
 #  and prepend a header: rscmd: ip-addr : date
 #  TODO: should watch all file commands more closely
-
 proc strip_log { filename router }  {
 
     global tempfile
@@ -871,7 +852,6 @@ if { $idx == $argc } {
 }
 
 # main loop
-
 foreach router [lrange $argv $idx end] {
 set router [string tolower $router]
 

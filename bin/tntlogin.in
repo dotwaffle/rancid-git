@@ -1,8 +1,8 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: tntlogin.in,v 1.17 2005/06/14 20:20:44 heas Exp $
+## $Id: tntlogin.in,v 1.20 2006/08/10 07:00:31 heas Exp $
 ##
-## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
+## Copyright (C) 1997-2006 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This software may be freely copied, modified and redistributed
@@ -419,10 +419,12 @@ proc run_commands { prompt command } {
 #		send "y\r"
 		exp_continue
 	}
-	"\n" { exp_continue }
-	"\[^\n\r *]*Session terminated" { return 0 }
-	timeout { return 0 }
-	eof { return 0 }
+	"\n"					{ exp_continue }
+	"\[^\n\r *]*Session terminated"		{ return 0 }
+	timeout					{ catch {close}; wait
+						  return 0
+						}
+	eof					{ return 0 }
     }
     set in_proc 0
 }

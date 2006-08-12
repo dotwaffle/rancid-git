@@ -1,8 +1,8 @@
 #! @PERLV_PATH@
 ##
-## $Id: francid.in,v 1.35 2005/09/25 17:48:29 heas Exp $
+## $Id: francid.in,v 1.39 2006/07/12 23:43:14 heas Exp $
 ##
-## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
+## Copyright (C) 1997-2006 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This software may be freely copied, modified and redistributed
@@ -186,10 +186,19 @@ sub ShowChassis {
 	next if (/ from /);
 	next if (/current temperature/i);
 
-	if (/^---/) { # next section reached
+	if (/^---/ || /^$/) { # next section reached
 	    $skip = 0;
 	}
 	if (/(POWERS|TEMPERATURE READINGS)/) {
+	    $skip = 1;
+	}
+	if (/fan controlled temperature:/i) {
+	    $skip = 1; 
+	}
+	if (/THERMAL PLANE/) { 
+	    $skip = 1;
+	}
+	if (/temperature:/i) {
 	    $skip = 1;
 	}
 	next if $skip;
@@ -246,6 +255,13 @@ sub WriteTerm {
 	/^ width /		&& next; # kill width on serial lines
 	# filter out any RCS/CVS tags to avoid confusing local CVS storage
 	s/\$(Revision|Id):/ $1:/;
+	# sort secure-mac-addresses.  Note: There is no way to determine which
+	# have been added dynamically vs statically.  Thus, sort them?
+	/secure-mac-address (\S+)/ &&
+	    ProcessHistory("SECMAC","keysort","$1","$_") && next;
+	# OR filter them? XXX
+	#next if (/secure-mac-address/);
+	
 	# order access-lists
 	/^access-list\s+(\d+)\s+(perm|deny)\s+(\d\S+)(\/\d+)\s*$/ &&
 	    ProcessHistory("PACL $1 $2","ipsort","$3","$_")

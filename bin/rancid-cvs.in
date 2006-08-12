@@ -1,8 +1,8 @@
 #! /bin/sh
 ##
-## $Id: rancid-cvs.in,v 1.17 2005/08/15 00:42:50 heas Exp $
+## $Id: rancid-cvs.in,v 1.18 2006/05/28 16:38:52 heas Exp $
 ##
-## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
+## Copyright (C) 1997-2006 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This software may be freely copied, modified and redistributed

@@ -1,8 +1,8 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: jlogin.in,v 1.51 2005/06/14 20:20:43 heas Exp $
+## $Id: jlogin.in,v 1.54 2006/08/10 07:00:31 heas Exp $
 ##
-## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
+## Copyright (C) 1997-2006 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This software may be freely copied, modified and redistributed
@@ -427,9 +427,11 @@ proc run_commands { prompt command } {
     }
     send "quit\r"
     expect {
-	"\n" { exp_continue }
-	timeout { return 0 }
-	eof { return 0 }
+	"\n"					{ exp_continue }
+	timeout					{ catch {close}; wait
+						  return 0
+						}
+	eof					{ return 0 }
     }
     set in_proc 0
 }

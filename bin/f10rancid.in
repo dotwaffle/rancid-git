@@ -1,8 +1,8 @@
 #! @PERLV_PATH@
 ##
-## $Id: f10rancid.in,v 1.17 2005/09/25 17:48:29 heas Exp $
+## $Id: f10rancid.in,v 1.22 2006/08/12 00:48:48 heas Exp $
 ##
-## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
+## Copyright (C) 1997-2006 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This software may be freely copied, modified and redistributed
@@ -356,41 +356,6 @@ sub ShowEnv {
 	    ProcessHistory("COMMENTS","keysort","E2","!Power: $1\n") && next;
 	/^\s*(redundant .*)/i &&
 	    ProcessHistory("COMMENTS","keysort","E2","!Power: $1\n") && next;
-    }
-    ProcessHistory("COMMENTS","","","!\n");
-    return(0);
-}
-
-# This routine parses "show gsr chassis-info" for the gsr
-# This will create arrays for hw info.
-sub ShowGSR {
-    # Skip if this is not a 1200n.
-    print STDERR "    In ShowGSR: $_" if ($debug);
-
-    while (<INPUT>) {
-	tr/\015//d;
-	last if (/^$prompt/);
-	next if (/^(\s*|\s*$cmd\s*)$/);
-	return(-1) if (/command authorization failed/i);
-	# return(1) if ($type !~ /^12[40]/);
-	/^$/ && next;
-	/^\s+Chassis: type (\S+) Fab Ver: (\S+)/ &&
-	    ProcessHistory("COMMENTS","keysort","D0","!\n") &&
-	    ProcessHistory("COMMENTS","keysort","D1",
-				"!GSR Chassis type: $1 Fab Ver: $2\n") &&
-	    next;
-	/^\s+Chassis S\/N: (.*)$/ &&
-	    ProcessHistory("COMMENTS","keysort","D2",
-				"!GSR Chassis S/N: $1\n") &&
-	    next;
-	/^\s+PCA: (\S+)\s*rev: (\S+)\s*dev: \S+\s*HW ver: (\S+)$/ &&
-	    ProcessHistory("COMMENTS","keysort","D3",
-				"!GSR Backplane PCA: $1, rev $2, ver $3\n") &&
-	    next;
-	/^\s+Backplane S\/N: (\S+)$/ &&
-	    ProcessHistory("COMMENTS","keysort","D4",
-				"!GSR Backplane S/N: $1\n") &&
-	    next;
     }
     ProcessHistory("COMMENTS","","","!\n");
     return(0);
@@ -801,41 +766,6 @@ sub ShowModule {
     return(0);
 }
 
-# This routine parses "show c7200" for the 7200
-# This will create arrays for hw info.
-sub ShowC7200 {
-    # Skip if this is not a 7200.
-    print STDERR "    In ShowC7200: $_" if ($debug);
-
-    while (<INPUT>) {
-	tr/\015//d;
-	last if (/^$prompt/);
-	next if (/^(\s*|\s*$cmd\s*)$/);
-	#return(1) if ($type !~ /^72/);
-	return(-1) if (/command authorization failed/i);
-	/^$/ && next;
-	if (/C7200 Midplane EEPROM:/) {
-	    $_ = <INPUT>;
-	    /revision\s+(\S+).*revision\s+(\S+)/;
-	    ProcessHistory("SLOT","","","!Slot Midplane: hvers $1 rev $2\n");
-	    $_ = <INPUT>;
-	    /number\s+(\S+)\s+Part number\s+(\S+)/;
-	    ProcessHistory("SLOT","","","!Slot Midplane: part $2, serial $1\n!\n");
-	    next;
-	}
-	if (/C720\d(VXR)? CPU EEPROM:/) {
-	    $_ = <INPUT>;
-	    /revision\s+(\S+).*revision\s+(\S+)/ &&
-		ProcessHistory("SLOT","","","!Slot CPU: hvers $1 rev $2\n");
-	    $_ = <INPUT>;
-	    /number\s+(\S+)\s+Part number\s+(\S+)/ &&
-		ProcessHistory("SLOT","","","!Slot CPU: part $2, serial $1\n!\n");
-	    next;
-	}
-    }
-    return(0);
-}
-
 # This routine parses "show vtp status"
 sub ShowVTP {
     print STDERR "    In ShowVTP: $_" if ($debug);
@@ -891,7 +821,7 @@ sub WriteTerm {
 	# skip the crap
 	if (/^(##+$|(Building|Current) configuration)/i) {
 	    while (<INPUT>) {
-		next if (/^Current configuration\s*:/i);
+		next if (/^!?Current configuration\s*:/i);
 		next if (/^:/);
 		next if (/^([%!].*|\s*)$/);
 		next if (/^ip add.*ipv4:/);	# band-aid for 3620 12.0S
@@ -1114,7 +1044,6 @@ sub DoNothing {print STDOUT;}
 	{'show version'			=> 'ShowVersion'},
 	{'show install active'		=> 'ShowInstallActive'},
 	{'show env all'			=> 'ShowEnv'},
-	{'show gsr chassis'		=> 'ShowGSR'},
 	{'show boot'			=> 'ShowBoot'},
 	{'show bootvar'			=> 'ShowBoot'},
 	{'show variables boot'		=> 'ShowBoot'},
@@ -1132,7 +1061,6 @@ sub DoNothing {print STDOUT;}
 	{'show diagbus'			=> 'ShowDiagbus'},
 	{'show diag'			=> 'ShowDiag'},
 	{'show module'			=> 'ShowModule'},
-	{'show c7200'			=> 'ShowC7200'},
 	{'show vtp status'		=> 'ShowVTP'},
 	{'show vlan'			=> 'ShowVLAN'},
 	{'show running'			=> 'WriteTerm'}

@@ -1,8 +1,8 @@
 #! /bin/sh
 ##
-## $Id: control_rancid.in,v 1.76 2006/05/04 21:31:20 heas Exp $
+## $Id: control_rancid.in,v 1.77 2006/05/28 16:38:50 heas Exp $
 ##
-## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
+## Copyright (C) 1997-2006 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This software may be freely copied, modified and redistributed

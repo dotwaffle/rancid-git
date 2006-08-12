@@ -1,7 +1,7 @@
 /*
- * $Id: hpuifilter.c,v 1.30 2005/09/29 16:58:16 heas Exp $
+ * $Id: hpuifilter.c,v 1.33 2006/05/28 16:38:51 heas Exp $
  *
- * Copyright (C) 1997-2004 by Terrapin Communications, Inc.
+ * Copyright (C) 1997-2006 by Terrapin Communications, Inc.
  * All rights reserved.
  *
  * This software may be freely copied, modified and redistributed
@@ -228,6 +228,17 @@ main(int argc, char **argv, char **ev)
     }
 
     if (child == 0) {
+	struct winsize ws;
+
+	/*
+	 * Make sure our terminal length and width are something greater
+	 * than 1, for pagers on stupid boxes.
+	 */
+	ioctl(ptys, TIOCGWINSZ, &ws);
+	ws.ws_row = 24;
+	ws.ws_col = 132;
+	ioctl(ptys, TIOCSWINSZ, &ws);
+
 	signal(SIGCHLD, SIG_DFL);
 	/* close the master pty & std* inherited from the parent */
 	close(ptym);
@@ -454,9 +465,7 @@ main(int argc, char **argv, char **ev)
 }
 
 int
-filter(buf, len)
-    char	*buf;
-    int		len;
+filter(char *buf, int len)
 {
     static regmatch_t	pmatch[1];
 #define	N_REG		13		/* number of regexes in reg[][] */

@@ -1,8 +1,8 @@
 #! @PERLV_PATH@
 ##
-## $Id: rancid.in,v 1.203 2006/04/06 21:14:05 heas Exp $
+## $Id: rancid.in,v 1.209 2006/08/12 02:34:22 heas Exp $
 ##
-## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
+## Copyright (C) 1997-2006 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This software may be freely copied, modified and redistributed
@@ -197,11 +197,12 @@ sub ShowVersion {
 	/^Encryption hardware device\s+:\s+(.*)/ &&
 	    ProcessHistory("COMMENTS","keysort","A3", "!Encryption: $1\n") &&
 	    next;
-	/^Flash\s+\S+ \@ 0x\S+,\s+(\S+)/ &&
-	    ProcessHistory("COMMENTS","keysort","B2", "!Memory: Flash $1\n") &&
-	    next;
 	/^running activation key\s*:\s+(.*)/i &&
 	    ProcessHistory("COMMENTS","keysort","D2", "!Key: $1\n") &&
+	    next;
+	# Flash on the PIX or FWSM (FireWall Switch Module)
+	/^Flash(\s+\S+)+ \@ 0x\S+,\s+(\S+)/ &&
+	    ProcessHistory("COMMENTS","keysort","B2", "!Memory: Flash $2\n") &&
 	    next;
 	# CatOS 3500xl stuff
 	/^System serial number(:\s+.*)$/ &&
@@ -233,7 +234,7 @@ sub ShowVersion {
 	    next;
 	/^System image file is "([^\"]*)"$/ &&
 	    ProcessHistory("COMMENTS","keysort","F5","!Image: $1\n") && next;
-	if (/(\S+)\s+\((\S+)\)\s+processor.*with (\S+[kK]) bytes/) {
+	if (/(\S+)\s+(?:\((\S+)\)\s+processor\s+)?\(revision[^)]+\).*with (\S+[kK]) bytes/) {
 	    my($proc) = $1;
 	    my($cpu) = $2;
 	    my($mem) = $3;
@@ -278,6 +279,8 @@ sub ShowVersion {
 		$type = "3600";
 	    } elsif ( $proc =~ /^37/) {
 		$type = "3700";
+	    } elsif ( $proc =~ /^38/) {
+		$type = "3800";
 	    } elsif ( $proc eq "RSP7000") {
 		$type = "7500";
 	    } elsif ( $proc =~ /RSP\d/) {
@@ -321,7 +324,10 @@ sub ShowVersion {
 		"!Chassis type:$slave $proc - a $type $device\n");
 	    ProcessHistory("COMMENTS","keysort","B1",
 		"!Memory:$slave main $mem\n");
-	    ProcessHistory("COMMENTS","keysort","A3","!CPU:$slave $cpu$_$slaveslot\n");
+	    if (defined($cpu)) {
+		ProcessHistory("COMMENTS","keysort","A3",
+			       "!CPU:$slave $cpu$_$slaveslot\n");
+	    }
 	    next;
 	}
 	if (/(\S+) Silicon\s*Switch Processor/) {
@@ -1365,6 +1371,7 @@ sub ShowVLAN {
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
+	return(1) if /Ambiguous command/i;
 	# newer releases (~12.1(9)) place the vlan config in the normal
 	# configuration (write term).
 	return(1) if ($type =~ /^(3550|4500|7600)$/);
@@ -1641,9 +1648,9 @@ sub WriteTerm {
 	    }
 	}
 	# prune tacacs/radius server keys
-	if (/^((tacacs-server|radius-server)\s(\w*[-\s(\s\S+])*\s?key) \d \w+/
+	if (/^((tacacs-server|radius-server)\s(\w*[-\s(\s\S+])*\s?key) \w+/
 							&& $filter_pwds >= 1) {
-	    ProcessHistory("","","","!$1 <removed>$'\n"); next;
+	    ProcessHistory("","","","!$1 <removed>$'"); next;
 	}
 	# order clns host statements
 	/^clns host \S+ (\S+)/ &&
@@ -1761,6 +1768,7 @@ sub DoNothing {print STDOUT;}
 	{'show inventory raw'		=> 'ShowInventory'},
 	{'show vtp status'		=> 'ShowVTP'},
 	{'show vlan'			=> 'ShowVLAN'},
+	{'show vlan-switch'		=> 'ShowVLAN'},
 	{'show debug'			=> 'ShowDebug'},
 	{'show running-config'		=> 'WriteTerm'},
 	{'write term'			=> 'WriteTerm'},
