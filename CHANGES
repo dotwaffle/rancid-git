@@ -1,7 +1,19 @@
-2.3.2
+2.3.2a6
+	*login: recognize the environment variable CLOGINRC, see clogin(1)
+
+	agmrancid: Cisco AGM/Anomaly Guard Module
+
+	francid: drop fan speed o/p from show chassis - John Adams
+
+	clogin: match Cisco CSS's "save config?" prompt - Lance Vermilion
+
+	jrancid: include show system core-dumps - Michael Lyngbol
+
+	rancid: filter empty 'show inventory' fields - from Michael Stefaniuc
+
 	*login: If we timeout while trying to quit in run_commands(), close the
-	connection (ie: file descriptor/tty) gracefully.  - from Ed Ravin,
-	adjusted to catch the close.
+		connection (ie: file descriptor/tty) gracefully. - from Ed
+		Ravin, adjusted to catch the close.
 
 	jrancid: Adapt M160 PCG freq rounding to new format - noted by Mark
 		 Davis
@@ -21,11 +33,13 @@
 
 	francid: sort intf "secure" MACs, order fluctuates - noted by Brad Volz
 
-	francid: filter tempurature o/p on the SuperX - Brad Volz
+	francid: filter temperature o/p on the SuperX - Brad Volz
 
 	convert rancid-fe vendor list to a hash - suggested by Ed Ravin.
 
 	rancid: new format for PIX 7.0 license string - Aaron Gee-clough
+
+	rancid: check for 7300 type of routers
 
 	clogin: older CatOS for 1900s has a CR after the pager prompt
 

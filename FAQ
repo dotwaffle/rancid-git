@@ -24,6 +24,7 @@ A. A catalyst running IOS is type "cisco".  The 'show version' output will
    have banner including a phrase similar to "Cisco Internetwork Operating
    System Software".  See the router.db(5) manual page.
 
+
 Q. I have Hybrid Cisco switch, like a cat5k with an RSM.  How do I collect
    both the routing engine and switch configurations?
 A. Recommended way is to use two entries in the router.db, one for each.
@@ -31,11 +32,13 @@ A. Recommended way is to use two entries in the router.db, one for each.
 	cat5k_rsm.domain.com:cisco:up
 	cat5k_sw.domain.com:cat5:up
 
+
 Q. I have a Cisco ??? on which collection stopped working, but clogin works
    as expected.
 A. Check if 'write term' produces output.  Some IOS combined with large
    configs and low free memory produce zero 'write term' output, esp. combined
    with a memory leak.  The device will have to be rebooted and/or upgraded.
+
 
 Q. I have a Cisco Catalyst switch.  clogin connects, but after receiving the
    prompt, it stalls until it times out.  Why?
@@ -44,8 +47,9 @@ A. This may be due to your prompt.  CatOS does not include an implicit '>' in
    your prompt with a trailing '>'.  Also see cat5rancid(1).  For example:
 	cat5k>
 	cat5k> enable
-	Password: 
-	cat5k> (enable) 
+	Password:
+	cat5k> (enable)
+
 
 Q. Polling a ZebOS box fails from cron, but is successful from the command-
    line.
@@ -65,6 +69,7 @@ A. The manual page for CVS is quite complete, but can be be overwhelming even
    for someone familiar with RCS.  There are some excellent resources on the
    web.  See http://www.loria.fr/~molli/cvs-index.html
 
+
 Q. Errors are showing up in the logs like:
 	cvs [diff aborted]: there is no version here; run 'cvs checkout' first
 A. The directory was not imported into CVS properly or was not properly checked
@@ -75,6 +80,7 @@ A. The directory was not imported into CVS properly or was not properly checked
    replace the router.db file.  If the CVS import was also performed manually,
    cd to <LOCALSTATEDIR> and use 'cvs co <rancid group>' to create all the CVS
    control bits.
+
 
 Q. I keep receiving the same diff for a (or set of) devices, but I know the
    data is not changing repeatedly.  Why?
@@ -115,7 +121,8 @@ A. This is probably a CVS or filesystem permissions problem.  Check the log
    ownership on the cvs repository is
 	chown -R <rancid user> <LOCALSTATEDIR>/CVS <LOCALSTATEDIR>/<GROUPS>
 
-Q. I am renaming a device but would like the retain the history in CVS.  How
+
+Q. I am renaming a device but would like to retain the history in CVS.  How
    is this done?
 A. CVS does not provide a way (AFAIK) to rename files or to rename or delete
    directories.  The best way is to copy the CVS repository file manually
@@ -134,6 +141,7 @@ A. CVS does not provide a way (AFAIK) to rename files or to rename or delete
    history, the same procedure would work.  Substituting the new group name
    appropriately.
 
+
 Q. I am removing a group and would like to remove all traces of it from the
    rancid directory and the CVS repository.  How is this done?
 A. As far as I know, CVS does not provide a way to remove directories.  First,
@@ -144,15 +152,17 @@ A. As far as I know, CVS does not provide a way to remove directories.  First,
 	% cd <LOCALSTATEDIR>
 	% rm -rf fubar CVS/fubar
 
+
 Q. I would like to place my CVS repository on a remote machine.  How do I do
    that?
-A. Assuming that you're starting fresh, its quite simply.  Before running
+A. Assuming that you're starting fresh, its quite simple.  Before running
    rancid-cvs for the first time, adjust CVS_RSH & CVSROOT in rancid.conf
    similar to the following:
 	CVS_RSH=ssh; export CVS_RSH
 	CVSROOT="myhost:/fqpn/CVS"; export CVSROOT
-   Note that CVS_RSH is not found in the rancid.conf sample that is distributed
+   Note that CVS_RSH is not found in the sample rancid.conf that is distributed
    with rancid.
+
 
 Q. I need a web interface to the rancid CVS repository, for the CVS unsavvy.
 A. cvsweb works with rancid.  Other similar software may as well.
@@ -202,6 +212,7 @@ A. Our usual diagnostic procedure for this is:
    If all of these work, make sure that the device's entry in the group's
    router.db file is correct and check the group's last log file for errors.
 
+
 Q. Are there any characters in the banner that rancid has problems with OR
    I changed the device's command prompt and now collection is failing?
 A. The trickiest part about clogin (et al) is recognizing the prompt
@@ -212,8 +223,9 @@ A. The trickiest part about clogin (et al) is recognizing the prompt
 
    Don't use '>' or '#' in your prompt or in your banner or other motd.
 
+
 Q. I use <BINDIR>/*login -c to run commands on multiple boxes.  Sometimes
-   these are commands that take secondary input, like a filename.  How can
+   these are commands that take secondary input, like a filename.  How can I
    enter the data for that secondary prompt?
 A. Two methods will work.  Write an expect script to be used with clogin's
    -s option, for which a few examples come with rancid like cisco-load.exp.
@@ -224,7 +236,9 @@ A. Two methods will work.  Write an expect script to be used with clogin's
 
 	clogin -c 'clear counters\n'
    The specific return (\n) will be entered after 'clear counters' followed
-   by the normal return after the command.
+   by the normal return after the command.  Some devices apparently eat the
+   linefeed of the typical Unix \r\n sequence and require that a carriage-
+   return be used instead (\r).
 
 
 Q. I would like to collect device configurations every hour, but only receive
@@ -245,7 +259,38 @@ A. Certainly, but rancid does not provide such a mechanism natively.  Two
 	   and passes this to the -D option of CVS.
 
    Obviously, the first option is the cleanest and most featureful, which is
-   why the script mention in the second option is not provided.
+   why the script mentioned in the second option is not provided.
+
+
+Q. I'd like to have RANCID automatically begin collection when someone
+   finishes configuring a router.  How can I do this?
+A. Using a syslog watcher script, one can trigger RANCID from the syslog
+   line emitted by, for example, an IOS router after configuration mode is
+   ended.
+
+   Here's a simple example using the Simple Event Correlator:
+   (http://simple-evcorr.sourceforge.net/)
+
+   If the syslog line in your logs looks like this (wrapped for readability):
+
+   Apr  5 09:56:52 acc1.geo269.example.com 72: 000069: *Mar  6 21:40:13.466 \
+   AEDT: %SYS-5-CONFIG_I: Configured from console by gwbush on vty0 (10.1.1.1)
+
+   You would use a SEC configuration stanza like this:
+
+   # example rancid trigger
+   #
+   type=SingleWithSuppress
+   ptype=RegExp
+   pattern=\s\S+:\S+\S+\s(\S+)\.example\.com.*SYS-5-CONFIG_I
+   action=shellcmd /opt/rancid/bin/do-diffs -r $1
+   window=1800
+
+   This will execute the command '/opt/rancid/bin/do-diffs -r acc1.geo269'
+   when it is fed a line like that syslog line.  The command will be run at
+   most once every 1800 seconds.  If you do not get hostnames in your
+   log lines that match your router.db entries, either fix your reverse
+   DNS or remove the '-r $1' part.
 
 
 Q. I would like to limit the permissions of the rancid user on my devices.  Is
@@ -296,7 +341,8 @@ Q. How can I run rancid to make the most efficient use of resources (i.e.
 A. You can adjust PAR_COUNT in rancid.conf to achieve maximum efficiency
    during polling. You can watch the output of the standard unix command
    vmstat command during polling to determine whether or not the cpu is being
-   wholly utilized - there should be little idle time and no process blocking.
+   wholly utilized - there should be little idle time and no process blocking
+   (see vmstat).
 
    Another simpler method is to look at the time stamps on the rancid log
    files, and adjust PAR_COUNT until the least amount of time is taken
@@ -316,11 +362,13 @@ A. You can adjust PAR_COUNT in rancid.conf to achieve maximum efficiency
    rancid may take a little longer to run but you won't be stepping on
    other people's toes.
 
+
 Q. I'm still stuck on this problem.  Where can I get more help?
 A. A discussion list is available, rancid-discuss@shrubbery.net.  You must
    be a subscriber to post.  Subscribe like this:
 
    shell% echo "subscribe" | mail rancid-discuss-request@shrubbery.net
+
 
 Q. What else can I do with rancid?
 A. The possibilities are endless...rancid is non-toxic when applied properly.

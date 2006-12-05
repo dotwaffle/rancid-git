@@ -1,5 +1,5 @@
 /*
- * $Id: hpuifilter.c,v 1.33 2006/05/28 16:38:51 heas Exp $
+ * $Id: hpuifilter.c,v 1.36 2006/11/29 01:02:27 heas Exp $
  *
  * Copyright (C) 1997-2006 by Terrapin Communications, Inc.
  * All rights reserved.
@@ -166,9 +166,10 @@ main(int argc, char **argv, char **ev)
 
     unsetenv("DISPLAY");
 
-    /* allocate pty for telnet/ssh, then fork and exec */
     for (child = 3; child < 10; child++)
 	close(child);
+
+    /* allocate pty for telnet/ssh, then fork and exec */
     if (openpty(&ptym, &ptys, ptyname, NULL, NULL)) {
 	fprintf(stderr, "%s: could not allocate pty: %s\n", progname,
 		strerror(errno));
@@ -242,7 +243,6 @@ main(int argc, char **argv, char **ev)
 	signal(SIGCHLD, SIG_DFL);
 	/* close the master pty & std* inherited from the parent */
 	close(ptym);
-	setsid();
 	if (ptys != 0)
 	    close(0);
 	if (ptys != 1)
@@ -250,10 +250,11 @@ main(int argc, char **argv, char **ev)
 	if (ptys != 2)
 	    close(2);
 #ifdef TIOCSCTTY
+	setsid();
 	if (ioctl(ptys, TIOCSCTTY, NULL) == -1) {
 	    snprintf(ptyname, FILENAME_MAX, "%s: could not set controlling "
 		     "tty: %s\n", progname, strerror(errno));
-	    write(ptys, ptyname, strlen(ptyname));
+	    write(0, ptyname, strlen(ptyname));
 	    return(EX_OSERR);
 	}
 #endif
@@ -262,7 +263,7 @@ main(int argc, char **argv, char **ev)
 	if (dup2(ptys, 0) == -1 || dup2(ptys, 1) == -1 || dup2(ptys, 2) == -1) {
 	    snprintf(ptyname, FILENAME_MAX, "%s: dup2() failed: %s\n", progname,
 		     strerror(errno));
-	    write(ptys, ptyname, strlen(ptyname));
+	    write(0, ptyname, strlen(ptyname));
 	    return(EX_OSERR);
 	}
 	if (ptys > 2)
@@ -272,7 +273,7 @@ main(int argc, char **argv, char **ev)
 	execvp(argv[optind], argv + optind);
 	snprintf(ptyname, FILENAME_MAX, "%s: execvp() failed: %s\n", progname,
 		 strerror(errno));
-	write(ptys, ptyname, strlen(ptyname));
+	write(0, ptyname, strlen(ptyname));
 	return(EX_TEMPFAIL);
 	/*NOTREACHED*/
     }
@@ -468,7 +469,7 @@ int
 filter(char *buf, int len)
 {
     static regmatch_t	pmatch[1];
-#define	N_REG		13		/* number of regexes in reg[][] */
+#define	N_REG		14		/* number of regexes in reg[][] */
     static regex_t	preg[N_REG];
     static char		reg[N_REG][50] = {	/* vt100/220 escape codes */
 				"\e7\e\\[1;24r\e8",		/* ds */
@@ -485,6 +486,7 @@ filter(char *buf, int len)
 				"\e\\[\\?25h",			/* ve */
 				"\e\\[\\?25l",			/* vi */
 				"\e\\[K",			/* ce */
+				"\e\\[7m",			/* mr - ansi */
 
 				/* replace these with CR */
 				"\e\\[0m",			/* me */
@@ -629,7 +631,7 @@ openpty(int *amaster, int *aslave, char *name, struct termios *term,
     static char		line[] = "/dev/XtyXX";
     const char		*cp1, *cp2, *cp, *linep;
     int			master, slave;
-	gid_t ttygid;
+    gid_t		ttygid;
     mode_t		mode;
     struct group	*gr;
 
@@ -644,6 +646,9 @@ openpty(int *amaster, int *aslave, char *name, struct termios *term,
 	linep = ptsname(master);
 	grantpt(master);
 	unlockpt(master);
+#ifndef TIOCSCTTY
+	setsid();
+#endif
 	if ((slave = open(linep, O_RDWR)) < 0) {
 	    slave = errno;
 	    (void) close(master);

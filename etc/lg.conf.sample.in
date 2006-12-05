@@ -1,3 +1,4 @@
+# @PACKAGE@ @VERSION@
 # configuration file for the looking glass
 #
 # note: these are perl statements!  Mind the syntax.  "perl -c lg.conf"

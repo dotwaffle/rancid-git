@@ -1,7 +1,8 @@
 #! @PERLV_PATH@
 ##
-## $Id: par.in,v 1.12 2006/05/28 16:38:52 heas Exp $
+## $Id: par.in,v 1.14 2006/11/28 21:21:28 heas Exp $
 ##
+## @PACKAGE@ @VERSION@
 ## Copyright (C) 1997-2006 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
@@ -44,7 +45,11 @@
 # line is assumed to be a command to be run.
 #
 use Getopt::Std;
-getopts('p:n:l:c:fixedq');
+getopts('p:n:l:c:fixedqV');
+if ($opt_V) {
+    print "@PACKAGE@ @VERSION@\n";
+    exit(0);
+}
 $procs=$opt_n;  $procs=3 if(!$procs);
 $command=$opt_c;   #$command="{}" if(!$command);
 $parlog=$opt_l; $parlog="par.log.".time() if(!$parlog);

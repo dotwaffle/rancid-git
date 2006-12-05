@@ -1,7 +1,8 @@
 #! /bin/sh
 ##
-## $Id: rancid-cvs.in,v 1.18 2006/05/28 16:38:52 heas Exp $
+## $Id: rancid-cvs.in,v 1.19 2006/10/05 04:27:43 heas Exp $
 ##
+## @PACKAGE@ @VERSION@
 ## Copyright (C) 1997-2006 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
@@ -27,6 +28,32 @@
 
 # Read in the environment
 ENVFILE="@sysconfdir@/rancid.conf"
+
+# print a usage message to stderr
+pr_usage() {
+    echo "usage: $0 [-V] [group [group ...]]" >&2;
+}
+
+# command-line options
+# -V print version string
+if [ $# -ge 1 ] ; then
+    while [ 1 ] ; do
+	case $1 in
+	-V)
+	    echo "@PACKAGE@ @VERSION@"
+	    exit 0
+	    ;;
+	-*)
+	    echo "unknown option: $1" >&2
+	    pr_usage
+	    exit 1
+	    ;;
+	*)
+	    break;
+	    ;;
+	esac
+    done
+fi
 
 . $ENVFILE
 

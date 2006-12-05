@@ -1,7 +1,8 @@
 #! @PERLV_PATH@
 ##
-## $Id: nsrancid.in,v 1.13 2006/05/28 16:38:52 heas Exp $
+## $Id: nsrancid.in,v 1.14 2006/10/05 04:27:43 heas Exp $
 ##
+## @PACKAGE@ @VERSION@
 ## Copyright (C) 1997-2006 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
@@ -24,10 +25,14 @@
 #
 #  RANCID - Really Awesome New Cisco confIg Differ
 #
-# usage: rancid [-d] [-l] [-f filename | hostname]
+# usage: rancid [-dV] [-l] [-f filename | hostname]
 #
 use Getopt::Std;
-getopts('dfl');
+getopts('dflV');
+if ($opt_V) {
+    print "@PACKAGE@ @VERSION@\n";
+    exit(0);
+}
 $log = $opt_l;
 $debug = $opt_d;
 $file = $opt_f;

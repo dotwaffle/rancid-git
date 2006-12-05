@@ -1,12 +1,13 @@
 .\"
 .hys 50
-.TH "clogin" "1" "26 September 2005"
+.TH "clogin" "1" "23 November 2006"
 .SH NAME
 clogin \- Cisco/Foundry login script
 .SH SYNOPSIS
 .B clogin
 [\fB\-autoenable\fP]
 [\fB\-noenable\fP]
+[\fB\-V\fR]
 [\c
 .BI \-c\ 
 command]
@@ -54,8 +55,9 @@ catalyst switch, Extreme switch, Juniper ERX/E-series, Procket Networks,
 or Redback router.
 There are complementary scripts for
 Alteon,
-Bay Networks (nortel),
 ADC-kentrox EZ-T3 mux,
+Bay Networks (nortel),
+Cisco AGM,
 Foundry,
 HP Procurve Switches,
 Hitachi Routers,
@@ -89,7 +91,9 @@ options exist to override some of the directives found in the
 configuration file.
 .PP
 The command-line options are as follows:
-.PP
+.TP
+.B \-V
+Prints package name and version strings.
 .TP
 .B \-c
 Command to be run on each router list on the command-line.  Multiple
@@ -209,6 +213,12 @@ option.
 .B clogin
 will not change the banner on your xterm window if this includes the
 character 'x'.
+.\"
+.TP
+.B CLOGINRC
+Specifies an alternative location for the
+.IR .cloginrc
+file, like the \fB\-f\fP option.
 .\"
 .TP
 .B HOME

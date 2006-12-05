@@ -1,7 +1,8 @@
 #! /bin/sh
 ##
-## $Id: control_rancid.in,v 1.77 2006/05/28 16:38:50 heas Exp $
+## $Id: control_rancid.in,v 1.79 2006/10/05 04:27:42 heas Exp $
 ##
+## @PACKAGE@ @VERSION@
 ## Copyright (C) 1997-2006 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
@@ -24,22 +25,21 @@
 
 # print a usage message to stderr
 pr_usage() {
-    echo "usage: $0 [-r device_name] [-m mail rcpt] [group [group ...]]" >&2;
+    echo "usage: $0 [-V] [-r device_name] [-m mail rcpt] [group [group ...]]" >&2;
 }
 
 # command-line options
-# -r <device name>
+# -V print version string
 # -m <mail recipients>
+# -r <device name>
 alt_mailrcpt=0
 if [ $# -ge 1 ] ; then
 
     while [ 1 ] ; do
 	case $1 in
-	-r)
-	    shift
-	    # next arg is the device name
-	    device="$1"
-	    shift
+	-V)
+	    echo "@PACKAGE@ @VERSION@"
+	    exit 0
 	    ;;
 	-m)
 	    shift
@@ -50,6 +50,12 @@ if [ $# -ge 1 ] ; then
 	    else
 		mailrcpt="$mailrcpt,$1"
 	    fi
+	    shift
+	    ;;
+	-r)
+	    shift
+	    # next arg is the device name
+	    device="$1"
 	    shift
 	    ;;
 	--)

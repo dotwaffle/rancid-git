@@ -1,10 +1,16 @@
 .\"
 .hys 50
-.TH "rancid-run" "1" "13 August 2005"
+.TH "rancid-run" "1" "5 October 2006"
 .SH NAME
 rancid-run \- run rancid for each of the groups
 .SH SYNOPSIS
 .B rancid-run
+[\fB\-V\fR] [\c
+.BI \-f\ \c
+rancid.conf]\ \c
+[\c
+.BI \-f\ \c
+rancid.conf]\ \c
 [\c
 .BI \-m\ \c
 mail_rcpt]\ \c
@@ -62,6 +68,12 @@ For example:
 .PP
 .\"
 The command-line options are as follows:
+.TP
+.B \-V
+Prints package name and version strings.
+.TP
+.B \-f rancid.conf
+Specify an alternate configuration file.
 .TP
 .B \-m mail_rcpt
 Specify the recipient of diff mail, which is normally rancid-<group>.  The

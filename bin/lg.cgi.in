@@ -1,7 +1,8 @@
 #! @PERLV_PATH@
 ##
-## $Id: lg.cgi.in,v 1.53 2006/05/28 16:38:51 heas Exp $
+## $Id: lg.cgi.in,v 1.54 2006/10/05 04:27:43 heas Exp $
 ##
+## @PACKAGE@ @VERSION@
 ## Copyright (C) 1997-2006 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##

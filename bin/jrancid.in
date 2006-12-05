@@ -1,7 +1,8 @@
 #! @PERLV_PATH@
 ##
-## $Id: jrancid.in,v 1.72 2006/07/28 16:57:57 heas Exp $
+## $Id: jrancid.in,v 1.79 2006/10/05 04:27:43 heas Exp $
 ##
+## @PACKAGE@ @VERSION@
 ## Copyright (C) 1997-2006 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
@@ -24,10 +25,14 @@
 #
 #  RANCID - Really Awesome New Cisco confIg Differ
 #
-# usage: jrancid [-d] [-l] [-f filename | hostname]
+# usage: jrancid [-dV] [-l] [-f filename | hostname]
 #
 use Getopt::Std;
-getopts('dfl');
+getopts('dflV');
+if ($opt_V) {
+    print "@PACKAGE@ @VERSION@\n";
+    exit(0);
+}
 $debug = $opt_d;
 $log = $opt_l;
 $file = $opt_f;
@@ -39,6 +44,7 @@ $timeo = 120;				# clogin timeout in seconds
 
 my(@commandtable, %commands, @commands);# command lists
 my(%filter_pwds);			# password filtering mode
+my($ShowChassisSCB);			# Only run ShowChassisSCB() once
 
 # This routine is used to print out the router configuration
 sub ProcessHistory {
@@ -152,9 +158,9 @@ sub ShowChassisClocks {
     ProcessHistory("","","","# $_");
     while (<INPUT>) {
 	tr/\015//d;
-	last if(/^$prompt/);
-	next if(/^system (shutdown message from|going down )/i);
-	next if(/^\{(master|backup)}/);
+	last if (/^$prompt/);
+	next if (/^system (shutdown message from|going down )/i);
+	next if (/^\{(master|backup)}/);
 
 	/error: the chassis subsystem is not running/ && return;
 	/Couldn\'t initiate connection/ && return;
@@ -188,9 +194,9 @@ sub ShowChassisEnvironment {
     ProcessHistory("","","","# $_");
     while (<INPUT>) {
 	tr/\015//d;
-	last if(/^$prompt/);
-	next if(/^system (shutdown message from|going down )/i);
-	next if(/^\{(master|backup)}/);
+	last if (/^$prompt/);
+	next if (/^system (shutdown message from|going down )/i);
+	next if (/^\{(master|backup)}/);
 
 	/error: the chassis subsystem is not running/ && return;
 	/Couldn\'t initiate connection/ && return;
@@ -206,6 +212,8 @@ sub ShowChassisEnvironment {
 		ProcessHistory("","","","# $1\n") && next;
 	/(^.*\S)\s+ Spinning at .*$/ &&
 		ProcessHistory("","","","# $1\n") && next;
+	/(^.*\S)\s+Measurement/ &&
+		ProcessHistory("","","","# $1\n") && next;
 	ProcessHistory("","","","# $_");
     }
     return;
@@ -219,9 +227,9 @@ sub ShowChassisFirmware {
     ProcessHistory("","","","# $_");
     while (<INPUT>) {
 	tr/\015//d;
-	last if(/^$prompt/);
-	next if(/^system (shutdown message from|going down )/i);
-	next if(/^\{(master|backup)}/);
+	last if (/^$prompt/);
+	next if (/^system (shutdown message from|going down )/i);
+	next if (/^\{(master|backup)}/);
 
 	/error: the chassis subsystem is not running/ && return;
 	/Couldn\'t initiate connection/ && return;
@@ -243,9 +251,9 @@ sub ShowChassisFpcDetail {
     ProcessHistory("","","","# $_");
     while (<INPUT>) {
 	tr/\015//d;
-	last if(/^$prompt/);
-	next if(/^system (shutdown message from|going down )/i);
-	next if(/^\{(master|backup)}/);
+	last if (/^$prompt/);
+	next if (/^system (shutdown message from|going down )/i);
+	next if (/^\{(master|backup)}/);
 
 	/error: the chassis subsystem is not running/ && return;
 	/Couldn\'t initiate connection/ && return;
@@ -270,9 +278,9 @@ sub ShowChassisHardware {
     ProcessHistory("","","","# $_");
     while (<INPUT>) {
 	tr/\015//d;
-	last if(/^$prompt/);
-	next if(/^system (shutdown message from|going down )/i);
-	next if(/^\{(master|backup)}/);
+	last if (/^$prompt/);
+	next if (/^system (shutdown message from|going down )/i);
+	next if (/^\{(master|backup)}/);
 
 	/error: the chassis subsystem is not running/ && return;
 	/Couldn\'t initiate connection/ && return;
@@ -295,9 +303,9 @@ sub ShowChassisRoutingEngine {
     ProcessHistory("","","","# $_");
     while (<INPUT>) {
 	tr/\015//d;
-	last if(/^$prompt/);
-	next if(/^system (shutdown message from|going down )/i);
-	next if(/^\{(master|backup)}/);
+	last if (/^$prompt/);
+	next if (/^system (shutdown message from|going down )/i);
+	next if (/^\{(master|backup)}/);
 
 	/error: the chassis subsystem is not running/ && return;
 	/Couldn\'t initiate connection/ && return;
@@ -328,9 +336,9 @@ sub ShowChassisSCB {
     ProcessHistory("","","","# $_");
     while (<INPUT>) {
 	tr/\015//d;
-	last if(/^$prompt/);
-	next if(/^system (shutdown message from|going down )/i);
-	next if(/^\{(master|backup)}/);
+	last if (/^$prompt/);
+	next if (/^system (shutdown message from|going down )/i);
+	next if (/^\{(master|backup)}/);
 
 	return if ($ShowChassisSCB);
 	/error: the chassis subsystem is not running/ && return;
@@ -361,9 +369,9 @@ sub ShowChassisAlarms {
     ProcessHistory("","","","# $_");
     while (<INPUT>) {
 	tr/\015//d;
-	last if(/^$prompt/);
-	next if(/^system (shutdown message from|going down )/i);
-	next if(/^\{(master|backup)}/);
+	last if (/^$prompt/);
+	next if (/^system (shutdown message from|going down )/i);
+	next if (/^\{(master|backup)}/);
 
 	/Unrecognized command/ && return;
 	/command is not valid/ && return;
@@ -383,9 +391,9 @@ sub ShowSystemAutoinstall {
     ProcessHistory("","","","# $_");
     while (<INPUT>) {
 	tr/\015//d;
-	last if(/^$prompt/);
-	next if(/^system (shutdown message from|going down )/i);
-	next if(/^\{(master|backup)}/);
+	last if (/^$prompt/);
+	next if (/^system (shutdown message from|going down )/i);
+	next if (/^\{(master|backup)}/);
 
 	/Unrecognized command/ && return;
 	/command is not valid/ && return;
@@ -397,6 +405,26 @@ sub ShowSystemAutoinstall {
     return;
 }
 
+sub ShowSystemCoreDumps {
+    print STDERR "    In ShowSystemCoreDumps: $_" if ($debug);
+
+    s/^[a-z]+@//;
+    ProcessHistory("","","","# $_");
+    while (<INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+
+	/Unrecognized command/ && return(1);
+	/^\s+\^/ && return(1);
+	/syntax error/ && return(1);
+	/^JUNOS / && <INPUT> && next;
+	/No such file or directory$/ && next;
+
+	ProcessHistory("","","","# $_");
+    }
+    return(0);
+}
+
 # This routine parses "show system license"
 sub ShowSystemLicense {
     print STDERR "    In ShowSystemLicense: $_" if ($debug);
@@ -405,9 +433,9 @@ sub ShowSystemLicense {
     ProcessHistory("","","","# $_");
     while (<INPUT>) {
 	tr/\015//d;
-	last if(/^$prompt/);
-	next if(/^system (shutdown message from|going down )/i);
-	next if(/^\{(master|backup)}/);
+	last if (/^$prompt/);
+	next if (/^system (shutdown message from|going down )/i);
+	next if (/^\{(master|backup)}/);
 
 	/Unrecognized command/ && return;
 	/command is not valid/ && return;
@@ -427,9 +455,9 @@ sub ShowSystemLicenseKeys {
     ProcessHistory("","","","# $_");
     while (<INPUT>) {
 	tr/\015//d;
-	last if(/^$prompt/);
-	next if(/^system (shutdown message from|going down )/i);
-	next if(/^\{(master|backup)}/);
+	last if (/^$prompt/);
+	next if (/^system (shutdown message from|going down )/i);
+	next if (/^\{(master|backup)}/);
 
 	/Unrecognized command/ && return;
 	/command is not valid/ && return;
@@ -449,9 +477,9 @@ sub ShowSystemBootMessages {
     ProcessHistory("","","","# $_");
     while (<INPUT>) {
 	tr/\015//d;
-	last if(/^$prompt/);
-	next if(/^system (shutdown message from|going down )/i);
-	next if(/^\{(master|backup)}/);
+	last if (/^$prompt/);
+	next if (/^system (shutdown message from|going down )/i);
+	next if (/^\{(master|backup)}/);
 
 	/Unrecognized command/ && return;
 	/command is not valid/ && return;
@@ -476,10 +504,10 @@ sub ShowVersion {
     ProcessHistory("","","","# $_");
     while (<INPUT>) {
 	tr/\015//d;
-	last if(/^$prompt/);
-	next if(/^\s*$/);
-	next if(/^system (shutdown message from|going down )/i);
-	next if(/^\{(master|backup)}/);
+	last if (/^$prompt/);
+	next if (/^\s*$/);
+	next if (/^system (shutdown message from|going down )/i);
+	next if (/^\{(master|backup)}/);
 
 	/^Juniper Networks is:/ && ProcessHistory("","","","# \n# $_") && next;
 	ProcessHistory("","","","# $_");
@@ -502,12 +530,12 @@ sub ShowConfiguration {
 	next if (/^\s*$/);
 	# end of config - hopefully.  juniper does not have a reliable
 	# end-of-config tag.  appears to end with "\nPROMPT>", but not sure.
-	if(/^$prompt/) {
+	if (/^$prompt/) {
 	    $found_end++;
 	    last;
 	}
-	next if(/^system (shutdown message from|going down )/i);
-	next if(/^\{(master|backup)}/);
+	next if (/^system (shutdown message from|going down )/i);
+	next if (/^\{(master|backup)}/);
 	$lines++;
 
 	/^database header mismatch: / && return(-1);
@@ -581,6 +609,7 @@ sub DoNothing {print STDOUT;}
 	{'show chassis scb'		=> 'ShowChassisSCB'},
 	{'show chassis sfm detail'	=> 'ShowChassisSCB'},
 	{'show chassis ssb'		=> 'ShowChassisSCB'},
+	{'show chassis feb detail'	=> 'ShowChassisSCB'},
 	{'show chassis feb'		=> 'ShowChassisSCB'},
 	{'show chassis cfeb'		=> 'ShowChassisSCB'},
 	{'show chassis alarms'		=> 'ShowChassisAlarms'},
@@ -588,6 +617,7 @@ sub DoNothing {print STDOUT;}
 	{'show system license'		=> 'ShowSystemLicense'},
 #	{'show system license keys'	=> 'ShowSystemLicenseKeys'},
 	{'show system boot-messages'	=> 'ShowSystemBootMessages'},
+	{'show system core-dumps'	=> 'ShowSystemCoreDumps'},
 	{'show version detail'		=> 'ShowVersion'},
 	{'show configuration'		=> 'ShowConfiguration'}
 );
@@ -640,7 +670,7 @@ if ($ENV{"FILTER_PWDS"} =~ /no/i) {
 }
 
 ProcessHistory("","","","# RANCID-CONTENT-TYPE: juniper\n#\n");
-TOP: while(<INPUT>) {
+TOP: while (<INPUT>) {
     tr/\015//d;
     if (/^Error:/) {
 	print STDOUT ("$host jlogin error: $_");

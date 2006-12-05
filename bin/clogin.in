@@ -1,7 +1,8 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: clogin.in,v 1.99 2006/08/10 07:00:30 heas Exp $
+## $Id: clogin.in,v 1.103 2006/12/05 16:50:52 heas Exp $
 ##
+## @PACKAGE@ @VERSION@
 ## Copyright (C) 1997-2006 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
@@ -75,6 +76,9 @@ if {[ info exists env(CISCO_USER) ]} {
     }
     regexp {\(([^)]*)} "$reason" junk default_user
 }
+if {[ info exists env(CLOGINRC) ]} {
+    set password_file $env(CLOGINRC)
+}
 
 # Sometimes routers take awhile to answer (the default is 10 sec)
 set timeout 45
@@ -100,13 +104,16 @@ for {set i 0} {$i < $argc} {incr i} {
 	    }
 	    set do_passwd 0
 	# VTY Password
-	} -v* -
-	-v* {
+	} -v* {
 	    if {! [  regexp .\[vV\](.+) $arg ignore passwd]} {
 		incr i
 		set passwd [ lindex $argv $i ]
 	    }
 	    set do_passwd 0
+	# Version string
+	} -V* {
+	    send_user "@PACKAGE@ @VERSION@\n"
+	    exit 0
 	# Enable Username
 	} -w* -
 	-W* {
@@ -489,14 +496,17 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 				  # Catalyst 1900s have some lame menu.  Enter
 				  # K to reach a command-line.
 				  send "K\r"
-				  exp_continue;
+				  exp_continue
+				}
+	-re "Last login:"	{
+				  exp_continue
 				}
 	-re "@\[^\r\n]+ $p_prompt"	{
-					  # ssh pwd prompt
-					  sleep 1
-					  send "$userpswd\r"
-					  exp_continue
-					}
+				  # ssh pwd prompt
+				  sleep 1
+				  send "$userpswd\r"
+				  exp_continue
+				}
 	-re "$u_prompt"		{
 				  send "$user\r"
 				  set uprompt_seen 1
@@ -674,6 +684,10 @@ proc run_commands { prompt command } {
 						  exp_continue;
 						}
 	"Would you like to save them now"	{ # Force10
+						  send "n\r"
+						  exp_continue
+						}
+	"Configuration changes have occurred.*"	{ # Cisco CSS
 						  send "n\r"
 						  exp_continue
 						}

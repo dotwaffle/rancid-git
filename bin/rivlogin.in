@@ -1,7 +1,8 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: rivlogin.in,v 1.21 2006/07/17 20:39:42 heas Exp $
+## $Id: rivlogin.in,v 1.25 2006/12/05 16:50:53 heas Exp $
 ##
+## @PACKAGE@ @VERSION@
 ## Copyright (C) 1997-2006 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
@@ -30,7 +31,11 @@
 #
 # Returned to the RANCID crowd by andrew fort
 
-# Global vars section
+# Usage line
+set usage "Error: Usage: $argv0 \[-noenable\] \
+\[-f cloginrc-file\] \[-c command\] \[-Evar=x\] \[-s script-file\] \
+\[-x command-file\] \[-t timeout\] \[-o output-file\] \
+router \[router...\]\n"
 
 # program diagnostics
 set verbose  0
@@ -66,12 +71,29 @@ set avenable	1
 # tracks if we receive them on the command line.
 set do_passwd    1
 set do_enapasswd 1
+#
+set send_human {.4 .4 .7 .3 5}
 
-# cmd usage
-set usage "Error: Usage: $argv0 \[-noenable\] \
-\[-f cloginrc-file\] \[-c command\] \[-Evar=x\] \[-s script-file\] \
-\[-x command-file\] \[-t timeout\] \[-o output-file\] \
-router \[router...\]\n"
+# Find the user in the ENV, or use the unix userid.
+if {[ info exists env(CISCO_USER) ]} {
+    set default_user $env(CISCO_USER)
+} elseif {[ info exists env(USER) ]} {
+    set default_user $env(USER)
+} elseif {[ info exists env(LOGNAME) ]} {
+    set default_user $env(LOGNAME)
+} else {
+    # This uses "id" which I think is portable.  At least it has existed
+    # (without options) on all machines/OSes I've been on recently -
+    # unlike whoami or id -nu.
+    if [ catch {exec id} reason ] {
+	send_error "\nError: could not exec id: $reason\n"
+	exit 1
+    }
+    regexp {\(([^)]*)} "$reason" junk default_user
+}
+if {[ info exists env(CLOGINRC) ]} {
+    set password_file $env(CLOGINRC)
+}
 
 # Procedures Section
 
@@ -794,6 +816,10 @@ for {set idx 0} {$idx < $argc} {incr idx} {
             }
 
             set do_script 1
+	# Version string
+	} -V* {
+	    send_user "@PACKAGE@ @VERSION@\n"
+	    exit 0
         # Command file
         } -x* -
         -X {
@@ -825,22 +851,21 @@ for {set idx 0} {$idx < $argc} {incr idx} {
 		    puts "DEBUG: output file: $output_file"
 		}
             }
-
-        } -t* -
-        -T* {
-            incr idx
-            set timeout [ lindex $argv $idx ]
-
-        } -noenable {
-            set avenable 0
-        } -* {
-            puts "ERROR:unkown argument passed: $arg\n"
-            puts $usage
+	# Timeout
+	} -t* -
+	-T* {
+	    incr idx
+	    set timeout [ lindex $argv $idx ]
+	# Do we enable?
+	} -noenable {
+	    set avenable 0
+	} -* {
+	    send_user "Error: Unkown argument! $arg\n"
+	    send_user $usage
 	    exit 1
-
-        } default {
+	} default {
 	    break
-        }
+	}
     }
 }
 

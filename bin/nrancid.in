@@ -1,7 +1,8 @@
 #! @PERLV_PATH@
 ##
-## $Id: nrancid.in,v 1.26 2006/05/28 16:38:52 heas Exp $
+## $Id: nrancid.in,v 1.28 2006/11/10 21:40:48 heas Exp $
 ##
+## @PACKAGE@ @VERSION@
 ## Copyright (C) 1997-2006 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
@@ -26,10 +27,14 @@
 #
 #  RANCID - Really Awesome New Cisco confIg Differ
 #
-# usage: rancid [-d] [-l] [-f filename | hostname]
+# usage: rancid [-dV] [-l] [-f filename | hostname]
 #
 use Getopt::Std;
-getopts('dfl');
+getopts('dflV');
+if ($opt_V) {
+    print "@PACKAGE@ @VERSION@\n";
+    exit(0);
+}
 $log = $opt_l;
 $debug = $opt_d;
 $file = $opt_f;
@@ -332,7 +337,6 @@ if (scalar(%commands) || !$found_end) {
 	printf(STDERR "$host: missed cmd(s): %s\n", join(',', keys(%commands))) if ($debug);
     }
     if (!$found_end) {
-	print STDOUT "$found_end: found end\n";
 	print STDOUT "$host: End of run not found\n";
 	print STDERR "$host: End of run not found\n" if ($debug);
 	system("/usr/bin/tail -1 $host.new");

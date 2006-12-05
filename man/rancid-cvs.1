@@ -1,11 +1,11 @@
 .\"
 .hys 50
-.TH "rancid-cvs" "1" "13 August 2005"
+.TH "rancid-cvs" "1" "5 October 2006"
 .SH NAME
 rancid-cvs \- initialize CVS or Subversion and rancid group files and directories
 .SH SYNOPSIS
 .B rancid-cvs
-[group [group ...]]
+[\fB\-V\fR] [group [group ...]]
 .SH DESCRIPTION
 .B rancid-cvs
 creates the directories and
@@ -34,6 +34,13 @@ directory already exists, the import into the revision control system
 will be skipped, and if it's
 .BR router.db (5)
 already exists, it will not be altered.
+.\"
+.PP
+.\"
+The command-line options are as follows:
+.TP
+.B \-V
+Prints package name and version strings.
 .\"
 .PP
 The best method for adding groups is add the group name to

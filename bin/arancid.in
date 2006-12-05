@@ -1,7 +1,8 @@
 #! @PERLV_PATH@
 ##
-## $Id: arancid.in,v 1.21 2006/05/28 16:38:50 heas Exp $
+## $Id: arancid.in,v 1.22 2006/10/05 04:27:42 heas Exp $
 ##
+## @PACKAGE@ @VERSION@
 ## Hacked version of rancid for Alteon WebOS switches
 ## tested with: ad3 v8.1.18
 ## afort@choqolat.org (andrew fort)
@@ -27,10 +28,14 @@
 #
 # arancid - Alteon WebOS plugin for rancid
 #
-# usage: arancid [-d] [-l] [-f filename | hostname]
+# usage: arancid [-dV] [-l] [-f filename | hostname]
 #
 use Getopt::Std;
-getopts('dfl');
+getopts('dflV');
+if ($opt_V) {
+    print "@PACKAGE@ @VERSION@\n";
+    exit(0);
+}
 $log = $opt_l;
 $debug = $opt_d;
 $file = $opt_f;

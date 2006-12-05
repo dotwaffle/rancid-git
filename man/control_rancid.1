@@ -1,11 +1,11 @@
 .\"
 .hys 50
-.TH "control_rancid" "1" "7 Jan 2004"
+.TH "control_rancid" "1" "5 October 2006"
 .SH NAME
 control_rancid \- run rancid for devices of a group
 .SH SYNOPSIS
 .B control_rancid
-[\c
+[\fB\-V\fR] [\c
 .BI \-m\ \c
 mail_rcpt]\ \c
 [\c
@@ -24,6 +24,9 @@ that failed collection, e-mail diffs, and e-mail error reports.
 .PP
 .\"
 The command-line options are as follows:
+.TP
+.B \-V
+Prints package name and version strings.
 .TP
 .B \-m mail_rcpt
 Specify the recipient of diff mail, which is normally rancid-<group>.  The

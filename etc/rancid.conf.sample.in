@@ -1,11 +1,11 @@
-#
+# @PACKAGE@ @VERSION@
 # This file sets up the environment used for rancid.  see rancid.conf(5)
 #
 # This will be site specific
 #
 TERM=network;export TERM
 #
-# Create files w/o world read/write/exec permissins, but read/exec permissions
+# Create files w/o world read/write/exec permissions, but read/exec permissions
 # for group.
 umask 027
 #
