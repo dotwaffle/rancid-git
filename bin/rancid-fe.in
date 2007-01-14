@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: rancid-fe.in,v 1.44 2006/11/23 20:26:47 heas Exp $
+## $Id: rancid-fe.in,v 1.45 2007/01/13 22:01:53 heas Exp $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (C) 1997-2006 by Terrapin Communications, Inc.
@@ -52,6 +52,7 @@ $vendor =~ tr/[A-Z]/[a-z]/;
     'procket'		=> 'prancid',
     'redback'		=> 'rrancid',
     'riverstone'	=> 'rivrancid',
+    'smc'		=> 'srancid',
     'tnt'		=> 'tntrancid',
     'zebra'		=> 'zrancid'
 );

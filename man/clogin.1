@@ -262,15 +262,17 @@ when the device is ready for the next command.
 All these login scripts for separate devices should be rolled into one.
 This goal is exceedingly difficult.
 .PP
-The HP Procurve switch CLI relies heavily upon curses for cursor/screen
-manipulation and assumes a vt100 terminal type.  They do not provide a way
-to set a different terminal type or adjust this behavior.  The resulting
-escape codes make automating interaction with these devices very difficult
-or impossible.  Thus bin/hpuifilter, which must be found in the user's PATH,
-is used by hlogin to filter these.  While this works for rancid's collection,
-there are side effects for interactive logins via hlogin; most of which are
-formatting annoyances that may be remedied by typing CTRL-R to reprint the
-current line.
+The HP Procurve switch and Cisco AGM CLIs rely heavily upon terminal escape
+codes for cursor/screen manipulation and assumes a vt100 terminal type.
+They do not provide a way to set a different terminal type or adjust this
+behavior.
+The resulting escape codes make automating interaction with these devices
+very difficult or impossible.
+Thus bin/hpuifilter, which must be found in the user's PATH, is used by
+hlogin to filter these escape sequences.
+While this works for rancid's collection, there are side effects for
+interactive logins via hlogin; most of which are formatting annoyances that
+may be remedied by typing CTRL-R to reprint the current line.
 .PP
 WARNING: repeated ssh login failures to HP Procurves cause the switch's
 management interface to lock-up (this includes snmp, ping) and sometimes

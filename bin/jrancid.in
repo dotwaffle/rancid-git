@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: jrancid.in,v 1.79 2006/10/05 04:27:43 heas Exp $
+## $Id: jrancid.in,v 1.80 2006/12/05 17:14:27 heas Exp $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (C) 1997-2006 by Terrapin Communications, Inc.
@@ -183,7 +183,7 @@ sub ShowChassisClocks {
 	}
 	ProcessHistory("","","","# $_");
     }
-    return;
+    return(0);
 }
 
 # This routine parses "show chassis environment"
@@ -216,7 +216,7 @@ sub ShowChassisEnvironment {
 		ProcessHistory("","","","# $1\n") && next;
 	ProcessHistory("","","","# $_");
     }
-    return;
+    return(0);
 }
 
 # This routine parses "show chassis firmware"
@@ -240,7 +240,7 @@ sub ShowChassisFirmware {
 
 	ProcessHistory("","","","# $_");
     }
-    return;
+    return(0);
 }
 
 # This routine parses "show chassis fpc detail"
@@ -267,7 +267,7 @@ sub ShowChassisFpcDetail {
 	/ Uptime/ && next;
 	ProcessHistory("","","","# $_");
     }
-    return;
+    return(0);
 }
 
 # This routine parses "show chassis hardware"
@@ -291,7 +291,7 @@ sub ShowChassisHardware {
 
 	ProcessHistory("","","","# $_");
     }
-    return;
+    return(0);
 }
 
 # This routine parses "show chassis routing-engine"
@@ -323,7 +323,7 @@ sub ShowChassisRoutingEngine {
 	/ Serial ID/ && ProcessHistory("","","","# $_") && next;
 	/^\s*$/ && ProcessHistory("","","","# $_") && next;
     }
-    return;
+    return(0);
 }
 
 # This routine parses "show chassis cfeb", "show chassis feb", "show
@@ -358,7 +358,7 @@ sub ShowChassisSCB {
 	ProcessHistory("","","","# $_");
     }
     $ShowChassisSCB = 1;
-    return;
+    return(0);
 }
 
 # This routine parses "show chassis alarms"
@@ -380,7 +380,7 @@ sub ShowChassisAlarms {
 
 	ProcessHistory("","","","# $_");
     }
-    return;
+    return(0);
 }
 
 # This routine parses "show system autoinstallation status"
@@ -402,7 +402,7 @@ sub ShowSystemAutoinstall {
 
 	ProcessHistory("","","","# $_");
     }
-    return;
+    return(0);
 }
 
 sub ShowSystemCoreDumps {
@@ -444,7 +444,7 @@ sub ShowSystemLicense {
 
 	ProcessHistory("","","","# $_");
     }
-    return;
+    return(0);
 }
 
 # This routine parses "show system license keys"
@@ -466,7 +466,7 @@ sub ShowSystemLicenseKeys {
 
 	ProcessHistory("","","","# $_");
     }
-    return;
+    return(0);
 }
 
 # This routine parses "show system boot-messages"
@@ -493,7 +493,7 @@ sub ShowSystemBootMessages {
 	/^\/dev\// && next;
 	ProcessHistory("","","","# $_");
     }
-    return;
+    return(0);
 }
 
 # This routine parses "show version"
@@ -514,7 +514,7 @@ sub ShowVersion {
     }
     ProcessHistory("","","","#\n");
 
-    return;
+    return(0);
 }
 
 # This routine parses "show configuration"
@@ -588,7 +588,7 @@ sub ShowConfiguration {
 	return(-1);
     }
 
-    return;
+    return(0);
 }
 
 ###

@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 ## A Makefile.in is supplied, in case you do not have automake.
 
-## $Id: Makefile.am,v 1.35 2006/11/23 20:26:47 heas Exp $
+## $Id: Makefile.am,v 1.36 2007/01/13 22:01:53 heas Exp $
 ##
 ## Copyright (C) 1997-2006 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -30,7 +30,7 @@ bin_SCRIPTS = cat5rancid control_rancid \
 	hlogin hrancid htlogin htrancid \
 	jerancid jlogin jrancid \
 	mrancid nlogin nrancid nslogin nsrancid par prancid \
-	rancid rancid-fe rivlogin rivrancid rrancid \
+	rancid rancid-fe rivlogin rivrancid rrancid srancid \
 	tntlogin tntrancid xrancid zrancid
 
 bin_SCRIPTS += lg.cgi lgform.cgi rancid-cvs rancid-run

@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: clogin.in,v 1.103 2006/12/05 16:50:52 heas Exp $
+## $Id: clogin.in,v 1.107 2006/12/08 21:28:25 heas Exp $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (C) 1997-2006 by Terrapin Communications, Inc.
@@ -754,6 +754,9 @@ foreach router [lrange $argv $i end] {
       }
       set passwd [join [lindex $pswd 0] ""]
       set enapasswd [join [lindex $pswd 1] ""]
+    } else {
+	set passwd $userpasswd
+	set enapasswd $enapasswd
     }
 
     # Figure out username
@@ -822,13 +825,13 @@ foreach router [lrange $argv $i end] {
 
     # Login to the router
     if {[login $router $ruser $userpswd $passwd $enapasswd $cmethod $cyphertype]} {
-	# if login failed or rsh was successful, move on to the next device
+	# if login failed or rsh was unsuccessful, move on to the next device
 	continue
     }
     if { $enable } {
 	if {[do_enable $enauser $enapasswd]} {
 	    if { $do_command || $do_script } {
-		close; wait
+		catch {close}; catch {wait}
 		continue
 	    }
 	}

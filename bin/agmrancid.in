@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: agmrancid.in,v 1.1 2006/11/23 20:20:16 heas Exp $
+## $Id: agmrancid.in,v 1.2 2006/12/06 00:40:54 heas Exp $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (C) 1997-2006 by Terrapin Communications, Inc.
@@ -42,6 +42,9 @@ $found_version = 0;
 $found_env = 0;
 $found_diag = 0;
 $timeo = 90;				# clogin timeout in seconds
+
+# the AGM kicks us off if it does not know our terminal type
+$ENV{'TERM'} = "dumb";
 
 my(@commandtable, %commands, @commands);# command lists
 my(%filter_pwds);			# password filtering mode

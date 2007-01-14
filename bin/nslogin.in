@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: nslogin.in,v 1.21 2006/12/05 16:50:53 heas Exp $
+## $Id: nslogin.in,v 1.22 2006/12/08 21:28:26 heas Exp $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (C) 1997-2006 by Terrapin Communications, Inc.
@@ -546,6 +546,9 @@ foreach router [lrange $argv $i end] {
       }
       set passwd [join [lindex $pswd 0] ""]
       set enapasswd [join [lindex $pswd 1] ""]
+    } else {
+	set passwd $userpasswd
+	set enapasswd $enapasswd
     }
 
     # Figure out username

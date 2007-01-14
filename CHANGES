@@ -1,4 +1,9 @@
-2.3.2a6
+2.3.2
+	srancid: SMC/Dell switch support - loaner from Randy Bush
+
+	*login: Set variables for do_login when both -e and -p/-v are specified
+		- reported by A Dudek
+
 	*login: recognize the environment variable CLOGINRC, see clogin(1)
 
 	agmrancid: Cisco AGM/Anomaly Guard Module
