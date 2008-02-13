@@ -6,6 +6,9 @@
 #define	CONFIG_H	1
 
 
+/* Define to 1 if you have the <ctype.h> header file. */
+#define HAVE_CTYPE_H 1
+
 /* Define to 1 if you have the <errno.h> header file. */
 #define HAVE_ERRNO_H 1
 

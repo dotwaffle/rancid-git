@@ -1,6 +1,6 @@
 .\"
 .hys 50
-.TH "router.db" "5" "8 January 2007"
+.TH "router.db" "5" "15 November 2007"
 .SH NAME
 router.db \- rancid group configuration file
 .SH DESCRIPTION
@@ -48,25 +48,33 @@ Domain Name) works best, as in the example above.
 The type of device from the set:
 .RS 8n
 .TP
-.B agm
-A Cisco Anomoly Guard Module (aka Riverhead).
-We suspect that at some point the UI will become more cisco-like and it
-can be merged with the IOS rancid module.
-.TP
+.ID 15n
 .B alteon
 An Alteon WebOS switches.
 .TP
+.ID 15n
+.B avocent
+An Avocent Cyclades console server.
+.TP
+.ID 15n
 .B baynet
 A Bay Networks router.
 .TP
+.ID 15n
+.B bigip
+A F5 BigIP switch.
+.TP
+.ID 15n
 .B cat5
 A Cisco catalyst series 5000 and 4000 switches (i.e.: running the catalyst OS,
 not IOS).
 .TP
+.ID 15n
 .B cisco
 A Cisco router, PIX, or switch such as the 3500XL or 6000 running IOS (or
 IOS-like) OS.
 .TP
+.ID 15n
 .B css
 A Cisco content services switch.
 .TP
@@ -76,31 +84,43 @@ An enterasys NAS.  This is currently an alias for the
 .B riverstone
 device type.
 .TP
+.ID 15n
 .B erx
 A Juniper E-series edge router.
 .TP
+.ID 15n
 .B extreme
 An Extreme switch.
 .TP
+.ID 15n
 .B ezt3
 An ADC-Kentrox EZ-T3 mux.
 .TP
+.ID 15n
 .B force10
 A Force10 router.
 .TP
+.ID 15n
+.B fortigate
+A Fortinet firewall.
+.TP
+.ID 15n
 .B foundry
 A Foundry router, switch, or router-switch.  This includes HP
 Procurve switches that are OEMs of Foundry products, such as the
 HP9304M.
 .TP
+.ID 15n
 .B hitachi
 A Hitachi routers.
 .TP
+.ID 15n
 .B hp
 A HP Procurve switch such as the 2524 or 4108 procurve switches.  Also see the
 .B foundry
 type.
 .TP
+.ID 15n
 .B juniper
 A Juniper router.
 .TP
@@ -116,8 +136,18 @@ A Netscalar load balancer.
 A Netscreen firewall.
 .TP
 .ID 15n
+.B procket
+A Procket router.
+.TP
+.ID 15n
 .B redback
 A Redback router, NAS, etc.
+.TP
+.ID 15n
+.B riverhead
+A Cisco Anomoly Guard Module (aka Riverhead).
+We suspect that at some point the UI will become more cisco-like and it
+can be merged with the IOS rancid module.
 .TP
 .ID 15n
 .B riverstone
@@ -125,11 +155,11 @@ A Riverstone NAS or Cabletron (starting with version ~9.0.3) router.
 .TP
 .ID 15n
 .B smc
-A SMC switch (some Dell OEMs)
+A SMC switch (some Dell OEMs).
 .TP
 .ID 15n
 .B tnt
-A lucent TNT.
+A Lucent TNT.
 .TP
 .ID 15n
 .B zebra

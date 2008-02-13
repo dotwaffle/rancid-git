@@ -3,48 +3,26 @@
 ## $Id$
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) 1997-2007 by Terrapin Communications, Inc.
+## Copyright (C) 1997-2007 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
-## This code is derived from software contributed to and maintained by
-## Terrapin Communications, Inc. by Henry Kilmer, John Heasley, Andrew Partan,
-## Pete Whiting, Austin Schutz, and Andrew Fort.
+## This software may be freely copied, modified and redistributed
+## without fee for non-commerical purposes provided that this license
+## remains intact and unmodified with any RANCID distribution.
 ##
-## Redistribution and use in source and binary forms, with or without
-## modification, are permitted provided that the following conditions
-## are met:
-## 1. Redistributions of source code must retain the above copyright
-##    notice, this list of conditions and the following disclaimer.
-## 2. Redistributions in binary form must reproduce the above copyright
-##    notice, this list of conditions and the following disclaimer in the
-##    documentation and/or other materials provided with the distribution.
-## 3. All advertising materials mentioning features or use of this software
-##    must display the following acknowledgement:
-##        This product includes software developed by Terrapin Communications,
-##        Inc. and its contributors for RANCID.
-## 4. Neither the name of Terrapin Communications, Inc. nor the names of its
-##    contributors may be used to endorse or promote products derived from
-##    this software without specific prior written permission.
-## 5. It is requested that non-binding fixes and modifications be contributed
-##    back to Terrapin Communications, Inc.
+## There is no warranty or other guarantee of fitness of this software.
+## It is provided solely "as is".  The author(s) disclaim(s) all
+## responsibility and liability with respect to this software's usage
+## or its effect upon hardware, computer systems, other software, or
+## anything else.
 ##
-## THIS SOFTWARE IS PROVIDED BY Terrapin Communications, INC. AND CONTRIBUTORS
-## ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
-## TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-## PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COMPANY OR CONTRIBUTORS
-## BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-## CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-## SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-## INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-## POSSIBILITY OF SUCH DAMAGE.
+## Except where noted otherwise, rancid was written by and is maintained by
+## Henry Kilmer, John Heasley, Andrew Partan, Pete Whiting, and Austin Schutz.
+##
 #
 #  RANCID - Really Awesome New Cisco confIg Differ
 #
-# arancid - Alteon WebOS plugin for rancid
-#
-# usage: arancid [-dV] [-l] [-f filename | hostname]
+# usage: rancid [-dV] [-l] [-f filename | $host]
 #
 use Getopt::Std;
 getopts('dflV');
@@ -58,13 +36,15 @@ $file = $opt_f;
 $host = $ARGV[0];
 $clean_run = 0;
 $found_end = 0;
-$prompt = "#";
-$timeo = 90;				# alogin timeout in seconds
+$found_version = 0;
+$found_env = 0;
+$found_diag = 0;
+$timeo = 90;				# avologin timeout in seconds
 
 my(@commandtable, %commands, @commands);# command lists
 my($aclsort) = ("ipsort");		# ACL sorting mode
 my($filter_commstr);			# SNMP community string filtering
-my($filter_pwds);			# password filtering mode
+my(%filter_pwds);			# password filtering mode
 
 # This routine is used to print out the router configuration
 sub ProcessHistory {
@@ -166,56 +146,22 @@ sub sortbyipaddr {
     &ipaddrval($a) <=> &ipaddrval($b);
 }
 
-# This routine parses "/info/sys" (cf. show version)
-sub ShowVersion {
-    print STDERR "    In ShowVersion: $_" if ($debug);
+# This routine parses "cat"
+sub CatFiles {
+    print STDERR "    In CatFiles: $_" if ($debug);
 
-    while (<INPUT>)  {
-	tr/\015//d;
-	last if (/^>>.*$prompt/);
-	next if(/^(\s*|\s*$cmd\s*)$/);
-
-	/^(ACEdirector.*|ACEswitch.*|Alteon.*)/i &&
-	  ProcessHistory("COMMENTS","keysort","A1", "\/\*Model: $1\n") && next;
-	/^Software Version\s+(.*?)\s\((.*)\)/i &&
-	  ProcessHistory("COMMENTS","keysort","B1", "\/\*Image: Software: $1 ($2)\n") && next;
-	/^Hardware Part No:\s+(.*?)\s+/i &&
-	  ProcessHistory("COMMENTS","keysort","A2", "\/\*Hardware part no: $1\n") && next;
-	/^MAC address:\s+([0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2})/i &&
-	  ProcessHistory("COMMENTS","keysort","C1", "\/\*Base MAC address: $1\n") && next;
-    }
-    return(0);
-}
-
-# This routine processes a "/cfg/dump"
-sub WriteTerm {
-    print STDERR "    In WriteTerm: $_" if ($debug);
-
-    # eat the header line
-    #$junk = <INPUT>;
-
-    # now just copy it verbatim to the history file
+    $catfile=$1;
+    $catfile=~s/cat //;
+    ProcessHistory("COMMENTS","","","! $catfile\n");
     while (<INPUT>) {
 	tr/\015//d;
-	last if(/^>>.*$prompt/);
-	chop;
-	if (/(rcomm|wcomm|t1com|t2com)(\s+)(.*)/ && $filter_commstr) {
-	    ProcessHistory("","","","\/\*\t$1$2\"<removed>\"\n") && next;
-	}
-	/^(\s+.{2,3}pw )\S+/ &&
-	    ProcessHistory("","","","\/\*$1<removed>\n") && next;
-
-	next if (/^\/\* Configuration dump taken/i);
-	next if (/^\/\* Version.*Base MAC.*/i);
-
-		if (/^\/?script end/) {
-		$found_end = 1;
-		ProcessHistory("","","","$_\n");
-		return(1);
-		}
-
-	ProcessHistory("","","","$_\n");
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+#	return(1) if /Line has invalid autocommand /;
+	ProcessHistory("COMMENTS","","","$_");
     }
+    ProcessHistory("COMMENTS","","","!\n");
+    if ( $catfile == "/etc/security.opts" ) { $found_end=1;$clean_run=1;};
     return(0);
 }
 
@@ -224,8 +170,15 @@ sub DoNothing {print STDOUT;}
 
 # Main
 @commandtable = (
-	{'/info/sys'		=> 'ShowVersion'},
-	{'/cfg/dump'		=> 'WriteTerm'}
+	{'cat /etc/hostname'		=> 'CatFiles'},
+	{'cat /etc/domainname.conf'		=> 'CatFiles'},
+	{'cat /etc/resolv.conf'		=> 'CatFiles'},
+	{'cat /etc/portslave/pslave.conf'		=> 'CatFiles'},
+	{'cat /etc/passwd'		=> 'CatFiles'},
+	{'cat /etc/snmp/snmpd.conf'		=> 'CatFiles'},
+	{'cat /etc/network/ifcfg_eth0'		=> 'CatFiles'},
+	{'cat /etc/network/st_routes'		=> 'CatFiles'},
+	{'cat /etc/security.opts'		=> 'CatFiles'},
 );
 # Use an array to preserve the order of the commands and a hash for mapping
 # commands to the subroutine and track commands that have been completed.
@@ -235,15 +188,6 @@ sub DoNothing {print STDOUT;}
 $cisco_cmds=join(";",@commands);
 $cmds_regexp=join("|",@commands);
 
-if (length($host) == 0) {
-    if ($file) {
-	print(STDERR "Too few arguments: file name required\n");
-	exit(1);
-    } else {
-	print(STDERR "Too few arguments: host name required\n");
-	exit(1);
-    }
-}
 open(OUTPUT,">$host.new") || die "Can't open $host.new for writing: $!\n";
 select(OUTPUT);
 # make OUTPUT unbuffered if debugging
@@ -254,13 +198,13 @@ if ($file) {
     print STDOUT "opening file $host\n" if ($log);
     open(INPUT,"<$host") || die "open failed for $host: $!\n";
 } else {
-    print STDERR "executing alogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($debug);
-    print STDOUT "executing alogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($log);
+    print STDERR "executing avologin -t $timeo -c\"$cisco_cmds\" $host\n" if ($debug);
+    print STDOUT "executing avologin -t $timeo -c\"$cisco_cmds\" $host\n" if ($log);
     if (defined($ENV{NOPIPE})) {
-	system "alogin -t $timeo -c \"$cisco_cmds\" $host </dev/null > $host.raw 2>&1" || die "alogin failed for $host: $!\n";
-	open(INPUT, "< $host.raw") || die "alogin failed for $host: $!\n";
+	system "avologin -t $timeo -c \"$cisco_cmds\" $host </dev/null > $host.raw 2>&1" || die "avologin failed for $host: $!\n";
+	open(INPUT, "< $host.raw") || die "avologin failed for $host: $!\n";
     } else {
-	open(INPUT,"alogin -t $timeo -c \"$cisco_cmds\" $host </dev/null |") || die "alogin failed for $host: $!\n";
+	open(INPUT,"avologin -t $timeo -c \"$cisco_cmds\" $host </dev/null |") || die "avologin failed for $host: $!\n";
     }
 }
 
@@ -283,17 +227,25 @@ if ($ENV{"FILTER_PWDS"} =~ /no/i) {
 } else {
     $filter_pwds = 1;
 }
-ProcessHistory("","","","\/\*RANCID-CONTENT-TYPE: alteon\n\/\*\n");
-ProcessHistory("COMMENTS","keysort","B0","\/\*\n");
-ProcessHistory("COMMENTS","keysort","F0","\/\*\n");
+
+ProcessHistory("","","","!RANCID-CONTENT-TYPE: avocent\n!\n");
+ProcessHistory("COMMENTS","keysort","B0","!\n");
+ProcessHistory("COMMENTS","keysort","D0","!\n");
+ProcessHistory("COMMENTS","keysort","F0","!\n");
+ProcessHistory("COMMENTS","keysort","G0","!\n");
 TOP: while(<INPUT>) {
     tr/\015//d;
-    if (/^>>.*$prompt exit/) {
+    if (/[>#]\s?exit$/) {
 	$clean_run=1;
 	last;
     }
-
-    while (/>>.*$prompt\s*($cmds_regexp)\s*$/) {
+    if (/^Error:/) {
+	print STDOUT ("$host avologin error: $_");
+	print STDERR ("$host avologin error: $_") if ($debug);
+	$clean_run=0;
+	last;
+    }
+    while (/#\s*($cmds_regexp)\s*$/) {
 	$cmd = $1;
 	if (!defined($prompt)) {
 	    $prompt = ($_ =~ /^([^#]+#)/)[0];
@@ -301,7 +253,7 @@ TOP: while(<INPUT>) {
 	    print STDERR ("PROMPT MATCH: $prompt\n") if ($debug);
 	}
 	print STDERR ("HIT COMMAND:$_") if ($debug);
-	if (!defined($commands{$cmd})) {
+	if (! defined($commands{$cmd})) {
 	    print STDERR "$host: found unexpected command - \"$cmd\"\n";
 	    $clean_run = 0;
 	    last TOP;

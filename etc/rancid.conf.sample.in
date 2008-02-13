@@ -30,6 +30,9 @@ LOGDIR=$BASEDIR/logs; export LOGDIR
 # requires manual conversions.
 RCSSYS=@RCSSYS@; export RCSSYS
 #
+# if ACLSORT is NO, access-lists will NOT be sorted.
+#ACLSORT=YES; export ACLSORT
+#
 # if NOPIPE is set, temp files will be used instead of a cmd pipe during
 # collection from the router(s).
 #NOPIPE=YES; export NOPIPE
@@ -47,8 +50,8 @@ RCSSYS=@RCSSYS@; export RCSSYS
 #
 # How many hours should pass before complaining about routers that
 # can not be reached.  The value should be greater than the number
-# of hours between your rancid-run cron job.
-OLDTIME=4; export OLDTIME
+# of hours between your rancid-run cron job.  Default: 24
+#OLDTIME=4; export OLDTIME
 #
 # How many hours should pass before complaining that a group's collection
 # (the age of it's lock file) is hung.
@@ -69,7 +72,7 @@ OLDTIME=4; export OLDTIME
 # be sure to read ../README regarding aliases.
 #
 # If your MTA configuration is broken or you want mail to be forwarded to a
-# domain not the same the local one, define that domain here.  "@" must be
+# domain not the same as the local one, define that domain here.  "@" must be
 # included, as this is simply appended to the usual recipients.  It is NOT
 # appended to recipients specified in rancid-run's -m option.
 #MAILDOMAIN="@example.com"; export MAILDOMAIN

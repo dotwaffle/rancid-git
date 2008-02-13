@@ -41,9 +41,9 @@ AC_C_STRINGIZE
 
 # check includes/headers
 AC_HEADER_STDC
-AC_CHECK_HEADERS(errno.h fcntl.h limits.h pty.h malloc.h memory.h siginfo.h \
-		 string.h strings.h stropts.h sys/types.h sys/wait.h unistd.h \
-		 util.h)
+AC_CHECK_HEADERS(ctype.h errno.h fcntl.h limits.h pty.h malloc.h memory.h \
+		 siginfo.h string.h strings.h stropts.h sys/types.h \
+		 sys/wait.h unistd.h util.h)
 AC_CHECK_HEADERS(sysexits.h)
 
 # check functions
@@ -127,20 +127,38 @@ fi],
 AM_CONDITIONAL([CONF_INSTALL], [test "${enable_conf_install}" = yes])
 
 # Configure for subversion revision control system instead of CVS.
+SVN_FSTYPE="--fs-type fsfs"
 AC_MSG_CHECKING([whether subversion])
-AC_ARG_ENABLE(svn,
-	AS_HELP_STRING([--enable-svn], [enable use of subversion instead of cvs]),
-[if test "$enable_svn" = yes; then
-    AC_MSG_RESULT(yes)
-    RCSSYS="svn"
-else
-    AC_MSG_RESULT(no)
-    RCSSYS="cvs"
-fi],
-[AC_MSG_RESULT(no)
+AC_ARG_WITH(svn,
+	AS_HELP_STRING([--with-svn=fstype],
+			[use subversion instead of cvs, with optional svn fstype (fsfs|bdb)]),
+[ case "$withval" in
+  yes)
+	AC_MSG_RESULT(yes)
+	RCSSYS="svn"
+	;;
+  fsfs)
+	AC_MSG_RESULT([yes fstype fsfs])
+	RCSSYS="svn"
+	SVN_FSTYPE="--fs-type fsfs"
+	;;
+  bdb)
+	AC_MSG_RESULT([yes fstype bdb])
+	RCSSYS="svn"
+	SVN_FSTYPE="--fs-type bdb"
+	;;
+  no)
+	AC_MSG_RESULT(no)
+	RCSSYS="cvs"
+	;;
+  *)
+	AC_MSG_ERROR([unknown svn fs-type $withval])
+  esac
+], [AC_MSG_RESULT(no)
     RCSSYS="cvs"
 ])
 AC_SUBST(RCSSYS)
+AC_SUBST(SVN_FSTYPE)
 rd_cv_RCSSYS=$RCSSYS
 
 # Check for a preference for using mail addresses like rancid+group
@@ -424,6 +442,7 @@ AC_CONFIG_HEADERS(include/config.h)
 AC_CONFIG_FILES(bin/control_rancid bin/par bin/rancid-fe, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/agmrancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/alogin bin/arancid, [chmod a+x $ac_file])
+AC_CONFIG_FILES(bin/avologin bin/avorancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/blogin bin/brancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/cat5rancid bin/clogin bin/rancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/cssrancid, [chmod a+x $ac_file])
@@ -431,9 +450,9 @@ AC_CONFIG_FILES(bin/elogin bin/erancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/f10rancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/flogin bin/francid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/fnrancid, [chmod a+x $ac_file])
-AC_CONFIG_FILES(bin/jlogin bin/jrancid bin/jerancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/hlogin bin/hrancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/htlogin bin/htrancid, [chmod a+x $ac_file])
+AC_CONFIG_FILES(bin/jlogin bin/jrancid bin/jerancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/mrancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/nlogin bin/nrancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/nslogin bin/nsrancid, [chmod a+x $ac_file])
@@ -442,7 +461,8 @@ AC_CONFIG_FILES(bin/rivlogin bin/rivrancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/rrancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/srancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/tntlogin bin/tntrancid, [chmod a+x $ac_file])
-AC_CONFIG_FILES(bin/xrancid bin/zrancid, [chmod a+x $ac_file])
+AC_CONFIG_FILES(bin/xrancid, [chmod a+x $ac_file])
+AC_CONFIG_FILES(bin/zrancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(share/rtrfilter, [chmod a+x $ac_file])
 
 AC_OUTPUT()

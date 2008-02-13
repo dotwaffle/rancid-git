@@ -1,11 +1,11 @@
 .\"
 .hys 50
-.TH "par" "1" "9 Jan 2004"
+.TH "par" "1" "18 December 2007"
 .SH NAME
 par \- parallel command processing
 .SH SYNOPSIS
 .B par
-[\fB\-diqx\fP]
+[\fB\-dfiqx\fP]
 [\c
 .BI \-c\ 
 command]
@@ -67,6 +67,10 @@ options, where the first line of the input file(s) begins with a pound-sign
 .TP
 .B \-d
 Print debugging information on standard error (stderr).
+.\"
+.TP
+.B \-f
+No file or STDIN, just run a quantity of the command specified with -c.
 .\"
 .TP
 .B \-i

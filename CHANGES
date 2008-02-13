@@ -1,4 +1,63 @@
 2.3.2
+	*login: Return/exit non-zero if there are failures for any of the
+		devices on the cmd-line. 
+
+	nslogin: password prompt change in newer code - from Derek Andree
+
+	hlogin: reformat the prompt matching in run_commands() like cisco, which
+		fixes -x and -c usage in configure mode.
+
+	avorancid: Avocent (Cyclades) module - from Stephen Griffin
+
+	f10rancid: updated support for all devices running FTOS: E-Series,
+	C-Series and S-Series - from Greg Hankins
+
+	jrancid: don't look for passwords in
+		system login class XX permissions []
+
+	jrancid: additional filter for M320
+
+	rancid: ignore author failure for some data that are collected by
+	different commands and succeeded the first time - from David Luyer
+
+	*login:	add -d to enable expect's debugging
+
+	configure: make svn fs-type configurable with --with-svn=fstype
+
+	xrancid: Correct the $prompt regex mangling for XOS - from Tore Anderson
+
+	f10rancid: E-series support updated - loaner & clues from Greg Hankins
+
+	rancid: Convert disk/flash free space to MB (from bytes) for IOX/IOS XR
+
+	accept NO & YES for NOCOMMSTR in rancid.conf
+
+	Add ACLSORT configuration knob - mostly from Michael Stefaniuc
+
+	cat5rancid: permit missing CRLF on exit - Michael Stefaniuc
+
+	cat5rancid: skip show inventory for those without - Michael Stefaniuc
+
+	agmrancid: show diag can fail shortly after boot
+
+	rancid: radius/tacacs key filtering on old IOS - from Michael Stefaniuc
+
+	rancid: Add AS5xxx support from Andre van der Merwe.
+
+	Changes so the RANCID-CONTENT-TYPE is the same as the
+	documented entry in router.db.5 and the same as the call
+	in rancid-fe.  These RANCID-CONTENT-TYPEs changed:
+		brancid 	from bay to baynet
+		cat5rancid 	from cisco-cat to cat5
+		cssrancid 	from cisco-css to css
+		erancid 	from adc-ezt3 to ezt3
+		fnrancid 	from Fortigate to fortigate
+		hrancid 	from hp-procurve to hp
+		jerancid 	from Juniper_ERX to erx
+		srancid 	from dell to smc
+
+	f5rancid: F5 BigIPs
+
 	srancid: SMC/Dell switch support - loaner from Randy Bush
 
 	*login: Set variables for do_login when both -e and -p/-v are specified

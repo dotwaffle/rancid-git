@@ -19,10 +19,12 @@ configure as substitutions are completed:
 
 README		This file.
 README.lg	Information about the Looking Glass.
+BUGS		Bug list.
 CHANGES		List of changes to Rancid.
 COPYING		RANCID license.
 FAQ		Frequently Asked Questions
 Todo		Partial list of what needs to be done.
+UPGRADING	Notes on upgrading rancid to a new version.
 cloginrc.sample	TCL commands to set passwords, usernames etc. used by clogin
 		and jlogin.  See cloginrc(5)
 etc/
@@ -43,12 +45,15 @@ bin/
 	rancid-fe.in	Chooses between rancid/[abefhjrx]rancid/cat5rancid.
 	rancid.in	Runs commands on cisco routers and processes the output.
 
+	agmrancid.in	Version of rancid.in for Cisco Anomaly Guard Module (AGM)
 	arancid.in	Version of rancid.in for Alteon switches.
 	brancid.in	Version of rancid.in for baynet/nortel routers.
 	cat5rancid.in	Version of rancid.in for Cisco Catalyst switches.
 	cssrancid.in	Version of rancid.in for Cisco CSS switches.
 	erancid.in	Version of rancid.in for ADC EZ-T3 muxes.
 	f10rancid.in	Version of rancid.in for Force10 routers.
+	f5rancid.in	Version of rancid.in for F5 BigIPs.
+	fnrancid.in	Version of rancid.in for Fortinet Firewalls.
 	francid.in	Version of rancid.in for Foundry switches.
 	hrancid.in	Version of rancid.in for HP Procurve switches.
 	htrancid.in	Version of rancid.in for Hitatchi routers.
@@ -60,6 +65,7 @@ bin/
 	prancid.in	Version of rancid.in for Procket routers.
 	rivancid.in	Version of rancid.in for Riverstone routers.
 	rrancid.in	Version of rancid.in for Redback routers.
+	srancid.in	Version of rancid.in for SMC switches.
 	tntrancid.in	Version of rancid.in for TNT access servers.
 	xrancid.in	Version of rancid.in for Extreme switches.
 	zrancid.in	Version of rancid.in for Zebra routers.
@@ -78,15 +84,22 @@ bin/
 	tntlogin.in	Version of clogin.in for TNT access servers.
 man/		man pages
 share/		Readmes, samples, utilities, contribs, etc
+include/	Include files and rancid version.h
 
 Also see rancid_intro(1), rancid(1), and clogin(1).
 
 The following (non-exhaustive list) are included as part of the installation
 and configuration tools:
 
-Makefile.in	processed by configure to produce Makefiles
+Makefile.am	processed by automake to produce Makefile.in
+Makefile.in	processed by configure to produce Makefile
+acinclude.m4	sets some GNU autoconf options
+aclocal.m4	Output of GNU autoconf script
 configure	GNU autoconf script
+configure.in	Input file for autoconf to procide configure
+depcomp		part of GNU autoconf
 install-sh	GNU autoconf shell script to simulate BSD style install
+missing		part of GNU autoconf
 mkinstalldirs	GNU autoconf shell script to make installation directories
 
 rancid will also need to have the following packages:

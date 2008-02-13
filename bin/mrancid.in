@@ -1,25 +1,45 @@
 #! @PERLV_PATH@
 ##
-## $Id: mrancid.in,v 1.19 2006/10/05 04:27:43 heas Exp $
+## $Id$
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (C) 1997-2006 by Terrapin Communications, Inc.
+## Copyright (c) 1997-2007 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
-## This software may be freely copied, modified and redistributed
-## without fee for non-commerical purposes provided that this license
-## remains intact and unmodified with any RANCID distribution.
+## This code is derived from software contributed to and maintained by
+## Terrapin Communications, Inc. by Henry Kilmer, John Heasley, Andrew Partan,
+## Pete Whiting, Austin Schutz, and Andrew Fort.
 ##
-## There is no warranty or other guarantee of fitness of this software.
-## It is provided solely "as is".  The author(s) disclaim(s) all
-## responsibility and liability with respect to this software's usage
-## or its effect upon hardware, computer systems, other software, or
-## anything else.
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted provided that the following conditions
+## are met:
+## 1. Redistributions of source code must retain the above copyright
+##    notice, this list of conditions and the following disclaimer.
+## 2. Redistributions in binary form must reproduce the above copyright
+##    notice, this list of conditions and the following disclaimer in the
+##    documentation and/or other materials provided with the distribution.
+## 3. All advertising materials mentioning features or use of this software
+##    must display the following acknowledgement:
+##        This product includes software developed by Terrapin Communications,
+##        Inc. and its contributors for RANCID.
+## 4. Neither the name of Terrapin Communications, Inc. nor the names of its
+##    contributors may be used to endorse or promote products derived from
+##    this software without specific prior written permission.
+## 5. It is requested that non-binding fixes and modifications be contributed
+##    back to Terrapin Communications, Inc.
 ##
-## Except where noted otherwise, rancid was written by and is maintained by
-## Henry Kilmer, John Heasley, Andrew Partan, Pete Whiting, and Austin Schutz.
-##
-#
+## THIS SOFTWARE IS PROVIDED BY Terrapin Communications, INC. AND CONTRIBUTORS
+## ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+## TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+## PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COMPANY OR CONTRIBUTORS
+## BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+## CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+## SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+## INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+## POSSIBILITY OF SUCH DAMAGE.
+# 
 # Amazingly hacked version of Hank's rancid - this one tries to
 # deal with MRTd.
 #
@@ -42,7 +62,9 @@ $found_end = 0;
 $timeo = 90;				# clogin timeout in seconds
 
 my(@commandtable, %commands, @commands);# command lists
-my(%filter_pwds);			# password filtering mode
+my($aclsort) = ("ipsort");		# ACL sorting mode
+my($filter_commstr);			# SNMP community string filtering
+my($filter_pwds);			# password filtering mode
 
 # This routine is used to print out the router configuration
 sub ProcessHistory {
@@ -233,19 +255,19 @@ sub WriteTerm {
 	next;
 	# order access-lists
 	/^access-list\s+(\d\d?)\s+(\S+)\s+(\S+)/ &&
-	    ProcessHistory("ACL $1 $2","ipsort","$3","$_") && next;
+	    ProcessHistory("ACL $1 $2","$aclsort","$3","$_") && next;
 	# order extended access-lists
 	/^access-list\s+(\d\d\d)\s+(\S+)\s+ip\s+host\s+(\S+)/ &&
-	    ProcessHistory("EACL $1 $2","ipsort","$3","$_") && next;
+	    ProcessHistory("EACL $1 $2","$aclsort","$3","$_") && next;
 	/^access-list\s+(\d\d\d)\s+(\S+)\s+ip\s+(\d\S+)/ &&
-	    ProcessHistory("EACL $1 $2","ipsort","$3","$_") && next;
+	    ProcessHistory("EACL $1 $2","$aclsort","$3","$_") && next;
 	/^access-list\s+(\d\d\d)\s+(\S+)\s+ip\s+any/ &&
-	    ProcessHistory("EACL $1 $2","ipsort","0.0.0.0","$_") && next;
+	    ProcessHistory("EACL $1 $2","$aclsort","0.0.0.0","$_") && next;
 	# order arp lists
 	/^arp\s+(\d+\.\d+\.\d+\.\d+)\s+/ &&
-	    ProcessHistory("ARP","ipsort","$1","$_") && next;
+	    ProcessHistory("ARP","$aclsort","$1","$_") && next;
 	/^ip prefix-list\s+(\S+)\s+seq\s+(\d+)\s+(permit|deny)\s+(\d\S+)(\/.*)$/ &&
-	    ProcessHistory("PACL $1 $3","ipsort","$4","ip prefix-list $1 $3 $4$5\n")
+	    ProcessHistory("PACL $1 $3","$aclsort","$4","ip prefix-list $1 $3 $4$5\n")
 	    && next;
 	# order logging statements
 	/^logging (\d+\.\d+\.\d+\.\d+)/ &&
@@ -254,7 +276,7 @@ sub WriteTerm {
 	# we only prune lines of the form
 	# snmp-server host a.b.c.d <community>
 	if (/^snmp-server host (\d+\.\d+\.\d+\.\d+) /) {
-	    if (defined($ENV{'NOCOMMSTR'})) {
+	    if ($filter_commstr) {
 		my($ip) = $1;
 		my($line) = "snmp-server host $ip";
 		my(@tokens) = split(' ', $');
@@ -276,7 +298,7 @@ sub WriteTerm {
 	    next;
 	}
 	if (/^(snmp-server community) (\S+)/) {
-	    if (defined($ENV{'NOCOMMSTR'})) {
+	    if ($filter_commstr) {
 		ProcessHistory("SNMPSERVERCOMM","keysort","$_","!$1 <removed>$'") && next;
 	    } else {
 		ProcessHistory("SNMPSERVERCOMM","keysort","$_","$_") && next;
@@ -351,13 +373,24 @@ if ($file) {
     }
 }
 
+# determine ACL sorting mode
+if ($ENV{"ACLSORT"} =~ /no/i) {
+    $aclsort = "";
+}
+# determine community string filtering mode
+if (defined($ENV{"NOCOMMSTR"}) &&
+    ($ENV{"NOCOMMSTR"} =~ /yes/i || $ENV{"NOCOMMSTR"} =~ /^$/)) {
+    $filter_commstr = 1;
+} else {
+    $filter_commstr = 0;
+}
 # determine password filtering mode
 if ($ENV{"FILTER_PWDS"} =~ /no/i) {
-	$filter_pwds = 0;
+    $filter_pwds = 0;
 } elsif ($ENV{"FILTER_PWDS"} =~ /all/i) {
-	$filter_pwds = 2;
+    $filter_pwds = 2;
 } else {
-	$filter_pwds = 1;
+    $filter_pwds = 1;
 }
 
 ProcessHistory("","","","!RANCID-CONTENT-TYPE: mrtd\n!\n");

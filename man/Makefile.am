@@ -1,39 +1,65 @@
 ## Process this file with automake to produce Makefile.in
 ## A Makefile.in is supplied, in case you do not have automake.
 
-## $Id: Makefile.am,v 1.46 2006/09/05 02:26:52 asp Exp $
+## $Id$
 ##
-## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
+## Copyright (c) 1997-2007 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
-## This software may be freely copied, modified and redistributed
-## without fee for non-commerical purposes provided that this license
-## remains intact and unmodified with any RANCID distribution.
+## This code is derived from software contributed to and maintained by
+## Terrapin Communications, Inc. by Henry Kilmer, John Heasley, Andrew Partan,
+## Pete Whiting, Austin Schutz, and Andrew Fort.
 ##
-## There is no warranty or other guarantee of fitness of this software.
-## It is provided solely "as is".  The author(s) disclaim(s) all
-## responsibility and liability with respect to this software's usage
-## or its effect upon hardware, computer systems, other software, or
-## anything else.
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted provided that the following conditions
+## are met:
+## 1. Redistributions of source code must retain the above copyright
+##    notice, this list of conditions and the following disclaimer.
+## 2. Redistributions in binary form must reproduce the above copyright
+##    notice, this list of conditions and the following disclaimer in the
+##    documentation and/or other materials provided with the distribution.
+## 3. All advertising materials mentioning features or use of this software
+##    must display the following acknowledgement:
+##        This product includes software developed by Terrapin Communications,
+##        Inc. and its contributors for RANCID.
+## 4. Neither the name of Terrapin Communications, Inc. nor the names of its
+##    contributors may be used to endorse or promote products derived from
+##    this software without specific prior written permission.
+## 5. It is requested that non-binding fixes and modifications be contributed
+##    back to Terrapin Communications, Inc.
 ##
-## Except where noted otherwise, rancid was written by and is maintained by
-## Henry Kilmer, John Heasley, Andrew Partan, Pete Whiting, and Austin Schutz.
-##
+## THIS SOFTWARE IS PROVIDED BY Terrapin Communications, INC. AND CONTRIBUTORS
+## ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+## TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+## PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COMPANY OR CONTRIBUTORS
+## BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+## CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+## SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+## INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+## POSSIBILITY OF SUCH DAMAGE.
+# 
+#  The expect login scripts were based on Erik Sherk's gwtn, by permission.
+# 
+#  The original looking glass software was written by Ed Kern, provided by
+#  permission and modified beyond recognition.
 
 AUTOMAKE_OPTIONS=foreign no-dependencies
 
 @SET_MAKE@
 
 man_gen_MANS = lg.conf.5 rancid.conf.5 lg_intro.1
-man_nogen_MANS = alogin.1 arancid.1 blogin.1 brancid.1 cat5rancid.1 \
-		clogin.1 cloginrc.5 control_rancid.1 cssrancid.1 \
-		drancid.1 elogin.1 erancid.1 f10rancid.1 flogin.1 \
-		fnrancid.1 francid.1 hlogin.1 hrancid.1 htlogin.1 \
-		htrancid.1 jerancid.1 jlogin.1 jrancid.1 mrancid.1 \
-		nlogin.1 nrancid.1 nslogin.1 nsrancid.1 par.1 \
-		prancid.1 rancid-cvs.1 rancid-run.1 rancid.1 \
+man_nogen_MANS = agmrancid.1 alogin.1 arancid.1 avologin.1 avorancid.1 \
+		blogin.1 brancid.1 cat5rancid.1 clogin.1 cloginrc.5 \
+		control_rancid.1 cssrancid.1 elogin.1 erancid.1 f10rancid.1 \
+		flogin.1 fnrancid.1 francid.1 hlogin.1 hrancid.1 \
+		htlogin.1 htrancid.1 jerancid.1 jlogin.1 jrancid.1 \
+		mrancid.1 nlogin.1 nrancid.1 nslogin.1 nsrancid.1 \
+		par.1 prancid.1 rancid-cvs.1 rancid-run.1 rancid.1 \
 		rancid_intro.1 rivlogin.1 rivrancid.1 router.db.5 \
-		tntlogin.1 tntrancid.1 xrancid.1 zrancid.1
+		rrancid.1 srancid.1 tntlogin.1 tntrancid.1 xrancid.1 \
+		zrancid.1
 
 man_MANS = $(man_nogen_MANS) $(man_gen_MANS)
 

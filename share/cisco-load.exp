@@ -1,34 +1,59 @@
 ##
-## $Id: cisco-load.exp,v 1.12 2006/05/28 16:38:53 heas Exp $
+## $Id$
 ##
 ##
-## Copyright (C) 1997-2006 by Terrapin Communications, Inc.
+## Copyright (c) 1997-2007 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
-## This software may be freely copied, modified and redistributed
-## without fee for non-commerical purposes provided that this license
-## remains intact and unmodified with any RANCID distribution.
+## This code is derived from software contributed to and maintained by
+## Terrapin Communications, Inc. by Henry Kilmer, John Heasley, Andrew Partan,
+## Pete Whiting, Austin Schutz, and Andrew Fort.
 ##
-## There is no warranty or other guarantee of fitness of this software.
-## It is provided solely "as is".  The author(s) disclaim(s) all
-## responsibility and liability with respect to this software's usage
-## or its effect upon hardware, computer systems, other software, or
-## anything else.
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted provided that the following conditions
+## are met:
+## 1. Redistributions of source code must retain the above copyright
+##    notice, this list of conditions and the following disclaimer.
+## 2. Redistributions in binary form must reproduce the above copyright
+##    notice, this list of conditions and the following disclaimer in the
+##    documentation and/or other materials provided with the distribution.
+## 3. All advertising materials mentioning features or use of this software
+##    must display the following acknowledgement:
+##        This product includes software developed by Terrapin Communications,
+##        Inc. and its contributors for RANCID.
+## 4. Neither the name of Terrapin Communications, Inc. nor the names of its
+##    contributors may be used to endorse or promote products derived from
+##    this software without specific prior written permission.
+## 5. It is requested that non-binding fixes and modifications be contributed
+##    back to Terrapin Communications, Inc.
 ##
-## Except where noted otherwise, rancid was written by and is maintained by
-## Henry Kilmer, John Heasley, Andrew Partan, Pete Whiting, and Austin Schutz.
-##
+## THIS SOFTWARE IS PROVIDED BY Terrapin Communications, INC. AND CONTRIBUTORS
+## ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+## TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+## PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COMPANY OR CONTRIBUTORS
+## BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+## CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+## SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+## INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+## POSSIBILITY OF SUCH DAMAGE.
+# 
+#  The expect login scripts were based on Erik Sherk's gwtn, by permission.
+# 
+#  The original looking glass software was written by Ed Kern, provided by
+#  permission and modified beyond recognition.
 #
-# this expect snipit is sourced by clogin (-s option) to load a configuration
-# file (named <routername>-confg into nvram from an rcp/tftp host.  this is an
+# This expect snippet is sourced by clogin (-s option) to load a configuration
+# file (named <routername>-confg into nvram from an rcp/tftp host.  This is an
 # _example_ as it not guaranteed to work for all applications.  PLEASE test
 # for your environment.
 #
-# it expects the following variables via the -E option:
+# It expects the following variables via the -E option:
 #	rcphost		='host to rcp from' such as 'foo.org' or '192.168.0.1'
 #	confgpath	='path under /tftpboot where configs are held'
 #
-# the config file is expected to be routername-confg, where routername is the
+# The config file is expected to be routername-confg, where routername is the
 # name as grok'd from the router's cmd-line prompt
 #
 # example usage:
@@ -36,16 +61,18 @@
 # router
 # loading router config from foo.shrubbery.net
 #
-# keep in mind that it is important to NOT polute the global variable space.
-# particularly, do not use variables used within clogin.  this may result in
-# indeterministic results.  an easy way to avoid this is to use a variable
+# exit is called at the end, so only one router can be handled per clogin.
+#
+# Keep in mind that it is important to NOT polute the global variable space.
+# Particularly, do not use variables used within clogin.  This may result in
+# indeterministic results.  An easy way to avoid this is to use a variable
 # name prefix (like 'E' or '_').
 #
-# useful variables from clogin global space:
+# Useful variables from clogin global space:
 #	router		router name as provided on the cmd-line
 #	prompt		cmd-line prompt as determined by clogin
 #
-# note: the tcl/expect parser is extremely stoopid.  comment lines are NOT
+# note: the tcl/expect parser is extremely stoopid.  Comment lines are NOT
 #	completely ignored!!  so, a '{' or '}' in a comment might produce
 #	unexpected results.
 ##

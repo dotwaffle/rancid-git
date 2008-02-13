@@ -129,17 +129,25 @@ A. CVS does not provide a way (AFAIK) to rename files or to rename or delete
    like this (disclaimer: BE VERY CAREFUL mucking around with the repository):
 	% su - rancid_user
 	% cd <LOCALSTATEDIR>
-	% echo "new_device_name:device_type:up" >> GROUP/router.db
-	% cp -p CVS/GROUP/configs/old_device_name,v \
-		CVS/GROUP/configs/new_device_name,v
+	% echo "new_device_name:device_type:up" >> <GROUP>/router.db
+	% cp -p CVS/<GROUP>/configs/old_device_name,v \
+		CVS/<GROUP>/configs/new_device_name,v
+	% cd <GROUP>/configs
+	% cvs update
+
    where GROUP is the name of the rancid group that the device is a member of.
-   Rancid will pick-up the new file with a CVS update the next time it runs.
    Once the renaming is complete, remove the old name from the router.db file
    and leave the CVS clean-up of the old filename to rancid.
 
    If one wanted to move a device to a different group and maintain the
-   history, the same procedure would work.  Substituting the new group name
-   appropriately.
+   history, the same procedure would work, substituting the new group name
+   appropriately, of course.
+
+   SVN provides a rename function; but we suggest that you use it's
+   copy function instead, and leave the clean-up of the old name
+   to rancid.  So, you would use the copy function (proper
+   substitutions, of course) in place of the cp in the CVS example,
+   then commit the new file.
 
 
 Q. I am removing a group and would like to remove all traces of it from the

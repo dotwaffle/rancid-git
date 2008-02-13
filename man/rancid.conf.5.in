@@ -1,8 +1,8 @@
 .\"
-.\" $Id: rancid.conf.5.in,v 1.16 2005/09/27 16:39:27 heas Exp $
+.\" $Id$
 .\"
 .hys 50
-.TH "rancid.conf" "5" "23 September 2005"
+.TH "rancid.conf" "5" "18 December 2007"
 .SH NAME
 rancid.conf \- rancid environment configuration file
 .SH DESCRIPTION
@@ -27,6 +27,14 @@ effect their run-time behavior or to enable them to find their resources.
 The following variables are used (listed alphabetically):
 .PP
 .Bl -tag -width flag
+.\"
+.TP
+.B ACLSORT
+Permits disabling of access-list sorting, which could alter statement order
+that had been cleverly crafted by the administrator for optimal performance,
+thus making recovery and comparsion more difficult.
+.sp
+Default: YES
 .\"
 .TP
 .B BASEDIR
@@ -171,7 +179,7 @@ the number of hours between
 .B rancid-run
 cron runs.
 .sp
-Default: 4
+Default: 24
 .\"
 .TP
 .B PAR_COUNT

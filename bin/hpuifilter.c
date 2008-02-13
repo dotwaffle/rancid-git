@@ -1,26 +1,43 @@
 /*
- * $Id: hpuifilter.c,v 1.36 2006/11/29 01:02:27 heas Exp $
+ * $Id$
  *
- * Copyright (C) 1997-2006 by Terrapin Communications, Inc.
+ * Copyright (c) 1997-2007 by Terrapin Communications, Inc.
  * All rights reserved.
  *
- * This software may be freely copied, modified and redistributed
- * without fee for non-commerical purposes provided that this license
- * remains intact and unmodified with any RANCID distribution.
+ * This code is derived from software contributed to and maintained by
+ * Terrapin Communications, Inc. by Henry Kilmer, John Heasley, Andrew Partan,
+ * Pete Whiting, Austin Schutz, and Andrew Fort.
  *
- * There is no warranty or other guarantee of fitness of this software.
- * It is provided solely "as is".  The author(s) disclaim(s) all
- * responsibility and liability with respect to this software's usage
- * or its effect upon hardware, computer systems, other software, or
- * anything else.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by Terrapin Communications,
+ *        Inc. and its contributors for RANCID.
+ * 4. Neither the name of Terrapin Communications, Inc. nor the names of its
+ *    contributors may be used to endorse or promote products derived from
+ *    this software without specific prior written permission.
+ * 5. It is requested that non-binding fixes and modifications be contributed
+ *    back to Terrapin Communications, Inc.
  *
- * Except where noted otherwise, rancid was written by and is maintained by
- * Henry Kilmer, John Heasley, Andrew Partan, Pete Whiting, and Austin Schutz.
+ * THIS SOFTWARE IS PROVIDED BY Terrapin Communications, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COMPANY OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  *
- * Run telnet or ssh to connect to device specified on the command line.  The
- * point of hpfilter is to filter all the bloody vt100 (curses) escape codes
- * that the HP procurve switches belch out, which are a real bitch to handle
- * in hlogin.
  *
  * Modified openpty() from NetBSD:
  * Copyright (c) 1990, 1993, 1994
@@ -59,6 +76,9 @@
 # include <unistd.h>
 #endif
 
+#if HAVE_CTYPE_H
+# include <ctype.h>
+#endif
 #include <stdio.h>
 #include <limits.h>
 #include <fcntl.h>
@@ -89,26 +109,28 @@
 #endif
 
 #define	BUFSZ	(LINE_MAX * 2)
+#define	ESC	0x1b
 
 char		**environ,
 		*progname;
-int		child,
-		debug,
-		drain,
-		timeo = 5;				/* default timeout */
+int		debug,
+		sigrx,
+		timeo = 5;				/* default timeout   */
+pid_t		child;
 
-int		filter __P((char *, int));
-RETSIGTYPE	reapchild __P((void));
+int		expectmore(char *buf, int len);
+int		filter(char *, int);
+RETSIGTYPE	reapchild(int);
 #if !HAVE_OPENPTY
 int		openpty(int *, int *, char *, struct termios *,
 			struct winsize *);
 #endif
-RETSIGTYPE	sighdlr __P((int));
+RETSIGTYPE	sighdlr(int);
 #if !HAVE_UNSETENV
-int		unsetenv __P((const char *));
+int		unsetenv(const char *);
 #endif
-void		usage __P((void));
-void		vers __P((void));
+void		usage(void);
+void		vers(void);
 
 int
 main(int argc, char **argv, char **ev)
@@ -119,13 +141,14 @@ main(int argc, char **argv, char **ev)
 			hbuf[BUFSZ],		/* hlogin buffer */
 			ptyname[FILENAME_MAX + 1],
 			tbuf[BUFSZ],		/* telnet/ssh buffer */
-			*tbufp;
+			tbufstr[4] = {ESC, '\r', '\n', '\0'};
     int			bytes,			/* bytes read/written */
 			devnull,
 			rval = EX_OK,
 			ptym,			/* master pty */
 			ptys;			/* slave pty */
-    ssize_t		hlen = 0,		/* len of hbuf */
+    ssize_t		idx,			/* strcspan span */
+			hlen = 0,		/* len of hbuf */
 			tlen = 0;		/* len of tbuf */
     struct pollfd	pfds[3];
     struct termios	tios;
@@ -166,8 +189,8 @@ main(int argc, char **argv, char **ev)
 
     unsetenv("DISPLAY");
 
-    for (child = 3; child < 10; child++)
-	close(child);
+    for (sigrx = 3; sigrx < 10; sigrx++)
+	close(sigrx);
 
     /* allocate pty for telnet/ssh, then fork and exec */
     if (openpty(&ptym, &ptys, ptyname, NULL, NULL)) {
@@ -221,7 +244,7 @@ main(int argc, char **argv, char **ev)
     memset(tbuf, 0, BUFSZ);
 
     /* reap our children, must be set-up *after* openpty() */
-    signal(SIGCHLD, (void *) reapchild);
+    signal(SIGCHLD, reapchild);
 
     if ((child = fork()) == -1) {
 	fprintf(stderr, "%s: fork() failed: %s\n", progname, strerror(errno));
@@ -280,9 +303,9 @@ main(int argc, char **argv, char **ev)
 
     /* parent */
     if (debug)
-	fprintf(stderr, "child %d\n", child);
+	fprintf(stderr, "child %d\n", (int)child);
 
-    signal(SIGHUP, (void *) sighdlr);
+    signal(SIGHUP, sighdlr);
 
     /* close the slave pty */
     close(ptys);
@@ -303,15 +326,18 @@ main(int argc, char **argv, char **ev)
     pfds[0].fd = fileno(stdin);
     pfds[0].events = POLLIN | POLLEXP;
     pfds[1].fd = fileno(stdout);
+    pfds[1].events = POLLEXP;
     pfds[2].fd = ptym;
     pfds[2].events = POLLIN | POLLEXP;
 
+    /* shuffle data across the pipes until we see EOF or a read/write error */
+    sigrx = 0;
     while (1) {
 	bytes = poll(pfds, 3, (timeo * 1000));
 	if (bytes == 0) {
-	    if (drain)
+	    if (sigrx)
 		break;
-		/* timeout */
+	    /* timeout */
 	    continue;
 	}
 	if (bytes == -1) {
@@ -328,18 +354,15 @@ main(int argc, char **argv, char **ev)
 
 	/*
 	 * write buffers first
-	 * write hbuf (stdin) -> ptym
+	 * write hbuf (aka hlogin/stdin/pfds[0]) -> telnet (aka ptym/pfds[2])
 	 */
 	if ((pfds[2].revents & POLLOUT) && hlen) {
 	    if ((bytes = write(pfds[2].fd, hbuf, hlen)) < 0 &&
 		errno != EINTR && errno != EAGAIN) {
 		fprintf(stderr, "%s: write() failed: %s\n", progname,
 			strerror(errno));
-		hbuf[0] = '\0';
 		hlen = 0;
-		drain = 1;
-		pfds[2].events &= ~POLLOUT;
-
+		hbuf[0] = '\0';
 		break;
 	    } else if (bytes > 0) {
 		strcpy(hbuf, hbuf + bytes);
@@ -347,51 +370,71 @@ main(int argc, char **argv, char **ev)
 		if (hlen < 1)
 		     pfds[2].events &= ~POLLOUT;
 	    }
-	} else if (pfds[2].revents & POLLEXP) {
-	    hbuf[0] = '\0';
+	}
+	if (pfds[2].revents & POLLEXP) {
 	    hlen = 0;
-	    pfds[2].events &= POLLIN;
+	    hbuf[0] = '\0';
 	    break;
 	}
 
-	/* write tbuf -> stdout */
+	/* write tbuf (aka telnet/ptym/pfds[2]) -> hlogin (stdout/pfds[1]) */
 	if ((pfds[1].revents & POLLOUT) && tlen) {
 	    /*
 	     * if there is an escape char that didnt get filter()'d,
 	     * we need to write only up to that point and wait for
 	     * the bits that complete the escape sequence.  if at least
-	     * two bytes follow it, write it anyway as filter() didnt
-	     * match it.
+	     * two bytes follow it and it doesn't look like we should expect
+	     * more data, write it anyway as filter() didnt match it.
 	     */
 	    bytes = tlen;
-	    if ((tbufp = index(tbuf, 0x1b)) != NULL)
-		if (tlen - (tbufp - tbuf) < 2)
-		    bytes = tbufp - tbuf;
+	    idx = strcspn(tbuf, tbufstr);
+	    if (idx) {
+		if (tbuf[idx] == ESC) {
+		    if (tlen - idx < 2 || expectmore(&tbuf[idx], tlen - idx)) {
+			bytes = idx;
+		    }
+		}
+		if (tbuf[idx] == '\r' || tbuf[idx] == '\n') {
+		    bytes = ++idx;
+		    if (tbuf[idx] == '\r' || tbuf[idx] == '\n')
+			bytes++;
+		}
+	    } else {
+		if (tbuf[0] == ESC) {
+		    if (tlen < 2 || expectmore(tbuf, tlen)) {
+			bytes = 0;
+		    }
+		}
+		if (tbuf[0] == '\r' || tbuf[0] == '\n') {
+		    bytes = 1;
+		    if (tbuf[1] == '\r' || tbuf[1] == '\n')
+			bytes++;
+		}
+	    }
 
 	    if ((bytes = write(pfds[1].fd, tbuf, bytes)) < 0 &&
 		errno != EINTR && errno != EAGAIN) {
 		fprintf(stderr, "%s: write() failed: %s\n", progname,
 			strerror(errno));
-		break;
-		tbuf[0] = '\0';
+		/* dont bother trying to flush tbuf */
 		tlen = 0;
-		drain = 1;
-		pfds[1].events = 0;
+		tbuf[0] = '\0';
+		break;
 	    } else if (bytes > 0) {
 		strcpy(tbuf, tbuf + bytes);
 		tlen -= bytes;
 		if (tlen < 1)
 		    pfds[1].events &= ~POLLOUT;
 	    }
-	} else if (pfds[1].revents & POLLEXP) {
-	    break;
-	    tbuf[0] = '\0';
+	}
+	if (pfds[1].revents & POLLEXP) {
+	    /* dont bother trying to flush tbuf */
 	    tlen = 0;
-	    pfds[1].fd = devnull;
-	    pfds[1].events = 0;
+	    tbuf[0] = '\0';
+	    break;
 	}
 
-	/* read stdin -> hbuf */
+	/* read hlogin (aka stdin/pfds[0]) -> hbuf */
 	if (pfds[0].revents & POLLIN) {
 	    if (BUFSZ - hlen > 1) {
 		bytes = read(pfds[0].fd, hbuf + hlen, (BUFSZ - 1) - hlen);
@@ -399,22 +442,16 @@ main(int argc, char **argv, char **ev)
 		    hlen += bytes;
 		    hbuf[hlen] = '\0';
 		    pfds[2].events |= POLLOUT;
-		} else if (bytes == 0 && errno != EAGAIN && errno != EINTR) {
+		} else if (bytes < 0 && errno != EAGAIN && errno != EINTR) {
+		    /* read error */
 		    break;
-		    /* EOF or read error */
-		    drain = 1;
-		    pfds[0].fd = devnull;
-		    pfds[0].events = 0;
 		}
 	    }
-	} else if (pfds[0].revents & POLLEXP) {
-	    break;
-	    drain = 1;
-	    pfds[0].fd = devnull;
-	    pfds[0].events = 0;
 	}
+	if (pfds[0].revents & POLLEXP)
+	    break;
 
-	/* read telnet/ssh -> tbuf, then filter */
+	/* read telnet/ssh (aka ptym/pfds[2]) -> tbuf, then filter */
 	if (pfds[2].revents & POLLIN) {
 	    if (BUFSZ - tlen > 1) {
 		bytes = read(pfds[2].fd, tbuf + tlen, (BUFSZ - 1) - tlen);
@@ -424,47 +461,74 @@ main(int argc, char **argv, char **ev)
 		    tlen = filter(tbuf, tlen);
 		    if (tlen > 0)
 			pfds[1].events |= POLLOUT;
-		} else if (bytes == 0 && errno != EAGAIN && errno != EINTR) {
-		    /* EOF or read error */
+		} else if (bytes < 0 && errno != EAGAIN && errno != EINTR) {
+		    /* read error */
 		    break;
-		    drain = 1;
-		    pfds[2].fd = devnull;
-		    pfds[2].events = 0;
 		}
 	    }
-	} else if (pfds[2].revents & POLLEXP) {
-	    break;
-	    drain = 1;
-	    pfds[2].fd = devnull;
-	    pfds[2].events = 0;
 	}
+	if (pfds[2].revents & POLLEXP)
+	    break;
     }
-    /* try to flush buffers */
+    /* try to flush any remaining data from our buffers */
     if (hlen) {
-	(void) write(pfds[2].fd, hbuf, hlen);
+	(void)write(pfds[2].fd, hbuf, hlen);
 	hlen = 0;
     }
     if (tlen) {
-	(void) write(pfds[1].fd, tbuf, tlen);
+	(void)write(pfds[1].fd, tbuf, tlen);
 	tlen = 0;
     }
     if ((bytes = read(pfds[2].fd, tbuf, (BUFSZ - 1))) > 0) {
 	tbuf[bytes] = '\0';
 	tlen = filter(tbuf, bytes);
-	(void) write(pfds[1].fd, tbuf, tlen);
+	(void)write(pfds[1].fd, tbuf, tlen);
     }
     tcdrain(pfds[1].fd);
     if ((hlen = read(pfds[0].fd, hbuf, (BUFSZ - 1))) > 0) {
-	(void) write(pfds[2].fd, hbuf, hlen);
+	(void)write(pfds[2].fd, hbuf, hlen);
     }
     tcdrain(pfds[2].fd);
 
     if (child && ! kill(child, SIGINT))
-	reapchild();
+	reapchild(SIGCHLD);
 
     return(rval);
 }
 
+/*
+ * return non-zero if the escape sequence beginning with buf appears to be
+ * incomplete (and the caller should wait for more data).
+ */
+int
+expectmore(char *buf, int len)
+{
+    int	i;
+
+    if (buf[1] == '[' || isdigit((int)buf[1])) {
+	/* look for a char that ends the sequence */
+	for (i = 2; i < len; i++) {
+	    if (isalpha((int)buf[i]))
+		return(0);
+	}
+	return(1);
+    }
+    if (buf[1] == '#') {
+	/* look for terminating digit */
+	for (i = 2; i < len; i++) {
+	    if (isdigit((int)buf[i]))
+		return(0);
+	}
+	return(1);
+    }
+
+    return(0);
+}
+
+/*
+ * Remove/replace vt100/220 screen manipulation escape sequences so they do
+ * not litter the output.
+ */
 int
 filter(char *buf, int len)
 {
@@ -472,25 +536,25 @@ filter(char *buf, int len)
 #define	N_REG		14		/* number of regexes in reg[][] */
     static regex_t	preg[N_REG];
     static char		reg[N_REG][50] = {	/* vt100/220 escape codes */
-				"\e7\e\\[1;24r\e8",		/* ds */
-				"\e8",				/* fs */
+				"\x1B""7\x1B\\[1;24r\x1B""8",	/* ds */
+				"\x1B""8",			/* fs */
 
-				"\e\\[2J",
-				"\e\\[2K",			/* kE */
+				"\x1B\\[2J",
+				"\x1B\\[2K",			/* kE */
 
-				"\e\\[[0-9]+;[0-9]+r",		/* cs */
-				"\e\\[[0-9]+;[0-9]+H",		/* cm */
+				"\x1B\\[[0-9]+;[0-9]+r",	/* cs */
+				"\x1B\\[[0-9]+;[0-9]+H",	/* cm */
 
-				"\e\\[\\?6l",
-				"\e\\[\\?7l",			/* RA */
-				"\e\\[\\?25h",			/* ve */
-				"\e\\[\\?25l",			/* vi */
-				"\e\\[K",			/* ce */
-				"\e\\[7m",			/* mr - ansi */
+				"\x1B\\[\\?6l",
+				"\x1B\\[\\?7l",			/* RA */
+				"\x1B\\[\\?25h",		/* ve */
+				"\x1B\\[\\?25l",		/* vi */
+				"\x1B\\[K",			/* ce */
+				"\x1B\\[7m",			/* mr - ansi */
 
 				/* replace these with CR */
-				"\e\\[0m",			/* me */
-				"\eE",
+				"\x1B\\[0m",			/* me */
+				"\x1B""E",
 			};
     char		ebuf[256];
     size_t		nmatch = 1;
@@ -498,7 +562,7 @@ filter(char *buf, int len)
 			x;
     static int		init = 0;
 
-    if (index(buf, 0x1b) == 0 || len == 0)
+    if (index(buf, ESC) == 0 || len == 0)
 	return(len);
 
     for (x = 0; x < N_REG - 2; x++) {
@@ -518,11 +582,12 @@ filter(char *buf, int len)
 	    }
 	} else {
 	    strcpy(buf + pmatch[0].rm_so, buf + pmatch[0].rm_eo);
-	    x = 0;
+	    /* start over with the first regex */
+	    x = -1;
 	}
     }
 
-    /* replace \eE w/ CR NL */
+    /* no the CR NL replacements */
     if (! init++) {
 	for (x = N_REG - 2; x < N_REG; x++)
 	    if ((err = regcomp(&preg[x], reg[x], REG_EXTENDED))) {
@@ -543,25 +608,32 @@ filter(char *buf, int len)
 	    *(buf + pmatch[0].rm_so) = '\r';
 	    *(buf + pmatch[0].rm_so + 1) = '\n';
 	    strcpy(buf + pmatch[0].rm_so + 2, buf + pmatch[0].rm_eo);
-	    x = N_REG - 2;
+	    /* start over with the first CR regex */
+	    x = N_REG - 3;
 	}
     }
+
     return(strlen(buf));
 }
 
 RETSIGTYPE
-reapchild(void)
+reapchild(int sig)
 {
     int         status;
     pid_t       pid;
 
-    /* XXX this needs to deal with/without wait3 via HAVE_WAIT3 */
-    while ((pid = wait3(&status, WNOHANG, 0)) > 0)
-	if (debug)
-            fprintf(stderr, "reap child %d\n", pid);
-    if (pid == child)
-	child = 0;
+    if (debug)
+	fprintf(stderr, "GOT SIGNAL %d\n", sig);
 
+    while ((pid = wait3(&status, WNOHANG, NULL)) > 0) {
+	if (debug)
+            fprintf(stderr, "reap child %d\n", (int)pid);
+	if (pid == child) {
+	    child = 0;
+	    sigrx = 0;
+	    break;
+	}
+    }
     return;
 }
 
@@ -570,7 +642,7 @@ sighdlr(int sig)
 {
     if (debug)
 	fprintf(stderr, "GOT SIGNAL %d\n", sig);
-    drain = 1;
+    sigrx = 1;
     return;
 }
 
@@ -691,11 +763,11 @@ openpty(int *amaster, int *aslave, char *name, struct termios *term,
 	    line[9] = *cp2;
 	    if ((master = open(line, O_RDWR, 0)) == -1) {
 		if (errno != ENOENT)
-				continue;	/* busy */
+			continue;	/* busy */
 		if (cp2 - cp + 1 < sizeof(TTY_OLD_SUFFIX))
-				return -1; /* out of ptys */
+			return -1;	/* out of ptys */
 		else	
-				break;	/* out of ptys in this group */
+			break;		/* out of ptys in this group */
 	    }
 	    line[5] = 't';
 	    linep = line;

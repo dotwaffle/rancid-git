@@ -1,26 +1,47 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: nlogin.in,v 1.33 2006/12/08 21:28:26 heas Exp $
+## $Id$
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (C) 1997-2006 by Terrapin Communications, Inc.
+## Copyright (c) 1997-2007 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
-## This software may be freely copied, modified and redistributed
-## without fee for non-commerical purposes provided that this license
-## remains intact and unmodified with any RANCID distribution.
+## This code is derived from software contributed to and maintained by
+## Terrapin Communications, Inc. by Henry Kilmer, John Heasley, Andrew Partan,
+## Pete Whiting, Austin Schutz, and Andrew Fort.
 ##
-## There is no warranty or other guarantee of fitness of this software.
-## It is provided solely "as is".  The author(s) disclaim(s) all
-## responsibility and liability with respect to this software's usage
-## or its effect upon hardware, computer systems, other software, or
-## anything else.
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted provided that the following conditions
+## are met:
+## 1. Redistributions of source code must retain the above copyright
+##    notice, this list of conditions and the following disclaimer.
+## 2. Redistributions in binary form must reproduce the above copyright
+##    notice, this list of conditions and the following disclaimer in the
+##    documentation and/or other materials provided with the distribution.
+## 3. All advertising materials mentioning features or use of this software
+##    must display the following acknowledgement:
+##        This product includes software developed by Terrapin Communications,
+##        Inc. and its contributors for RANCID.
+## 4. Neither the name of Terrapin Communications, Inc. nor the names of its
+##    contributors may be used to endorse or promote products derived from
+##    this software without specific prior written permission.
+## 5. It is requested that non-binding fixes and modifications be contributed
+##    back to Terrapin Communications, Inc.
 ##
-## Except where noted otherwise, rancid was written by and is maintained by
-## Henry Kilmer, John Heasley, Andrew Partan, Pete Whiting, and Austin Schutz.
-##
-#
-# The login expect scripts were based on Erik Sherk's gwtn, by permission.
+## THIS SOFTWARE IS PROVIDED BY Terrapin Communications, INC. AND CONTRIBUTORS
+## ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+## TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+## PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COMPANY OR CONTRIBUTORS
+## BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+## CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+## SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+## INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+## POSSIBILITY OF SUCH DAMAGE.
+# 
+#  The expect login scripts were based on Erik Sherk's gwtn, by permission.
+# 
 # Netscreen hacks implemented by Stephen Gill <gillsr@yahoo.com>.
 #
 # nlogin - netscreen login
@@ -32,8 +53,8 @@
 #	users permissions can not change.
 
 # Usage line
-set usage "Usage: $argv0 \[-c command\] \[-Evar=x\] \[-f cloginrc-file\] \
-\[-p user-password\] \
+set usage "Usage: $argv0 \[-dV\] \[-c command\] \[-Evar=x\] \
+\[-f cloginrc-file\] \[-p user-password\] \
 \[-s script-file\] \[-t timeout\] \[-u username\] \
 \[-v vty-password\] \[-x command-file\] \
 \[-y ssh_cypher_type\] router \[router...\]\n"
@@ -80,8 +101,11 @@ for {set i 0} {$i < $argc} {incr i} {
     set arg [lindex $argv $i]
 
     switch  -glob -- $arg {
+	# Expect debug mode
+	-d* {
+	    exp_internal 1
 	# Username
-	-u* -
+	} -u* -
 	-U* {
 	    if {! [  regexp .\[uU\](.+) $arg ignore user]} {
 		incr i
@@ -295,7 +319,7 @@ cyphertype } {
     expect_after {
 	timeout {
 	    send_user "\nError: TIMEOUT reached\n"
-	    catch {close}; wait
+	    catch {close}; catch {wait};
 	    if { $in_proc} {
 	        return 1
 	    } else {
@@ -303,7 +327,7 @@ cyphertype } {
 	    }
         } eof {
 	    send_user "\nError: EOF received\n"
-	    catch {close}; wait
+	    catch {close}; catch {wait};
 	    if { $in_proc} {
 	        return 1
 	    } else {
@@ -350,7 +374,7 @@ cyphertype } {
 	    send_user "\nError: host key mismatch for $firewall.  Update the SSH known_hosts file accordingly.\n"
 	    return 1 }
 	denied		{ send_user "\nError: Check your passwd for $firewall\n"
-	                  catch {close}; wait; return 1
+	                  catch {close}; catch {wait}; return 1
 	                }
 	" ### Login failed" {send_user "\nError: Check your passwd for $firewall\n"; return 1 }
 	-re "(login:)"			{
@@ -425,7 +449,7 @@ proc run_commands { prompt command } {
 						  send "n\r"
 						  exp_continue
 						}
-	timeout					{ catch {close}; wait
+	timeout					{ catch {close}; catch {wait};
 						  return 0
 						}
 	eof					{ return 0 }
@@ -438,6 +462,7 @@ proc run_commands { prompt command } {
 #
 source_password_file $password_file
 set in_proc 0
+set exitval 0
 foreach firewall [lrange $argv $i end] {
     set firewall [string tolower $firewall]
     send_user "$firewall\n"
@@ -496,6 +521,7 @@ foreach firewall [lrange $argv $i end] {
 
     # Login to the firewall
     if {[login $firewall $ruser $userpswd $passwd $enapasswd $prompt $cmethod $cyphertype]} {
+	incr exitval
 	continue
     }
 
@@ -512,13 +538,14 @@ foreach firewall [lrange $argv $i end] {
 
     if { $do_command } {
 	if {[run_commands $prompt $command]} {
+	    incr exitval
 	    continue
 	}
     } elseif { $do_script } {
 	send "set console page 0\r"
 	expect -re $prompt	{}
 	source $sfile
-	close
+	catch {close};
     } else {
 	label $firewall
 	log_user 1
@@ -526,7 +553,7 @@ foreach firewall [lrange $argv $i end] {
     }
 
     # End of for each firewall
-    wait
+    catch {wait};
     sleep 0.3
 }
-exit 0
+exit $exitval
