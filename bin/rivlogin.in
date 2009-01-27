@@ -1,9 +1,9 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id$
+## $Id: rivlogin.in,v 1.35 2008/09/27 16:45:06 heas Exp $
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) 1997-2007 by Terrapin Communications, Inc.
+## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -255,7 +255,7 @@ proc login { router user userpswd passwd enapasswd } {
 
         "Password:"  {
             incr pass_attempt
-            send "$passwd\r"
+            send -- "$passwd\r"
             exp_continue
         }
 
@@ -263,16 +263,16 @@ proc login { router user userpswd passwd enapasswd } {
 
             set pattempt 0
 
-            send "$user\r"
+            send -- "$user\r"
             expect {
 
                 "Password: "    {
 
                     incr pattempt
                     if {$pattempt == 1} {
-                        send "$userpswd\r";
+                        send -- "$userpswd\r";
                     } else {
-                        send "$enapasswd\r";
+                        send -- "$enapasswd\r";
                     }
                     exp_continue
                 }
@@ -418,14 +418,14 @@ proc do_enable { enauser enapasswd userpswd } {
     expect {
         Username:     {
 	    set uses_username 1;
-	    send "$enauser\r";
+	    send -- "$enauser\r";
 	    exp_continue
 	}
         Password:     {
 	    if {$uses_username == 1} {
-		send "$userpswd\r";
+		send -- "$userpswd\r";
 	    } else {
-		send "$enapasswd\r";
+		send -- "$enapasswd\r";
 	    }
 	    exp_continue
 	}
@@ -435,7 +435,7 @@ proc do_enable { enauser enapasswd userpswd } {
 	    return 1
 	}
 
-	"CONS-W-AUTH_PASSWD" { send "$enapasswd\r"; }
+	"CONS-W-AUTH_PASSWD" { send -- "$enapasswd\r"; }
 
         "$enable_prompt "  { }
         "%SYS-W-NOPASSWD*" { }

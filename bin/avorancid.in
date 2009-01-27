@@ -1,9 +1,9 @@
 #! @PERLV_PATH@
 ##
-## $Id$
+## $Id: avorancid.in,v 1.6 2008/02/09 19:09:58 heas Exp $
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (C) 1997-2007 by Terrapin Communications, Inc.
+## Copyright (C) 1997-2008 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This software may be freely copied, modified and redistributed
@@ -147,21 +147,21 @@ sub sortbyipaddr {
 }
 
 # This routine parses "cat"
-sub CatFiles {
-    print STDERR "    In CatFiles: $_" if ($debug);
+sub CatFile {
+    print STDERR "    In CatFile: $_" if ($debug);
 
-    $catfile=$1;
-    $catfile=~s/cat //;
+    $catfile = $1;
+    $catfile =~ s/cat //;
     ProcessHistory("COMMENTS","","","! $catfile\n");
     while (<INPUT>) {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
-#	return(1) if /Line has invalid autocommand /;
+	return(-1) if /: Permission denied/;
 	ProcessHistory("COMMENTS","","","$_");
     }
     ProcessHistory("COMMENTS","","","!\n");
-    if ( $catfile == "/etc/security.opts" ) { $found_end=1;$clean_run=1;};
+    if ( $catfile == "/etc/security.opts" ) { $found_end = 1; $clean_run = 1;};
     return(0);
 }
 
@@ -170,23 +170,23 @@ sub DoNothing {print STDOUT;}
 
 # Main
 @commandtable = (
-	{'cat /etc/hostname'		=> 'CatFiles'},
-	{'cat /etc/domainname.conf'		=> 'CatFiles'},
-	{'cat /etc/resolv.conf'		=> 'CatFiles'},
-	{'cat /etc/portslave/pslave.conf'		=> 'CatFiles'},
-	{'cat /etc/passwd'		=> 'CatFiles'},
-	{'cat /etc/snmp/snmpd.conf'		=> 'CatFiles'},
-	{'cat /etc/network/ifcfg_eth0'		=> 'CatFiles'},
-	{'cat /etc/network/st_routes'		=> 'CatFiles'},
-	{'cat /etc/security.opts'		=> 'CatFiles'},
+	{'cat /etc/hostname'		=> 'CatFile'},
+	{'cat /etc/domainname.conf'	=> 'CatFile'},
+	{'cat /etc/resolv.conf'		=> 'CatFile'},
+	{'cat /etc/portslave/pslave.conf' => 'CatFile'},
+	{'cat /etc/passwd'		=> 'CatFile'},
+	{'cat /etc/snmp/snmpd.conf'	=> 'CatFile'},
+	{'cat /etc/network/ifcfg_eth0'	=> 'CatFile'},
+	{'cat /etc/network/st_routes'	=> 'CatFile'},
+	{'cat /etc/security.opts'	=> 'CatFile'},
 );
 # Use an array to preserve the order of the commands and a hash for mapping
 # commands to the subroutine and track commands that have been completed.
 @commands = map(keys(%$_), @commandtable);
 %commands = map(%$_, @commandtable);
 
-$cisco_cmds=join(";",@commands);
-$cmds_regexp=join("|",@commands);
+$cisco_cmds = join(";",@commands);
+$cmds_regexp = join("|",@commands);
 
 open(OUTPUT,">$host.new") || die "Can't open $host.new for writing: $!\n";
 select(OUTPUT);
@@ -235,21 +235,21 @@ ProcessHistory("COMMENTS","keysort","F0","!\n");
 ProcessHistory("COMMENTS","keysort","G0","!\n");
 TOP: while(<INPUT>) {
     tr/\015//d;
-    if (/[>#]\s?exit$/) {
-	$clean_run=1;
+    if (/[#\$] exit$/) {
+	$clean_run = 1;
 	last;
     }
     if (/^Error:/) {
 	print STDOUT ("$host avologin error: $_");
 	print STDERR ("$host avologin error: $_") if ($debug);
-	$clean_run=0;
+	$clean_run = 0;
 	last;
     }
-    while (/#\s*($cmds_regexp)\s*$/) {
+    while (/[#\$]\s*($cmds_regexp)\s*$/) {
 	$cmd = $1;
 	if (!defined($prompt)) {
-	    $prompt = ($_ =~ /^([^#]+#)/)[0];
-	    $prompt =~ s/([][}{)(\\])/\\$1/g;
+	    $prompt = ($_ =~ /^([^#\$]+[#\$] )/)[0];
+	    $prompt =~ s/([][}{)(\\\$])/\\$1/g;
 	    print STDERR ("PROMPT MATCH: $prompt\n") if ($debug);
 	}
 	print STDERR ("HIT COMMAND:$_") if ($debug);

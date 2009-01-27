@@ -1,6 +1,60 @@
 2.3.2
+	nxrancid: add "show version build-info".  sort snmp-server user.
+
+	rancid: filter filesize and date of tracelogs dir on IOS-XE
+
+	rancid: summarize bytes free for IOS-XE like XR 
+
+	nsrancid/nslogin: updates for netscalar version 8 - Marco Schirrmeister
+
+	f10rancid: updated support for all devices running FTOS: E-Series,
+	C-Series and S-Series - Greg Hankins
+
+	clogin: force10/SFTOS fixes for username & logout prompts - Doug Hughes
+
+	f10rancid: SFTOS config end marker has trailing space - Marcus
+	Stoegbauer
+
+	mrvrancid: support for the MRV fiber switch
+
+	rancid: collect GSR linecard route memory - Kritian Larsson
+
+	clogin: new CSS configuration change prompt syntax - Kritian Larsson
+
+	*login: add -- to other sends that take input from the user
+
+	*login: terminate send options with -- to avoid interpretation of -'s
+	in arguments - partly from Ric Anderson
+
+	nxrancid: add support for cisco Nexus boxes; use type cisco-nx
+
+	rancid: Skip "Cryptochecksum:" line on ASA, PIX, et al
+
+	hrancid: K.13 s/w changed cmd 'show system information' - Richard Golier
+
+	rancid: Spot yet another flash disk in show version output.
+
+	rancid: Some support for Cisco Nexus.
+
+	rancid: corrupted flash is not a rancid failure - from John Payne
+
+	rancid.spec: Linux spec file - blame Steve Snodgrass
+
+	rancid: changes for cisco SAN - from Mark Favas
+
+	clogin: escape regex grouping atom '()' in the catalyst prompt - From
+		Casey Deccio
+
+	flogin: handle strange characters like space in prompt w/ the method
+		from clogin for handling regex characters
+
+	francid: filter SSL secret - From Jethro Binks
+
+	francid: privlvl 5 does not allow write term, also run show
+		running-config - from Jethro Binks
+
 	*login: Return/exit non-zero if there are failures for any of the
-		devices on the cmd-line. 
+		devices on the cmd-line.
 
 	nslogin: password prompt change in newer code - from Derek Andree
 
@@ -47,14 +101,14 @@
 	Changes so the RANCID-CONTENT-TYPE is the same as the
 	documented entry in router.db.5 and the same as the call
 	in rancid-fe.  These RANCID-CONTENT-TYPEs changed:
-		brancid 	from bay to baynet
-		cat5rancid 	from cisco-cat to cat5
-		cssrancid 	from cisco-css to css
-		erancid 	from adc-ezt3 to ezt3
-		fnrancid 	from Fortigate to fortigate
-		hrancid 	from hp-procurve to hp
-		jerancid 	from Juniper_ERX to erx
-		srancid 	from dell to smc
+		brancid		from bay to baynet
+		cat5rancid	from cisco-cat to cat5
+		cssrancid	from cisco-css to css
+		erancid		from adc-ezt3 to ezt3
+		fnrancid	from Fortigate to fortigate
+		hrancid		from hp-procurve to hp
+		jerancid	from Juniper_ERX to erx
+		srancid		from dell to smc
 
 	f5rancid: F5 BigIPs
 
@@ -80,12 +134,12 @@
 		Ravin, adjusted to catch the close.
 
 	jrancid: Adapt M160 PCG freq rounding to new format - noted by Mark
-		 Davis
+		Davis
 
 	rancid: collect flash size on the FWSM - from Aaron Gee-clough
 
 	francid: Fix temperature/show chassis filtering for newer Foundry boxes
-		 - noted and tested by Gary Roberts
+		- noted and tested by Gary Roberts
 
 	rancid: fix Cisco 3825,3845 show version parsing - Michael Stefaniuc
 
@@ -156,7 +210,7 @@
 
 	add -ko to cvs diff commands - Michael Shields
 
-	Add a MAILHEADERS configuration variable for user-defined mail headers 
+	Add a MAILHEADERS configuration variable for user-defined mail headers
 
 	rancid: match HSRP group numbers greater than 1 char wide - Ed Ravin
 

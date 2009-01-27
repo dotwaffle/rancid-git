@@ -1,9 +1,9 @@
 #! @PERLV_PATH@
 ##
-## $Id$
+## $Id: cssrancid.in,v 1.22 2008/04/23 18:37:19 heas Exp $
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) 1997-2007 by Terrapin Communications, Inc.
+## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -231,7 +231,7 @@ sub ShowVersion {
 	}
 	if (/(\S+) Silicon\s*Switch Processor/) {
 	    if (!defined($C0)) {
-		$C0=1; ProcessHistory("COMMENTS","keysort","C0","!\n");
+		$C0 = 1; ProcessHistory("COMMENTS","keysort","C0","!\n");
 	    }
 	    ProcessHistory("COMMENTS","keysort","C2","!SSP: $1\n");
 	    $ssp = 1;
@@ -260,7 +260,7 @@ sub ShowVersion {
 	}
 	if(/^WARNING/) {
 	    if (!defined($I0)) {
-		$I0=1;
+		$I0 = 1;
 		ProcessHistory("COMMENTS","keysort","I0","!\n");
 	    }
 	    ProcessHistory("COMMENTS","keysort","I1","! $_");
@@ -269,7 +269,7 @@ sub ShowVersion {
 	    ProcessHistory("COMMENTS","keysort","I1","!          $_");
 	}
 	if (/^Configuration register is (.*)$/) {
-	    $config_register=$1;
+	    $config_register = $1;
 	    next;
 	}
     }
@@ -317,7 +317,7 @@ sub ShowBoot {
 	next if (/\*\* BOOT CONFIG /);
 	next if /CONFGEN variable/;
 	if (!defined($H0)) {
-	    $H0=1; ProcessHistory("COMMENTS","keysort","H0","!\n");
+	    $H0 = 1; ProcessHistory("COMMENTS","keysort","H0","!\n");
 	}
 	if ($type !~ /^(12[04]|7)/) {
 	    if ($type !~ /^(29|35)00/) {
@@ -423,7 +423,7 @@ sub ShowRun {
 	    ProcessHistory("","","","!isis password <removed>$2\n"); next;
 	}
 	if (/^\s+(domain-password|area-password) (\S+)( .*)?/
-							&& $filter_pwds >= 1) {
+	    && $filter_pwds >= 1) {
 	    ProcessHistory("","","","!$1 <removed>$2\n"); next;
 	}
 	# this is reversable, despite 'md5' in the cmd
@@ -588,8 +588,8 @@ sub DoNothing {print STDOUT;}
 @commands = map(keys(%$_), @commandtable);
 %commands = map(%$_, @commandtable);
 
-$cisco_cmds=join(";",@commands);
-$cmds_regexp=join("|",@commands);
+$cisco_cmds = join(";",@commands);
+$cmds_regexp = join("|",@commands);
 
 if (length($host) == 0) {
     if ($file) {
@@ -649,13 +649,13 @@ TOP: while(<INPUT>) {
 NEXT:
     tr/\015//d;
     if (/\#\s?exit/) {
-	$clean_run=1;
+	$clean_run = 1;
 	last;
     }
     if (/^Error:/) {
 	print STDOUT ("$host clogin error: $_");
 	print STDERR ("$host clogin error: $_") if ($debug);
-	$clean_run=0;
+	$clean_run = 0;
 	last;
     }
     if (/#\s*($cmds_regexp)\s*$/) {

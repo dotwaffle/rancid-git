@@ -1,9 +1,9 @@
 #! @PERLV_PATH@
 ##
-## $Id$
+## $Id: agmrancid.in,v 1.13 2008/02/08 10:02:03 heas Exp $
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) 1997-2007 by Terrapin Communications, Inc.
+## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -462,7 +462,7 @@ if ($ENV{"FILTER_PWDS"} =~ /no/i) {
     $filter_pwds = 1;
 }
 
-ProcessHistory("","","","!RANCID-CONTENT-TYPE: riverhead\n!\n");
+ProcessHistory("","","","!RANCID-CONTENT-TYPE: AGM\n!\n");
 ProcessHistory("COMMENTS","keysort","B0","!\n");
 ProcessHistory("COMMENTS","keysort","C0","!\n");
 TOP: while(<INPUT>) {
@@ -520,7 +520,6 @@ if (scalar(%commands) || !$clean_run || !$found_end) {
 	printf(STDERR "$host: missed cmd(s): %s\n", join(',', keys(%commands))) if ($debug);
     }
     if (!$clean_run || !$found_end) {
-print STDOUT $clean_run . " " . $found_end . "\n";
 	print STDOUT "$host: End of run not found\n";
 	print STDERR "$host: End of run not found\n" if ($debug);
 	system("/usr/bin/tail -1 $host.new");

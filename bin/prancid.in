@@ -1,9 +1,9 @@
 #! @PERLV_PATH@
 ##
-## $Id$
+## $Id: prancid.in,v 1.42 2008/02/08 09:54:18 heas Exp $
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) 1997-2007 by Terrapin Communications, Inc.
+## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by

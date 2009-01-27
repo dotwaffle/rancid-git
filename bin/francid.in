@@ -1,9 +1,9 @@
 #! @PERLV_PATH@
 ##
-## $Id$
+## $Id: francid.in,v 1.53 2008/04/10 23:17:04 heas Exp $
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) 1997-2007 by Terrapin Communications, Inc.
+## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -39,7 +39,7 @@
 ## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 # Amazingly hacked version of Hank's rancid - this one tries to
 # deal with foundrys and foundrys OEM'd by HP as Procurves.
 #
@@ -245,7 +245,7 @@ sub ShowFlash {
     print STDERR "    In ShowFlash: $_" if ($debug);
 
     while (<INPUT>) {
-    tr/\015//d;
+	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^\s*$/);
 	ProcessHistory("FLASH","","","!Flash: $_");
@@ -264,6 +264,7 @@ sub ShowModule {
 	return(1) if (/Invalid input ->/);
 	next if (/^\s*$/);
 	next if (/:\s*$/);
+
 	ProcessHistory("MODULE","","","!Module: $_");
     }
     ProcessHistory("","","","!\n");
@@ -276,9 +277,11 @@ sub WriteTerm {
 
     while (<INPUT>) {
 	tr/\015//d;
+	return(1) if (/Invalid input ->/);
+	return(0) if ($found_end);		# Only do this routine once
 	last if (/^$prompt/);
 
-	/Current configuration:/i && next;
+	/Current configuration\s*:/i && next;
 	/^ver \d+\.\d+/ && next;
 	/^module \d+ / && next;
 
@@ -363,6 +366,12 @@ sub WriteTerm {
 	    ProcessHistory("","","","!$1 <removed>\n");
 	    next;
 	}
+	# filter ssl secret
+	if (/^(crypto-ssl certificate generate secret_data)/ &&
+	    $filter_pwds >= 1) {
+	    ProcessHistory("","","","!$1 <removed>\n");
+	    next;
+	}
 
 	# reorder listing of ports in a vlan
 	if (/^ (?:un)?tagged ethe/) {
@@ -400,7 +409,8 @@ sub DoNothing {print STDOUT;}
 	{'show chassis'		=> 'ShowChassis'},
 	{'show module'		=> 'ShowModule'},
 	{'show flash'		=> 'ShowFlash'},
-	{'write term'		=> 'WriteTerm'}
+	{'write term'		=> 'WriteTerm'},
+	{'show running-config'	=> 'WriteTerm'},
 );
 # Use an array to preserve the order of the commands and a hash for mapping
 # commands to the subroutine and track commands that have been completed.

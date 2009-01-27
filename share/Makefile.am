@@ -1,9 +1,9 @@
 ## Process this file with automake to produce Makefile.in
 ## A Makefile.in is supplied, in case you do not have automake.
 
-## $Id$
+## $Id: Makefile.am,v 1.9 2008/03/06 07:49:59 heas Exp $
 ##
-## Copyright (c) 1997-2007 by Terrapin Communications, Inc.
+## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -53,7 +53,7 @@ dist_pkgdata_SCRIPTS=getipacctg
 dist_pkgdata_DATA=README.misc cisco-load.exp cisco-reload.exp \
 	index.html lgnotes.html
 
-EXTRA_DIST = rtrfilter.in downreport.in
+EXTRA_DIST = rancid.spec rtrfilter.in downreport.in
 
 CLEANFILES= downreport
 

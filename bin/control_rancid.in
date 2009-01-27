@@ -1,9 +1,9 @@
 #! /bin/sh
 ##
-## $Id$
+## $Id: control_rancid.in,v 1.85 2008/04/24 19:07:05 heas Exp $
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) 1997-2007 by Terrapin Communications, Inc.
+## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -419,8 +419,8 @@ do
 done
 echo
 
-# Make sure that no empty configs are accepted.  Those that are non-empty
-# are renamed from device_name.new -> device_name.
+# Make sure that no empty/truncated configs are accepted.  The remainder are
+# renamed from device_name.new -> device_name.
 for router in `cat $devlistfile`
 do
     OFS=$IFS
@@ -433,9 +433,19 @@ do
     then
 	rm -f $router.new
     else
-	mv $router.new $router
-	if [ $? -ne 0 ]; then
-	    echo "Error: could not rename $router.new to $router"
+	lines=`awk '{if (/^([-*!;#]|\/\*)/) { next; } lines++; \
+		if (lines > 10) { print "1"; exit;}} \
+		END { if (lines < 10) {print "0";}}' $router.new`
+
+	if [ ! $lines ]
+	then
+	    rm -f $router.new
+	else
+	    mv $router.new $router
+	    if [ $? -ne 0 ]; then
+		echo "Error: could not rename $router.new to $router"
+		rm -f $router.new
+	    fi
 	fi
     fi
 done

@@ -1,9 +1,9 @@
 #! @PERLV_PATH@
 ##
-## $Id$
+## $Id: nsrancid.in,v 1.24 2008/11/12 05:12:42 heas Exp $
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) 1997-2007 by Terrapin Communications, Inc.
+## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -66,8 +66,6 @@ my($aclsort) = ("ipsort");		# ACL sorting mode
 my($filter_commstr);			# SNMP community string filtering
 my($filter_pwds);			# password filtering mode
 
-@temp1 = split (/\./,$host);
-$prompt = "$temp1[0]#";
 $prompt = "netscaler#";
 
 # This routine is used to print out the router configuration
@@ -170,7 +168,7 @@ sub sortbyipaddr {
     &ipaddrval($a) <=> &ipaddrval($b);
 }
 
-# This routine parses "show config"
+# This routine parses "show ns ns.conf"
 sub ShowConfig {
     print STDERR "    In ShowConfig: $_" if ($debug);
 
@@ -199,23 +197,6 @@ sub ShowConfig {
     return(0);
 }
 
-# This routine parses "get log setting"
-sub GetLogSet {
-    print STDERR "    In GetLogSet: $_" if ($debug);
-
-    while (<INPUT>) {
-	tr/\015//d;
-	last if (/^$prompt/);
-	next if (/^(\s*|\s*$cmd\s*)$/);
-	next if (/^Reading configuration information/);
-	next if (/^Can\'t find object or class named \"\-all\"\s*$/);
-	return(1) if /(invalid command name)/;
-
-	ProcessHistory("","","","$_");
-    }
-    return(0);
-}
-
 # This routine parses single command's that return no required info
 sub RunCommand {
     print STDERR "    In RunCommand: $_" if ($debug);
@@ -233,8 +214,7 @@ sub DoNothing {print STDOUT;}
 
 # Main
 @commandtable = (
-	{'cat /etc/ns.conf'	=> 'ShowConfig'},
-	{'get log setting'	=> 'GetLogSet'}
+	{'show ns ns.conf'	=> 'ShowConfig'},
 );
 # Use an array to preserve the order of the commands and a hash for mapping
 # commands to the subroutine and track commands that have been completed.
@@ -297,26 +277,14 @@ if ($ENV{"FILTER_PWDS"} =~ /no/i) {
 ProcessHistory("","","","!RANCID-CONTENT-TYPE: netscaler\n!\n");
 TOP: while(<INPUT>) {
     tr/\015//d;
-#print STDOUT " --IN--$_";
-  #  if ( (/exit/) || $found_end ) {
-#	$clean_run=1;
-#print STDOUT "\n\nhere11\n";
-#last;
-#    }
-
-  # if ( (/netscaler#/) || $found_end ) {
-#print STDOUT "\n\nhere1\n";
-#	$clean_run=1;
-#	last;
-#    }
 
     if (/^Error:/) {
 	print STDOUT ("$host nslogin error: $_");
 	print STDERR ("$host nslogin error: $_") if ($debug);
-	$clean_run=0;
+	$clean_run = 0;
 	last;
     }
-    while (/#\s*($cmds_regexp)\s*$/) {
+    while (/$prompt\s*($cmds_regexp)\s*$/) {
 	$cmd = $1;
 	print STDERR ("HIT COMMAND:$_") if ($debug);
 	if (! defined($commands{$cmd})) {

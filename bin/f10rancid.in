@@ -1,9 +1,9 @@
 #! @PERLV_PATH@
 ##
-## $Id$
+## $Id: f10rancid.in,v 1.39 2008/11/12 01:36:36 heas Exp $
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) 1997-2007 by Terrapin Communications, Inc.
+## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -39,7 +39,7 @@
 ## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 # This version of rancid tries to deal with Force10s.
 #
 #  RANCID - Really Awesome New Cisco confIg Differ
@@ -176,34 +176,34 @@ sub ShowVersion {
 	return(-1) if (/command authorization failed/i);
 
 	/ Type: / && chop && chop &&
-	    ProcessHistory("COMMENTS","keysort","A1","!$_\n");
+	    ProcessHistory("COMMENTS","keysort","A1", "!$_\n");
 
 	/^.* Version.*$/ &&
-	    ProcessHistory("COMMENTS","keysort","F1","!Image: $_") && next;
+	    ProcessHistory("COMMENTS","keysort","F1", "!Image: $_") && next;
 
 	/^Build .*$/ &&
-	    ProcessHistory("COMMENTS","keysort","F1","!Image: $_") && next;
+	    ProcessHistory("COMMENTS","keysort","F1", "!Image: $_") && next;
 
 	/^System image file is "([^\"]*)"$/ &&
-	    ProcessHistory("COMMENTS","keysort","F5","!Image: $1\n") && next;
+	    ProcessHistory("COMMENTS","keysort","F5", "!Image: $1\n") && next;
 
 	if (/^(.*\s+Processor)( \d)?:(.*) with (\d+[kK]?) bytes/) {
 	    my($cpu) = "$1$2:$3";
 	    my($mem) = int($4 / (1024 * 1024));
 	    my($device) = "Force10";
 	    ProcessHistory("COMMENTS","keysort","B1",
-		"!Memory: $1$2: $mem" . "M\n");
+			   "!Memory: $1$2: $mem" . "M\n");
 	    ProcessHistory("COMMENTS","keysort","A3","!CPU: $cpu\n");
 	    next;
 	}
 
 	# E-Series and C-Series use NVRAM
 	/^(\d+[kK]) bytes of non-volatile/ &&
-	    ProcessHistory("COMMENTS","keysort","B3","!Memory: NVRAM $1\n") &&
+	    ProcessHistory("COMMENTS","keysort","B3", "!Memory: NVRAM $1\n") &&
 	    next;
-        # S-Series uses boot flash
+	# S-Series uses boot flash
 	/^(\d+[mM]) bytes of .oot..lash/ &&
-	    ProcessHistory("COMMENTS","keysort","B3","!Memory: Flash $1\n") &&
+	    ProcessHistory("COMMENTS","keysort","B3", "!Memory: Flash $1\n") &&
 	    next;
     }
     return(0);
@@ -217,7 +217,8 @@ sub ShowBoot {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
-	return(1) if /(Invalid input detected|Type help or )/;
+	return(1) if /(Invalid input|Type help or )/;
+	return(1) if /( *\^$)/;
 	return(-1) if (/command authorization failed/i);
 	
 	ProcessHistory("COMMENTS","keysort","H0","!Boot Variables: $_");
@@ -234,7 +235,8 @@ sub ShowChassis {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
-	return(1) if /(Invalid input detected|Type help or )/;
+	return(1) if /(Invalid input|Type help or )/;
+	return(1) if /( *\^$)/;
 	return(-1) if (/command authorization failed/i);
 
 	/-----------------------------/ && next;
@@ -257,7 +259,7 @@ sub ShowChassis {
 	s/ (\d.*)<.*/$1/;
 	# C300 fan speed
 	s/FanNumber    Speed    Status/FanNumber    Status/;
-	s/(.*\d).*\d\d\d\d(.*)/$1 $2/;
+	s/(          \d) *\d\d\d\d(.*)/$1 $2/;
 	ProcessHistory("COMMENTS","keysort","CHASSIS","!Chassis: $_");
     }
     ProcessHistory("COMMENTS","keysort","CHASSIS","!\n");
@@ -276,7 +278,7 @@ sub DirSlotN {
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	# return(1) if ($type !~ /^(12[40]|7|36)/);
 	return(1) if /^\s*\^\s*$/;
-	return(1) if /(Invalid input detected|Type help or )/;
+	return(1) if /(Invalid input|Type help or )/;
 	return(1) if /No such device/i;
 	return(1) if /\% ?Error: No such file or directory/;
 
@@ -312,7 +314,7 @@ sub ShowInventory {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
-	return(1) if /(Invalid input detected|Type help or )/;
+	return(1) if /(Invalid input|Type help or )/;
 	return(-1) if (/command authorization failed/i);
 
 	/-----------------------------/ && next;
@@ -330,7 +332,7 @@ sub ShowVLAN {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
-	return(1) if /(Invalid input detected|Type help or )/;
+	return(1) if /(Invalid input|Type help or )/;
 	return(-1) if (/command authorization failed/i);
 	ProcessHistory("COMMENTS","keysort","VLAN","!VLAN: $_");
     }
@@ -363,6 +365,10 @@ sub WriteTerm {
 	    ProcessHistory("ENABLE","","","!$1 <removed>\n");
 	    next;
 	}
+	if (/^(enable restricted) / && $filter_pwds >= 2) {
+	    ProcessHistory("ENABLE","","","!$1 <removed>\n");
+	    next;
+	}
 	if (/^username (\S+)(\s.*)? secret /) {
 	    if ($filter_pwds >= 2) {
 		ProcessHistory("USER","keysort","$1","!username $1$2 secret <removed>\n");
@@ -390,6 +396,9 @@ sub WriteTerm {
 	    next;
 	}
 	if (/^(ip ftp password) / && $filter_pwds >= 1) {
+	    ProcessHistory("","","","!$1 <removed>\n"); next;
+	}
+	if (/^(ftp-server username.*password) / && $filter_pwds >= 1) {
 	    ProcessHistory("","","","!$1 <removed>\n"); next;
 	}
 	if (/^( ip ospf authentication-key) / && $filter_pwds >= 1) {
@@ -496,7 +505,7 @@ sub WriteTerm {
 	# catch anything that wasnt matched above.
 	ProcessHistory("","","","$_");
 	# end of config.  the ": " game is for the PIX
-	if (/^end$/) {
+	if (/^end *$/) {
 	    $found_end = 1;
 	    return(0);
 	}
@@ -514,6 +523,7 @@ sub DoNothing {print STDOUT;}
 	{'dir flash:'			=> 'DirSlotN'},
 	{'dir slot0:'			=> 'DirSlotN'},
 	{'show chassis'			=> 'ShowChassis'},
+	{'show system'			=> 'ShowChassis'},
 	{'show inventory'		=> 'ShowInventory'},
 	{'show vlan'			=> 'ShowVLAN'},
 	{'show running'			=> 'WriteTerm'}

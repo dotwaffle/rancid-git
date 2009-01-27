@@ -1,9 +1,9 @@
 ## Process this file with automake to produce Makefile.in
 ## A Makefile.in is supplied, in case you do not have automake.
 
-## $Id$
+## $Id: Makefile.am,v 1.45 2008/11/05 09:05:50 heas Exp $
 ##
-## Copyright (c) 1997-2007 by Terrapin Communications, Inc.
+## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -49,12 +49,13 @@
 AUTOMAKE_OPTIONS=foreign
 
 bin_PROGRAMS = hpuifilter
-bin_SCRIPTS = agmrancid alogin arancid blogin brancid cat5rancid clogin \
-	control_rancid cssrancid elogin erancid f10rancid \
+bin_SCRIPTS = agmrancid alogin arancid avologin avorancid blogin brancid \
+	cat5rancid clogin control_rancid cssrancid elogin erancid f10rancid \
 	flogin fnrancid francid hlogin hrancid htlogin htrancid \
-	jerancid jlogin jrancid mrancid nlogin nrancid nslogin \
-	nsrancid par prancid rancid-fe rancid rivlogin rivrancid \
-	rrancid srancid tntlogin tntrancid xrancid zrancid
+	jerancid jlogin jrancid mrancid mrvlogin mrvrancid nlogin nrancid \
+	nslogin nsrancid nxrancid par prancid rancid-fe rancid rivlogin \
+	rivrancid rrancid srancid tlogin tntlogin tntrancid trancid xrancid \
+	zrancid
 
 bin_SCRIPTS += lg.cgi lgform.cgi rancid-cvs rancid-run
 EXTRA_DIST= lg.cgi.in lgform.cgi.in rancid-cvs.in rancid-run.in

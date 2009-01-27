@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 ## A Makefile.in is supplied, in case you do not have automake.
 
-## $Id$
+## $Id: Makefile.am,v 1.52 2008/09/11 03:55:18 asp Exp $
 ##
 ## Copyright (c) 1997-2007 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -55,11 +55,11 @@ man_nogen_MANS = agmrancid.1 alogin.1 arancid.1 avologin.1 avorancid.1 \
 		control_rancid.1 cssrancid.1 elogin.1 erancid.1 f10rancid.1 \
 		flogin.1 fnrancid.1 francid.1 hlogin.1 hrancid.1 \
 		htlogin.1 htrancid.1 jerancid.1 jlogin.1 jrancid.1 \
-		mrancid.1 nlogin.1 nrancid.1 nslogin.1 nsrancid.1 \
+		mrancid.1 nlogin.1 nrancid.1 nslogin.1 nsrancid.1 nxrancid.1 \
 		par.1 prancid.1 rancid-cvs.1 rancid-run.1 rancid.1 \
 		rancid_intro.1 rivlogin.1 rivrancid.1 router.db.5 \
-		rrancid.1 srancid.1 tntlogin.1 tntrancid.1 xrancid.1 \
-		zrancid.1
+		rrancid.1 srancid.1 tlogin.1 tntlogin.1 tntrancid.1 trancid.1 \
+		xrancid.1 zrancid.1
 
 man_MANS = $(man_nogen_MANS) $(man_gen_MANS)
 

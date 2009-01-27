@@ -1,9 +1,9 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id$
+## $Id: nslogin.in,v 1.36 2008/11/12 05:42:19 heas Exp $
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) 1997-2007 by Terrapin Communications, Inc.
+## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -78,8 +78,6 @@ set avautoenable 0
 # tracks if we receive them on the command line.
 set do_passwd 1
 set do_enapasswd 1
-# attempt at platform switching.
-set platform ""
 
 # Find the user in the ENV, or use the unix userid.
 if {[ info exists env(CISCO_USER) ]} {
@@ -317,7 +315,7 @@ proc source_password_file { password_file } {
 # Log into the router.
 # returns: 0 on success, 1 on failure
 proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
-    global spawn_id in_proc do_command do_script platform
+    global spawn_id in_proc do_command do_script
     global prompt u_prompt p_prompt e_prompt sshcmd
     set in_proc 1
     set uprompt_seen 0
@@ -426,7 +424,7 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 	-re "(@\[^\r\n]+ )?$p_prompt"	{
 					  # ssh pwd prompt
 					  sleep 1
-					  send "$userpswd\r"
+					  send -- "$userpswd\r"
 					  exp_continue
 					}
 
@@ -446,83 +444,52 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 # Run commands given on the command line.
 
 proc run_commands { prompt command } {
-    global in_proc platform
+    global in_proc
     set in_proc 1
 
     regsub -all "\[)(]" $prompt {\\&} reprompt
     # this is the only way i see to get rid of more prompts in o/p..grrrrr
     log_user 0
-    # Is this a multi-command?
-    if [ string match "*\;*" "$command" ] {
-        set commands [split $command \;]
-        set num_commands [llength $commands]
-        # the pager can not be turned off on the PIX, so we have to look
-        # for the "More" prompt.  the extreme is equally obnoxious, with a
-        # global switch in the config.
-        for {set i 0} {$i < $num_commands} { incr i} {
-            send "[subst -nocommands [lindex $commands $i]]\r"
-            expect {
-                -re "\b+"                       { exp_continue }
-                -re "^\[^\n\r *]*$reprompt"     { send_user -- "$expect_out(buffer)"
-                                                }
-                -re "^\[^\n\r]*$reprompt."      { send_user -- "$expect_out(buffer)"
-                                                  exp_continue }
-                -re "\[\n\r]+"                  { send_user -- "$expect_out(buffer)"
-                                                  exp_continue }
-                -re "\[^\r\n]*Press <SPACE> to cont\[^\r\n]*"   {
-                                                  send " "
-                                                  # bloody ^[[2K after " "
-                                                  expect {
-                                                        -re "^\[^\r\n]*\r" {}
-                                                        }
-                                                  exp_continue
-                                                }
-                -re "^ --More--\[^\n\r]*"       {
-                                                  send " "
-                                                  exp_continue }
-                -re "^<-+ More -+>\[^\n\r]*"    {
-                                                  send_user -- "$expect_out(buffer)"
-                                                  send " "
-                                                  exp_continue }
-            }
-        }
-    } else {
-        # the pager can not be turned off on the PIX, so we have to look
-        # for the "More" prompt.  the extreme is equally obnoxious, with a
-        # global switch in the config.
-        send "[subst -nocommands $command]\r"
-        expect {
-                -re "\b+"                       { exp_continue }
-                -re "^\[^\n\r *]*$reprompt"     { send_user -- "$expect_out(buffer)"
-                                                }
-                -re "^\[^\n\r]*$reprompt."      { send_user -- "$expect_out(buffer)"
-                                                  exp_continue }
-                -re "\[\n\r]+"                  { send_user -- "$expect_out(buffer)"
-                                                  exp_continue }
-                -re "\[^\r\n]*Press <SPACE> to cont\[^\r\n]*"   {
-                                                  send " "
-                                                  # bloody ^[[2K after " "
-                                                  expect {
-                                                        -re "^\[^\r\n]*\r" {}
-                                                        }
-                                                  exp_continue
-                                                }
-                -re "^ --More--\[^\n\r]*"       {
-                                                  send " "
-                                                  exp_continue }
-                -re "^<-+ More -+>\[^\n\r]*"    {
-                                                  send_user -- "$expect_out(buffer)"
-                                                  send " "
-                                                  exp_continue }
-        }
+
+    set commands [split $command \;]
+    set num_commands [llength $commands]
+    # the pager can not be turned off on the PIX, so we have to look
+    # for the "More" prompt.  the extreme is equally obnoxious, with a
+    # global switch in the config.
+    for {set i 0} {$i < $num_commands} { incr i} {
+	send -- "[subst -nocommands [lindex $commands $i]]\r"
+	expect {
+	    -re "\b+"				{ exp_continue }
+	    -re "^\[^\n\r *]*$reprompt"		{ send_user -- "$expect_out(buffer)"
+						}
+	    -re "^\[^\n\r]*$reprompt."		{ send_user -- "$expect_out(buffer)"
+						  exp_continue
+						}
+	    -re "\[\n\r]+"			{ send_user -- "$expect_out(buffer)"
+						  exp_continue
+						}
+	    -re "\[^\r\n]*Press <SPACE> to cont\[^\r\n]*" {
+						  send " "
+						  # bloody ^[[2K after " "
+						  expect {
+						    -re "^\[^\r\n]*\r" {}
+						  }
+						  exp_continue
+						}
+	    -re "^ --More--\[^\n\r]*"		{
+						  send " "
+						  exp_continue
+						}
+	    -re "^<-+ More -+>\[^\n\r]*"	{
+						  send_user -- "$expect_out(buffer)"
+						  send " "
+						  exp_continue
+						}
+	}
     }
     log_user 1
 
-    if { [ string compare "extreme" "$platform" ] } {
-        send "exit\r"
-    } else {
-        send "quit\r"
-    }
+    send "quit\r"
     expect {
         "Do you wish to save your configuration changes" {
                                                   send "n\r"
@@ -651,17 +618,8 @@ foreach router [lrange $argv $i end] {
     send "\r"
     expect {
 	-re "\[\r\n]+"		{ exp_continue; }
-	-re "^(.+:)1 $prompt"	{ # stoopid extreme cmd-line numbers and
-				  # prompt based on state of config changes
-				  set junk $expect_out(1,string)
-				  regsub -all "^\\\* " $expect_out(1,string) {} junk
-				  set prompt ".? ?$junk\[0-9]+ $prompt";
-				  set platform "extreme"
-				}
 	-re "^.+$prompt"	{ set junk $expect_out(0,string);
 				  regsub -all "\[\]\[]" $junk {\\&} prompt; }
-	-re "^.+> \\\(enable\\\)"	{ set junk $expect_out(0,string);
-					  regsub -all "\[\]\[]" $junk {\\&} prompt; }
     }
 
     if { $do_command } {

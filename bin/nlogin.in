@@ -1,9 +1,9 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id$
+## $Id: nlogin.in,v 1.43 2008/11/12 00:59:06 heas Exp $
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) 1997-2007 by Terrapin Communications, Inc.
+## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -379,22 +379,22 @@ cyphertype } {
 	" ### Login failed" {send_user "\nError: Check your passwd for $firewall\n"; return 1 }
 	-re "(login:)"			{
 					  sleep 1;
-					  send "$user\r"
+					  send -- "$user\r"
 					  set uprompt_seen 1
 					  exp_continue
 					}
 	-re "@\[^\r\n]+\[Pp]assword:"	{
 					  # ssh pwd prompt
 					  sleep 1
-					  send "$userpswd\r"
+					  send -- "$userpswd\r"
 					  exp_continue
 					}
 	"\[Pp]assword:"			{
 					  sleep 1;
 					  if {$uprompt_seen == 1} {
-						send "$userpswd\r"
+						send -- "$userpswd\r"
 					  } else {
-						send "$passwd\r"
+						send -- "$passwd\r"
 					  }
 					  exp_continue
 					}
@@ -413,27 +413,14 @@ proc run_commands { prompt command } {
     send "set console page 0\r"
     expect -re $prompt {}
 
-    # Is this a multi-command?
-    if [ string match "*\;*" "$command" ] {
-	set commands [split $command \;]
-	set num_commands [llength $commands]
-
-	for {set i 0} {$i < $num_commands} { incr i} {
-	    send "[subst [lindex $commands $i]]\r"
-	    expect {
-		-re "\[\n\r]+"			{ exp_continue }
-                -re "$prompt"			{}
-		-gl "--- more ---"		{ send " "
-						  exp_continue
-						}
-            }
-	}
-    } else {
-	send "[subst $command]\r"
+    set commands [split $command \;]
+    set num_commands [llength $commands]
+    for {set i 0} {$i < $num_commands} { incr i} {
+	send -- "[subst [lindex $commands $i]]\r"
 	expect {
-		-re "\[\n\r]+"			{ exp_continue }
-                -re "$prompt"			{}
-		-gl "--- more ---"		{ send " "
+	    -re "\[\n\r]+"			{ exp_continue }
+            -re "$prompt"			{}
+	    -gl "--- more ---"			{ send " "
 						  exp_continue
 						}
 	}

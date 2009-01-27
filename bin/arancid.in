@@ -1,9 +1,9 @@
 #! @PERLV_PATH@
 ##
-## $Id$
+## $Id: arancid.in,v 1.32 2008/02/08 22:25:08 heas Exp $
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) 1997-2007 by Terrapin Communications, Inc.
+## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -178,11 +178,14 @@ sub ShowVersion {
 	/^(ACEdirector.*|ACEswitch.*|Alteon.*)/i &&
 	  ProcessHistory("COMMENTS","keysort","A1", "\/\*Model: $1\n") && next;
 	/^Software Version\s+(.*?)\s\((.*)\)/i &&
-	  ProcessHistory("COMMENTS","keysort","B1", "\/\*Image: Software: $1 ($2)\n") && next;
+	  ProcessHistory("COMMENTS","keysort","B1",
+			 "\/\*Image: Software: $1 ($2)\n") && next;
 	/^Hardware Part No:\s+(.*?)\s+/i &&
-	  ProcessHistory("COMMENTS","keysort","A2", "\/\*Hardware part no: $1\n") && next;
+	  ProcessHistory("COMMENTS","keysort","A2",
+			 "\/\*Hardware part no: $1\n") && next;
 	/^MAC address:\s+([0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2})/i &&
-	  ProcessHistory("COMMENTS","keysort","C1", "\/\*Base MAC address: $1\n") && next;
+	  ProcessHistory("COMMENTS","keysort","C1",
+			 "\/\*Base MAC address: $1\n") && next;
     }
     return(0);
 }
@@ -208,11 +211,11 @@ sub WriteTerm {
 	next if (/^\/\* Configuration dump taken/i);
 	next if (/^\/\* Version.*Base MAC.*/i);
 
-		if (/^\/?script end/) {
-		$found_end = 1;
-		ProcessHistory("","","","$_\n");
-		return(1);
-		}
+	if (/^\/?script end/) {
+	    $found_end = 1;
+	    ProcessHistory("","","","$_\n");
+	    return(1);
+	}
 
 	ProcessHistory("","","","$_\n");
     }
@@ -232,8 +235,8 @@ sub DoNothing {print STDOUT;}
 @commands = map(keys(%$_), @commandtable);
 %commands = map(%$_, @commandtable);
 
-$cisco_cmds=join(";",@commands);
-$cmds_regexp=join("|",@commands);
+$cisco_cmds = join(";",@commands);
+$cmds_regexp = join("|",@commands);
 
 if (length($host) == 0) {
     if ($file) {
@@ -289,7 +292,7 @@ ProcessHistory("COMMENTS","keysort","F0","\/\*\n");
 TOP: while(<INPUT>) {
     tr/\015//d;
     if (/^>>.*$prompt exit/) {
-	$clean_run=1;
+	$clean_run = 1;
 	last;
     }
 

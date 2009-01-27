@@ -1,9 +1,9 @@
 #! @PERLV_PATH@
 ##
-## $Id$
+## $Id: rancid.in,v 1.252 2008/11/29 23:10:58 heas Exp $
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) 1997-2007 by Terrapin Communications, Inc.
+## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -39,7 +39,7 @@
 ## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 #  RANCID - Really Awesome New Cisco confIg Differ
 #
 # usage: rancid [-dV] [-l] [-f filename | hostname]
@@ -64,6 +64,7 @@ $timeo = 90;				# clogin timeout in seconds
 
 my(@commandtable, %commands, @commands);# command lists
 my($aclsort) = ("ipsort");		# ACL sorting mode
+my($config_register);			# configuration register value
 my($filter_commstr);			# SNMP community string filtering
 my($filter_pwds);			# password filtering mode
 
@@ -174,7 +175,7 @@ sub ShowVersion {
 
     while (<INPUT>) {
 	tr/\015//d;
-	if (/^$prompt/) { $found_version=1; last};
+	if (/^$prompt/) { $found_version = 1; last};
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
@@ -192,7 +193,12 @@ sub ShowVersion {
 	    next;
 	}
 	if (/cisco ios xr /i) { $ios = "XR"; }
-	if (/^Application and Content Networking Software/) { $type="CE"; }
+	if (/cisco ios .* IOS-XE/i) { $ios = "XE"; }
+	if (/^Application and Content Networking Software/) { $type = "CE"; }
+	# treat the ACE like the Content Engines for matching endofconfig
+	if (/^Cisco Application Control Software/) { $type = "CE"; }
+	if (/^Cisco Storage Area Networking Operating System/) { $type = "SAN";}
+	if (/^Cisco Nexus Operating System/) { $type = "NXOS";}
 	/^Application and Content Networking Software Release /i &&
 	    ProcessHistory("COMMENTS","keysort","F1", "!Image: $_") && next;
 	/^Cisco Secure PIX /i &&
@@ -375,7 +381,7 @@ sub ShowVersion {
 	}
 	if (/(\S+) Silicon\s*Switch Processor/) {
 	    if (!defined($C0)) {
-		$C0=1; ProcessHistory("COMMENTS","keysort","C0","!\n");
+		$C0 = 1; ProcessHistory("COMMENTS","keysort","C0","!\n");
 	    }
 	    ProcessHistory("COMMENTS","keysort","C2","!SSP: $1\n");
 	    $ssp = 1;
@@ -402,19 +408,24 @@ sub ShowVersion {
 		"!Memory: pcmcia $2 $3$4 $1\n");
 	    next;
 	}
+	if (/^(\d+[kK]) bytes of (slot|disk)(\d)/i) {
+	    ProcessHistory("COMMENTS","keysort","B7",
+		"!Memory: pcmcia $2$3 $1\n");
+	    next;
+	}
 	if (/^WARNING/) {
 	    if (!defined($I0)) {
-		$I0=1;
+		$I0 = 1;
 		ProcessHistory("COMMENTS","keysort","I0","!\n");
 	    }
 	    ProcessHistory("COMMENTS","keysort","I1","! $_");
 	}
 	if (/^Configuration register is (.*)$/) {
-	    $config_register=$1;
+	    $config_register = $1;
 	    next;
 	}
 	if (/^Configuration register on node \S+ is (.*)$/) {
-	    $config_register=$1 if $config_register eq "";
+	    $config_register = $1 if (length($config_register) < 1);
 	    next;
 	}
     }
@@ -517,7 +528,7 @@ sub ShowEnv {
 
     while (<INPUT>) {
 	tr/\015//d;
-	if (/^$prompt/) { $found_env=1; last};
+	if (/^$prompt/) { $found_env = 1; last};
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	#return(1) if ($type !~ /^7/);
 	return(1) if /Line has invalid autocommand /;
@@ -531,12 +542,12 @@ sub ShowEnv {
 	}
 
 	if (!defined($E0)) {
-	    $E0=1;
+	    $E0 = 1;
 	    ProcessHistory("COMMENTS","keysort","E0","!\n");
 	}
 	if (/^Arbiter type (\d), backplane type (\S+)/) {
 	    if (!defined($C0)) {
-		$C0=1; ProcessHistory("COMMENTS","keysort","C0","!\n");
+		$C0 = 1; ProcessHistory("COMMENTS","keysort","C0","!\n");
 	    }
 	    ProcessHistory("COMMENTS","keysort","C1",
 		"!Enviromental Arbiter Type: $1\n");
@@ -656,7 +667,7 @@ sub ShowBoot {
 
 	next if /CONFGEN variable/;
 	if (!defined($H0)) {
-	    $H0=1; ProcessHistory("COMMENTS","keysort","H0","!\n");
+	    $H0 = 1; ProcessHistory("COMMENTS","keysort","H0","!\n");
 	}
 	if ($type !~ /^(12[04]|7)/) {
 	    if ($type !~ /^(29|35)00/) {
@@ -718,13 +729,24 @@ sub DirSlotN {
 	return(1) if /(No such device|Error Sending Request)/i;
 	return(1) if /\%Error: No such file or directory/;
 	return(1) if /No space information available/;
+	# Corrupt flash
+	/\%Error calling getdents / &&
+	    ProcessHistory("FLASH","","","!Flash: $dev: $_") && next;
 	return(-1) if /\%Error calling/;
 	return(-1) if /(: device being squeezed|ATA_Status time out)/i; # busy
 	return(-1) if (/command authorization failed/i);
 	return(1) if /(Open device \S+ failed|Error opening \S+:)/;
-	if (/.*\((\d+) bytes free\)/ && $ios eq "XR") {
+	# filter frequently changing files from IOX bootflash
+	if ($dev =~ /bootflash/) {
+	    next if (/temp_cont\s*$/);
+	    next if (/uptime_cont\s*$/);
+	}
+	if (($ios eq "XR" || $ios eq "XE")  && /.*\((\d+) bytes free\)/) {
 	    my($tmp) = int($1 / (1024 * 1024));
 	    s/$1 bytes free/$tmp MB free/;
+	}
+	if ($ios eq "XE" && /^((\s+)?\d+\s+\S+)\s+\d+.*(tracelogs$)/) {
+	    $_ = "$1" . sprintf("%43s", "") . "$3\n";
 	}
 	# the pager can not be disabled per-session on the PIX
 	if (/^(<-+ More -+>)/) {
@@ -873,6 +895,7 @@ sub ShowDebug {
 	}
 
 	/^No matching debug flags set$/ && next;
+	/^No debug flags set$/ && next;
 	ProcessHistory("COMMENTS","keysort","J1","!DEBUG: $_");
 	$lines++;
     }
@@ -984,7 +1007,7 @@ sub ShowDiag {
 
     while (<INPUT>) {
 REDUX:	tr/\015//d;
-	if (/^$prompt/) { $found_diag=1; last};
+	if (/^$prompt/) { $found_diag = 1; last};
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	# return(1) if ($type !~ /^(12[40]|720|36|26)/);
 	return(1) if /Line has invalid autocommand /;
@@ -1061,7 +1084,7 @@ REDUX:	tr/\015//d;
 	    next;
 	}
 	if (/^c3700\s+(io-board|mid-plane)/i) {
-	    $slot=$1;
+	    $slot = $1;
 	    ProcessHistory("SLOT","","","!\n");
 	    ProcessHistory("SLOT","keysort","A","!Slot $slot: part $1\n");
 	    next;
@@ -1079,6 +1102,10 @@ REDUX:	tr/\015//d;
 	}
 	if (/\s+Packet Memory:\s+(\S+)/) {
 	    ProcessHistory("SLOT","keysort","AF","!Slot $slot/FRU: Packet Memory: $1\n");
+	    next;
+	}
+	if (/\s+Route Memory:\s+(\S+)/) {
+	    ProcessHistory("SLOT","keysort","AF","!Slot $slot/FRU: Route Memory: $1\n");
 	    next;
 	}
 	if (/^\s+PCA:\s+(.*)/) {
@@ -1495,6 +1522,7 @@ sub WriteTerm {
 	last if (/^$prompt/);
 	return(1) if /Line has invalid autocommand /;
 	return(1) if (/(Invalid input detected|Type help or )/i);
+	return(1) if /\%Error: No such file or directory/;
 	return(0) if ($found_end);		# Only do this routine once
 	return(-1) if (/command authorization failed/i);
 	# the pager can not be disabled per-session on the PIX
@@ -1502,21 +1530,21 @@ sub WriteTerm {
 	    my($len) = length($1);
 	    s/^$1\s{$len}//;
 	}
+	if (!$linecnt && defined($config_register)) {
+	    ProcessHistory("","","", "!\nconfig-register $config_register\n");
+	}
 
 	/Non-Volatile memory is in use/  && return(-1); # NvRAM is locked
 	$linecnt++;
 	$lineauto = 0 if (/^[^ ]/);
 	# skip the crap
-	if (/^(##+$|(Building|Current) configuration)/i) {
+	if (/^(##+|(building|current) configuration)/i) {
 	    while (<INPUT>) {
 		next if (/^Current configuration\s*:/i);
 		next if (/^:/);
 		next if (/^([%!].*|\s*)$/);
 		next if (/^ip add.*ipv4:/);	# band-aid for 3620 12.0S
 		last;
-	    }
-	    if (defined($config_register)) {
-		ProcessHistory("","","","!\nconfig-register $config_register\n");
 	    }
 	    tr/\015//d;
 	}
@@ -1552,7 +1580,8 @@ sub WriteTerm {
 	}
 	if (/^username (\S+)(\s.*)? secret /) {
 	    if ($filter_pwds >= 2) {
-		ProcessHistory("USER","keysort","$1","!username $1$2 secret <removed>\n");
+		ProcessHistory("USER","keysort","$1",
+			       "!username $1$2 secret <removed>\n");
 	    } else {
 		ProcessHistory("USER","keysort","$1","$_");
 	    }
@@ -1560,9 +1589,11 @@ sub WriteTerm {
 	}
 	if (/^username (\S+)(\s.*)? password ((\d) \S+|\S+)/) {
 	    if ($filter_pwds >= 2) {
-		ProcessHistory("USER","keysort","$1","!username $1$2 password <removed>\n");
+		ProcessHistory("USER","keysort","$1",
+			       "!username $1$2 password <removed>\n");
 	    } elsif ($filter_pwds >= 1 && $4 ne "5"){
-		ProcessHistory("USER","keysort","$1","!username $1$2 password <removed>\n");
+		ProcessHistory("USER","keysort","$1",
+			       "!username $1$2 password <removed>\n");
 	    } else {
 		ProcessHistory("USER","keysort","$1","$_");
 	    }
@@ -1581,7 +1612,8 @@ sub WriteTerm {
 	    ProcessHistory("","","","!$1<removed>\n");
 	    next;
 	}
-	if (/^( set session-key (in|out)bound esp \d+ (authenticator|cypher) )/ && $filter_pwds >= 1) {
+	if (/^( set session-key (in|out)bound esp \d+ (authenticator|cypher) )/
+	    && $filter_pwds >= 1) {
 	    ProcessHistory("","","","!$1<removed>\n");
 	    next;
 	}
@@ -1619,7 +1651,8 @@ sub WriteTerm {
 	    ProcessHistory("","","","!$1 <removed>\n"); next;
 	}
 	# this is also reversable, despite 'md5 encrypted' in the cmd
-	if (/^(  message-digest-key \d+ md5 (7|encrypted)) / && $filter_pwds >= 1) {
+	if (/^(  message-digest-key \d+ md5 (7|encrypted)) /
+	    && $filter_pwds >= 1) {
 	    ProcessHistory("","","","!$1 <removed>\n"); next;
 	}
 	if (/^((crypto )?isakmp key) \S+ / && $filter_pwds >= 1) {
@@ -1645,6 +1678,11 @@ sub WriteTerm {
 	    }
 	    next;
 	}
+	# ASA/PIX keys in more system:running-config
+	if (/^( pre-shared-key |failover key ).*/ && $filter_pwds >= 1) {
+	    ProcessHistory("","","","!$1 <removed> $'"); next;
+	}
+	#
 	if (/^( cable shared-secret )/ && $filter_pwds >= 1) {
 	    ProcessHistory("","","","!$1 <removed>\n");
 	    next;
@@ -1726,7 +1764,8 @@ sub WriteTerm {
 		    } elsif ($token =~ /^(informs?|traps?|(no)?auth)$/) {
 			$line .= " " . $token;
 		    } else {
-			$line = "!$line " . join(' ', ("<removed>", join(' ',@tokens)));
+			$line = "!$line " . join(' ', ("<removed>",
+						 join(' ',@tokens)));
 			last;
 		    }
 		}
@@ -1738,7 +1777,8 @@ sub WriteTerm {
 	}
 	if (/^(snmp-server community) (\S+)/) {
 	    if ($filter_commstr) {
-		ProcessHistory("SNMPSERVERCOMM","keysort","$_","!$1 <removed>$'") && next;
+		ProcessHistory("SNMPSERVERCOMM","keysort","$_",
+			       "!$1 <removed>$'") && next;
 	    } else {
 		ProcessHistory("SNMPSERVERCOMM","keysort","$_","$_") && next;
 	    }
@@ -1784,6 +1824,8 @@ sub WriteTerm {
 	    next;
 	}
 
+	/^Cryptochecksum:/ && next;
+
 	# catch anything that wasnt matched above.
 	ProcessHistory("","","","$_");
 	# end of config.  the ": " game is for the PIX
@@ -1793,9 +1835,9 @@ sub WriteTerm {
 	}
     }
     # The ContentEngine lacks a definitive "end of config" marker.  If we
-    # know that it is a CE and we have seen at least 5 lines of write term
-    # o/p, we can be reasonably sure that we got the config.
-    if ($type =~ /^CE$/ && $linecnt > 5) {
+    # know that it is a CE, SAN, or NXOS and we have seen at least 5 lines
+    # of write term output, we can be reasonably sure that we got the config.
+    if (($type == "CE" || $type == "SAN" || $type == "NXOS" ) && $linecnt > 5) {
 	$found_end = 1;
 	return(0);
     }
@@ -1866,6 +1908,7 @@ sub DoNothing {print STDOUT;}
 	{'show vlan'			=> 'ShowVLAN'},
 	{'show vlan-switch'		=> 'ShowVLAN'},
 	{'show debug'			=> 'ShowDebug'},
+	{'more system:running-config'	=> 'WriteTerm'},	# ASA/PIX
 	{'show running-config'		=> 'WriteTerm'},
 	{'write term'			=> 'WriteTerm'},
 );
@@ -1874,8 +1917,8 @@ sub DoNothing {print STDOUT;}
 @commands = map(keys(%$_), @commandtable);
 %commands = map(%$_, @commandtable);
 
-$cisco_cmds=join(";",@commands);
-$cmds_regexp=join("|",@commands);
+$cisco_cmds = join(";",@commands);
+$cmds_regexp = join("|",@commands);
 
 if (length($host) == 0) {
     if ($file) {
@@ -1934,13 +1977,13 @@ ProcessHistory("COMMENTS","keysort","G0","!\n");
 TOP: while(<INPUT>) {
     tr/\015//d;
     if (/[>#]\s?exit$/) {
-	$clean_run=1;
+	$clean_run = 1;
 	last;
     }
     if (/^Error:/) {
 	print STDOUT ("$host clogin error: $_");
 	print STDERR ("$host clogin error: $_") if ($debug);
-	$clean_run=0;
+	$clean_run = 0;
 	last;
     }
     while (/#\s*($cmds_regexp)\s*$/) {

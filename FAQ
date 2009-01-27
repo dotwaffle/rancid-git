@@ -67,7 +67,8 @@ A. This is the tty/pty handling of either your O/S or ZebOS.  Supposedly,
 Q. I am new to CVS, where can I find additional information?
 A. The manual page for CVS is quite complete, but can be be overwhelming even
    for someone familiar with RCS.  There are some excellent resources on the
-   web.  See http://www.loria.fr/~molli/cvs-index.html
+   web.  See http://en.wikipedia.org/wiki/Concurrent_Versions_System and
+   http://cvshome.org/.
 
 
 Q. Errors are showing up in the logs like:
@@ -141,7 +142,8 @@ A. CVS does not provide a way (AFAIK) to rename files or to rename or delete
 
    If one wanted to move a device to a different group and maintain the
    history, the same procedure would work, substituting the new group name
-   appropriately, of course.
+   appropriately and editing the router.db of both old and new groups, of
+   course.
 
    SVN provides a rename function; but we suggest that you use it's
    copy function instead, and leave the clean-up of the old name

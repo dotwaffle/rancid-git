@@ -1,9 +1,9 @@
 #! @PERLV_PATH@
 ##
-## $Id$
+## $Id: rancid-fe.in,v 1.55 2008/11/05 09:05:51 heas Exp $
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) 1997-2007 by Terrapin Communications, Inc.
+## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -51,17 +51,20 @@ require 5;
 $vendor =~ tr/[A-Z]/[a-z]/;
 
 %vendortable = (
+    'agm'		=> 'agmrancid',
     'alteon'		=> 'arancid',
     'avocent'		=> 'avorancid',
     'baynet'		=> 'brancid',
     'bigip'		=> 'f5rancid',
     'cat5'		=> 'cat5rancid',
     'cisco'		=> 'rancid',
+    'cisco-nx'		=> 'nxrancid',
     'css'		=> 'cssrancid',
     'enterasys'		=> 'rivrancid',
     'erx'		=> 'jerancid',
     'extreme'		=> 'xrancid',
     'ezt3'		=> 'erancid',
+    'f5'		=> 'f5rancid',
     'force10'		=> 'f10rancid',
     'fortigate'		=> 'fnrancid',
     'foundry'		=> 'francid',
@@ -69,11 +72,12 @@ $vendor =~ tr/[A-Z]/[a-z]/;
     'hp'		=> 'hrancid',
     'juniper'		=> 'jrancid',
     'mrtd'		=> 'mrancid',
+    'mrv'		=> 'mrvrancid',
+    'netopia'		=> 'trancid',
     'netscaler'		=> 'nsrancid',
     'netscreen'		=> 'nrancid',
     'procket'		=> 'prancid',
     'redback'		=> 'rrancid',
-    'riverhead'		=> 'agmrancid',
     'riverstone'	=> 'rivrancid',
     'smc'		=> 'srancid',
     'tnt'		=> 'tntrancid',

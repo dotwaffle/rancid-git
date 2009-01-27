@@ -1,9 +1,9 @@
 #! @PERLV_PATH@
 ##
-## $Id$
+## $Id: hrancid.in,v 1.38 2008/11/05 01:22:22 heas Exp $
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) 1997-2007 by Terrapin Communications, Inc.
+## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -65,6 +65,8 @@ my(@commandtable, %commands, @commands);# command lists
 my($aclsort) = ("ipsort");		# ACL sorting mode
 my($filter_commstr);			# SNMP community string filtering
 my($filter_pwds);			# password filtering mode
+
+my($systeminfo) = 0;			# show system-information
 
 # This routine is used to print out the router configuration
 sub ProcessHistory {
@@ -203,16 +205,21 @@ sub ShowFlash {
     return;
 }
 
-# This routine parses "show system-information"
+# This routine parses "show system-information" or "show system information"
 sub ShowSystem {
     print STDERR "    In ShowSystem: $_" if ($debug);
+
+    if ($systeminfo) {
+	$_ = <INPUT>;
+	return(0);
+    }
 
     while (<INPUT>) {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(-1) if (/command authorization failed/i);
-	return(-1) if /^(Invalid|Ambiguous) input:/i;
+	return(0) if /^(Invalid|Ambiguous) input:/i;
 
 	if (/memory\s+-\s+total\s+:\s+(\S+)/i) {
 	    my($mem) = $1;
@@ -229,6 +236,8 @@ sub ShowSystem {
 	/rom\s+version\s+:\s+(\S+)/i &&
 	    ProcessHistory("COMMENTS","keysort","C1",";Image: ROM $1\n");
     }
+    $systeminfo = 1;
+
     return(0);
 }
 
@@ -462,6 +471,7 @@ sub DoNothing {print STDOUT;}
 	{'show version'			=> 'ShowVersion'},
 	{'show flash'			=> 'ShowFlash'},
 	{'show system-information'	=> 'ShowSystem'},
+	{'show system information'	=> 'ShowSystem'},
 	{'show module'			=> 'ShowModule'},
 	{'show stack'			=> 'ShowStack'},
 	{'write term'			=> 'WriteTerm'}

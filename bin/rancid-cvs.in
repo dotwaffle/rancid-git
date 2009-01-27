@@ -1,9 +1,9 @@
 #! /bin/sh
 ##
-## $Id$
+## $Id: rancid-cvs.in,v 1.24 2008/05/22 19:40:30 heas Exp $
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) 1997-2007 by Terrapin Communications, Inc.
+## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -128,9 +128,9 @@ do
 	    cd $BASEDIR
 	    cvs checkout $GROUP
 	else
-	    svn import -m "$GROUP" . file://$CVSROOT/$GROUP
+	    svn import -m "$GROUP" . file:///$CVSROOT/$GROUP
 	    cd $BASEDIR
-	    svn checkout file://$CVSROOT/$GROUP $GROUP
+	    svn checkout file:///$CVSROOT/$GROUP $GROUP
 	fi
     fi
     cd $DIR

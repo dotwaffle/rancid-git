@@ -1,9 +1,9 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id$
+## $Id: jlogin.in,v 1.66 2008/11/12 00:59:05 heas Exp $
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) 1997-2007 by Terrapin Communications, Inc.
+## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -383,7 +383,7 @@ proc login { router user passwd cmethod cyphertype identfile} {
 	    -re "Enter passphrase.*: " {
 		# sleep briefly to allow time for stty -echo
 		sleep 1
-		send "$passphrase\r"
+		send -- "$passphrase\r"
 		exp_continue }
 	    -re "(Host key not found |The authenticity of host .* be established).*\(yes\/no\)\?" {
 		send "yes\r"
@@ -398,11 +398,11 @@ proc login { router user passwd cmethod cyphertype identfile} {
 		send_user "\nError: host key mismatch for $router.  Update the SSH known_hosts file accordingly.\n"
 		return 1 }
 	    -re "(Username|\[\r\n]login):"	{
-						  send "$user\r"
+						  send -- "$user\r"
 						  exp_continue
 	    					}
 	    "\[Pp]assword:"			{
-						  sleep 1; send "$passwd\r"
+						  sleep 1; send -- "$passwd\r"
 						  exp_continue
 						}
 	    -re "$prompt"		{ break; }
@@ -435,25 +435,14 @@ proc run_commands { prompt command } {
     send "set cli screen-length 0\r"
     expect -re $prompt	{}
 
-    # Is this a multi-command?
-    if [ string match "*\;*" "$command" ] {
-	set commands [split $command \;]
-	set num_commands [llength $commands]
-
-	for {set i 0} {$i < $num_commands} { incr i} {
-	    send "[lindex $commands $i]\r"
-	    expect {
-		-re "^\[^\n\r *]*$prompt $"	{}
-		-re "^\[^\n\r]*$prompt."	{ exp_continue }
-		-re "(\r\n|\n)"			{ exp_continue }
-            }
-	}
-    } else {
-	send "$command\r"
+    set commands [split $command \;]
+    set num_commands [llength $commands]
+    for {set i 0} {$i < $num_commands} { incr i} {
+	send "[lindex $commands $i]\r"
 	expect {
-		-re "^\[^\n\r *]*$prompt $"	{}
-		-re "^\[^\n\r]*$prompt."	{ exp_continue }
-		-re "(\r\n|\n)"			{ exp_continue }
+	    -re "^\[^\n\r *]*$prompt $"	{}
+	    -re "^\[^\n\r]*$prompt."	{ exp_continue }
+	    -re "(\r\n|\n)"			{ exp_continue }
 	}
     }
     send "quit\r"

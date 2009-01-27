@@ -1,7 +1,7 @@
 /*
- * $Id$
+ * $Id: hpuifilter.c,v 1.58 2008/11/26 17:18:00 heas Exp $
  *
- * Copyright (c) 1997-2007 by Terrapin Communications, Inc.
+ * Copyright (c) 1997-2008 by Terrapin Communications, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to and maintained by
@@ -630,7 +630,7 @@ reapchild(int sig)
             fprintf(stderr, "reap child %d\n", (int)pid);
 	if (pid == child) {
 	    child = 0;
-	    sigrx = 0;
+	    sigrx = 1;
 	    break;
 	}
     }
