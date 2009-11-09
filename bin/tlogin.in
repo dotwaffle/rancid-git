@@ -1,23 +1,44 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: tlogin.in,v 1.4 2008/11/12 00:59:06 heas Exp $
+## $Id: tlogin.in,v 1.8 2009/04/16 21:22:58 heas Exp $
 ##
-## Copyright (C) 1997-2008 by Terrapin Communications, Inc.
+## @PACKAGE@ @VERSION@
+## Copyright (c) 1997-2009 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
-## This software may be freely copied, modified and redistributed
-## without fee for non-commerical purposes provided that this license
-## remains intact and unmodified with any RANCID distribution.
+## This code is derived from software contributed to and maintained by
+## Terrapin Communications, Inc. by Henry Kilmer, John Heasley, Andrew Partan,
+## Pete Whiting, Austin Schutz, and Andrew Fort.
 ##
-## There is no warranty or other guarantee of fitness of this software.
-## It is provided solely "as is".  The author(s) disclaim(s) all
-## responsibility and liability with respect to this software's usage
-## or its effect upon hardware, computer systems, other software, or
-## anything else.
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted provided that the following conditions
+## are met:
+## 1. Redistributions of source code must retain the above copyright
+##    notice, this list of conditions and the following disclaimer.
+## 2. Redistributions in binary form must reproduce the above copyright
+##    notice, this list of conditions and the following disclaimer in the
+##    documentation and/or other materials provided with the distribution.
+## 3. All advertising materials mentioning features or use of this software
+##    must display the following acknowledgement:
+##        This product includes software developed by Terrapin Communications,
+##        Inc. and its contributors for RANCID.
+## 4. Neither the name of Terrapin Communications, Inc. nor the names of its
+##    contributors may be used to endorse or promote products derived from
+##    this software without specific prior written permission.
+## 5. It is requested that non-binding fixes and modifications be contributed
+##    back to Terrapin Communications, Inc.
 ##
-## Except where noted otherwise, rancid was written by and is maintained by
-## Henry Kilmer, John Heasley, Andrew Partan, Pete Whiting, and Austin Schutz.
-##
+## THIS SOFTWARE IS PROVIDED BY Terrapin Communications, INC. AND CONTRIBUTORS
+## ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+## TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+## PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COMPANY OR CONTRIBUTORS
+## BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+## CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+## SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+## INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+## POSSIBILITY OF SUCH DAMAGE.
 #
 # The login expect scripts were based on Erik Sherk's gwtn, by permission.
 #
@@ -26,11 +47,10 @@
 # Modified by Ed Ravin for Netopia.
 
 # Usage line
-set usage "Usage: $argv0 \[-autoenable\] \[-noenable\] \[-c command\] \
-\[-debug] \
+set usage "Usage: $argv0 \[-dSV\] \[-autoenable\] \[-noenable\] \[-c command\] \
 \[-Evar=x\] \[-e enable-password\] \[-f cloginrc-file\] \[-p user-password\] \
 \[-s script-file\] \[-t timeout\] \[-u username\] \
-\[-v vty-password\] \[-w enable-username\] \[-x command-file\] \
+\[-V\] \[-v vty-password\] \[-w enable-username\] \[-x command-file\] \
 \[-y ssh_cypher_type\] router \[router...\]\n"
 
 # env(CLOGIN) may contain:
@@ -79,39 +99,36 @@ for {set i 0} {$i < $argc} {incr i} {
     set arg [lindex $argv $i]
 
     switch  -glob -- $arg {
+	} -d {
+	    exp_internal 1
 	# Username
-	-u* -
-	-U* {
+	} -u* {
 	    if {! [  regexp .\[uU\](.+) $arg ignore user]} {
 		incr i
 		set username [ lindex $argv $i ]
 	    }
 	# VTY Password
-	} -p* -
-	-P* {
+	} -p* {
 	    if {! [  regexp .\[pP\](.+) $arg ignore userpasswd]} {
 		incr i
 		set userpasswd [ lindex $argv $i ]
 	    }
 	    set do_passwd 0
 	# VTY Password
-	} -v* -
-	-v* {
+	} -v* {
 	    if {! [  regexp .\[vV\](.+) $arg ignore passwd]} {
 		incr i
 		set passwd [ lindex $argv $i ]
 	    }
 	    set do_passwd 0
 	# Enable Username
-	} -w* -
-	-W* {
+	} -w* {
 	    if {! [  regexp .\[wW\](.+) $arg ignore enauser]} {
 		incr i
 		set enausername [ lindex $argv $i ]
 	    }
 	# Environment variable to pass to -s scripts
-	} -E*
-	{
+	} -E* {
 	    if {[ regexp .\[E\](.+)=(.+) $arg ignore varname varvalue]} {
 		set E$varname $varvalue
 	    } else {
@@ -119,24 +136,21 @@ for {set i 0} {$i < $argc} {incr i} {
 		exit 1
 	    }
 	# Enable Password
-	} -e*
-	{
+	} -e* {
 	    if {! [  regexp .\[e\](.+) $arg ignore enapasswd]} {
 		incr i
 		set enapasswd [ lindex $argv $i ]
 	    }
 	    set do_enapasswd 0
 	# Command to run.
-	} -c* -
-	-C* {
+	} -c* {
 	    if {! [  regexp .\[cC\](.+) $arg ignore command]} {
 		incr i
 		set command [ lindex $argv $i ]
 	    }
 	    set do_command 1
 	# Expect script to run.
-	} -s* -
-	-S* {
+	} -s* {
 	    if {! [  regexp .\[sS\](.+) $arg ignore sfile]} {
 		incr i
 		set sfile [ lindex $argv $i ]
@@ -146,30 +160,29 @@ for {set i 0} {$i < $argc} {incr i} {
 		exit 1
 	    }
 	    set do_script 1
+	# save config on exit
+	} -S* {
+	    set do_saveconfig 1
 	# 'ssh -c' cypher type
-	} -y* -
-	-Y* {
+	} -y* {
 	    if {! [  regexp .\[eE\](.+) $arg ignore cypher]} {
 		incr i
 		set cypher [ lindex $argv $i ]
 	    }
 	# alternate cloginrc file
-	} -f* -
-	-F* {
+	} -f* {
 	    if {! [ regexp .\[fF\](.+) $arg ignore password_file]} {
 		incr i
 		set password_file [ lindex $argv $i ]
 	    }
 	# Timeout
-	} -t* -
-	-T* {
+	} -t* {
 	    if {! [ regexp .\[tT\](.+) $arg ignore timeout]} {
 		incr i
 	        set timeout [ lindex $argv $i ]
 	    }
 	# Command file
-	} -x* -
-	-X {
+	} -x* {
 	    if {! [  regexp .\[xX\](.+) $arg ignore cmd_file]} {
 		incr i
 		set cmd_file [ lindex $argv $i ]
@@ -182,6 +195,10 @@ for {set i 0} {$i < $argc} {incr i} {
 	    close $cmd_fd
 	    set command [join [split $cmd_text \n] \;]
 	    set do_command 1
+	# Version string
+	} -V* {
+	    send_user "@PACKAGE@ @VERSION@\n"
+	    exit 0
 	# Do we enable?
 	} -noenable {
 	    set avenable 0
@@ -189,8 +206,6 @@ for {set i 0} {$i < $argc} {incr i} {
 	} -autoenable {
 	    set avautoenable 1
 	    set avenable 0
-	} -debug {
-		exp_internal 1
 	} -* {
 	    send_user "\nError: Unknown argument! $arg\n"
 	    send_user $usage
@@ -404,11 +419,11 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 	    send "yes\r"
 	    send_user "\nHost $router added to the list of known hosts.\n"
 	    exp_continue }
-	-re "HOST IDENTIFICATION HAS CHANGED.* \(yes\/no\)\?"   {
+	-re "HOST IDENTIFICATION HAS CHANGED.* \(yes\/no\)\?" {
 	    send "no\r"
 	    send_user "\nError: The host key for $router has changed.  Update the SSH known_hosts file accordingly.\n"
 	    return 1 }
-	-re "Offending key for .* \(yes\/no\)\?"   {
+	-re "Offending key for .* \(yes\/no\)\?" {
 	    send "no\r"
 	    send_user "\nError: host key mismatch for $router.  Update the SSH known_hosts file accordingly.\n"
 	    return 1 }

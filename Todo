@@ -1,3 +1,5 @@
+- make *login and login.top.in cmdline options common among all scripts
+- rivlogin is a mess
 - why does hlogin fail when the host key is not yet known?  eg:
   unix% ./hlogin procurve
   procurve

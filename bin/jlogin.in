@@ -1,9 +1,9 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: jlogin.in,v 1.66 2008/11/12 00:59:05 heas Exp $
+## $Id: jlogin.in,v 1.69 2009/04/16 21:22:57 heas Exp $
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
+## Copyright (c) 1997-2009 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -49,7 +49,7 @@
 #
 
 # Usage line
-set usage "Usage: $argv0 \[-dV\] \[-c command\] \[-Evar=x\] \
+set usage "Usage: $argv0 \[-dSV\] \[-c command\] \[-Evar=x\] \
 \[-f cloginrc-file\] \[-p user-password\] \[-r passphrase\] \[-s script-file\] \
 \[-u username\] \[-t timeout\] \[-x command-file\] \[-y ssh_cypher_type\] \
 router \[router...\]\n"
@@ -67,6 +67,8 @@ set avenable 1
 # The default is to look in the password file to find the passwords.  This
 # tracks if we receive them on the command line.
 set do_passwd 1
+# Save config, if prompted
+set do_saveconfig 0
 
 # Find the user in the ENV, or use the unix userid.
 if {[ info exists env(CISCO_USER) ]} {
@@ -109,8 +111,7 @@ for {set i 0} {$i < $argc} {incr i} {
 	} -d* {
 	    exp_internal 1
 	# Environment variable to pass to -s scripts
-	} -E*
-	{
+	} -E* {
 	    if {[ regexp .\[E\](.+)=(.+) $arg ignore varname varvalue]} {
 		set E$varname $varvalue
 	    } else {
@@ -118,15 +119,13 @@ for {set i 0} {$i < $argc} {incr i} {
 		exit 1
 	    }
 	# alternate cloginrc file
-	} -f* -
-	-F* {
+	} -f* {
 	    if {! [ regexp .\[fF\](.+) $arg ignore password_file]} {
 		incr i
 		set password_file [ lindex $argv $i ]
 	    }
 	# user Password
-	} -p* -
-	-P* {
+	} -p* {
 	    if {! [  regexp .\[pP\](.+) $arg ignore userpasswd]} {
 		incr i
 		set userpasswd [ lindex $argv $i ]
@@ -137,15 +136,13 @@ for {set i 0} {$i < $argc} {incr i} {
 	    send_user "@PACKAGE@ @VERSION@\n"
 	    exit 0
 	# passphrase
-	} -r* -
-	-R* {
+	} -r* {
 	    if {! [  regexp .\[rR\](.+) $arg ignore passphrase]} {
 		incr i
 		set avpassphrase [ lindex $argv $i ]
 	    }
 	# Expect script to run.
-	} -s* -
-	-S* {
+	} -s* {
 	    if {! [  regexp .\[sS\](.+) $arg ignore sfile]} {
 		incr i
 		set sfile [ lindex $argv $i ]
@@ -155,23 +152,23 @@ for {set i 0} {$i < $argc} {incr i} {
 		exit 1
 	    }
 	    set do_script 1
+	# save config on exit
+	} -S* {
+	    set do_saveconfig 1
 	# Timeout
-	} -t* -
-	-T* {
+	} -t* {
 	    if {! [ regexp .\[tT\](.+) $arg ignore timeout]} {
 		incr i
 		set timeout [ lindex $argv $i ]
 	    }
 	# Username
-	} -u* -
-	-U* {
+	} -u* {
 	    if {! [  regexp .\[uU\](.+) $arg ignore user]} {
 		incr i
 		set username [ lindex $argv $i ]
 	    }
 	# command file
-	} -x* -
-	-X* {
+	} -x* {
 	    if {! [  regexp .\[xX\](.+) $arg ignore cmd_file]} {
 		incr i
 		set cmd_file [ lindex $argv $i ]
@@ -185,8 +182,7 @@ for {set i 0} {$i < $argc} {incr i} {
             set command [join [split $cmd_text \n] \;]
             set do_command 1
 	# 'ssh -c' cypher type
-	} -y* -
-	-Y* {
+	} -y* {
 	    if {! [  regexp .\[yY\](.+) $arg ignore cypher]} {
 		incr i
 		set cypher [ lindex $argv $i ]
@@ -389,11 +385,11 @@ proc login { router user passwd cmethod cyphertype identfile} {
 		send "yes\r"
 		send_user "\nHost $router added to the list of known hosts.\n"
 		exp_continue }
-	    -re "HOST IDENTIFICATION HAS CHANGED.* \(yes\/no\)\?"	{
+	    -re "HOST IDENTIFICATION HAS CHANGED.* \(yes\/no\)\?" {
 		send "no\r"
 		send_user "\nError: The host key for $router has changed.  Update the SSH known_hosts file accordingly.\n"
 		return 1 }
-	    -re "Offending key for .* \(yes\/no\)\?"   {
+	    -re "Offending key for .* \(yes\/no\)\?" {
 		send "no\r"
 		send_user "\nError: host key mismatch for $router.  Update the SSH known_hosts file accordingly.\n"
 		return 1 }

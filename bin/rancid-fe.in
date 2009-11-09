@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: rancid-fe.in,v 1.55 2008/11/05 09:05:51 heas Exp $
+## $Id: rancid-fe.in,v 1.56 2009/04/16 22:05:51 heas Exp $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
@@ -55,7 +55,6 @@ $vendor =~ tr/[A-Z]/[a-z]/;
     'alteon'		=> 'arancid',
     'avocent'		=> 'avorancid',
     'baynet'		=> 'brancid',
-    'bigip'		=> 'f5rancid',
     'cat5'		=> 'cat5rancid',
     'cisco'		=> 'rancid',
     'cisco-nx'		=> 'nxrancid',

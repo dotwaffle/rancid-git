@@ -113,7 +113,7 @@ expect		http://expect.nist.gov/  We highly suggest that you stick to
 		you need to have the accompanying tcl &/ tk.
 svn		Code revision system, an alternative to cvs.  Available from
 		http://subversion.tigris.org/tarballs/.  Use the configure
-		option --enable-svn to configure for Subversion.
+		option --with-svn to configure for Subversion.
 tcl		Required by expect.
 
 Bill Fenner (now maintained by others) has a cgi script for interacting

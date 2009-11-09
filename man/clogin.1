@@ -1,13 +1,13 @@
 .\"
 .hys 50
-.TH "clogin" "1" "27 February 2008"
+.TH "clogin" "1" "16 April 2009"
 .SH NAME
 clogin \- Cisco/Foundry login script
 .SH SYNOPSIS
 .B clogin
 [\fB\-autoenable\fP]
 [\fB\-noenable\fP]
-[\fB\-dV\fR]
+[\fB\-dSV\fR]
 [\c
 .BI \-c\ 
 command]
@@ -94,6 +94,10 @@ options exist to override some of the directives found in the
 configuration file.
 .PP
 The command-line options are as follows:
+.TP
+.B \-S
+Save the configuration on exit, if the device prompts at logout time.
+This only has affect when used with -s.
 .TP
 .B \-V
 Prints package name and version strings.
@@ -265,6 +269,9 @@ The Extreme is supported by
 but it has no concept of an "enabled" privilege level.  You must
 set autoenable for these devices in your
 .IR .cloginrc .
+.PP
+The -S option is a recent addition, it may not be supported in all of the
+login scripts or for every target device.
 .\"
 .SH BUGS
 Do not use greater than (>) or pound sign (#) in device banners.  These

@@ -1,4 +1,35 @@
 2.3.2
+	clogin: fix for Extreme prompt handling
+
+	nxrancid: delete Command: and Time: output
+
+	f5rancid: install the script and use the device type 'f5'
+
+	*login: accept -S for "save configuration if prompted"
+
+	*login: remove uppercase versions of lowercase options
+
+	tlogin: replace -debug with -d
+
+	nlogin: cloginrc method handling and login error path fixes
+
+	clogin: change "(enable)" and/or regex meta-char exscaping so that
+	catalyst logins work properly.
+
+	hlogin: run_commands exp_continueing when it shouldnt have
+
+	jerancid: summarize DirSlotN bytes to reduce diffs
+
+	rancid: catch aborted 'show diag' output on some 7300s.
+	Bug found by Paul Vlaar.
+
+	rancid: correct/add some filtering for ASA's more system:running-config
+
+	srancid: filter temperature sensor info for Dell 6428 stacks
+
+	hpuifilter: Filter \x07 (bell) from output, which the Cisco AGM suddenly
+	started inserting *sometimes*.
+
 	nxrancid: add "show version build-info".  sort snmp-server user.
 
 	rancid: filter filesize and date of tracelogs dir on IOS-XE

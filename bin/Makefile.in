@@ -219,12 +219,12 @@ top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = foreign
 bin_SCRIPTS = agmrancid alogin arancid avologin avorancid blogin \
 	brancid cat5rancid clogin control_rancid cssrancid elogin \
-	erancid f10rancid flogin fnrancid francid hlogin hrancid \
-	htlogin htrancid jerancid jlogin jrancid mrancid mrvlogin \
-	mrvrancid nlogin nrancid nslogin nsrancid nxrancid par prancid \
-	rancid-fe rancid rivlogin rivrancid rrancid srancid tlogin \
-	tntlogin tntrancid trancid xrancid zrancid lg.cgi lgform.cgi \
-	rancid-cvs rancid-run
+	erancid f5rancid f10rancid flogin fnrancid francid hlogin \
+	hrancid htlogin htrancid jerancid jlogin jrancid mrancid \
+	mrvlogin mrvrancid nlogin nrancid nslogin nsrancid nxrancid \
+	par prancid rancid-fe rancid rivlogin rivrancid rrancid \
+	srancid tlogin tntlogin tntrancid trancid xrancid zrancid \
+	lg.cgi lgform.cgi rancid-cvs rancid-run
 EXTRA_DIST = lg.cgi.in lgform.cgi.in rancid-cvs.in rancid-run.in
 #dist_bin_SCRIPTS= $(bin_SCRIPTS:%=%.in)
 CLEANFILES = lg.cgi lgform.cgi rancid-cvs rancid-run
@@ -656,6 +656,8 @@ rancid-run: Makefile $(srcdir)/rancid-run.in
 	$(auto_edit) $(srcdir)/rancid-run.in >rancid-run.tmp; \
 	chmod +x rancid-run.tmp; \
 	mv rancid-run.tmp rancid-run
+
+$(bin_PROGRAMS) $(bin_SCRIPTS): ../include/version.h
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

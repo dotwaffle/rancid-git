@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 ## A Makefile.in is supplied, in case you do not have automake.
 
-## $Id: Makefile.am,v 1.45 2008/11/05 09:05:50 heas Exp $
+## $Id: Makefile.am,v 1.47 2009/04/16 22:03:08 heas Exp $
 ##
 ## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -50,8 +50,8 @@ AUTOMAKE_OPTIONS=foreign
 
 bin_PROGRAMS = hpuifilter
 bin_SCRIPTS = agmrancid alogin arancid avologin avorancid blogin brancid \
-	cat5rancid clogin control_rancid cssrancid elogin erancid f10rancid \
-	flogin fnrancid francid hlogin hrancid htlogin htrancid \
+	cat5rancid clogin control_rancid cssrancid elogin erancid f5rancid \
+	f10rancid flogin fnrancid francid hlogin hrancid htlogin htrancid \
 	jerancid jlogin jrancid mrancid mrvlogin mrvrancid nlogin nrancid \
 	nslogin nsrancid nxrancid par prancid rancid-fe rancid rivlogin \
 	rivrancid rrancid srancid tlogin tntlogin tntrancid trancid xrancid \
@@ -125,3 +125,5 @@ rancid-run: Makefile $(srcdir)/rancid-run.in
 	$(auto_edit) $(srcdir)/rancid-run.in >rancid-run.tmp; \
 	chmod +x rancid-run.tmp; \
 	mv rancid-run.tmp rancid-run
+
+$(bin_PROGRAMS) $(bin_SCRIPTS): ../include/version.h

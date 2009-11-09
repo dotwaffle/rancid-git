@@ -1,9 +1,9 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: rivlogin.in,v 1.35 2008/09/27 16:45:06 heas Exp $
+## $Id: rivlogin.in,v 1.37 2009/04/16 21:02:03 heas Exp $
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
+## Copyright (c) 1997-2009 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -75,6 +75,8 @@ set output_file  ""
 set conf_prompt  "*\(config\)# "
 set logging 0
 set config_mode 0
+# Save config, if prompted
+set do_saveconfig 0
 
 # Password file for routers to access
 set password_file $env(HOME)/.cloginrc
@@ -122,28 +124,27 @@ if {[ info exists env(CLOGINRC) ]} {
 # Sets Xterm title if interactive...if its an xterm and the user cares
 #
 proc label { host } {
-
     global env
 
     # if CLOGIN has an 'x' in it, don't set the xterm name/banner
     if [info exists env(CLOGIN)] {
-        if {[string first "x" $env(CLOGIN)] != -1} { return }
+	if {[string first "x" $env(CLOGIN)] != -1} { return }
     }
 
     if [info exists env(TERM)] {
-        if [regexp \^(xterm|vs) $env(TERM) ignore ] {
-            send_user "\033]1;[lindex [split $host "."] 0]\a"
-            send_user "\033]2;$host\a"
-        }
+	if [regexp \^(xterm|vs) $env(TERM) ignore ] {
+	    send_user "\033]1;[lindex [split $host "."] 0]\a"
+	    send_user "\033]2;$host\a"
+	}
     }
 }
 
 # This is a helper function to make the password file easier to
 # maintain.
 # NOTES: Using this the password file has the form:
-# add password sl*      pete cow
-# add password at*      steve
-# add password *        hanky-pie
+# add password sl*	pete cow
+# add password at*	steve
+# add password *	hanky-pie
 proc add { var args } {
 
     global $var
@@ -156,23 +157,22 @@ proc add { var args } {
 # that a "bad guy" could just as easy put such code in the clogin
 # script, so I will leave .cloginrc as just an extention of that script
 proc source_password_file { } {
-
     global env password_file read_password_file
 
     if { [info exists read_password_file] } {
-        return  1
+	return  1
     }
 
     if { [info exists password_file] == 0 } {
-        set password_file $env(HOME)/.cloginrc
+	set password_file $env(HOME)/.cloginrc
     }
 
     set read_password_file 1
     file stat $password_file fileinfo
 
     if { [expr ($fileinfo(mode) & 007)] != 0000 } {
-        puts "ERROR: $password_file must not be group or world readable and writable\n"
-        return 1
+	puts "ERROR: $password_file must not be group or world readable and writable\n"
+	return 1
     }
 
     source $password_file
@@ -183,23 +183,23 @@ proc source_password_file { } {
 proc find { var router } {
 
     if {[ source_password_file ] == 0 } {
-        return {}
+	return {}
     }
 
     upvar $var list
     if { [info exists list] } {
-        foreach line $list {
-            if { [string match [lindex $line 0] $router ] } {
-                return [lrange $line 1 end]
-            }
-        }
+	foreach line $list {
+	    if { [string match [lindex $line 0] $router ] } {
+		return [lrange $line 1 end]
+	    }
+	}
     }
     return {}
 }
 
 # pre: login completed ok
 # post: terminate login session by closing tcp connection
-proc auto_exit  { } {
+proc auto_exit { } {
 
     global telnet_id
 
@@ -225,19 +225,19 @@ proc login { router user userpswd passwd enapasswd } {
     global config verbose my_prompt
 
     if { $verbose == 1 } {
-        puts "DEBUG: login router = $router"
-        puts "DEBUG: login username = $user"
-        puts "DEBUG: login userpasswd = $userpswd"
+	puts "DEBUG: login router = $router"
+	puts "DEBUG: login username = $user"
+	puts "DEBUG: login userpasswd = $userpswd"
 	puts "DEBUG: login passwd = $passwd"
-        puts "DEBUG: login enapasswd = $enapasswd"
+	puts "DEBUG: login enapasswd = $enapasswd"
     }
 
     spawn  -noecho telnet $router
     set telnet_id $spawn_id
 
     if { $telnet_id == 0 } {
-        puts "ERROR: login: spawn telnet session failed.\n"
-        return 1
+	puts "ERROR: login: spawn telnet session failed.\n"
+	return 1
     }
 
     # wait for initial 'Press RETURN to...' response
@@ -249,70 +249,56 @@ proc login { router user userpswd passwd enapasswd } {
     # If password fails 3 times then expect again
     set pass_attempt  0
 
-    expect  {
+    expect {
+	-re ".*> " { }
+	"Password:" {
+	    incr pass_attempt
+	    send -- "$passwd\r"
+	    exp_continue
+	}
+	"Username: " {
+	    set pattempt 0
 
-        -re ".*> " { }
-
-        "Password:"  {
-            incr pass_attempt
-            send -- "$passwd\r"
-            exp_continue
-        }
-
-        "Username: " {
-
-            set pattempt 0
-
-            send -- "$user\r"
-            expect {
-
-                "Password: "    {
-
-                    incr pattempt
-                    if {$pattempt == 1} {
-                        send -- "$userpswd\r";
-                    } else {
-                        send -- "$enapasswd\r";
-                    }
-                    exp_continue
-                }
-
-                -re ".*> " { exp_continue;}
-            }
-        }
-
+	    send -- "$user\r"
+	    expect {
+	    "Password: " {
+		incr pattempt
+		if {$pattempt == 1} {
+		    send -- "$userpswd\r";
+		} else {
+		    send -- "$enapasswd\r";
+		}
+		exp_continue
+	    }
+	    -re ".*> " { exp_continue;}
+	    }
+	}
 	"%TELNETD-W-BADPASSWD" {
 	    puts "ERROR: bad userid or password to telnet."
 	    return 1
 	}
 	"%CONS-W-AUTH_PASSWD" {
 	    exp_continue
-        }
-
+	}
 	"% Authentication failed." {
 	    puts "ERROR: bad userid or password to telnet."
 	    return 1
 	}
-
-
 	"Authentication Failed:" {
 	    puts "ERROR: bad userid or password to radius/tacacs+"
 	    return 1
 	}
-
-        "Connection closed *"   {
-            if {$pass_attempt == 3} {
-                puts "ERROR: Maximum attempts for password reached. Check password. Exiting.";
-                puts $expect_out(0,string);
+	"Connection closed *" {
+	    if {$pass_attempt == 3} {
+		puts "ERROR: Maximum attempts for password reached. Check password. Exiting.";
+		puts $expect_out(0,string);
 		return 1
-            }
-        }
-
-        timeout {
-            puts "ERROR: Timeout on login. Exiting.";
-            return 1
-        }
-
+	    }
+	}
+	timeout {
+	    puts "ERROR: Timeout on login. Exiting.";
+	    return 1
+	}
 	eof {
 	    puts "ERROR: device closed telnet connection during login"
 	    return 1
@@ -324,7 +310,7 @@ proc login { router user userpswd passwd enapasswd } {
     expect -re ".*> "
     set abc "$expect_out(buffer)"
     set my_prompt "[lindex $abc 0]"
-   regexp {(.*[^>])} $my_prompt my
+    regexp {(.*[^>])} $my_prompt my
 
     return 0;
 }
@@ -338,7 +324,7 @@ proc disable_cli_paging { } {
     send "cli set terminal rows 0\r"
 
     expect {
-        "$my_prompt"  {return 0 }
+	"$my_prompt" {return 0 }
     }
     return 1
 }
@@ -346,19 +332,17 @@ proc disable_cli_paging { } {
 # pre: login returned 0, prompt at top level
 # post: turn off command completion return 0
 # on error, return 1
-proc disable_cmd_autocomplete { }  {
+proc disable_cmd_autocomplete { } {
     global my_prompt
 
     send "cli set command completion off\r"
     expect {
+	$my_prompt { }
 
-        $my_prompt  { }
-
-        timeout {
-            puts "ERROR:disable_cmd_autocomplete(TIMEOUT)";
-            return 0;
-        }
-
+	timeout {
+	    puts "ERROR:disable_cmd_autocomplete(TIMEOUT)";
+	    return 0;
+	}
     }
 
     return 0
@@ -371,18 +355,14 @@ proc logout { prompt } {
 
     # in case of not being at root cmd...
     # verify top level prompt state, move to it if necessary
-
     if { $config_mode == 1 } {
-
 	send "exit\r"
 
 	expect {
 	    "Do you want*" {
 		send "no\r"
 	    }
-
 	    "$enable_prompt" { }
-
 	    timeout { puts "ERROR: logout: timeout from config mode\n" }
 	    eof { puts "ERROR: device dropped connection\n" }
 	}
@@ -391,8 +371,7 @@ proc logout { prompt } {
 
     send "logout\r"
     expect {
-
-        "Are you sure*"  {
+	"Are you sure*" {
 	    send "yes\r"
 	    return 0
 	}
@@ -406,22 +385,21 @@ proc do_enable { enauser enapasswd userpswd } {
     global my_prompt enable_prompt
     set enable_prompt [ string trimright $my_prompt ">" ]
     set enable_prompt $enable_prompt\#
+    set uses_username 0;
 
     if { $verbose == 1 } {
 	puts "DEBUG: do_enable: my_prompt = $my_prompt ena_prompt = $enable_prompt"
     }
 
-    set uses_username 0;
-
     send "enable\r"
 
     expect {
-        Username:     {
+	Username: {
 	    set uses_username 1;
 	    send -- "$enauser\r";
 	    exp_continue
 	}
-        Password:     {
+	Password: {
 	    if {$uses_username == 1} {
 		send -- "$userpswd\r";
 	    } else {
@@ -429,18 +407,14 @@ proc do_enable { enauser enapasswd userpswd } {
 	    }
 	    exp_continue
 	}
-
-        "$my_prompt"    {
+	"$my_prompt" {
 	    puts "ERROR: do_enable failed to gain enable mode."
 	    return 1
 	}
-
 	"CONS-W-AUTH_PASSWD" { send -- "$enapasswd\r"; }
-
-        "$enable_prompt "  { }
-        "%SYS-W-NOPASSWD*" { }
-
-        "Authentication Failed: Access Denied" {
+	"$enable_prompt " { }
+	"%SYS-W-NOPASSWD*" { }
+	"Authentication Failed: Access Denied" {
 	    puts "ERROR: Bad user or password for enable mode."
 	    return 1
 	}
@@ -464,10 +438,8 @@ proc do_configure { } {
 
     send "configure\r"
     expect {
-        "$config_prompt "   { }
-        "$my_prompt"    {
-	}
-
+	"$config_prompt " { }
+	"$my_prompt" { }
 	eof { return 1}
 	timeout { return 1}
     }
@@ -484,9 +456,7 @@ proc start_logfile { output_file } {
     global logging
 
     if { [ string length $output_file ] != 0 } {
-	set rc [ catch  {
-	    log_file -noappend $output_file
-	} errMsg ]
+	set rc [ catch { log_file -noappend $output_file } errMsg ]
 
 	if { $rc != 0 } {
 	    puts "ERROR: open file $output_file for write access failed. $errMsg\n"
@@ -505,12 +475,12 @@ proc run_commands { prompt cmdstring } {
     set num_commands [llength $cmdstring]
 
     for {set i 0} {$i < $num_commands} { incr i} {
-        regsub -- {[ ]*([^\.]*)} [subst -nocommands [lindex $commands $i]] {\1} sendstring
+	regsub -- {[ ]*([^\.]*)} [subst -nocommands [lindex $commands $i]] {\1} sendstring
 
-        if {[ run_single_command $prompt $sendstring ] == 1} {
-            puts "ERROR: command '$sendstring' not processed by device.  Check previous error messages."
-            return 1
-        }
+	if {[ run_single_command $prompt $sendstring ] == 1} {
+	    puts "ERROR: command '$sendstring' not processed by device.  Check previous error messages."
+	    return 1
+	}
     }
     return 0
 }
@@ -529,16 +499,16 @@ proc run_single_command { prompt cmdstring } {
     set delay 0
 
     if {$verbose == 1} {
-        puts "DEBUG: run_commands: prompt=$prompt \"$cmdstring\" "
+	puts "DEBUG: run_commands: prompt=$prompt \"$cmdstring\" "
     }
 
     # ays == "are you sure" - must send back yes
     if { [string compare $cmdstring "save startup" ]  == 0 } {
 	set need_ays 1
-        set delay 1
-        if {$verbose == 1} {
-          puts "DEBUG: save startup cmd seen, set need_ays = 1"
-        }
+	set delay 1
+	if {$verbose == 1} {
+	    puts "DEBUG: save startup cmd seen, set need_ays = 1"
+	}
     }
 
     # TODO: add case for copy command to startup, also prompts for ok
@@ -549,48 +519,39 @@ proc run_single_command { prompt cmdstring } {
     send "$cmdstring\r"
 
     if { $delay == 1} {
-       sleep 1
+	sleep 1
     }
 
     expect {
-
-        "%CLI-E-IVCMD*" {
-           puts "ERROR: run_commands(command rejected by device)\n"
-           set rc 1
-        }
-
-	"%CLI-E-FACUNKNWN*" {
-           puts "ERROR: run_commands(command rejected by device)\n"
-           set rc 1
+	"%CLI-E-IVCMD*" {
+	    puts "ERROR: run_commands(command rejected by device)\n"
+	    set rc 1
 	}
-
+	"%CLI-E-FACUNKNWN*" {
+	    puts "ERROR: run_commands(command rejected by device)\n"
+	    set rc 1
+	}
 	"%SYS-I-ADDFAILED*" {
-           puts "ERROR: run_commands(command rejected by device)\n"
-           set rc 1
+	    puts "ERROR: run_commands(command rejected by device)\n"
+	    set rc 1
 	}
 	"%TFTP-E-REMOTE,*" {
-           puts "ERROR: run_commands(command rejected by device)\n"
-           set rc 1
+	    puts "ERROR: run_commands(command rejected by device)\n"
+	    set rc 1
 	}
-
 	"%SYS-E-PRIMARY_NO_SUCH_IMAGE*" {
-           puts "ERROR: run_commands(command rejected by device)\n"
-           set rc 1
+	    puts "ERROR: run_commands(command rejected by device)\n"
+	    set rc 1
 	}
-
 	"want to overwrite " {
 	    send "yes\r"
 	    if {$verbose == 1} {
-               puts "DEBUG: got overwrite question, set need_ays to 0"
-            }
+		puts "DEBUG: got overwrite question, set need_ays to 0"
+	    }
 	    set need_ays 0
 	}
-
-
-        "%CONFIG-E-DUPLICATE,*" {
-         }
-
-        "$prompt" {
+	"%CONFIG-E-DUPLICATE,*" { }
+	"$prompt" {
 	    if { $seen_prompt == 0 } {
 		set seen_prompt 1
 	    }
@@ -603,14 +564,11 @@ proc run_single_command { prompt cmdstring } {
 		exp_continue
 	    }
 	}
-
-        -re ".* More: m,<space> --- Quit: q --- One line: <return> ---" {
-            send "q"
-            exp_continue
-        }
-
-
-        timeout {
+	-re ".* More: m,<space> --- Quit: q --- One line: <return> ---" {
+	    send "q"
+	    exp_continue
+	}
+	timeout {
 	    if {$verbose == 1} {
 		puts "DEBUG: timeout occured for the $seen_time time\n"
 	    }
@@ -621,16 +579,14 @@ proc run_single_command { prompt cmdstring } {
 		exp_continue
 	    }
 
-            puts "ERROR:run_commands(TIMEOUT)"
-            set rc 1
-        }
-
-        eof {
+	    puts "ERROR:run_commands(TIMEOUT)"
+	    set rc 1
+	}
+	eof {
 	    puts "ERROR:run_commands(connection closed by device)\n"
 	    set rc 1
-        }
-
-        "\n" { exp_continue }
+	}
+	"\n" { exp_continue }
     }
 
     # clear input buffer of any remaining data
@@ -645,24 +601,22 @@ proc init_userid { } {
   global default_user
 
     if {[ info exists env(RSTONE_USER) ] } {
-        set default_user $env(RSTONE_USER)
+	set default_user $env(RSTONE_USER)
     } else {
-        # This uses "id" which I think is portable.  At least it has existed
-        # (without options) on all machines/OSes I've been on recently -
-        # unlike whoami or id -nu.
-        regexp {\(([^)]*)} [exec id] junk default_user
+	# This uses "id" which I think is portable.  At least it has existed
+	# (without options) on all machines/OSes I've been on recently -
+	# unlike whoami or id -nu.
+	regexp {\(([^)]*)} [exec id] junk default_user
     }
 }
 
 proc source_script_file { filename } {
-	global my_prompt
+    global my_prompt
 
-        expect -re "$my_prompt"      {}
+    expect -re "$my_prompt" {}
 
-        source $filename
-
+    source $filename
 }
-
 
 # pre: login completed ok, filename contains set of cli commands one per line
 # post: each command is extracted from filename and sent to device
@@ -670,14 +624,11 @@ proc source_script_file { filename } {
 # NOTE: for scripts that begin with "configure", change the mode to configure
 # before executing the following commands
 proc process_script_file { filename } {
-
     global my_prompt verbose
     set rc 0
     set ifile ""
 
-    set rc [ catch  {
-	set ifile [ open $filename r]
-    } errMsg ]
+    set rc [ catch { set ifile [ open $filename r] } errMsg ]
 
     if { $rc != 0 } {
 	puts "ERROR: process_script_file: open script file $filename for read access failed. $errMsg\n"
@@ -724,27 +675,20 @@ proc process_script_file { filename } {
     return $rc
 }
 
-
-
 #  pre: filename is valid file
 #  post: remove extended ascii sequences and other cruft
 #  and prepend a header: rscmd: ip-addr : date
 #  TODO: should watch all file commands more closely
-proc strip_log { filename router }  {
-
+proc strip_log { filename router } {
     global tempfile
 
-    set rc [ catch  {
-	set ifile [ open $filename r]
-    } errMsg ]
+    set rc [ catch { set ifile [ open $filename r] } errMsg ]
 
     if { $rc != 0 } {
 	puts "ERROR: strip_log: open script file $filename for read access failed. $errMsg\n"
 	return 1
     }
-    set rc [ catch  {
-	set ofile [ open $tempfile w]
-    } errMsg ]
+    set rc [ catch { set ofile [ open $tempfile w] } errMsg ]
 
     if { $rc != 0 } {
 	puts "ERROR: strip_log: open temp file $tempfile for write access failed. $errMsg\n"
@@ -780,8 +724,6 @@ proc strip_log { filename router }  {
 #
 # main section
 #
-
-
 if { $verbose == 1 } {
     puts "\n\nrscmd: Version 1.1 started on [exec date]"
     puts "[exec uname -a]"
@@ -795,84 +737,83 @@ set send_human {.1 .3 1 .05 2}
 init_userid
 
 # Parse Command Line
-
 for {set idx 0} {$idx < $argc} {incr idx} {
-
     set arg [lindex $argv $idx]
 
     switch  -glob -- $arg {
-        -c* -
-        -C* {
-            if {! [  regexp .\[cC\](.+) $arg ignore command]} {
-                incr idx
-                set command [ lindex $argv $idx ]
-            }
-            set do_command 1
+	-c* -
+	-C* {
+	    if {! [  regexp .\[cC\](.+) $arg ignore command]} {
+		incr idx
+		set command [ lindex $argv $idx ]
+	    }
+	    set do_command 1
 	# Expect debug mode
 	} -d* {
 	    exp_internal 1
-        # Environment variable to pass to -s scripts
-        } -E*
-        {
-            if {[ regexp .\[E\](.+)=(.+) $arg ignore varname varvalue]} {
-                set E$varname $varvalue
-            } else {
-                send_user "Error: invalid format for -E in $arg\n"
-                exit 1
-            }
-	# Expect script to run
-        } -s* -
-        -S* {
-            if {! [  regexp .\[sS\](.+) $arg ignore sfile]} {
-                incr idx
-                set sfile [ lindex $argv $idx ]
-            }
-
-            if { ! [ file exists $sfile ] } {
-                puts "ERROR: invalid argument script file \"$sfile\" does not exist.\n"
+	# Environment variable to pass to -s scripts
+	} -E*
+	{
+	    if {[ regexp .\[E\](.+)=(.+) $arg ignore varname varvalue]} {
+		set E$varname $varvalue
+	    } else {
+		send_user "Error: invalid format for -E in $arg\n"
 		exit 1
 	    }
-            if { ! [ file readable $sfile ] } {
-                puts "ERROR: invalid argument script file \"$sfile\" permissions disallow read access.\n"
-		exit 1
-            }
+	# Expect script to run
+	} -s* {
+	    if {! [  regexp .\[sS\](.+) $arg ignore sfile]} {
+		incr idx
+		set sfile [ lindex $argv $idx ]
+	    }
 
-            set do_script 1
+	    if { ! [ file exists $sfile ] } {
+		puts "ERROR: invalid argument script file \"$sfile\" does not exist.\n"
+		exit 1
+	    }
+	    if { ! [ file readable $sfile ] } {
+		puts "ERROR: invalid argument script file \"$sfile\" permissions disallow read access.\n"
+		exit 1
+	    }
+
+	    set do_script 1
+	# save config on exit
+	} -S* {
+	    set do_saveconfig 1
 	# Version string
 	} -V* {
 	    send_user "@PACKAGE@ @VERSION@\n"
 	    exit 0
-        # Command file
-        } -x* -
-        -X {
-            if {! [  regexp .\[xX\](.+) $arg ignore cmd_file]} {
-                incr idx
-                set cmd_file [ lindex $argv $idx ]
-            }
-            if [ catch {set cmd_fd [open $cmd_file r]} reason ] {
-                send_user "\nError: $reason\n"
-                exit 1
-            }
-            set cmd_text [read $cmd_fd]
-            close $cmd_fd
-            set command [join [split $cmd_text \n] \;]
-            set do_command 1
-        } -f* -
-        -F* {
-            if {! [ regexp .\[fF\](.+) $arg ignore password_file]} {
-                incr idx
-                set password_file [ lindex $argv $idx ]
-            }
-
-        } -o* -
-        -O* {
-            if {! [ regexp .\[fF\](.+) $arg ignore password_file]} {
-                incr idx
-                set output_file [ lindex $argv $idx ]
+	# Command file
+	} -x* -
+	-X {
+	    if {! [  regexp .\[xX\](.+) $arg ignore cmd_file]} {
+		incr idx
+		set cmd_file [ lindex $argv $idx ]
+	    }
+	    if [ catch {set cmd_fd [open $cmd_file r]} reason ] {
+		send_user "\nError: $reason\n"
+		exit 1
+	    }
+	    set cmd_text [read $cmd_fd]
+	    close $cmd_fd
+	    set command [join [split $cmd_text \n] \;]
+	    set do_command 1
+	} -f* -
+	-F* {
+	    if {! [ regexp .\[fF\](.+) $arg ignore password_file]} {
+		incr idx
+		set password_file [ lindex $argv $idx ]
+	    }
+	} -o* -
+	-O* {
+	    if {! [ regexp .\[fF\](.+) $arg ignore password_file]} {
+		incr idx
+		set output_file [ lindex $argv $idx ]
 		if { $verbose == 1 } {
 		    puts "DEBUG: output file: $output_file"
 		}
-            }
+	    }
 	# Timeout
 	} -t* -
 	-T* {
@@ -1009,7 +950,7 @@ foreach router [lrange $argv $idx end] {
 	    exit 1
 	}
 
-#	if { [process_script_file $sfile] == 1}  {
+#	if { [process_script_file $sfile] == 1}{
 #	    puts "DEBUG: logfile $output_file closed on error\n"
 #	    logout $my_prompt
 #	    exit 1

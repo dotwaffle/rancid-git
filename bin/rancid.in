@@ -1,9 +1,9 @@
 #! @PERLV_PATH@
 ##
-## $Id: rancid.in,v 1.252 2008/11/29 23:10:58 heas Exp $
+## $Id: rancid.in,v 1.255 2009/04/20 19:56:27 heas Exp $
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
+## Copyright (c) 1997-2009 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -1246,6 +1246,14 @@ REDUX:	tr/\015//d;
 	    while (<INPUT>) {
 		tr/\015//d;
 
+		# Sometimes "show diag" just ends while we are
+		# trying to process this pcb stuff.  Check for a
+		# prompt so we can get out.
+		if (/^$prompt/) {
+		    $found_diag=1;
+		    goto PerlSucks;
+		}
+
 		if (/0x..: / || /^$/) {
 		    # no effing idea why break does not work there
 		    goto PerlSucks;
@@ -1268,6 +1276,8 @@ PerlSucks:
 	    #
 	    ProcessHistory("SLOT","keysort","B","!Slot $slot$WIC: hvers $hw rev $rev\n");
 	    ProcessHistory("SLOT","keysort","C","!Slot $slot$WIC: part $pn, serial $sn\n");
+	    # If we saw the prompt, then we are done.
+	    last if $found_diag;
 	}
 	/revision\s+(\S+).*revision\s+(\S+)/ &&
 	    ProcessHistory("SLOT","keysort","C","!Slot $slot$WIC: hvers $1 rev $2\n") &&
@@ -1551,6 +1561,8 @@ sub WriteTerm {
 	# some versions have other crap mixed in with the bits in the
 	# block above
 	/^! (Last configuration|NVRAM config last)/ && next;
+	# and for the ASA
+	/^: (Written by \w+ at|Saved)/ && next;
 
 	# skip consecutive comment lines to avoid oscillating extra comment
 	# line on some access servers.  grrr.
@@ -1824,7 +1836,7 @@ sub WriteTerm {
 	    next;
 	}
 
-	/^Cryptochecksum:/ && next;
+	/^ *Cryptochecksum:/ && next;
 
 	# catch anything that wasnt matched above.
 	ProcessHistory("","","","$_");

@@ -4,6 +4,6 @@
 
 /* pkg version */
 char package[] = "rancid";
-char version[] = "2.3.2a9";
+char version[] = "2.3.2";
 
 #endif

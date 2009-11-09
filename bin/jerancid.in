@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: jerancid.in,v 1.46 2008/04/22 23:43:05 heas Exp $
+## $Id: jerancid.in,v 1.47 2009/03/04 19:11:55 heas Exp $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
@@ -293,6 +293,19 @@ sub DirSlotN {
 	# fail if the RP is amid the auto-sync process
 	return(-1) if (/active\/standby/i && /not sync/);
 
+	if (/(\S+:\s+)(\d+)(\s+)(\d+)(\s+)(\d+)/) {
+	    my($totlen) = length($2) - 1;
+	    my($tot) = $2 / (1024 * 1024);
+	    my($freelen) = length($4) - 1;
+	    my($free) = $4 / (1024 * 1024);
+	    my($usedlen) = length($6) - 1;
+	    my($used) = $6 / (1024 * 1024);
+	    my($fmt) = sprintf("%%-%dsK%s%%-%dsK%s%%-%dsK", $totlen, $3,
+			       $freelen, $5, $usedlen);
+
+	    ProcessHistory("FLASH","","","!Flash: $1" .
+			   sprintf($fmt, $tot, $free, $used));
+	}
 	ProcessHistory("FLASH","","","!Flash: $_");
     }
     ProcessHistory("","","","!\n");

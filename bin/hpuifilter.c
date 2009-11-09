@@ -1,5 +1,5 @@
 /*
- * $Id: hpuifilter.c,v 1.58 2008/11/26 17:18:00 heas Exp $
+ * $Id: hpuifilter.c,v 1.61 2008/12/05 20:53:17 heas Exp $
  *
  * Copyright (c) 1997-2008 by Terrapin Communications, Inc.
  * All rights reserved.
@@ -141,7 +141,7 @@ main(int argc, char **argv, char **ev)
 			hbuf[BUFSZ],		/* hlogin buffer */
 			ptyname[FILENAME_MAX + 1],
 			tbuf[BUFSZ],		/* telnet/ssh buffer */
-			tbufstr[4] = {ESC, '\r', '\n', '\0'};
+			tbufstr[5] = {ESC, '\x07', '\r', '\n', '\0'};
     int			bytes,			/* bytes read/written */
 			devnull,
 			rval = EX_OK,
@@ -533,7 +533,8 @@ int
 filter(char *buf, int len)
 {
     static regmatch_t	pmatch[1];
-#define	N_REG		14		/* number of regexes in reg[][] */
+#define	N_REG		15		/* number of regexes in reg[][] */
+#define	N_CRs		2		/* number of CR replacements */
     static regex_t	preg[N_REG];
     static char		reg[N_REG][50] = {	/* vt100/220 escape codes */
 				"\x1B""7\x1B\\[1;24r\x1B""8",	/* ds */
@@ -551,21 +552,23 @@ filter(char *buf, int len)
 				"\x1B\\[\\?25l",		/* vi */
 				"\x1B\\[K",			/* ce */
 				"\x1B\\[7m",			/* mr - ansi */
+				"\x07",				/* bell */
 
 				/* replace these with CR */
 				"\x1B\\[0m",			/* me */
 				"\x1B""E",
 			};
-    char		ebuf[256];
+    char		bufstr[3] = {ESC, '\x07', '\0'},
+			ebuf[256];
     size_t		nmatch = 1;
     int			err,
 			x;
     static int		init = 0;
 
-    if (index(buf, ESC) == 0 || len == 0)
+    if (len == 0 || (err = strcspn(buf, bufstr)) >= len)
 	return(len);
 
-    for (x = 0; x < N_REG - 2; x++) {
+    for (x = 0; x < N_REG - N_CRs; x++) {
 	if (! init) {
 	    if ((err = regcomp(&preg[x], reg[x], REG_EXTENDED))) {
 		regerror(err, &preg[x], ebuf, 256);
@@ -587,9 +590,9 @@ filter(char *buf, int len)
 	}
     }
 
-    /* no the CR NL replacements */
+    /* now the CR NL replacements */
     if (! init++) {
-	for (x = N_REG - 2; x < N_REG; x++)
+	for (x = N_REG - N_CRs; x < N_REG; x++)
 	    if ((err = regcomp(&preg[x], reg[x], REG_EXTENDED))) {
 		regerror(err, &preg[x], ebuf, 256);
 		fprintf(stderr, "%s: regex compile failed: %s\n", progname,
@@ -597,7 +600,7 @@ filter(char *buf, int len)
 		abort();
 	    }
     }
-    for (x = N_REG - 2; x < N_REG; x++) {
+    for (x = N_REG - N_CRs; x < N_REG; x++) {
 	if ((err = regexec(&preg[x], buf, nmatch, pmatch, 0))) {
 	    if (err != REG_NOMATCH) {
 		regerror(err, &preg[x], ebuf, 256);

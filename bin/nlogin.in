@@ -1,9 +1,9 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: nlogin.in,v 1.43 2008/11/12 00:59:06 heas Exp $
+## $Id: nlogin.in,v 1.51 2009/04/16 21:22:58 heas Exp $
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
+## Copyright (c) 1997-2009 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -53,7 +53,7 @@
 #	users permissions can not change.
 
 # Usage line
-set usage "Usage: $argv0 \[-dV\] \[-c command\] \[-Evar=x\] \
+set usage "Usage: $argv0 \[-dSV\] \[-c command\] \[-Evar=x\] \
 \[-f cloginrc-file\] \[-p user-password\] \
 \[-s script-file\] \[-t timeout\] \[-u username\] \
 \[-v vty-password\] \[-x command-file\] \
@@ -71,6 +71,8 @@ set do_script 0
 # tracks if we receive them on the command line.
 set do_passwd 1
 set do_enapasswd 1
+# Save config, if prompted
+set do_saveconfig 0
 
 # Find the user in the ENV, or use the unix userid.
 if {[ info exists env(CISCO_USER) ]} {
@@ -105,23 +107,20 @@ for {set i 0} {$i < $argc} {incr i} {
 	-d* {
 	    exp_internal 1
 	# Username
-	} -u* -
-	-U* {
+	} -u* {
 	    if {! [  regexp .\[uU\](.+) $arg ignore user]} {
 		incr i
 		set username [ lindex $argv $i ]
 	    }
 	# VTY Password
-	} -p* -
-	-P* {
+	} -p* {
 	    if {! [  regexp .\[pP\](.+) $arg ignore userpasswd]} {
 		incr i
 		set userpasswd [ lindex $argv $i ]
 	    }
 	    set do_passwd 0
 	# Environment variable to pass to -s scripts
-	} -E*
-	{
+	} -E* {
 	    if {[ regexp .\[E\](.+)=(.+) $arg ignore varname varvalue]} {
 		set E$varname $varvalue
 	    } else {
@@ -129,16 +128,14 @@ for {set i 0} {$i < $argc} {incr i} {
 		exit 1
 	    }
 	# Command to run.
-	} -c* -
-	-C* {
+	} -c* {
 	    if {! [  regexp .\[cC\](.+) $arg ignore command]} {
 		incr i
 		set command [ lindex $argv $i ]
 	    }
 	    set do_command 1
 	# Expect script to run.
-	} -s* -
-	-S* {
+	} -s* {
 	    if {! [  regexp .\[sS\](.+) $arg ignore sfile]} {
 		incr i
 		set sfile [ lindex $argv $i ]
@@ -148,26 +145,25 @@ for {set i 0} {$i < $argc} {incr i} {
 		exit 1
 	    }
 	    set do_script 1
-       # cypher type
-        } -y* -
-        -Y* {
+	# save config on exit
+	} -S* {
+	    set do_saveconfig 1
+	# cypher type
+        } -y* {
             if {! [  regexp .\[eE\](.+) $arg ignore cypher]} {
                 incr i
                 set cypher [ lindex $argv $i ]
             }
 	# alternate cloginrc file
-	} -f* -
-	-F* {
+	} -f* {
 	    if {! [ regexp .\[fF\](.+) $arg ignore password_file]} {
 		incr i
 		set password_file [ lindex $argv $i ]
 	    }
-	} -t* -
-	-T* {
+	} -t* {
 	    incr i
 	    set timeout [ lindex $argv $i ]
-        } -x* -
-        -X {
+        } -x* {
             if {! [  regexp .\[xX\](.+) $arg ignore cmd_file]} {
                 incr i
                 set cmd_file [ lindex $argv $i ]
@@ -180,6 +176,10 @@ for {set i 0} {$i < $argc} {incr i} {
             close $cmd_fd
             set command [join [split $cmd_text \n] \;]
             set do_command 1
+	# Version string
+	} -V* {
+	    send_user "@PACKAGE@ @VERSION@\n"
+	    exit 0
 	# Does tacacs automatically enable us?
         } -autoenable {
 	    # ignore autoenable
@@ -240,11 +240,11 @@ proc include {args} {
     source_password_file $args
 }
 
-proc find {var firewall} {
+proc find {var router} {
     upvar int_$var list
     if { [info exists list] } {
 	foreach line $list {
-	    if { [string match [lindex $line 0] $firewall ] } {
+	    if { [string match [lindex $line 0] $router ] } {
 		return [lrange $line 1 end]
 	    }
 	}
@@ -276,8 +276,7 @@ proc source_password_file { password_file } {
 
 # Log into the firewall.
 # returns: 0 on success, 1 on failure
-proc login { firewall user userpswd passwd enapasswd prompt cmethod
-cyphertype } {
+proc login { router user userpswd passwd enapasswd prompt cmethod cyphertype } {
     global spawn_id in_proc do_command do_script sshcmd
     set in_proc 1
     set uprompt_seen 0
@@ -289,16 +288,24 @@ cyphertype } {
 	if [string match "telnet*" $prog] {
 	    regexp {telnet(:([^[:space:]]+))*} $prog command suffix port
 	    if {"$port" == ""} {
-		set retval [ catch {spawn telnet $firewall} reason ]
+		set retval [ catch {spawn telnet $router} reason ]
 	    } else {
-		set retval [ catch {spawn telnet $firewall $port} reason ]
+		set retval [ catch {spawn telnet $router $port} reason ]
 	    }
 	    if { $retval } {
 		send_user "\nError: telnet failed: $reason\n"
 		return 1
 	    }
-	} elseif ![string compare $prog "ssh"] {
-	    if [ catch {spawn $sshcmd -c $cyphertype -x -l $user $firewall} reason ] {
+	} elseif [string match "ssh*" $prog] {
+	    regexp {ssh(:([^[:space:]]+))*} $prog methcmd suffix port
+	    if {"$port" == ""} {
+		set cmd [join [lindex $sshcmd 0] " "]
+		set retval [ catch {eval spawn [split "$cmd -c $cyphertype -x -l $user $router" { }]} reason ]
+	    } else {
+		set cmd [join [lindex $sshcmd 0] " "]
+		set retval [ catch {eval spawn [split "$cmd -c $cyphertype -x -l $user -p $port $router" { }]} reason ]
+	    }
+	    if { $retval } {
 		send_user "\nError: $sshcmd failed: $reason\n"
 		return 1
 	    }
@@ -344,39 +351,60 @@ cyphertype } {
     # then it will just send the passwd.
     # if telnet fails with connection refused, try ssh
     expect {
-	"Connection refused" {
-	    send_user "\nError: Connection Refused\n"; wait; return 1
-        } eof { send_user "\nError: Couldn't login\n"; wait; return 1
-	} "Unknown host\r\n" {
-	    expect eof
-	    send_user "\nError: Unknown host\n"; wait; return 1
-	} "Host is unreachable" {
-	    expect eof
-	    send_user "\nError: Host Unreachable!\n"; wait; return 1
-	} "No address associated with name" {
-	    expect eof
-	    send_user "\nError: Unknown host\n"; wait; return 1
+	-re "(Connection refused|Secure connection \[^\n\r]+ refused)" {
+	    catch {close}; catch {wait};
+	    if !$progs {
+		send_user "\nError: Connection Refused ($prog): $router\n"
+		return 1
+	    }
 	}
-	-re "Are you sure you want to continue connecting .*" {
+	-re "(Connection closed by|Connection to \[^\n\r]+ closed)" {
+	    catch {close}; catch {wait};
+	    if !$progs {
+		send_user "\nError: Connection closed ($prog): $router\n"
+		return 1
+	    }
+	}
+	eof { send_user "\nError: Couldn't login: $router\n"; wait; return 1 }
+	-nocase "unknown host\r" {
+	    send_user "\nError: Unknown host $router\n";
+	    catch {close}; catch {wait};
+	    return 1
+	}
+	"Host is unreachable" {
+	    send_user "\nError: Host Unreachable: $router\n";
+	    catch {close}; catch {wait};
+	    return 1
+	}
+	"No address associated with name" {
+	    send_user "\nError: Unknown host $router\n";
+	    catch {close}; catch {wait};
+	    return 1
+	}
+	-re "(Host key not found |The authenticity of host .* be established).*\(yes\/no\)\?" {
 	    send "yes\r"
-	    send_user "Host $firewall added to the list of known hosts.\n"
-            exp_continue }
-	-re "Host key not found .* \(yes\/no\)\?"       {
-            send "yes\r"
-            send_user "Host $firewall added to the list of known hosts.\n"
-            exp_continue }
-        -re "HOST IDENTIFICATION HAS CHANGED.* \(yes\/no\)\?"   {
-            send "no\r"
-            send_user "\nError: The host key for $firewall has changed.  Update the SSH known_hosts file accordingly.\n"
-            return 1 }
-	-re "Offending key for .* \(yes\/no\)\?"   {
+	    send_user "\nHost $router added to the list of known hosts.\n"
+	    exp_continue }
+	-re "HOST IDENTIFICATION HAS CHANGED.* \(yes\/no\)\?" {
 	    send "no\r"
-	    send_user "\nError: host key mismatch for $firewall.  Update the SSH known_hosts file accordingly.\n"
-	    return 1 }
-	denied		{ send_user "\nError: Check your passwd for $firewall\n"
-	                  catch {close}; catch {wait}; return 1
-	                }
-	" ### Login failed" {send_user "\nError: Check your passwd for $firewall\n"; return 1 }
+	    send_user "\nError: The host key for $router has changed.  Update the SSH known_hosts file accordingly.\n"
+	    catch {close}; catch {wait};
+	    return 1
+	}
+	-re "Offending key for .* \(yes\/no\)\?" {
+	    send "no\r"
+	    send_user "\nError: host key mismatch for $router.  Update the SSH known_hosts file accordingly.\n"
+	    catch {close}; catch {wait};
+	    return 1
+	}
+	-re "(denied|Sorry)"	{
+				  send_user "\nError: Check your passwd for $router\n"
+				  catch {close}; catch {wait}; return 1
+				}
+	"Login failed"		{
+				  send_user "\nError: Check your passwd for $router\n";
+				  catch {close}; catch {wait}; return 1
+				 }
 	-re "(login:)"			{
 					  sleep 1;
 					  send -- "$user\r"
@@ -450,17 +478,17 @@ proc run_commands { prompt command } {
 source_password_file $password_file
 set in_proc 0
 set exitval 0
-foreach firewall [lrange $argv $i end] {
-    set firewall [string tolower $firewall]
-    send_user "$firewall\n"
+foreach router [lrange $argv $i end] {
+    set router [string tolower $router]
+    send_user "$router\n"
 
     set prompt {-> }
 
     # Figure out passwords
     if { $do_passwd || $do_enapasswd } {
-      set pswd [find password $firewall]
+      set pswd [find password $router]
       if { [llength $pswd] == 0 } {
-        send_user "\nError: no password for $firewall in $password_file.\n"
+        send_user "\nError: no password for $router in $password_file.\n"
         continue
       }
      set passwd [join [lindex $pswd 0] ""]
@@ -475,7 +503,7 @@ foreach firewall [lrange $argv $i end] {
       # command line username
       set ruser $username
     } else {
-      set ruser [join [find user $firewall] ""]
+      set ruser [join [find user $router] ""]
       if { "$ruser" == "" } { set ruser $default_user }
     }
 
@@ -484,7 +512,7 @@ foreach firewall [lrange $argv $i end] {
       # command line username
       set userpswd $userpasswd
     } else {
-      set userpswd [join [find userpassword $firewall] ""]
+      set userpswd [join [find userpassword $router] ""]
       if { "$userpswd" == "" } { set userpswd $passwd }
     }
 
@@ -494,20 +522,20 @@ foreach firewall [lrange $argv $i end] {
       # command line cypher type
       set cyphertype $cypher
     } else {
-      set cyphertype [find cyphertype $firewall]
+      set cyphertype [find cyphertype $router]
       if { "$cyphertype" == "" } { set cyphertype "3des" }
     }
 
     # Figure out connection method
-    set cmethod [find method $firewall]
+    set cmethod [find method $router]
     if { "$cmethod" == "" } { set cmethod {{telnet} {ssh}} }
 
     # Figure out the SSH executable name
-    set sshcmd [find sshcmd $firewall]
+    set sshcmd [find sshcmd $router]
     if { "$sshcmd" == "" } { set sshcmd {ssh} }
 
-    # Login to the firewall
-    if {[login $firewall $ruser $userpswd $passwd $enapasswd $prompt $cmethod $cyphertype]} {
+    # Login to the router
+    if {[login $router $ruser $userpswd $passwd $enapasswd $prompt $cmethod $cyphertype]} {
 	incr exitval
 	continue
     }
@@ -534,7 +562,7 @@ foreach firewall [lrange $argv $i end] {
 	source $sfile
 	catch {close};
     } else {
-	label $firewall
+	label $router
 	log_user 1
 	interact
     }

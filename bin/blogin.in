@@ -1,9 +1,9 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: blogin.in,v 1.47 2008/11/12 00:59:04 heas Exp $
+## $Id: blogin.in,v 1.50 2009/04/16 21:22:57 heas Exp $
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
+## Copyright (c) 1997-2009 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -52,7 +52,7 @@
 #
 
 # Usage line
-set usage "Usage: $argv0 \[-dV\] \[-autoenable\] \[-noenable\] \[-c command\] \
+set usage "Usage: $argv0 \[-dSV\] \[-autoenable\] \[-noenable\] \[-c command\] \
 \[-Evar=x\] \[-e enable-password\] \[-f cloginrc-file\] \[-p user-password\] \
 \[-s script-file\] \[-t timeout\] \[-u username\] \
 \[-v vty-password\] \[-w enable-username\] \[-x command-file\] \
@@ -75,6 +75,8 @@ set avautoenable 0
 # tracks if we receive them on the command line.
 set do_passwd 1
 set do_enapasswd 0
+# Save config, if prompted
+set do_saveconfig 0
 
 # Find the user in the ENV, or use the unix userid.
 if {[ info exists env(CISCO_USER) ]} {
@@ -109,15 +111,13 @@ for {set i 0} {$i < $argc} {incr i} {
 	-d* {
 	    exp_internal 1
 	# Username
-	} -u* -
-	-U* {
+	} -u* {
 	    if {! [  regexp .\[uU\](.+) $arg ignore user]} {
 		incr i
 		set username [ lindex $argv $i ]
 	    }
 	# VTY Password
-	} -p* -
-	-P* {
+	} -p* {
 	    if {! [  regexp .\[pP\](.+) $arg ignore userpasswd]} {
 		incr i
 		set userpasswd [ lindex $argv $i ]
@@ -135,15 +135,13 @@ for {set i 0} {$i < $argc} {incr i} {
 	    send_user "@PACKAGE@ @VERSION@\n"
 	    exit 0
 	# Enable Username
-	} -w* -
-	-W* {
+	} -w* {
 	    if {! [  regexp .\[wW\](.+) $arg ignore enauser]} {
 		incr i
 		set enausername [ lindex $argv $i ]
 	    }
         # Environment variable to pass to -s scripts
-	} -E*
-	{
+	} -E* {
 	    if {[ regexp .\[E\](.+)=(.+) $arg ignore varname varvalue]} {
 		set E$varname $varvalue
 	    } else {
@@ -151,24 +149,21 @@ for {set i 0} {$i < $argc} {incr i} {
 		exit 1
 	    }
 	# Enable Password
-	} -e*
-	{
+	} -e* {
 	    if {! [  regexp .\[eE\](.+) $arg ignore enapasswd]} {
 		incr i
 		set enapasswd [ lindex $argv $i ]
 	    }
 	    set do_enapasswd 0
 	# Command to run.
-	} -c* -
-	-C* {
+	} -c* {
 	    if {! [  regexp .\[cC\](.+) $arg ignore command]} {
 		incr i
 		set command [ lindex $argv $i ]
 	    }
 	    set do_command 1
 	# Expect script to run.
-	} -s* -
-	-S* {
+	} -s* {
 	    if {! [  regexp .\[sS\](.+) $arg ignore sfile]} {
 		incr i
 		set sfile [ lindex $argv $i ]
@@ -178,30 +173,29 @@ for {set i 0} {$i < $argc} {incr i} {
 		exit 1
 	    }
 	    set do_script 1
+	# save config on exit
+	} -S* {
+	    set do_saveconfig 1
 	# 'ssh -c' cypher type
-	} -y* -
-	-Y* {
+	} -y* {
 	    if {! [  regexp .\[eE\](.+) $arg ignore cypher]} {
 		incr i
 		set cypher [ lindex $argv $i ]
 	    }
 	# alternate cloginrc file
-	} -f* -
-	-F* {
+	} -f* {
 	    if {! [ regexp .\[fF\](.+) $arg ignore password_file]} {
 		incr i
 		set password_file [ lindex $argv $i ]
 	    }
 	# Timeout
-	} -t* -
-	-T* {
+	} -t* {
 	    if {! [ regexp .\[tT\](.+) $arg ignore timeout]} {
 		incr i
 	        set timeout [ lindex $argv $i ]
 	    }
 	# Command file
-	} -x* -
-	-X {
+	} -x* {
 	    if {! [  regexp .\[xX\](.+) $arg ignore cmd_file]} {
 		incr i
 		set cmd_file [ lindex $argv $i ]
@@ -382,7 +376,8 @@ proc login { router user userpswd passwd enapasswd prompt cmethod cyphertype } {
 	    if !$progs {
 		send_user "\nError: Connection Refused ($prog)\n"; return 1
 	    }
-	} eof { send_user "\nError: Couldn't login\n"; wait; return 1
+	}
+	eof { send_user "\nError: Couldn't login\n"; wait; return 1
 	} -nocase "unknown host\r" {
 	    catch {close}; catch {wait};
 	    send_user "\nError: Unknown host\n"; wait; return 1
@@ -397,14 +392,16 @@ proc login { router user userpswd passwd enapasswd prompt cmethod cyphertype } {
 	    send "yes\r"
 	    send_user "\nHost $router added to the list of known hosts.\n"
 	    exp_continue }
-	-re "HOST IDENTIFICATION HAS CHANGED.* \(yes\/no\)\?"   {
+	-re "HOST IDENTIFICATION HAS CHANGED.* \(yes\/no\)\?" {
 	    send "no\r"
 	    send_user "\nError: The host key for $router has changed.  Update the SSH known_hosts file accordingly.\n"
-	    return 1 }
-	-re "Offending key for .* \(yes\/no\)\?"   {
+	    return 1
+	}
+	-re "Offending key for .* \(yes\/no\)\?" {
 	    send "no\r"
 	    send_user "\nError: host key mismatch for $router.  Update the SSH known_hosts file accordingly.\n"
-	    return 1 }
+	    return 1
+	}
 	-re "$u_prompt"	{ send -- "$user\r"
 	    expect {
 		eof			{ send_user "\nError: Couldn't login\n"; wait; return 1 }

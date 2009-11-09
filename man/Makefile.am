@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 ## A Makefile.in is supplied, in case you do not have automake.
 
-## $Id: Makefile.am,v 1.52 2008/09/11 03:55:18 asp Exp $
+## $Id: Makefile.am,v 1.53 2009/04/16 22:12:51 heas Exp $
 ##
 ## Copyright (c) 1997-2007 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -52,8 +52,8 @@ AUTOMAKE_OPTIONS=foreign no-dependencies
 man_gen_MANS = lg.conf.5 rancid.conf.5 lg_intro.1
 man_nogen_MANS = agmrancid.1 alogin.1 arancid.1 avologin.1 avorancid.1 \
 		blogin.1 brancid.1 cat5rancid.1 clogin.1 cloginrc.5 \
-		control_rancid.1 cssrancid.1 elogin.1 erancid.1 f10rancid.1 \
-		flogin.1 fnrancid.1 francid.1 hlogin.1 hrancid.1 \
+		control_rancid.1 cssrancid.1 elogin.1 erancid.1 f5rancid.1 \
+		f10rancid.1 flogin.1 fnrancid.1 francid.1 hlogin.1 hrancid.1 \
 		htlogin.1 htrancid.1 jerancid.1 jlogin.1 jrancid.1 \
 		mrancid.1 nlogin.1 nrancid.1 nslogin.1 nsrancid.1 nxrancid.1 \
 		par.1 prancid.1 rancid-cvs.1 rancid-run.1 rancid.1 \

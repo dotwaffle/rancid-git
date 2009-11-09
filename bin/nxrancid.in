@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: nxrancid.in,v 1.3 2008/12/02 06:41:44 asp Exp $
+## $Id: nxrancid.in,v 1.4 2009/04/21 22:43:42 asp Exp $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
@@ -1338,6 +1338,8 @@ sub WriteTerm {
 #	$comment = 0;
 
 	# Dog gone Cool matches to process the rest of the config
+	/^!Command: show running-config/ && next; # kill this junk
+	/^!Time: /		&& next; # kill this junk
 #	/^tftp-server flash /   && next; # kill any tftp remains
 #	/^ntp clock-period /    && next; # kill ntp clock-period
 #	/^ length /		&& next; # kill length on serial lines
