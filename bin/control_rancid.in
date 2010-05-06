@@ -112,7 +112,7 @@ unset noclobber > /dev/null 2>&1
 
 # RCS system
 RCSSYS=${RCSSYS:=cvs};
-if [ $RCSSYS != "cvs" -a $RCSSYS != "svn" ] ; then
+if [ $RCSSYS != "cvs" -a $RCSSYS != "svn" -a $RCSSYS != "git" ] ; then
     echo "$RCSSYS is not a valid value for RCSSYS."
     exit 1
 fi
@@ -151,31 +151,73 @@ if [ ! -d $DIR ] ; then
 fi
 cd $DIR
 
-# create a .cvsignore
-if [ ! -f .cvsignore ] ; then
-    rm -f .cvsignore
-    cat >.cvsignore <<EOF
-.cvsignore
-routers.all
-routers.down
-routers.up
-EOF
-    if [ $RCSSYS = svn ] ; then
-	svn propset svn:ignore -F .cvsignore .
-    fi
-fi
+create_ignore () {
+    echo "*~"
+    echo "routers.added"
+    echo "routers.all"
+    echo "routers.all.new"
+    echo "routers.db"
+    echo "routers.deleted"
+    echo "routers.down"
+    echo "routers.down.new"
+    echo "routers.failed"
+    echo "routers.mail"
+    echo "routers.single"
+    echo "routers.up"
+    echo "routers.up.new"
+    echo "routers.up.missed"
+}
 
-# do cvs update of router.db in case anyone has fiddled.
-$RCSSYS update router.db > $TMP 2>&1
-grep "^C" $TMP > /dev/null
-if [ $? -eq 0 ] ; then
-    echo "There were $RCSSYS conflicts during update."
-    echo ""
-    cat $TMP
-    rm -f $TMP
-    exit 1
-fi
-rm -f $TMP
+case $RCSSYS in
+    cvs )
+       if [ ! -f .cvsignore ]; then
+           rm -f .cvsignore
+           create_ignore > .cvsignore
+           cvs add .cvsignore
+           cvs commit -m "Adding .cvsignore"
+       fi
+       ;;
+   svn )
+       svn proplist . | grep -q 'svn:ignore'
+       if [ $? -ne 0 ]; then
+           create_ignore > .svnignore
+           svn propset svn:ignore -F .svnignore .
+           svn commit -m "Adding svn:ignore"
+           rm -f .svnignore
+       fi
+       ;;
+    git )
+       if [ ! -f .gitignore ]; then
+           rm -f .gitignore
+           create_ignore > .gitignore
+           (
+               flock -x 200
+               git add .gitignore
+               git commit -m "Adding .gitignore"
+           ) 200>$BASEDIR/.lockfile
+       fi
+       ;;
+esac
+
+case $RCSSYS in
+    cvs | svn )
+        # do cvs/svn update of router.db in case anyone has fiddled.
+       $RCSSYS update router.db > $TMP 2>&1
+       grep "^C" $TMP > /dev/null
+       if [ $? -eq 0 ] ; then
+           echo "There were $RCSSYS conflicts during update."
+           echo ""
+           cat $TMP
+           rm -f $TMP
+           exit 1
+       fi
+       rm -f $TMP
+       ;;
+    git )
+       # do nothing here (for now)
+       ;;
+esac
+
 
 if [ ! -f $DIR/router.db ] ; then
     echo "$DIR/router.db does not exist."
@@ -278,21 +320,27 @@ if [ $RALL -ne 0 -o $RDOWN -ne 0 -o $RUP -ne 0 ] ; then
     cd $DIR/configs
 
     # Add new routers to the CVS structure.
-    for router in `comm -13 $DIR/routers.up $DIR/routers.up.new`
+    for router in `comm -13 $DIR/routers.up $DIR/routers.up.new | cut -d: -f1`
     do
-	OFS=$IFS
-	IFS=:
-	set $router
-	IFS=$OFS
-	router=$1
-
+	message="new router $router in group $GROUP"
 	touch $router
-	if [ $RCSSYS = cvs ] ; then
-	    cvs add -ko $router
-	else
-	    svn add $router
-	fi
-	$RCSSYS commit -m 'new router' $router
+	case $RCSSYS in
+	    cvs )
+		cvs add -ko $router
+		cvs commit -m "$message" $router
+		;;
+	    svn )
+		svn add $router
+		svn commit -m "$message" $router
+		;;
+	    git )
+		(
+		    flock -x 200
+		    git add $router
+		    git commit -m "$message"
+		) 200>$BASEDIR/.lockfile
+		;;
+	esac
 	echo "Added $router"
     done
     echo
@@ -317,29 +365,56 @@ trap 'rm -fr $TMP;' 1 2 15
 cd $DIR/configs
 # check for 'up' routers missing in RCS.  no idea how this happens to some folks
 for router in `cut -d: -f1 ../routers.up` ; do
-    if [ $RCSSYS = cvs ] ; then
-	cvs status $router | grep -i 'status: unknown' > /dev/null 2>&1
-    else
-	svn status $router | grep '^?' > /dev/null 2>&1
-    fi
-    if [ $? -eq 0 ] ; then
-	touch $router
-	if [ $RCSSYS = cvs ] ; then
-	    cvs add -ko $router
-	else
-	    svn add $router
-	fi
-	echo "$RCSSYS added missing router $router"
-    fi
+	case $RCSSYS in
+       cvs )
+           cvs status $router | grep -i 'status: unknown' > /dev/null 2>&1
+           if [ $? -eq 0 ]; then
+               touch $router
+               cvs add -ko $router
+               echo "$RCSSYS added missing router $router"
+           fi
+           ;;
+       svn )
+           svn status $router | grep '^?' > /dev/null 2>&1
+           if [ $? -eq 0 ]; then
+               touch $router
+               svn add $router
+               echo "$RCSSYS added missing router $router"
+           fi
+           ;;
+       git )
+           git ls-files $router > /dev/null 2>&1 
+           if [ $? -eq 1 ]; then
+               touch $router
+               (
+                   flock -x 200
+                   git add $router
+                   git commit -m "added missing router $router"
+               ) 200>$BASEDIR/.lockfile
+               echo "$RCSSYS added missing router $router"
+           fi
+           ;;
+    esac
 done
 echo
 # delete configs from RCS for routers not listed in routers.up.
-for router in `find . \( -name \*.new -prune -o -name CVS -prune -o -name .svn -prune \) -o -type f -print | sed -e 's/^.\///'` ; do
+for router in `find . \( -name \*.new -prune -o -name CVS -prune -o -name .cvsignore -prune -o -name .svn -prune -o -name .git -prune -o -name .gitignore -prune \) -o -type f -print | sed -e 's/^.\///'` ; do
     grep -i "^$router:" ../router.db > /dev/null 2>&1
     if [ $? -eq 1 ] ; then
 	rm -f $router
-	$RCSSYS delete $router
-	$RCSSYS commit -m 'deleted router' $router
+	case $RCSSYS in
+           cvs | svn )
+               $RCSSYS delete $router
+               $RCSSYS commit -m "deleted router $router" $router
+               ;;
+           git )
+               (
+                   flock -x 200
+                   git rm $router
+                   git commit -m "deleted router $router"
+               ) 200>$BASEDIR/.lockfile
+               ;;
+    esac
 	echo "Deleted $router"
     fi
 done
@@ -349,7 +424,19 @@ cd $DIR
 if [ ! -s routers.up ]
 then
     # commit router.db
-    $RCSSYS commit -m updates router.db
+    message="updates of group $GROUP"
+    case $RCSSYS in
+	cvs | svn )
+	    $RCSSYS commit -m "$message" router.db
+	    ;;
+	git )
+	    (
+		flock -x 200
+		git add router.db
+		git commit -m "$message"
+	    ) 200>$BASEDIR/.lockfile
+	    ;;
+    esac
     exit;
 fi
 
@@ -384,13 +471,9 @@ if [ -f $DIR/routers.up.missed ] ; then
 fi
 while [ $round -le $pass ]
 do
-    for router in `cat $devlistfile`
+    for router in `cat $devlistfile | cut -d: -f1`
     do
-	OFS=$IFS
-	IFS=':'
-	set $router
-	IFS=$OFS
-	router=$1; mfg=$2
+	mfg=$2
 
 	if [ ! -s $router.new ]
 	then
@@ -444,29 +527,50 @@ do
     fi
 done
 
-# This has been different for different machines...
-# Diff the directory and then checkin.
-trap 'rm -fr $TMP $TMP.diff $DIR/routers.single;' 1 2 15
-cd $DIR
-if [ $RCSSYS = "cvs" ] ; then
-    cvs -f @DIFF_CMD@ -ko | sed -e '/^RCS file: /d' -e '/^--- /d' \
-	-e '/^+++ /d' -e 's/^\([-+ ]\)/\1 /' >$TMP.diff
-else
-    svn diff | sed -e '/^+++ /d' -e 's/^\([-+ ]\)/\1 /' >$TMP.diff
-fi
-
 if [ $alt_mailrcpt -eq 1 ] ; then
     subject="router config diffs - courtesy of $mailrcpt"
 else
     subject="router config diffs"
 fi
 if [ "X$device" != "X" ] ; then
-    $RCSSYS commit -m "updates - courtesy of $mailrcpt"
+    message="updates of group $GROUP - courtesy of $mailrcpt"
     subject="$GROUP/$device $subject"
 else
-    $RCSSYS commit -m updates
+    message="updates of group $GROUP"
     subject="$GROUP $subject"
 fi
+
+# This has been different for different machines...
+# Diff the directory and then checkin.
+trap 'rm -fr $TMP $TMP.diff $DIR/routers.single;' 1 2 15
+cd $DIR
+case $RCSSYS in
+    cvs )
+	cvs -f @DIFF_CMD@ -ko | sed -e '/^RCS file: /d' -e '/^--- /d' \
+	    -e '/^+++ /d' -e 's/^\([-+ ]\)/\1 /' >$TMP.diff
+	cvs commit -m "$message"
+	;;
+    svn )
+	svn diff | sed -e '/^+++ /d' -e 's/^\([-+ ]\)/\1 /' >$TMP.diff
+	svn commit -m "$message"
+	;;
+    git )
+	# with git we do things differently - first commit, then grab the diff
+	(
+	    flock -x 200
+	    git add router.db
+	    for router in `cat $devlistfile | cut -d: -f1`
+	    do
+	      git add configs/$router
+	    done
+	    git commit -m "$message"
+	    if [ $? -eq 0 ]; then
+		# only generate a diff if the commit was successful
+		git diff --patch-with-stat HEAD^ HEAD -- . >$TMP.diff
+	    fi
+	) 200>$BASEDIR/.lockfile
+	;;
+esac
 
 # Mail out the diffs (if there are any).
 if [ -s $TMP.diff ] ; then
