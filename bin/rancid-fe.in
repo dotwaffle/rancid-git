@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: rancid-fe.in,v 1.56 2009/04/16 22:05:51 heas Exp $
+## $Id: rancid-fe.in 2098 2009-07-13 23:40:10Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
@@ -53,6 +53,7 @@ $vendor =~ tr/[A-Z]/[a-z]/;
 %vendortable = (
     'agm'		=> 'agmrancid',
     'alteon'		=> 'arancid',
+    'arista'		=> 'arrancid',
     'avocent'		=> 'avorancid',
     'baynet'		=> 'brancid',
     'cat5'		=> 'cat5rancid',

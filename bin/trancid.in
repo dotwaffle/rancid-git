@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: trancid.in,v 1.2 2009/02/07 08:15:17 asp Exp $
+## $Id: trancid.in 2117 2009-11-02 21:02:59Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
@@ -230,8 +230,17 @@ foreach (@commandtable) {
 };
 
 $cisco_cmds=join(";",@commands);
-$cmds_regexp=join("|",@commands);
+$cmds_regexp = join("|", map quotemeta($_), @commands);
 
+if (length($host) == 0) {
+    if ($file) {
+	print(STDERR "Too few arguments: file name required\n");
+	exit(1);
+    } else {
+	print(STDERR "Too few arguments: host name required\n");
+	exit(1);
+    }
+}
 open(OUTPUT,">$host.new") || die "Can't open $host.new for writing: $!\n";
 select(OUTPUT);
 # make OUTPUT unbuffered if debugging

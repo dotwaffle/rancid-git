@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: jrancid.in,v 1.91 2008/02/08 09:54:17 heas Exp $
+## $Id: jrancid.in 2162 2010-03-15 21:20:31Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
@@ -184,12 +184,12 @@ sub ShowChassisClocks {
 	next if (/^system (shutdown message from|going down )/i);
 	next if (/^\{(master|backup)}/);
 
-	/error: the chassis subsystem is not running/ && return;
-	/Couldn\'t initiate connection/ && return;
-	/Unrecognized command/ && return;
-	/command is not valid/ && return;
-	/^\s+\^/ && return;
-	/syntax error/ && return;
+	/error: the chassis subsystem is not running/ && return(-1);
+	/Couldn\'t initiate connection/ && return(-1);
+	/Unrecognized command/ && return(1);
+	/command is not valid/ && return(1);
+	/^\s+\^/ && return(1);
+	/syntax error/ && return(1);
 
 	# filter decimal places of m160 measured clock MHz
 	if (/Measured frequency/) {
@@ -226,12 +226,12 @@ sub ShowChassisEnvironment {
 	next if (/^system (shutdown message from|going down )/i);
 	next if (/^\{(master|backup)}/);
 
-	/error: the chassis subsystem is not running/ && return;
-	/Couldn\'t initiate connection/ && return;
-	/Unrecognized command/ && return;
-	/command is not valid/ && return;
-	/^\s+\^/ && return;
-	/syntax error/ && return;
+	/error: the chassis subsystem is not running/ && return(-1);
+	/Couldn\'t initiate connection/ && return(-1);
+	/Unrecognized command/ && return(1);
+	/command is not valid/ && return(1);
+	/^\s+\^/ && return(1);
+	/syntax error/ && return(1);
 
 	/ backplane temperature/ && next;
 	/(\s*Power supply.*), temperature/ &&
@@ -260,12 +260,12 @@ sub ShowChassisFirmware {
 	next if (/^system (shutdown message from|going down )/i);
 	next if (/^\{(master|backup)}/);
 
-	/error: the chassis subsystem is not running/ && return;
-	/Couldn\'t initiate connection/ && return;
-	/Unrecognized command/ && return;
-	/command is not valid/ && return;
-	/^\s+\^/ && return;
-	/syntax error/ && return;
+	/error: the chassis subsystem is not running/ && return(-1);
+	/Couldn\'t initiate connection/ && return(-1);
+	/Unrecognized command/ && return(1);
+	/command is not valid/ && return(1);
+	/^\s+\^/ && return(1);
+	/syntax error/ && return(1);
 
 	ProcessHistory("","","","# $_");
     }
@@ -285,12 +285,12 @@ sub ShowChassisFpcDetail {
 	next if (/^system (shutdown message from|going down )/i);
 	next if (/^\{(master|backup)}/);
 
-	/error: the chassis subsystem is not running/ && return;
-	/Couldn\'t initiate connection/ && return;
-	/Unrecognized command/ && return;
-	/command is not valid/ && return;
-	/^\s+\^/ && return;
-	/syntax error/ && return;
+	/error: the chassis subsystem is not running/ && return(-1);
+	/Couldn\'t initiate connection/ && return(-1);
+	/Unrecognized command/ && return(1);
+	/command is not valid/ && return(1);
+	/^\s+\^/ && return(1);
+	/syntax error/ && return(1);
 
 	/ Temperature/ && next;
 	/ Start time/ && next;
@@ -313,12 +313,12 @@ sub ShowChassisHardware {
 	next if (/^system (shutdown message from|going down )/i);
 	next if (/^\{(master|backup)}/);
 
-	/error: the chassis subsystem is not running/ && return;
-	/Couldn\'t initiate connection/ && return;
-	/Unrecognized command/ && return;
-	/command is not valid/ && return;
-	/^\s+\^/ && return;
-	/syntax error/ && return;
+	/error: the chassis subsystem is not running/ && return(-1);
+	/Couldn\'t initiate connection/ && return(-1);
+	/Unrecognized command/ && return(1);
+	/command is not valid/ && return(1);
+	/^\s+\^/ && return(1);
+	/syntax error/ && return(1);
 
 	ProcessHistory("","","","# $_");
     }
@@ -338,12 +338,12 @@ sub ShowChassisRoutingEngine {
 	next if (/^system (shutdown message from|going down )/i);
 	next if (/^\{(master|backup)}/);
 
-	/error: the chassis subsystem is not running/ && return;
-	/Couldn\'t initiate connection/ && return;
-	/Unrecognized command/ && return;
-	/command is not valid/ && return;
-	/^\s+\^/ && return;
-	/syntax error/ && return;
+	/error: the chassis subsystem is not running/ && return(-1);
+	/Couldn\'t initiate connection/ && return(-1);
+	/Unrecognized command/ && return(1);
+	/command is not valid/ && return(1);
+	/^\s+\^/ && return(1);
+	/syntax error/ && return(1);
 
 	/^Routing Engine status:/ && ProcessHistory("","","","# $_") && next;
 	/ Slot / && ProcessHistory("","","","# $_") && next;
@@ -371,13 +371,13 @@ sub ShowChassisSCB {
 	next if (/^system (shutdown message from|going down )/i);
 	next if (/^\{(master|backup)}/);
 
-	return if ($ShowChassisSCB);
-	/error: the chassis subsystem is not running/ && return;
-	/Couldn\'t initiate connection/ && return;
-	/Unrecognized command/ && return;
-	/command is not valid/ && return;
-	/^\s+\^/ && return;
-	/syntax error/ && return;
+	return(0) if ($ShowChassisSCB);
+	/error: the chassis subsystem is not running/ && return(-1);
+	/Couldn\'t initiate connection/ && return(-1);
+	/Unrecognized command/ && return(1);
+	/command is not valid/ && return(1);
+	/^\s+\^/ && return(1);
+	/syntax error/ && return(1);
 
 	/ Temperature/ && next;
 	/ temperature/ && next;
@@ -404,10 +404,10 @@ sub ShowChassisAlarms {
 	next if (/^system (shutdown message from|going down )/i);
 	next if (/^\{(master|backup)}/);
 
-	/Unrecognized command/ && return;
-	/command is not valid/ && return;
-	/^\s+\^/ && return;
-	/syntax error/ && return;
+	/Unrecognized command/ && return(1);
+	/command is not valid/ && return(1);
+	/^\s+\^/ && return(1);
+	/syntax error/ && return(1);
 
 	ProcessHistory("","","","# $_");
     }
@@ -426,10 +426,10 @@ sub ShowSystemAutoinstall {
 	next if (/^system (shutdown message from|going down )/i);
 	next if (/^\{(master|backup)}/);
 
-	/Unrecognized command/ && return;
-	/command is not valid/ && return;
-	/^\s+\^/ && return;
-	/syntax error/ && return;
+	/Unrecognized command/ && return(1);
+	/command is not valid/ && return(1);
+	/^\s+\^/ && return(1);
+	/syntax error/ && return(1);
 
 	ProcessHistory("","","","# $_");
     }
@@ -446,6 +446,7 @@ sub ShowSystemCoreDumps {
 	last if (/^$prompt/);
 
 	/Unrecognized command/ && return(1);
+	/command is not valid/ && return(1);
 	/^\s+\^/ && return(1);
 	/syntax error/ && return(1);
 	/^JUNOS / && <INPUT> && next;
@@ -468,10 +469,10 @@ sub ShowSystemLicense {
 	next if (/^system (shutdown message from|going down )/i);
 	next if (/^\{(master|backup)}/);
 
-	/Unrecognized command/ && return;
-	/command is not valid/ && return;
-	/^\s+\^/ && return;
-	/syntax error/ && return;
+	/Unrecognized command/ && return(1);
+	/command is not valid/ && return(1);
+	/^\s+\^/ && return(1);
+	/syntax error/ && return(1);
 
 	ProcessHistory("","","","# $_");
     }
@@ -490,10 +491,10 @@ sub ShowSystemLicenseKeys {
 	next if (/^system (shutdown message from|going down )/i);
 	next if (/^\{(master|backup)}/);
 
-	/Unrecognized command/ && return;
-	/command is not valid/ && return;
-	/^\s+\^/ && return;
-	/syntax error/ && return;
+	/Unrecognized command/ && return(1);
+	/command is not valid/ && return(1);
+	/^\s+\^/ && return(1);
+	/syntax error/ && return(1);
 
 	ProcessHistory("","","","# $_");
     }
@@ -512,10 +513,10 @@ sub ShowSystemBootMessages {
 	next if (/^system (shutdown message from|going down )/i);
 	next if (/^\{(master|backup)}/);
 
-	/Unrecognized command/ && return;
-	/command is not valid/ && return;
-	/^\s+\^/ && return;
-	/syntax error/ && return;
+	/Unrecognized command/ && return(1);
+	/command is not valid/ && return(1);
+	/^\s+\^/ && return(1);
+	/syntax error/ && return(1);
 
 	/^JUNOS / && <INPUT> && next;
 	/^Timecounter "TSC" / && next;
@@ -663,7 +664,7 @@ sub DoNothing {print STDOUT;}
 %commands = map(%$_, @commandtable);
 
 $jnx_commands=join(";",@commands);
-$cmds_regexp=join("|",@commands);
+$cmds_regexp = join("|", map quotemeta($_), @commands);
 
 if (length($host) == 0) {
     if ($file) {

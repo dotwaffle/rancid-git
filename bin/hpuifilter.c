@@ -1,5 +1,5 @@
 /*
- * $Id: hpuifilter.c,v 1.61 2008/12/05 20:53:17 heas Exp $
+ * $Id: hpuifilter.c 2037 2008-12-05 20:53:17Z heas $
  *
  * Copyright (c) 1997-2008 by Terrapin Communications, Inc.
  * All rights reserved.

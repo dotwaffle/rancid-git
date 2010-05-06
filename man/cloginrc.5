@@ -1,8 +1,8 @@
 .\"
-.\" $Id: cloginrc.5,v 1.37 2005/09/12 18:48:19 heas Exp $
+.\" $Id: cloginrc.5 2139 2010-02-10 19:29:27Z heas $
 .\"
 .hys 50
-.TH "cloginrc" "5" "12 September 2005"
+.TH "cloginrc" "5" "9 February 2009"
 .SH NAME
  \.cloginrc \- clogin configuration file
 .SH DESCRIPTION
@@ -227,6 +227,13 @@ a separate binary such as "ssh1".
 allows this to be adjusted as necessary for the local environment.
 .sp
 Default: ssh
+.\"
+.TP
+.B add timeout <router name glob> {<seconds>}
+Time in seconds that the login script will wait for input from the device
+before timeout.
+.sp
+Default: device dependent
 .\"
 .\" .TP
 .\" .B add rc <router name glob> {<cmd;cmd>}

@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: mrvrancid.in,v 1.7 2008/11/21 08:54:14 heas Exp $
+## $Id: mrvrancid.in 2117 2009-11-02 21:02:59Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
@@ -186,6 +186,7 @@ sub ShowVersion {
 	return(-1) if (/command authorization failed/i);
 
 	/copyright/i && next;
+	/^up/ && next;
 	/u-boot/i &&
 	    ProcessHistory("COMMENTS","keysort","C1", "!ROM: $_") && next;
 
@@ -367,7 +368,7 @@ sub WriteTerm {
 	    }
 	}
 	# prune tacacs/radius server keys
-	# radius-server host <1-5> IP SECRET [<ip port> [TIMEOUT [RETRY]]] 
+	# radius-server host <1-5> IP SECRET [<ip port> [TIMEOUT [RETRY]]]
 	if (/^((tacacs|radius)-server)\s(\d+\.\d+\.\d+\.\d+)\s(\w*)/
 	    && $filter_pwds >= 1) {
 	    ProcessHistory("","","","!$1 $2 <removed>$'"); next;
@@ -409,7 +410,7 @@ sub DoNothing {print STDOUT;}
 %commands = map(%$_, @commandtable);
 
 $cisco_cmds = join(";",@commands);
-$cmds_regexp = join("|",@commands);
+$cmds_regexp = join("|", map quotemeta($_), @commands);
 
 if (length($host) == 0) {
     if ($file) {

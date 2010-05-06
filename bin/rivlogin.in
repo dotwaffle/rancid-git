@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: rivlogin.in,v 1.37 2009/04/16 21:02:03 heas Exp $
+## $Id: rivlogin.in 2139 2010-02-10 19:29:27Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2009 by Terrapin Communications, Inc.
@@ -63,7 +63,7 @@ set success  1
 set config   0
 
 # in seconds to wait for data back from device
-set timeout 10
+set timeoutdflt 10
 set tempfile "/tmp/rivlogin.[exec date]"
 
 # cli command prompt
@@ -818,7 +818,7 @@ for {set idx 0} {$idx < $argc} {incr idx} {
 	} -t* -
 	-T* {
 	    incr idx
-	    set timeout [ lindex $argv $idx ]
+	    set timeoutdflt [ lindex $argv $idx ]
 	# Do we enable?
 	} -noenable {
 	    set avenable 0
@@ -844,6 +844,12 @@ set exitval 0
 foreach router [lrange $argv $idx end] {
     set router [string tolower $router]
     send_user -- "$router\n"
+
+    # device timeout
+    set timeout [find timeout $router]
+    if { [llength $timeout] == 0 } {
+	set timeout $timeoutdflt
+    }
 
     # Figure out passwords
     if {$verbose == 1} {

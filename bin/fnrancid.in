@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: fnrancid.in,v 1.19 2008/02/08 09:54:16 heas Exp $
+## $Id: fnrancid.in 2117 2009-11-02 21:02:59Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
@@ -175,7 +175,6 @@ sub GetSystem {
 	next if /^\s*$/;
 	last if(/$prompt/);
 	ProcessHistory("","","","$_");
-	#print STDOUT "$_";
     }
     print STDOUT "Vendor: $vendor";
     ProcessHistory("SYSTEM","","","\n");
@@ -202,9 +201,8 @@ sub GetConf {
 	    next;
 	}
 	ProcessHistory("","","","$_");
-	#print STDOUT "$_";
     }
-    $found_end=1;
+    $found_end = 1;
     return(1);
 }
 
@@ -222,7 +220,7 @@ sub DoNothing {print STDOUT;}
 %commands = map(%$_, @commandtable);
 
 $cisco_cmds=join(";",@commands);
-$cmds_regexp=join("|",@commands);
+$cmds_regexp = join("|", map quotemeta($_), @commands);
 
 if (length($host) == 0) {
     if ($file) {
@@ -241,7 +239,8 @@ if ($debug) { $| = 1; }
 if ($file) {
     print STDERR "opening file $host\n" if ($debug);
     print STDOUT "opening file $host\n" if ($log);
-    open(INPUT,"<$host") || die "open failed for $host: $!\n"; } else {
+    open(INPUT,"<$host") || die "open failed for $host: $!\n";
+} else {
     print STDERR "executing nlogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($debug);
     print STDOUT "executing nlogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($log);
     if (defined($ENV{NOPIPE})) {

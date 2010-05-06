@@ -50,7 +50,7 @@ AC_CHECK_HEADERS(sysexits.h)
 AC_CHECK_FUNCS(memcpy memmove memset strerror strchr \
 		strrchr strstr strtok strrtok index rindex unsetenv)
 AC_CHECK_FUNCS(openpty, openpty=1, openpty=0)
-# openlog() is not in the default libraries.  See if it is in some other lib.
+# openpty() is not in the default libraries.  See if it is in some other lib.
 if test $openpty = 0; then
   for lib in util; do
     AC_CHECK_LIB($lib, openpty, [AC_DEFINE(HAVE_OPENPTY)
@@ -82,11 +82,11 @@ if test $openpty = 0; then
     AC_MSG_CHECKING([for OSF/1 style pty allocation])
     AH_TEMPLATE(HAVE_PTMX_OSF, "define this for OSF/1 ptmx")
     if test -r /dev/ptmx_bsd ; then
-	AC_DEFINE(HAVE_PTMX_OSF) 
+	AC_DEFINE(HAVE_PTMX_OSF)
 	AC_MSG_RESULT(yes)
     else
 	AC_MSG_RESULT(no)
-    fi  
+    fi
 fi
 
 dnl AC_FUNC_VPRINTF
@@ -379,12 +379,12 @@ AH_BOTTOM([
 # include <stdlib.h>
 #endif
 
-#if HAVE_UNISTD_H       
-# include <unistd.h>    
+#if HAVE_UNISTD_H
+# include <unistd.h>
 # include <sys/types.h>
-#elif HAVE_SYS_TYPES_H 
+#elif HAVE_SYS_TYPES_H
 # include <sys/types.h>
-#endif  
+#endif
 
 #if HAVE_ERRNO_H
 # include <errno.h>
@@ -392,25 +392,25 @@ AH_BOTTOM([
 extern int		errno;
 
 #if HAVE_STRING_H
-# include <string.h>    
+# include <string.h>
 #endif
-#if HAVE_STRINGS_H      
+#if HAVE_STRINGS_H
 # include <strings.h>
-#endif 
+#endif
 
 #if ! HAVE_STRERROR
 # define strerror(n)	sys_errlist[n];
 #endif
 
-#if HAVE_SYS_WAIT_H 
+#if HAVE_SYS_WAIT_H
 # include <sys/wait.h>
-#endif  
+#endif
 #ifndef WEXITSTATUS
 # define WEXITSTATUS(stat_val) ((unsigned)(stat_val) >> 8)
 #endif
 #ifndef WIFEXITED
 # define WIFEXITED(stat_val) (((stat_val) & 255) == 0)
-#endif  
+#endif
 
 #if HAVE_MEMSET
 # define bzero(p,s)	memset(p, 0, s)
@@ -442,6 +442,7 @@ AC_CONFIG_HEADERS(include/config.h)
 AC_CONFIG_FILES(bin/control_rancid bin/par bin/rancid-fe, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/agmrancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/alogin bin/arancid, [chmod a+x $ac_file])
+AC_CONFIG_FILES(bin/arrancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/avologin bin/avorancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/blogin bin/brancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/cat5rancid bin/clogin bin/rancid, [chmod a+x $ac_file])

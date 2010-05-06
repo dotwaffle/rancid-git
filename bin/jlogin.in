@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: jlogin.in,v 1.69 2009/04/16 21:22:57 heas Exp $
+## $Id: jlogin.in 2162 2010-03-15 21:20:31Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2009 by Terrapin Communications, Inc.
@@ -69,6 +69,8 @@ set avenable 1
 set do_passwd 1
 # Save config, if prompted
 set do_saveconfig 0
+# Sometimes routers take awhile to answer (the default is 10 sec)
+set timeoutdflt 120
 
 # Find the user in the ENV, or use the unix userid.
 if {[ info exists env(CISCO_USER) ]} {
@@ -90,9 +92,6 @@ if {[ info exists env(CISCO_USER) ]} {
 if {[ info exists env(CLOGINRC) ]} {
     set password_file $env(CLOGINRC)
 }
-
-# Sometimes routers take awhile to answer (the default is 10 sec)
-set timeout 120
 
 # Process the command line
 for {set i 0} {$i < $argc} {incr i} {
@@ -159,7 +158,7 @@ for {set i 0} {$i < $argc} {incr i} {
 	} -t* {
 	    if {! [ regexp .\[tT\](.+) $arg ignore timeout]} {
 		incr i
-		set timeout [ lindex $argv $i ]
+		set timeoutdflt [ lindex $argv $i ]
 	    }
 	# Username
 	} -u* {
@@ -304,16 +303,19 @@ proc login { router user passwd cmethod cyphertype identfile} {
 	    # ssh to the router & try to login with or without an identfile.
 	    # We use two calls to spawn since spawn does not seem to parse
 	    # spaces correctly.
+	    regexp {ssh(:([^[:space:]]+))*} $prog methcmd suffix port
+	    set cmd [join [lindex $sshcmd 0] " "]
+	    if {"$port" != ""} {
+		set cmd "$cmd -p $port"
+	    }
 	    if {$identfile != ""} {
-		if [ catch {spawn $sshcmd -c $cyphertype -x -l $user -i $identfile $router} reason ] {
-		    send_user "\nError: failed to $sshcmd: $reason\n"
-		    return 1
-		}
+		set retval [ catch {eval spawn [split "$cmd -c $cyphertype -x -l $user -i $identfile $router" { }]} reason ]
 	    } else {
-		if [ catch {spawn $sshcmd -c $cyphertype -x -l $user $router} reason ] {
-		    send_user "\nError: failed to $sshcmd: $reason\n"
-		    return 1
-		}
+		set retval [ catch {eval spawn [split "$cmd -c $cyphertype -x -l $user $router" { }]} reason ]
+	    }
+	    if { $retval } {
+		send_user "\nError: $sshcmd failed: $reason\n"
+		return 1
 	    }
 	} elseif ![string compare $prog "rsh"] {
 	    send_error "\nError: unsupported method: rsh\n"
@@ -461,6 +463,12 @@ set exitval 0
 foreach router [lrange $argv $i end] {
     set router [string tolower $router]
     send_user "$router\n"
+
+    # device timeout
+    set timeout [find timeout $router]
+    if { [llength $timeout] == 0 } {
+	set timeout $timeoutdflt
+    }
 
     set prompt ">"
 

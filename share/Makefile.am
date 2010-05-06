@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 ## A Makefile.in is supplied, in case you do not have automake.
 
-## $Id: Makefile.am,v 1.9 2008/03/06 07:49:59 heas Exp $
+## $Id: Makefile.am 1955 2008-03-06 07:49:59Z heas $
 ##
 ## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
 ## All rights reserved.

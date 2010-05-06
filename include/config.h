@@ -129,6 +129,9 @@
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME ""
 
+/* Define to the home page for this package. */
+#define PACKAGE_URL ""
+
 /* Define to the version of this package. */
 #define PACKAGE_VERSION ""
 
@@ -175,12 +178,12 @@
 # include <stdlib.h>
 #endif
 
-#if HAVE_UNISTD_H       
-# include <unistd.h>    
+#if HAVE_UNISTD_H
+# include <unistd.h>
 # include <sys/types.h>
-#elif HAVE_SYS_TYPES_H 
+#elif HAVE_SYS_TYPES_H
 # include <sys/types.h>
-#endif  
+#endif
 
 #if HAVE_ERRNO_H
 # include <errno.h>
@@ -188,25 +191,25 @@
 extern int		errno;
 
 #if HAVE_STRING_H
-# include <string.h>    
+# include <string.h>
 #endif
-#if HAVE_STRINGS_H      
+#if HAVE_STRINGS_H
 # include <strings.h>
-#endif 
+#endif
 
 #if ! HAVE_STRERROR
 # define strerror(n)	sys_errlist[n];
 #endif
 
-#if HAVE_SYS_WAIT_H 
+#if HAVE_SYS_WAIT_H
 # include <sys/wait.h>
-#endif  
+#endif
 #ifndef WEXITSTATUS
 # define WEXITSTATUS(stat_val) ((unsigned)(stat_val) >> 8)
 #endif
 #ifndef WIFEXITED
 # define WIFEXITED(stat_val) (((stat_val) & 255) == 0)
-#endif  
+#endif
 
 #if HAVE_MEMSET
 # define bzero(p,s)	memset(p, 0, s)

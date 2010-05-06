@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: clogin.in,v 1.136 2009/04/22 18:59:04 heas Exp $
+## $Id: clogin.in 2162 2010-03-15 21:20:31Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2009 by Terrapin Communications, Inc.
@@ -78,6 +78,8 @@ set do_passwd 1
 set do_enapasswd 1
 # Save config, if prompted
 set do_saveconfig 0
+# Sometimes routers take awhile to answer (the default is 10 sec)
+set timeoutdflt 45
 #
 set send_human {.4 .4 .7 .3 5}
 
@@ -101,9 +103,6 @@ if {[ info exists env(CISCO_USER) ]} {
 if {[ info exists env(CLOGINRC) ]} {
     set password_file $env(CLOGINRC)
 }
-
-# Sometimes routers take awhile to answer (the default is 10 sec)
-set timeout 45
 
 # Process the command line
 for {set i 0} {$i < $argc} {incr i} {
@@ -195,7 +194,7 @@ for {set i 0} {$i < $argc} {incr i} {
 	} -t* {
 	    if {! [regexp .\[tT\](.+) $arg ignore timeout]} {
 		incr i
-	        set timeout [ lindex $argv $i ]
+	        set timeoutdflt [ lindex $argv $i ]
 	    }
 	# Command file
 	} -x* {
@@ -334,11 +333,11 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 	    }
 	} elseif [string match "ssh*" $prog] {
 	    regexp {ssh(:([^[:space:]]+))*} $prog methcmd suffix port
-	    if {"$port" == ""} {
-		set retval [ catch {spawn $sshcmd -c $cyphertype -x -l $user $router} reason ]
-	    } else {
-		set retval [ catch {spawn $sshcmd -c $cyphertype -x -l $user -p $port $router} reason ]
+	    set cmd [join [lindex $sshcmd 0] " "]
+	    if {"$port" != ""} {
+		set cmd "$cmd -p $port"
 	    }
+	    set retval [ catch {eval spawn [split "$cmd -c $cyphertype -x -l $user $router" { }]} reason ]
 	    if { $retval } {
 		send_user "\nError: $sshcmd failed: $reason\n"
 		return 1
@@ -589,7 +588,7 @@ proc do_enable { enauser enapasswd } {
 
 # Run commands given on the command line.
 proc run_commands { prompt command } {
-    global in_proc platform
+    global do_saveconfig in_proc platform
     set in_proc 1
 
     # If the prompt is (enable), then we are on a switch and the
@@ -725,6 +724,12 @@ foreach router [lrange $argv $i end] {
     # attempt at platform switching.
     set platform ""
     send_user -- "$router\n"
+
+    # device timeout
+    set timeout [find timeout $router]
+    if { [llength $timeout] == 0 } {
+	set timeout $timeoutdflt
+    }
 
     # Figure out the prompt.
     # autoenable is off by default.  If we have it defined, it was done
@@ -881,6 +886,8 @@ foreach router [lrange $argv $i end] {
 	    send "set logging session disable\r"
 	} else {
 	    send "terminal length 0\r"
+	    expect -re $prompt  {}
+	    send "set width 80\r"
 	}
 	expect -re $prompt	{}
 	source $sfile

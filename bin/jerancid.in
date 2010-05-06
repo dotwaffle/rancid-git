@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: jerancid.in,v 1.47 2009/03/04 19:11:55 heas Exp $
+## $Id: jerancid.in 2117 2009-11-02 21:02:59Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
@@ -193,9 +193,9 @@ sub ShowVersion {
 	}
 	/^(--.*) --+$/ && $slots &&
 		ProcessHistory("COMMENTS","keysort","B2", "! $1\n") && next;
-	if (/^(\d+ +\S+ +(\S+).*) \S+$/ && $slots) {
+	if (/^(\d+\s+(\S+)\s+\S+\s+.*) \S+/ && $slots) {
 	    my($line) = $1;
-	    if ($2 != /--+/) {
+	    if (! ($2 =~ /--+/)) {
 		ProcessHistory("COMMENTS","keysort","B3", "! $line\n");
 	    }
 	    next;
@@ -232,7 +232,15 @@ sub ShowEnv {
 	next if (/^Please wait/i);
 	return(-1) if (/command authorization failed/i);
 	# fail if the RP is amid the auto-sync process
-	return(-1) if (/auto-sync enabled/ && !/in sync/);
+	if (/auto-sync enabled/ && !/in sync/) {
+	    $in_sync = <INPUT>;
+	    $in_sync =~ s/\015//;
+	    print STDERR $in_sync if ($debug);
+	    return(-1) if ( $in_sync !~ /in sync/);
+	    s/^    //;
+	    ProcessHistory("COMMENTS","keysort","D1","! $_");
+	    $_ = $in_sync;
+	}
 
 	# skip the temperature goop
 	if (/processor\s+processor/) {
@@ -598,7 +606,7 @@ sub DoNothing {print STDOUT;}
 %commands = map(%$_, @commandtable);
 
 $jnxe_cmds=join(";",@commands);
-$cmds_regexp=join("|",@commands);
+$cmds_regexp = join("|", map quotemeta($_), @commands);
 
 if (length($host) == 0) {
     if ($file) {

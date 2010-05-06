@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: avorancid.in,v 1.7 2009/02/07 08:15:16 asp Exp $
+## $Id: avorancid.in 2117 2009-11-02 21:02:59Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
@@ -207,7 +207,7 @@ sub DoNothing {print STDOUT;}
 %commands = map(%$_, @commandtable);
 
 $cisco_cmds = join(";",@commands);
-$cmds_regexp = join("|",@commands);
+$cmds_regexp = join("|", map quotemeta($_), @commands);
 
 open(OUTPUT,">$host.new") || die "Can't open $host.new for writing: $!\n";
 select(OUTPUT);

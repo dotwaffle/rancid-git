@@ -1,4 +1,4 @@
-Frequently Asked Questions about rancid - last updated 20050813.
+Frequently Asked Questions about rancid - last updated 20091111.
 
 This FAQ contains information that may not apply directly to versions of
 rancid prior to 2.3.  It also contains paths containing tags such as
@@ -15,6 +15,8 @@ rancid.
 			The location of rancid.conf, etc.
 	LOCALSTATEDIR	configure --localstatedir option. default: <PREFIX>/var
 			The location of the CVS repository, log files, etc.
+
+The most recent FAQ can be found at http://www.shrubbery.net/rancid/FAQ
 
 1) Platform specific
 
@@ -152,6 +154,11 @@ A. CVS does not provide a way (AFAIK) to rename files or to rename or delete
    then commit the new file.
 
 
+Q. I am new to svn.  Where can I find more information?
+Q. The svn so-called "red book" is the definitive guide.
+   http://svnbook.red-bean.com/en/1.5/svn-book.html 
+
+
 Q. I am removing a group and would like to remove all traces of it from the
    rancid directory and the CVS repository.  How is this done?
 A. As far as I know, CVS does not provide a way to remove directories.  First,
@@ -221,6 +228,17 @@ A. Our usual diagnostic procedure for this is:
 
    If all of these work, make sure that the device's entry in the group's
    router.db file is correct and check the group's last log file for errors.
+
+
+Q. I am receiving persistent diffs for up/down/added/deleted devices in
+   router.db, but nothing has changed and the cvs repository is up to date.
+A. Check that the configure process run during the installation of rancid
+   determined the proper options for diff(1); look for diff in the
+   control_rancid script.
+   If you also run rancid from the command-line, be sure that your locale
+   environment variables are consistent between your interactive and non-
+   interactive (ie: cron) environments.  On some O/Ses, the locale will
+   affect the operation of sort(1).
 
 
 Q. Are there any characters in the banner that rancid has problems with OR
@@ -386,3 +404,8 @@ A. The possibilities are endless...rancid is non-toxic when applied properly.
 	http://www.nanog.org/mtg-0210/abley.html
    or our NANOG presentation:
 	http://www.shrubbery.net/rancid/NANOG29/
+
+4) License
+Q. Please explain the RANCID license.
+A. Quite simple; read it.  It is a slightly modified BSD license; it has an
+   additional clause.

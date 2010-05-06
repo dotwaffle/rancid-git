@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: agmrancid.in,v 1.13 2008/02/08 10:02:03 heas Exp $
+## $Id: agmrancid.in 2117 2009-11-02 21:02:59Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
@@ -411,7 +411,7 @@ sub DoNothing {print STDOUT;}
 %commands = map(%$_, @commandtable);
 
 $cisco_cmds=join(";",@commands);
-$cmds_regexp=join("|",@commands);
+$cmds_regexp = join("|", map quotemeta($_), @commands);
 
 if (length($host) == 0) {
     if ($file) {

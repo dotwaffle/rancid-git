@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: francid.in,v 1.53 2008/04/10 23:17:04 heas Exp $
+## $Id: francid.in 2131 2009-12-03 20:50:27Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
@@ -212,6 +212,7 @@ sub ShowChassis {
 	last if (/^$prompt/);
 	next if (/ from /);
 	next if (/current temperature/i);
+	return(1) if (/^\s+\^$/);		# edgeiron invalid command
 
 	if (/^---/ || /^$/) { # next section reached
 	    $skip = 0;
@@ -219,7 +220,8 @@ sub ShowChassis {
 	if (/(POWERS|TEMPERATURE READINGS)/) {
 	    $skip = 1;
 	}
-	if (/fan controlled temperature:/i) {
+	if (/fan controlled temperature:/i ||
+	    /fan speed switching temperature thresholds/i) {
 	    $skip = 1;
 	}
 	if (/THERMAL PLANE/) {
@@ -248,6 +250,8 @@ sub ShowFlash {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^\s*$/);
+	return(1) if (/^\s+\^$/);		# edgeiron invalid command
+
 	ProcessHistory("FLASH","","","!Flash: $_");
     }
     ProcessHistory("","","","!\n");
@@ -261,7 +265,8 @@ sub ShowModule {
     while (<INPUT>) {
 	tr/\015//d;
 	last if (/^$prompt/);
-	return(1) if (/Invalid input ->/);
+	return(1) if (/Invalid input (->|detected)/);
+	return(1) if (/^\s+\^$/);		# edgeiron invalid command
 	next if (/^\s*$/);
 	next if (/:\s*$/);
 
@@ -277,11 +282,14 @@ sub WriteTerm {
 
     while (<INPUT>) {
 	tr/\015//d;
-	return(1) if (/Invalid input ->/);
+	return(1) if (/Invalid input (->|detected)/);
+	return(1) if (/^\s+\^$/);		# edgeiron invalid command
 	return(0) if ($found_end);		# Only do this routine once
 	last if (/^$prompt/);
 
-	/Current configuration\s*:/i && next;
+	/current configuration\s*:/i && next;
+	/building configuration\.+\s*/i && next;
+	/building running-config, please wait/i && next;	# edgeiron
 	/^ver \d+\.\d+/ && next;
 	/^module \d+ / && next;
 
@@ -418,7 +426,7 @@ sub DoNothing {print STDOUT;}
 %commands = map(%$_, @commandtable);
 
 $cisco_cmds=join(";",@commands);
-$cmds_regexp=join("|",@commands);
+$cmds_regexp = join("|", map quotemeta($_), @commands);
 
 if (length($host) == 0) {
     if ($file) {
@@ -521,6 +529,7 @@ if (scalar(%commands) || !$clean_run || !$found_end) {
 	printf(STDERR "$host: missed cmd(s): %s\n", join(',', keys(%commands))) if ($debug);
     }
     if (!$clean_run || !$found_end) {
+print STDERR "$host: End of run not found $clean_run || $found_end\n";
 	print STDOUT "$host: End of run not found\n";
 	print STDERR "$host: End of run not found\n" if ($debug);
 	system("/usr/bin/tail -1 $host.new");

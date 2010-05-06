@@ -1,6 +1,6 @@
 .\"
 .hys 50
-.TH "rancid" "1" "27 February 2008"
+.TH "rancid" "1" "5 March 2010"
 .SH NAME
 rancid \- Cisco configuration filter
 .SH SYNOPSIS
@@ -31,6 +31,9 @@ Cisco Anomaly Guard Module (AGM)
 .TP 15
 .B arancid
 Alteon WebOS switches
+.TP 15
+.B arrancid
+Arista Networks devices
 .TP
 .B brancid
 Bay Networks (nortel)
@@ -70,6 +73,9 @@ Juniper Networks
 .TP
 .B mrancid
 MRTd
+.TP
+.B mrvrancid
+MRV optical switches
 .TP
 .B nrancid
 Netscreen firewalls
@@ -130,6 +136,13 @@ output it would normally collect from the device (
 .BR rancid.conf (5)
 .\"
 .SH "CAVEATS"
+Cisco IOS offers a DHCP server that maintains a text database which can be
+stored remotely or on local storage.
+If stored locally, the file changes constantly and causes constant diffs
+from rancid.
+If this file's name ('ip dhcp database') matches the regex
+dhcp_[^[:space:].]\.txt, it will be filtered.
+.Pp
 For Catalyst switches running CatOS, type
 .B cat5,
 the prompt must end with '>'.

@@ -1,3 +1,82 @@
+2.3.3
+	rancid: check for device busy when opening flash fails, which seems to
+	occur on 6500s when some other command is run.
+
+	*login: support :port method syntax for ssh and adjust to allow spaces
+	in sshcmd
+
+	jrancid: fix return values of formatting functions
+
+	clogin: set terminal width so that o/p is consistent
+
+	rancid: filter some crud resulting from the change in handling non-empty
+	comment lines
+
+	rancid: fail if the configuration buffer fills
+
+	rancid: filter dhcp_[^[:space:].].txt from flash directories, so it
+	does not create constant changes resulting from the ip dhcp database
+	saves.
+
+	rancid: filter ldap host password on PIX
+
+	rancid: when compressing consecutive comment lines, only consider
+	empty lines.
+
+	arancid: handle password filter for HP 1:10Gb Ethernet Blade Switch
+	5.0.4-Base, running AOS - Tore Anderson
+
+	*login:	add cloginrc timeout directive
+
+	nrancid: fix control number match - Guillaume RISCHARD
+
+	rancid: remove ASA coredump* filter - Cisco Bug CSCsz85597, fixed in
+	8.2(1.2), 8.3(0.0), 100.3(0.3)M
+
+	f5rancid: adjust fan rpm and config sync time filters for new f5
+	code - Ben O'Hara
+
+	rancid: ACE/SANOS report invalid input differently - Michael Stefaniuc
+
+	rancid: skip leading blank lines in config - Michael Stefaniuc
+
+	rancid: remove ASA keys such as tacacs and radius - Michael Stefaniuc
+
+	rancid: match non-space for usernames in "Written by" line - James Davis
+
+	*rancid: quote meta characters - from Jeremy Singletary
+
+	rancid: Fail on error msg "% Configuration buffer full" seen on 6500
+
+	rancid: Dont filter 'show vlan' on Catalyst 3550/4500s - Jon Lewis
+
+	import Arista script - from Bill Fenner
+
+	jerancid: fix for 'show environment all' for filtering with auto-sync
+	on BRASes - from Christophe Fonteyne
+
+	francid,flogin: edgeiron can not disable the pager and does not offer
+	some commands found on the bigirons
+
+	rancid: filter coredumpinfo/coredump.cfg found on ASA - rancid-discuss@
+
+	f5rancid: fileter HA peer status - from David Stipp
+
+	WTI scripts from Geert Jan de Groot with a few tweaks
+
+	jerancid: include standby slots in showversion o/p
+
+	lg: add code for LG_SINGLE config knob
+
+	clogin: run_commands() needs do_saveconfig
+
+	f10rancid: change fan status parsing to handle c300
+
+	nxrancid: collect license info; fix 'show env temp' & 'show
+	env power' parsing; drop unused code.
+
+	change zero-config check to avoid broken awks - from jim buchele
+
 2.3.2
 	clogin: fix for Extreme prompt handling
 

@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: f5rancid.in,v 1.16 2008/11/12 08:32:10 heas Exp $
+## $Id: f5rancid.in 2134 2009-12-15 21:23:44Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
@@ -206,7 +206,8 @@ sub ShowDb {
 	    ProcessHistory("SHOWDB","","","#\n#database:\n");
 	}
 	/UCS.LoadTime/ && next;
-	/Configsync.LocalConfigTime/ && next;
+	/Configsync\..*Time/ && next;
+	/Configsync.peerupdatedstatus/ && next;
 	/LTM.ConfigTime/ && next;
 
 	if (/^(snmp\..*\.community\..* =) (.+)/i) {
@@ -293,6 +294,7 @@ sub ShowPlatform {
 	/fan speed/i && next;
 	/chassis temperature/i && next;
 	/degC/ && next;
+	s/\d+rpm//ig;
 	s/^\|//;
 	/Type: / && ProcessHistory("COMMENTS","keysort","A0",
 				   "#Chassis type: $'");
@@ -531,7 +533,7 @@ sub DoNothing {print STDOUT;}
 %commands = map(%$_, @commandtable);
 
 $cisco_cmds=join(";",@commands);
-$cmds_regexp=join("|",@commands);
+$cmds_regexp = join("|", map quotemeta($_), @commands);
 
 if (length($host) == 0) {
     if ($file) {

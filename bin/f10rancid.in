@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: f10rancid.in,v 1.39 2008/11/12 01:36:36 heas Exp $
+## $Id: f10rancid.in 2117 2009-11-02 21:02:59Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
@@ -251,17 +251,64 @@ sub ShowChassis {
 	# E600 AC PSMs
 	/Status        : up/ && next;
 	/High line/ && next;
-	# E600 fan speed
-	/Status  Temp/ && next;
-	s/(.*)\d\dC.*/ $1/;
-	# E1200 fan speed
-	s/Tray  Status.*/Tray Status/;
-	s/ (\d.*)<.*/$1/;
-	# C300 fan speed
-	s/FanNumber    Speed    Status/FanNumber    Status/;
-	s/(          \d) *\d\d\d\d(.*)/$1 $2/;
+	# fans
+	if (/Fan\s+Status/i) {
+	    ProcessHistory("COMMENTS","keysort","CHASSIS","!Chassis: $_");
+
+	    while (<INPUT>) {
+		tr/\015//d;
+		if (/^$prompt/) {
+		    goto OUT;
+		}
+		last if (/^$/);
+		# remove any trailing WS
+		s/\s+$//;
+		next if (/^----+$/);
+		# c150 / c300 style
+		/FanNumber\s+Speed\s+Status/ && ProcessHistory("COMMENTS",
+		    "keysort","CHASSIS","!Chassis: FanNumber\tStatus\n") &&
+		    next;
+		/^\s+(\d)\s+\d+\s+(\S+)/ && ProcessHistory("COMMENTS",
+		    "keysort","CHASSIS","!Chassis: $1\t\t$2\n") && next;
+		# e300
+		/^Status\s+$/ && next;
+		/^\s+(\S+)\s*$/ && ProcessHistory("COMMENTS","keysort",
+		    "CHASSIS","!Chassis: $1\n") && next;
+		# e600 style
+		/Status\s+Temp\s+Fan1\s+Fan2\s+Fan3\s+Serial\s/ && next;
+		/^\s+(\S+)\s+\d+C\s+\d+ RPM\s+/ && ProcessHistory("COMMENTS",
+		    "keysort","CHASSIS","!Chassis: $1\n") && next;
+		# e1200 style
+		/Tray\s+Status\s+Temp\s+/ && ProcessHistory("COMMENTS",
+		    "keysort","CHASSIS","!Chassis: Tray\tStatus\n") &&
+		    next;
+		/^\s+(\d+)\s+(\S+)\s+(or down|(< )?\d+C\s+)/ &&
+		    ProcessHistory("COMMENTS","keysort","CHASSIS",
+		    "!Chassis: $1\t$2\n") && next;
+		# s50n / s50v style
+		if (/Unit\s+TrayStatus\s+Fan0\s+Fan1\s+/) {
+		    ProcessHistory("COMMENTS","keysort","CHASSIS",
+		    "!Chassis: $_\n");
+		    # consume the following blank/separator line
+		    $_ = <INPUT>;
+		    # the s50n botches its fan status line with the "---..."
+		    # separator line w/o a CR, followed by the fan status.  we
+		    # would normally skip the sparator line, so hack it.
+		    s/^------+(\s+)/$1/;
+		    tr/\015//d;
+		    # the s50v has a blank line following the table header,
+		    # loop for that one and continue for the S50n
+		    /^\s+$/ && next;
+		}
+		/^\s+\d+\s+\S+\s+\S+\s+\S+\s+\S+\s+/ &&
+		    ProcessHistory("COMMENTS","keysort","CHASSIS",
+		    "!Chassis: $_") && next;
+	    }
+	    next;
+	}
 	ProcessHistory("COMMENTS","keysort","CHASSIS","!Chassis: $_");
     }
+OUT:
     ProcessHistory("COMMENTS","keysort","CHASSIS","!\n");
     return(0);
 }
@@ -534,7 +581,7 @@ sub DoNothing {print STDOUT;}
 %commands = map(%$_, @commandtable);
 
 $cisco_cmds=join(";",@commands);
-$cmds_regexp=join("|",@commands);
+$cmds_regexp = join("|", map quotemeta($_), @commands);
 
 if (length($host) == 0) {
     if ($file) {
