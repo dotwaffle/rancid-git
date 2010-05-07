@@ -1,0 +1,73 @@
+# translation of rancid debconf to Portuguese
+# Copyright (C) 2007 Américo Monteiro
+# This file is distributed under the same license as the rancid package.
+#
+# Américo Monteiro <a_monteiro@netcabo.pt>, 2007.
+msgid ""
+msgstr ""
+"Project-Id-Version: rancid 2.3.2~a7-1\n"
+"Report-Msgid-Bugs-To: rancid@packages.debian.org\n"
+"POT-Creation-Date: 2009-02-15 21:21+0100\n"
+"PO-Revision-Date: 2007-08-25 16:25+0100\n"
+"Last-Translator: Américo Monteiro <a_monteiro@netcabo.pt>\n"
+"Language-Team: Portuguese <traduz@debianpt.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: KBabel 1.11.4\n"
+
+#. Type: note
+#. Description
+#: ../rancid.templates:1001
+msgid "Note"
+msgstr "Nota"
+
+#. Type: note
+#. Description
+#: ../rancid.templates:1001
+msgid ""
+"Rancid debian package is still in an alpha stage.  If you find problems "
+"first check all the docs and then report them as bugs as soon as possible.  "
+"Currently it doesn't have any installation script to help you configuring "
+"it, look at the examples directory under /usr/share/doc/rancid to look for "
+"some example for your configuration."
+msgstr ""
+"O pacote Debian Rancid ainda está em estado alfa, se você detectar "
+"problemas, primeiro verifique todos os documentos e depois reporte-os como "
+"'bugs' assim que for possível. Actualmente não tem nenhum script de "
+"instalação para o ajudar a configurar, veja no directório dos exemplos em /"
+"usr/share/doc/rancid para ver algum exemplo para a sua configuração."
+
+#. Type: boolean
+#. Description
+#: ../rancid.templates:2001
+msgid "Really continue?"
+msgstr "Deseja continuar?"
+
+#. Type: boolean
+#. Description
+#: ../rancid.templates:2001
+msgid ""
+"Please check, whether you made a backup copy of your rancid data.  If it's "
+"your first installation of rancid accept here, otherwise decline, perform "
+"the backup and then run \"dpkg-reconfigure rancid\""
+msgstr ""
+"Por favor verifique se Já fez uma cópia de segurança dos dados rancid. "
+"Aceite aqui se é a sua primeira instalação do rancid, caso contrário "
+"rejeite, faça a cópia de segurança e depois corra 'dpkg-reconfigure rancid'."
+
+#~ msgid "Dangerous upgrade"
+#~ msgstr "Actualização perigosa"
+
+#~ msgid ""
+#~ "This newer version of Rancid has some newer features which could lead to "
+#~ "loss of all your precedent configuration and data.  It is STRONGLY "
+#~ "RECOMMEND that you first make a BACKUP of the ~rancid directory before "
+#~ "performing this upgrade, and then you should check /usr/share/doc/rancid "
+#~ "directory for information on what has been changed."
+#~ msgstr ""
+#~ "Esta nova versão do Rancid tem novas funcionalidades que podem levar à "
+#~ "perda dos seus dados e configuração anteriores. É FORTEMENTE RECOMENDADO "
+#~ "que faça primeiro uma CÓPIA DE SEGURANÇA do directório ~rancid antes de "
+#~ "fazer esta actualização, e depois você deverá verificar o directório /usr/"
+#~ "share/doc/rancid por informação sobre o que é que foi alterado."

@@ -1,0 +1,80 @@
+# translation of rancid_2.3.2~a7-3_sv.po to swedish
+# Translators, if you are not familiar with the PO format, gettext
+# documentation is worth reading, especially sections dedicated to
+# this format, e.g. by running:
+# info -n '(gettext)PO Files'
+# info -n '(gettext)Header Entry'
+# Some information specific to po-debconf are available at
+# /usr/share/doc/po-debconf/README-trans
+# or http://www.debian.org/intl/l10n/po-debconf/README-trans
+# Developers do not need to manually edit POT or PO files.
+#
+# Martin Bagge <martin.bagge@bthstudent.se>, 2008.
+msgid ""
+msgstr ""
+"Project-Id-Version: rancid_2.3.2~a7-3_sv\n"
+"Report-Msgid-Bugs-To: rancid@packages.debian.org\n"
+"POT-Creation-Date: 2009-02-15 21:21+0100\n"
+"PO-Revision-Date: 2008-06-26 21:52+0200\n"
+"Last-Translator: Martin Bagge <martin.bagge@bthstudent.se>\n"
+"Language-Team: swedish <debian-l10n-swedish@lists.debian.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ISO-8859-1\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: KBabel 1.11.4\n"
+
+#. Type: note
+#. Description
+#: ../rancid.templates:1001
+msgid "Note"
+msgstr "Notera"
+
+#. Type: note
+#. Description
+#: ../rancid.templates:1001
+msgid ""
+"Rancid debian package is still in an alpha stage.  If you find problems "
+"first check all the docs and then report them as bugs as soon as possible.  "
+"Currently it doesn't have any installation script to help you configuring "
+"it, look at the examples directory under /usr/share/doc/rancid to look for "
+"some example for your configuration."
+msgstr ""
+"Debianpaketet rancid är fortfarande i alphastadiet. Om du hittar problem, "
+"läs då alla manualer och rapportera sedan problemet som en bug så snart som "
+"möjligt. För tillfället finns inga installationsskript som hjälper dig att "
+"konfigurera applikationen men exempel finns i katalogen /usr/share/doc/"
+"rancid*."
+
+#. Type: boolean
+#. Description
+#: ../rancid.templates:2001
+msgid "Really continue?"
+msgstr "Vill du verkligen fortsätta?"
+
+#. Type: boolean
+#. Description
+#: ../rancid.templates:2001
+msgid ""
+"Please check, whether you made a backup copy of your rancid data.  If it's "
+"your first installation of rancid accept here, otherwise decline, perform "
+"the backup and then run \"dpkg-reconfigure rancid\""
+msgstr ""
+"Har du gjort en backup av rancids data ? Om detta är din första installation "
+"av rancid, svara \"Ja\". Om inte, svara \"Nej\" och gör sedan en backup och "
+"kör 'dpkg-reconfigure rancid'."
+
+#~ msgid "Dangerous upgrade"
+#~ msgstr "Farlig uppgradering"
+
+#~ msgid ""
+#~ "This newer version of Rancid has some newer features which could lead to "
+#~ "loss of all your precedent configuration and data.  It is STRONGLY "
+#~ "RECOMMEND that you first make a BACKUP of the ~rancid directory before "
+#~ "performing this upgrade, and then you should check /usr/share/doc/rancid "
+#~ "directory for information on what has been changed."
+#~ msgstr ""
+#~ "Denna nya version av Rancid har några nya funktioner som kan leda till "
+#~ "att du tappar gammal konfiguration och data. Det är STARKT REKOMMENDERAT "
+#~ "att du gör en BACKUP av  ~rancid mappen före du gör denna uppgradering. "
+#~ "Sedan bör du även kontrollera /usr/share/doc/rancid* efter information om "
+#~ "vad som har ändrats"

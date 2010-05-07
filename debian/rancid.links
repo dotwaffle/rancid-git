@@ -1,0 +1,3 @@
+var/log/rancid         var/lib/rancid/logs
+usr/lib/rancid/bin     var/lib/rancid/bin
+usr/lib/rancid/bin/rancid-run /usr/bin/rancid-run

@@ -1,0 +1,100 @@
+#
+#    Translators, if you are not familiar with the PO format, gettext
+#    documentation is worth reading, especially sections dedicated to
+#    this format, e.g. by running:
+#         info -n '(gettext)PO Files'
+#         info -n '(gettext)Header Entry'
+#
+#    Some information specific to po-debconf are available at
+#            /usr/share/doc/po-debconf/README-trans
+#         or http://www.debian.org/intl/l10n/po-debconf/README-trans
+#
+#    Developers do not need to manually edit POT or PO files.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Rancid 2.3\n"
+"Report-Msgid-Bugs-To: rancid@packages.debian.org\n"
+"POT-Creation-Date: 2009-02-15 21:21+0100\n"
+"PO-Revision-Date: 2004-03-28 18:30+0200\n"
+"Last-Translator: Samuele Giovanni Tonon <samu@debian.org>\n"
+"Language-Team: Italiano <IT@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ISO-8859-15\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. Type: note
+#. Description
+#: ../rancid.templates:1001
+msgid "Note"
+msgstr "Attenzione !!"
+
+#. Type: note
+#. Description
+#: ../rancid.templates:1001
+#, fuzzy
+msgid ""
+"Rancid debian package is still in an alpha stage.  If you find problems "
+"first check all the docs and then report them as bugs as soon as possible.  "
+"Currently it doesn't have any installation script to help you configuring "
+"it, look at the examples directory under /usr/share/doc/rancid to look for "
+"some example for your configuration."
+msgstr ""
+"Il pacchetto debian di rancid e' ancora in fase alfa, se trovate problemi "
+"controllate prima nella documentazione e poi riportateli come bug il piu' "
+"velocemente possibile. Attualmente non ha alcun script di installazione per "
+"aiutare la configurazione, tuttavia sono disponibili alcuni esempi nella "
+"directory examples in /usr/share/doc/rancid-{core|util|cgi}/examples"
+
+#. Type: boolean
+#. Description
+#: ../rancid.templates:2001
+msgid "Really continue?"
+msgstr ""
+
+#. Type: boolean
+#. Description
+#: ../rancid.templates:2001
+#, fuzzy
+msgid ""
+"Please check, whether you made a backup copy of your rancid data.  If it's "
+"your first installation of rancid accept here, otherwise decline, perform "
+"the backup and then run \"dpkg-reconfigure rancid\""
+msgstr ""
+"E' stata fatta una copia di backup dei dati di rancid ? Se questa e' la "
+"vostra prima installazione di rancid potete rispondere tranquillamente 'Si', "
+"altrimenti scegliete 'No', procedete al backup, e poi eseguite 'dpkg-"
+"reconfigure -plow rancid' per tornare a questo menu"
+
+#~ msgid "Dangerous upgrade"
+#~ msgstr "Upgrade pericoloso"
+
+#, fuzzy
+#~ msgid ""
+#~ "This newer version of Rancid has some newer features which could lead to "
+#~ "loss of all your precedent configuration and data.  It is STRONGLY "
+#~ "RECOMMEND that you first make a BACKUP of the ~rancid directory before "
+#~ "performing this upgrade, and then you should check /usr/share/doc/rancid "
+#~ "directory for information on what has been changed."
+#~ msgstr ""
+#~ "Questa nuova versione di Rancid ha alcune nuove feature che potrebbero "
+#~ "portarvi a perdere i vecchi dati e le vecchie configurazioni. Si "
+#~ "RACCOMANDA FORTEMENTE di fare un BACKUP della directory di rancid prima "
+#~ "di aggiornare il pacchetto e quindi di controllare la directory di "
+#~ "documentazione per vedere che cosa e' cambiato effettivamente"
+
+#~ msgid "Let's go!"
+#~ msgstr "Avanti Tutta!"
+
+#, fuzzy
+#~ msgid ""
+#~ "This package provides you a simple tracker to download and build latest "
+#~ "Rancid debian source packages for non x86 arch users.  Read /usr/share/"
+#~ "doc/rancid-installer/README.rancid-installer for instruction on compiling "
+#~ "and installing it."
+#~ msgstr ""
+#~ "Questo pacchetto fornisce una semplice notifica per scaricare gli ultimi "
+#~ "sorgenti rancid per debian disponibili per utenti di architetture "
+#~ "differenti da X86. Leggere  /usr/share/doc/rancid-installe/README.rancid-"
+#~ "installer per istruzioni sulla compilazione e installazione"

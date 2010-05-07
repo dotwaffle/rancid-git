@@ -1,0 +1,4 @@
+version=3
+
+opts=uversionmangle=s/\.(tar.*|tgz|zip|gz|bz2)$//i;s/a/~a/;s/rc/~rc/,pasv \
+ftp://ftp.shrubbery.net/pub/rancid/rancid-(\d+[.0-9abrc]+)\.(tar.*|tgz|zip|gz|bz2|) debian uupdate

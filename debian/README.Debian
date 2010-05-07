@@ -1,0 +1,90 @@
+rancid for Debian
+-----------------
+
+The main rancid package is divided in two subpackages to separate
+the core from the cgi looking glass web interface.
+
+The user 'rancid' is automatically created.
+
+In /etc/rancid you can find rancid.conf and lg.conf (if rancid-cgi is
+installed) to configure them as you wish.
+
+in the example directory of rancid-cgi you can find an example of
+configuration to add to your apache's conf.d directory to enable the
+lg cgi view from localhost.
+
+
+** a note from  Colin Whittaker 
+
+if you find problem on session hanging try setting 
+NOPIPE=YES; export NOPIPE
+in /etc/rancid/rancid.conf 
+
+** 
+
+A patch is applied to allow logging into a Cisco PIX:
+(http://www.shrubbery.net/pipermail/rancid-discuss/2005-August/001159.html)
+
+----------------------- schnipp -------------------------------
+From: Emre Bastuz <info@emre.de>
+Subject: Obtaining Cisco Pix Configs
+Date: Mon Aug 8 10:02:32 UTC 2005
+
+Hi,
+
+some time ago I wrote to this list and asked how RANCID could be used
+with a Pix firewall and a local user with only "show" privileges.
+
+It seems there is no way of doing the following with RANCID:
+# ssh mypix
+mypix# login
+<user>
+<password>
+mypix# show running-config
+etc....
+
+To use "login" instead of "enable" I had to introduce a new variable
+to .cloginrc and patch the script "clogin".
+
+I have included the patch. Please feel free to use it if you need the
+functionality.
+
+Some words about the usage/prerequisites:
+- you have a pix and want it´s config
+- you do not want to have the enable password in clear text in your
+  cloginrc
+- you do not have a tacacs server and want to configure a rancid user
+  on your pix locally 
+
+You have to:
+- add a user ("rancid") to your pix, who has the privileges for "show
+  running config", "show flash" and "write term"
+- add the pix host to your routers.db as type cisco
+- add the following line/variables to your cloginrc for this
+  host/group/whatever:
+
+add user mypix.emre.de rancid
+add password mypix.emre.de Pass--Word Pass--Word
+add cyphertype mypix.emre.de des
+add method mypix.emre.de ssh
+add login mypix.emre.de {1}
+
+The new variable is "login" which will "tell" RANCID to use the
+"login" command instead of the "enable" command to reach the required
+privilege level.  Please note that using the "login" option implicitly
+sets "enable" to "no".
+
+I´m not a shell-scripting guy, so I hope I didn´t break anything but
+the patch has worked for me.
+
+Any hints/sugestions are welcome.
+
+Cheers,
+
+Emre
+----------------------- schnipp -------------------------------
+
+Samuele Giovanni Tonon <samu@debian.org> Sun Mar 28 15:47:07 CEST 2004
+Roland Rosenfeld <roland@debian.org>
+$Id: README.Debian,v 1.5 2009-02-15 19:35:07 roland Exp $
+

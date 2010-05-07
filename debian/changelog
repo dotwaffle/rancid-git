@@ -1,0 +1,289 @@
+rancid (2.3.2-1) unstable; urgency=low
+
+  * New upstream release 2.3.2.
+  * Merge rancid-core and rancid-util into a new package rancid.
+  * Adapt all patches to the new version.
+  * 07_nrancid_bs_paging: Fix "--- more ---" & backspace style paging on
+    netscreen devices.  Thanks to Vaclav Ovsik <vaclav.ovsik@i.cz> for
+    providing a patch (Closes: #520899).
+  * 08_hlogin_paging: Turn off paging on HP equipment.  Thanks to James
+    W. Laferriere <babydr@baby-dragons.com> for providing a patch.
+  * 09_svn: Avoid "svn: Directory '<GROUP>' is out of date" message.
+    Thanks to Nicolas DEFFAYET <nicolas-ml@deffayet.com> for providing a
+    patch.
+  * Update to Standards-Version 3.8.1 (no changes).
+
+ -- Roland Rosenfeld <roland@debian.org>  Thu, 11 Jun 2009 14:24:49 +0200
+
+rancid (2.3.2~a8-4) unstable; urgency=medium
+
+  * rancid-core.postinst: Only try to add the rancid user when he does not
+    exist. Thanks to Evgeni Golov for providing a patch (Closes: #493988)
+
+ -- Roland Rosenfeld <roland@debian.org>  Sat, 15 Nov 2008 12:24:53 +0100
+
+rancid (2.3.2~a8-3) unstable; urgency=low
+
+  * 06_tmp_security.dpatch: remove temporary directory recursively.  This
+    bug was introduced with the previous security fix
+    (Closes: #497972, #500025).
+
+ -- Roland Rosenfeld <roland@debian.org>  Wed, 24 Sep 2008 20:56:11 +0200
+
+rancid (2.3.2~a8-2) unstable; urgency=high
+
+  * 06_tmp_security.dpatch: Fix some temp file security vulnerabilities by
+    using mktemp(1) or moving the lockfiles or tempfiles to
+    /var/lib/rancid, where they should be safe (Closes: #496426).
+  * Remove "XS-Autobuild: yes" from debian/control, since we are in main now.
+
+ -- Roland Rosenfeld <roland@debian.org>  Sun, 24 Aug 2008 23:29:23 +0200
+
+rancid (2.3.2~a8-1) unstable; urgency=low
+
+  * New upstream alpha version 2.3.2a8.
+  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !!! This version uses a new copyright which is BSD compatible, !!!
+    !!! so the package can now be moved into main!                 !!!
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  * Upgrade all patches to the new upstream version.
+  * Upgrade sv.po.  Thanks to Martin Bagge (Closes: #488181).
+  * Add ${shlibs:Depends}, ${misc:Depends} to rancid-core dependencies.
+  * 05_man_fixup: Comment out unknown commands .El, .Bl, and .ID in man
+    pages to make lintian happy.
+  * Add debian/watch file.
+  * Update to Standards-Version 3.8.0 (no changes).
+  
+ -- Roland Rosenfeld <roland@debian.org>  Sun, 29 Jun 2008 12:51:07 +0200
+
+rancid (2.3.2~a7-3) unstable; urgency=low
+
+  * Add "XS-Autobuild: yes" to control and justification to copyright to
+    allow autobuilding of this package.
+  * Move Homepage from package description to Source header.
+  * Update to Standards-Version 3.7.3 (no changes).
+
+ -- Roland Rosenfeld <roland@debian.org>  Sat, 12 Jan 2008 19:17:33 +0100
+
+rancid (2.3.2~a7-2) unstable; urgency=low
+
+  * Update de.po.  Thanks to Helge Kreutzmann (Closes: #439632).
+  * Update pt.po.  Thanks to Rui Branco (Closes: #439692).
+  * Update fr.po.  Thanks to Christian Perrier (Closes: #440393).
+
+ -- Roland Rosenfeld <roland@debian.org>  Sat,  8 Sep 2007 13:58:40 +0200
+
+rancid (2.3.2~a7-1) unstable; urgency=low
+
+  * New Debian maintainer (Closes: #424722).
+  * New upstream (alpha) version 2.3.2a7 (Closes: #342274).
+  * Re-added lost changelog entries (2.3.0-3 and 2.3.1-1).
+  * Upgrade to debhelper 5 (no real changes).
+  * Remove config.[sub|guess] from debian patch, because they are never
+    used.
+  * Fix minor typos in debconf templates.  Thanks to Helge Kreutzmann
+    for providing the fixes (Closes: #412321).
+  * Add German debconf translaten.  Thanks to Helge Kreutzmann
+    (Closes: #412323).
+  * Build the package for all architectures again (hopefully the
+    experimental buildd network does support this). This removes
+    rancid-installer package.
+  * Make rancid-utils and rancid-cgi "Architecture: all" instead of "any".
+  * Add Homepage to package descriptions.
+  * 01_rancid_par: Really rename par to rancid_par now.
+  * Removed empty rancid-cgi.postinst, rancid-util.postinst,
+    rancid-{core|util|cgi}.prerm.
+  * Remove debconf stuff from rancid-cgi.preinst and rancid-core.preinst,
+    because debconf isn't used there.
+  * rancid-core.postinst: Fix non POSIX stuff.
+  * Change PREFIX in debian/rules from /usr to / and all other paths
+    accordingly to avoid /usr/../var and the like in the scripts.
+  * Remove dependency on csh|tcsh, cause this isn't needed.
+  * Create user rancid using adduser instead of useradd/usermod.
+  * Change debconf question "Let's go!" to "Really continue?" to make it a
+    question and remove question from extended description to make lintian
+    happy.
+  * Update to Standards-Version 3.7.2 (no changes).
+  * 02_man_hyphen: Fix hyphens used as minus signs in several man pages.
+  * 03_diffstat: add diffstat output to changes e-mail (Closes: #357218).
+  * Depends on "openssh-client | ssh" instead of "ssh" now. Build-Depends
+    on openssh-client instead of ssh now.
+  * rancid-cgi depends on "apache2 | httpd-cgi" instead of "apache | httpd"
+    now.
+  * Depends on "cvs | subversion" now, because 2.3.2 supports svn as a cvs
+    alternative.
+  * 04_pixlogin.dpatch by Emre Bastuz <info@emre.de>:
+    Allow additional option "add login" in .cloginrc to allow login
+    to Cisco PIX via SSH instead of using enable.  For more info see:
+    http://www.shrubbery.net/pipermail/rancid-discuss/2005-August/001159.html
+    or /usr/share/doc/rancid-core/README.Debian
+  * Depend/Build-Depend on "iputils-ping | ping", because this should also
+    work with other variants of ping.
+  * Build-Depend on "exim4 | mail-transport-agent", otherwise /usr/sbin is
+    missing from the PATH in rancid.conf and /usr/sbin/sendmail cannot be
+    found.
+  * Build-Depend on "telnet", otherwise the PATH contains ".", which is
+    insecure.
+  * Add Portuguese debconf translaten.  Thanks to Miguel Figueiredo
+    (Closes: #437390).
+
+ -- Roland Rosenfeld <roland@debian.org>  Sat, 18 Aug 2007 11:14:18 +0200
+
+rancid (2.3.1-4) unstable; urgency=low
+
+  * Added Depends to debconf-2.0 (Closes: #332081)
+  * Closing bug about Swedish translation (Closes: #330456)
+
+ -- Samuele Giovanni Tonon <samu@debian.org>  Sat, 29 Oct 2005 11:18:10 +0200
+
+rancid (2.3.1-3) unstable; urgency=low
+
+  * Added Swedish translation, thanks to Daniel Nylander
+
+ -- Samuele Giovanni Tonon <samu@debian.org>  Wed, 28 Sep 2005 09:34:00 +0200
+
+rancid (2.3.1-2) unstable; urgency=low
+
+  * Added amd64 to arch that can be compiled (Closes: #306311)
+  * Added Czech translation, thanks to Miroslav Kure
+    (Closes: #319636)
+
+ -- Samuele Giovanni Tonon <samu@debian.org>  Thu, 11 Aug 2005 12:04:35 +0200
+
+rancid (2.3.1-1) unstable; urgency=low
+
+  * Initial Release.
+  * Added Danish translation, thanks to Morten Brix Pedersen (Closes: #253027)
+  * Added fixed nrancid and nlogin, thanks to Sebastien Barbereau
+    (Closes: #250254)
+  * Added a note on Readme.Debian to help ppl with problem with session
+    hanging
+
+ -- Samuele Giovanni Tonon <samu@debian.org>  Fri, 11 Jun 2004 11:35:51 +0200
+
+rancid (2.3.0-3) unstable; urgency=low
+
+  * Added liblockfile-simple-perl to rancid-cgi depends, thanks to
+    Ernesto Hernandez-Novich for reporting (Closes: #247752)
+
+ -- Samuele Giovanni Tonon <samu@debian.org>  Thu,  6 May 2004 23:44:52 +0200
+
+rancid (2.3.0-2) unstable; urgency=low
+
+  * Added French templates translation, thanks to Christian Perrier
+    (Closes:#243642)
+
+ -- Samuele Giovanni Tonon <samu@debian.org>  Thu, 15 Apr 2004 23:47:41 +0200
+
+rancid (2.3.0-1) unstable; urgency=low
+
+  * New upstream release
+  * Upstream Author fixed man page for control_rancid (Closes:#219908)
+  * control_rancid should not source env because it's called from do-diff 
+    as the man page say (Closes:#219917)
+  * renamed apache.conf in rancid-lg.conf 
+
+ -- Samuele Giovanni Tonon <samu@debian.org>  Sun, 28 Mar 2004 15:33:33 +0200
+
+rancid (2.2.2-13) unstable; urgency=low
+
+  * Added dpatch to use patch available on rancid site (Closes:#225524)
+
+ -- Samuele Giovanni Tonon <samu@debian.org>  Tue, 30 Dec 2003 19:03:17 +0100
+
+rancid (2.2.2-12) unstable; urgency=low
+
+  * Fixed copyright file
+
+ -- Samuele Giovanni Tonon <samu@debian.org>  Thu, 18 Dec 2003 12:27:54 +0100
+
+rancid (2.2.2-11) unstable; urgency=low
+
+  * Moved rancid-installer to non-free/net
+
+ -- Samuele Giovanni Tonon <samu@debian.org>  Sun,  2 Feb 2003 11:16:45 +0100
+
+rancid (2.2.2-10) unstable; urgency=low
+
+  * Fixed Build Depends, netkit-ping instead of ping alone (Closes: #178975)
+  * Added some hacks to make rancid-installer build for every architecture
+  * Added description on how to compile in debian/README.rancid-installer
+
+ -- Samuele Giovanni Tonon <samu@debian.org>  Thu, 30 Jan 2003 19:06:38 +0100
+
+rancid (2.2.2-9) unstable; urgency=low
+
+  * Fixed Build Depends (Closes: #173354)
+
+ -- Samuele Giovanni Tonon <samu@debian.org>  Fri, 24 Jan 2003 18:46:53 +0100
+
+rancid (2.2.2-8) unstable; urgency=low
+
+  * Added ping, cvs and ssh to build depends Section
+  * Added ping and ssh to Depends Section
+
+ -- Samuele Giovanni Tonon <samu@debian.org>  Mon, 16 Dec 2002 22:47:27 +0100
+
+rancid (2.2.2-7) unstable; urgency=low
+
+  * Added some information of what rancid is in rancid-installer 
+    description (Closes: Bug#173106)
+
+ -- Samuele Giovanni Tonon <samu@debian.org>  Mon, 16 Dec 2002 18:30:38 +0100
+
+rancid (2.2.2-6) unstable; urgency=low
+
+  * fixed paths on cron.example
+  * moved from /usr/lib/rancid to /var/lib/rancid (to best fit things
+    following fhs)
+  * added link from /var/log/rancid to /var/lib/rancid/logs
+  * added a control for default home of user rancid
+  * added a lots of symbolic links to well fit the original structure 
+
+ -- Samuele Giovanni Tonon <samu@debian.org>  Wed, 13 Nov 2002 18:58:00 +0100
+
+rancid (2.2.2-5) unstable; urgency=low
+
+  * Changed in control_rancid par and rename in to rancid_par and
+    rancid_rename, thanks to Wolfgang Tremmel for reporting it
+    (Closes: Bug#163074)
+
+ -- Samuele Giovanni Tonon <samu@debian.org>  Fri, 11 Oct 2002 11:49:51 +0200
+
+rancid (2.2.2-4) unstable; urgency=low
+
+  * removed dependencies from libc6 
+
+ -- Samuele Giovanni Tonon <samu@debian.org>  Sun,  6 Oct 2002 18:33:35 +0200
+
+rancid (2.2.2-3) unstable; urgency=low
+
+  * Moved apache.conf from /etc/rancid into doc/example
+  * lg.conf it's now in /etc/rancid with symlink to
+    /usr/lib/rancid/util/lg/lg.conf
+  * changed bin dir, now all it's in /usr/bin
+  * env is a conffile in /etc/rancid
+  * Renamed par in rancid_par as well as his manpage (Closes: Bug#163074)
+  * Renamed rename in rancid_rename
+  * Added rancid_rename man page (copied from perl rename man page)
+  * Modified all refer to bin/env to /etc/rancid/env
+
+ -- Samuele Giovanni Tonon <samu@debian.org>  Sun,  6 Oct 2002 17:19:00 +0200
+
+rancid (2.2.2-2) unstable; urgency=low
+
+  * unstable release (Closes: Bug#125894) 
+
+ -- Samuele Giovanni Tonon <samu@debian.org>  Thu, 26 Sep 2002 02:30:46 +0200
+
+rancid (2.2.2-1) experimental; urgency=low
+
+  * Initial Release.
+  * Modified Makefile.am, Makefile.in, util/Makefile.in util/lg/Makefile.in
+    to follow FHS
+  * added /etc/rancid/apache.conf to add to your apache configuration to
+    make cgi visible  under http://wbserver/rancid/
+  * added a cron and a .cshrc example in /usr/share/doc/rancid-core/examples/
+
+ -- Samuele Giovanni Tonon <samu@debian.org>  Thu, 12 Sep 2002 18:28:39 +0200
+
