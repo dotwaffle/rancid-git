@@ -540,6 +540,80 @@ else
     subject="$GROUP $subject"
 fi
 
+function ansi2html {
+# Convert ANSI (terminal) colour codes to HTML
+
+# Author:
+#    http://www.pixelbeat.org/docs/terminal_colours/
+# Changes:
+#    V0.1, 24 Apr 2008, Initial release
+#    V0.2, 01 Jan 2009, Phil Harnish <philharnish@gmail.com>
+#                         Support `git diff --color` output by
+#                         matching ANSI codes that specify only
+#                         bold or background colour.
+#                       P@draigBrady.com
+#                         Support `ls --color` output by stripping
+#                         redundant leading 0s from ANSI codes.
+#                         Support `grep --color` by stripping
+#                         unhandled ANSI codes (specifically ^[[K).
+
+echo -n "
+<head>
+<style type=\"text/css\">
+/* linux console palette */
+.f0 { color: #000000; }
+.f1 { color: #AA0000; }
+.f2 { color: #00AA00; }
+.f3 { color: #AA5500; }
+.f4 { color: #0000AA; }
+.f5 { color: #AA00AA; }
+.f6 { color: #00AAAA; }
+.f7 { color: #AAAAAA; }
+.bf0 { color: #555555; }
+.bf1 { color: #FF5555; }
+.bf2 { color: #55FF55; }
+.bf3 { color: #FFFF55; }
+.bf4 { color: #5555FF; }
+.bf5 { color: #FF55FF; }
+.bf6 { color: #55FFFF; }
+.bf7 { color: #FFFFFF; }
+.b0 { background-color: #000000; }
+.b1 { background-color: #AA0000; }
+.b2 { background-color: #00AA00; }
+.b3 { background-color: #AA5500; }
+.b4 { background-color: #0000AA; }
+.b5 { background-color: #AA00AA; }
+.b6 { background-color: #00AAAA; }
+.b7 { background-color: #AAAAAA; }
+</style>
+</head>
+
+<html>
+<body>
+
+<pre>
+"
+
+cat -v |
+#first line strips non SGR codes
+#second line normalizes SGR codes a little
+sed '
+s#\^\[\[[0-9;]*[A-KSTfnsu]##g;
+s#\^\[\[0\([0-7]\)#^[[\1#g; s#\^\[\[1m\^\[\[\([34][0-7]m\)#^[[1;\1#g; s#\^\[\[m#^[[0m#g;
+s#\^\[\[1m#<span style="font-weight:bold">#g;
+s#\^\[\[0m#</span>#g;
+s#\^\[\[3\([0-7]\);4\([0-7]\)m#<span class=" f\1 b\2">#g;
+s#\^\[\[1;3\([0-7]\);4\([0-7]\)m#<span class="bf\1 b\2">#g;
+s#\^\[\[3\([0-7]\)m#<span class=" f\1">#g;
+s#\^\[\[4\([0-7]\)m#<span class=" b\1">#g;
+s#\^\[\[1;3\([0-7]\)m#<span class="bf\1">#g;'
+
+echo "</pre>
+</body>
+</html>
+"
+}
+
 # This has been different for different machines...
 # Diff the directory and then checkin.
 trap 'rm -fr $TMP $TMP.diff $DIR/routers.single;' 1 2 15
@@ -566,7 +640,7 @@ case $RCSSYS in
 	    git commit -m "$message"
 	    if [ $? -eq 0 ]; then
 		# only generate a diff if the commit was successful
-		git diff --patch-with-stat HEAD^ HEAD -- . >$TMP.diff
+		git diff --color --patch-with-stat HEAD^ HEAD -- .  | ansi2html >$TMP.diff
 	    fi
 	) 200>$BASEDIR/.lockfile
 	;;
@@ -578,9 +652,12 @@ if [ -s $TMP.diff ] ; then
 	  echo "To: $mailrcpt"
 	  echo "Subject: $subject"
 	  echo "$MAILHEADERS" | awk '{L = "";LN = $0;while (LN ~ /\\n/) { I = index(LN,"\\n");L = L substr(LN,0,I-1) "\n";LN = substr(LN,I+2,length(LN)-I-1);}print L LN;}'
+	  echo "Mime-Version: 1.0"
+	  echo "Content-type: text/html"
+	  echo "Content-transfer-encoding: 8bit"
 	  echo ""
 	  cat $TMP.diff
-	) | sendmail -t
+	) | sendmail -oi -t
 fi
 
 # If any machines have not been reached within the last $OLDTIME
