@@ -124,6 +124,7 @@ if [ ! -d $CVSROOT ]; then
 		git add .gitignore
 		git commit -m "Initializing repository."
 	    ) 200>$BASEDIR/.lockfile
+            ;;
     esac
 fi
 
