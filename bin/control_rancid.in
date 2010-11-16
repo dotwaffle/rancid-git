@@ -621,11 +621,11 @@ cd $DIR
 case $RCSSYS in
     cvs )
 	cvs -f @DIFF_CMD@ -ko | sed -e '/^RCS file: /d' -e '/^--- /d' \
-	    -e '/^+++ /d' -e 's/^\([-+ ]\)/\1 /' >$TMP.diff
+	    -e '/^+++ /d' -e 's/^\([-+ ]\)/\1 /' | ansi2html >$TMP.diff
 	cvs commit -m "$message"
 	;;
     svn )
-	svn diff | sed -e '/^+++ /d' -e 's/^\([-+ ]\)/\1 /' >$TMP.diff
+	svn diff | sed -e '/^+++ /d' -e 's/^\([-+ ]\)/\1 /' | ansi2html >$TMP.diff
 	svn commit -m "$message"
 	;;
     git )
@@ -651,10 +651,10 @@ if [ -s $TMP.diff ] ; then
 	(
 	  echo "To: $mailrcpt"
 	  echo "Subject: $subject"
-	  echo "$MAILHEADERS" | awk '{L = "";LN = $0;while (LN ~ /\\n/) { I = index(LN,"\\n");L = L substr(LN,0,I-1) "\n";LN = substr(LN,I+2,length(LN)-I-1);}print L LN;}'
 	  echo "Mime-Version: 1.0"
 	  echo "Content-type: text/html"
 	  echo "Content-transfer-encoding: 8bit"
+	  echo "$MAILHEADERS" | awk '{L = "";LN = $0;while (LN ~ /\\n/) { I = index(LN,"\\n");L = L substr(LN,0,I-1) "\n";LN = substr(LN,I+2,length(LN)-I-1);}print L LN;}'
 	  echo ""
 	  cat $TMP.diff
 	) | sendmail -oi -t
