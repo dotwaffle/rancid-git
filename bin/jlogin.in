@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: jlogin.in 2162 2010-03-15 21:20:31Z heas $
+## $Id: jlogin.in 2186 2010-04-08 22:30:47Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2009 by Terrapin Communications, Inc.
@@ -308,11 +308,10 @@ proc login { router user passwd cmethod cyphertype identfile} {
 	    if {"$port" != ""} {
 		set cmd "$cmd -p $port"
 	    }
-	    if {$identfile != ""} {
-		set retval [ catch {eval spawn [split "$cmd -c $cyphertype -x -l $user -i $identfile $router" { }]} reason ]
-	    } else {
-		set retval [ catch {eval spawn [split "$cmd -c $cyphertype -x -l $user $router" { }]} reason ]
+	    if {"$identfile" != ""} {
+		set cmd "$cmd -i $identfile"
 	    }
+	        set retval [ catch {eval spawn [split "$cmd -c $cyphertype -x -l $user $router" { }]} reason ]
 	    if { $retval } {
 		send_user "\nError: $sshcmd failed: $reason\n"
 		return 1

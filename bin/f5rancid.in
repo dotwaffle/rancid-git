@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: f5rancid.in 2134 2009-12-15 21:23:44Z heas $
+## $Id: f5rancid.in 2192 2010-04-21 16:54:35Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
@@ -208,6 +208,7 @@ sub ShowDb {
 	/UCS.LoadTime/ && next;
 	/Configsync\..*Time/ && next;
 	/Configsync.peerupdatedstatus/ && next;
+	/Failover\..*Time/ && next;
 	/LTM.ConfigTime/ && next;
 
 	if (/^(snmp\..*\.community\..* =) (.+)/i) {

@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: fnrancid.in 2117 2009-11-02 21:02:59Z heas $
+## $Id: fnrancid.in 2202 2010-06-16 20:48:28Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
@@ -41,7 +41,7 @@
 ## POSSIBILITY OF SUCH DAMAGE.
 # 
 # A library built on Stephen Gill's Netscreen stuff to accomodate
-#  the Fortinet product line.  [d_pfleger@juniper.net]
+# the Fortinet product line.  [d_pfleger@juniper.net]
 #
 #  RANCID - Really Awesome New Cisco confIg Differ
 #
@@ -173,10 +173,12 @@ sub GetSystem {
     while (<INPUT>) {
 	tr/\015//d;
 	next if /^\s*$/;
-	last if(/$prompt/);
+	last if (/$prompt/);
+
+	next if (/^System Time:/);
+	next if (/^FortiClient application signature package:/);
 	ProcessHistory("","","","$_");
     }
-    print STDOUT "Vendor: $vendor";
     ProcessHistory("SYSTEM","","","\n");
     return(0);
 }
@@ -184,7 +186,7 @@ sub GetSystem {
 sub GetFile {
     print STDERR "    In GetFile: $_" if ($debug);
     while (<INPUT>) {
-	last if(/$prompt/);
+	last if (/$prompt/);
     }
     ProcessHistory("FILE","","","\n");
     return(0);
@@ -195,7 +197,9 @@ sub GetConf {
     while (<INPUT>) {
 	tr/\015//d;
 	next if /^\s*$/;
-	last if(/$prompt/);
+	last if (/$prompt/);
+
+	next if (/^conf_file_ver=/);
 	if (/(^set.*)('Enc .*')(.*)/) {
 	    ProcessHistory("ENC","","","!$1 'Enc **encoding removed**' $3\n");
 	    next;

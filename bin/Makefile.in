@@ -62,7 +62,8 @@ DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(srcdir)/rivrancid.in $(srcdir)/rrancid.in \
 	$(srcdir)/srancid.in $(srcdir)/tlogin.in $(srcdir)/tntlogin.in \
 	$(srcdir)/tntrancid.in $(srcdir)/trancid.in \
-	$(srcdir)/xrancid.in $(srcdir)/zrancid.in
+	$(srcdir)/xrancid.in $(srcdir)/xrrancid.in \
+	$(srcdir)/zrancid.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/acinclude.m4 \
 	$(top_srcdir)/configure.in
@@ -76,7 +77,8 @@ CONFIG_CLEAN_FILES = control_rancid par rancid-fe agmrancid alogin \
 	flogin francid fnrancid hlogin hrancid htlogin htrancid jlogin \
 	jrancid jerancid mrancid mrvlogin mrvrancid nlogin nrancid \
 	nslogin nsrancid nxrancid prancid rivlogin rivrancid rrancid \
-	srancid tlogin tntlogin tntrancid trancid xrancid zrancid
+	srancid tlogin tntlogin tntrancid trancid xrancid xrrancid \
+	zrancid
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
@@ -248,7 +250,7 @@ bin_SCRIPTS = agmrancid alogin arancid arrancid avologin avorancid \
 	mrancid mrvlogin mrvrancid nlogin nrancid nslogin nsrancid \
 	nxrancid par prancid rancid-fe rancid rivlogin rivrancid \
 	rrancid srancid tlogin tntlogin tntrancid trancid xrancid \
-	zrancid lg.cgi lgform.cgi rancid-cvs rancid-run
+	xrrancid zrancid lg.cgi lgform.cgi rancid-cvs rancid-run
 EXTRA_DIST = lg.cgi.in lgform.cgi.in rancid-cvs.in rancid-run.in
 #dist_bin_SCRIPTS= $(bin_SCRIPTS:%=%.in)
 CLEANFILES = lg.cgi lgform.cgi rancid-cvs rancid-run
@@ -410,6 +412,8 @@ tntrancid: $(top_builddir)/config.status $(srcdir)/tntrancid.in
 trancid: $(top_builddir)/config.status $(srcdir)/trancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 xrancid: $(top_builddir)/config.status $(srcdir)/xrancid.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+xrrancid: $(top_builddir)/config.status $(srcdir)/xrrancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 zrancid: $(top_builddir)/config.status $(srcdir)/zrancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@

@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: avologin.in 2162 2010-03-15 21:20:31Z heas $
+## $Id: avologin.in 2203 2010-06-17 18:14:51Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2009 by Terrapin Communications, Inc.
@@ -331,6 +331,7 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 	    }
 	} elseif [string match "ssh*" $prog] {
 	    regexp {ssh(:([^[:space:]]+))*} $prog command suffix port
+	    set cmd [join [lindex $sshcmd 0] " "]
 	    if {"$port" != ""} {
 		set cmd "$cmd -p $port"
 	    }

@@ -246,10 +246,11 @@ Q. Are there any characters in the banner that rancid has problems with OR
 A. The trickiest part about clogin (et al) is recognizing the prompt
    correctly.  clogin looks for '>' and '#' to figure out if it is logged
    in or in enable mode.  So if you have a '>' or '#' in your login banner
-   (or other motd), then clogin gets all confused and will not be able to log
+   (or other motd), then clogin gets confused and will not be able to log
    in correctly, and thus rancid will fail.
 
-   Don't use '>' or '#' in your prompt or in your banner or other motd.
+   Don't use '>' or '#', or whatever the termination character of the given
+   device's prompt is, in your prompt or in your banner or other motd.
 
 
 Q. I use <BINDIR>/*login -c to run commands on multiple boxes.  Sometimes

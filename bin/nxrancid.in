@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: nxrancid.in 2168 2010-03-23 23:19:15Z heas $
+## $Id: nxrancid.in 2170 2010-03-24 21:07:00Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
@@ -173,6 +173,7 @@ sub ShowVersion {
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
+	return(-1) if (/\% Invalid command at /);
 	return(-1) if (/command authorization failed/i);
 
 	if (/^Cisco Nexus Operating System/) { $type = "NXOS";}
@@ -238,6 +239,7 @@ sub ShowVersionBuild {
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
+	return(1) if (/\% Invalid command at /);
 	return(-1) if (/command authorization failed/i);
 
 	/^Built By / && ProcessHistory("COMMENTS","","", "!Build: $_");
@@ -259,6 +261,7 @@ sub ShowLicense {
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if /(Invalid input detected|Type help or )/;
+	return(1) if (/\% Invalid command at /);
 	return(-1) if (/command authorization failed/i);
 
 	/^-+$/ && next;		# Skip lines of all dashes.
@@ -279,6 +282,8 @@ sub ShowRedundancy {
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
+	return(-1) if (/\% Invalid command at /);
+	return(-1) if (/command authorization failed/i);
 
 	s/ +$//;	# Drop trailing ' '
 	ProcessHistory("COMMENTS","","","!Red: $_");
@@ -297,6 +302,7 @@ sub ShowEnv {
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
+	return(-1) if (/\% Invalid command at /);
 	return(-1) if (/command authorization failed/i);
 
 	s/ +$//;	# Drop trailing ' '
@@ -316,6 +322,7 @@ sub ShowEnvTemp {
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
+	return(-1) if (/\% Invalid command at /);
 	return(-1) if (/command authorization failed/i);
 
 # Cut out CurTemp - drop the 2nd to last field.
@@ -343,6 +350,7 @@ sub ShowEnvPower {
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
+	return(-1) if (/\% Invalid command at /);
 	return(-1) if (/command authorization failed/i);
 
 # Cut out Actual Output/Draw.
@@ -387,6 +395,7 @@ sub ShowBoot {
 	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
 	return(1) if /Ambiguous command/i;
+	return(-1) if (/\% Invalid command at /);
 	return(-1) if (/command authorization failed/i);
 
 	s/ variable = / = /;
@@ -409,6 +418,7 @@ sub DirSlotN {
 	return(1) if /^\s*\^\s*$/;
 	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
+	return(1) if (/\% Invalid command at /);
 	return(1) if /(No such device|Error Sending Request)/i;
 	return(1) if /\%Error: No such file or directory/;
 	return(1) if /No space information available/;
@@ -439,6 +449,7 @@ sub ShowModule {
 	last if (/online diag status/i);
 	last if (/^$prompt/);
 	next if (/^\s*$cmd\s*$/);
+	return(1) if (/\% Invalid command at /);
 	return(-1) if (/command authorization failed/i);
 
 	s/(.*) \*$/$1/;	# Drop a trailing '*'
@@ -462,6 +473,7 @@ sub ShowInventory {
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
+	return(1) if (/\% Invalid command at /);
 	return(-1) if (/command authorization failed/i);
 
 	if (/^(NAME: "[^"]*",)\s+(DESCR: "[^"]+")/) {
@@ -507,7 +519,7 @@ sub ShowVTP {
 	return(1) if /^\s*\^\s*$/;
 	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
-	#return(1) if ($type !~ /^(2900XL|3500XL|6000)$/);
+	return(1) if (/\% Invalid command at /);
 	return(-1) if (/command authorization failed/i);
 	next if (/^Configuration last modified by/);
 	# the pager can not be disabled per-session on the PIX
@@ -538,11 +550,11 @@ sub ShowVLAN {
 	return(1) if /^\s*\^\s*$/;
 	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
+	return(-1) if (/\% Invalid command at /);
 	return(1) if /Ambiguous command/i;
 	# newer releases (~12.1(9)) place the vlan config in the normal
 	# configuration (write term).
 	return(1) if ($type =~ /^(3550|4500)$/);
-	#return(1) if ($type !~ /^(2900XL|3500XL|6000)$/);
 	return(-1) if (/command authorization failed/i);
 	# the pager can not be disabled per-session on the PIX
 	if (/^(<-+ More -+>)/) {
@@ -567,6 +579,7 @@ sub ShowDebug {
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
+	return(-1) if (/\% Invalid command at /);
 	return(-1) if (/command authorization failed/i);
 
 	/^No matching debug flags set$/ && next;
@@ -590,6 +603,7 @@ sub ShowCores {
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
+	return(-1) if (/\% Invalid command at /);
 	return(-1) if (/command authorization failed/i);
 
 	ProcessHistory("COMMENTS","","","!CORES: $_");
@@ -608,6 +622,7 @@ sub ShowProcLog {
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
+	return(-1) if (/\% Invalid command at /);
 	return(-1) if (/command authorization failed/i);
 
 	ProcessHistory("COMMENTS","","","!PROC_LOGS: $_");
@@ -626,13 +641,9 @@ sub WriteTerm {
 	last if (/^$prompt/);
 	return(1) if /Line has invalid autocommand /;
 	return(1) if (/(Invalid input detected|Type help or )/i);
+	return(-1) if (/\% Invalid command at /);
 	return(0) if ($found_end);		# Only do this routine once
 	return(-1) if (/command authorization failed/i);
-#	# the pager can not be disabled per-session on the PIX
-#	if (/^(<-+ More -+>)/) {
-#	    my($len) = length($1);
-#	    s/^$1\s{$len}//;
-#	}
 
 #	/Non-Volatile memory is in use/  && return(-1); # NvRAM is locked
 	$linecnt++;
