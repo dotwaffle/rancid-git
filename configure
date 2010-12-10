@@ -6074,6 +6074,8 @@ ac_config_files="$ac_config_files bin/trancid"
 
 ac_config_files="$ac_config_files bin/xrancid"
 
+ac_config_files="$ac_config_files bin/xrrancid"
+
 ac_config_files="$ac_config_files bin/zrancid"
 
 ac_config_files="$ac_config_files share/rtrfilter"
@@ -6853,6 +6855,7 @@ do
     "bin/tntrancid") CONFIG_FILES="$CONFIG_FILES bin/tntrancid" ;;
     "bin/trancid") CONFIG_FILES="$CONFIG_FILES bin/trancid" ;;
     "bin/xrancid") CONFIG_FILES="$CONFIG_FILES bin/xrancid" ;;
+    "bin/xrrancid") CONFIG_FILES="$CONFIG_FILES bin/xrrancid" ;;
     "bin/zrancid") CONFIG_FILES="$CONFIG_FILES bin/zrancid" ;;
     "share/rtrfilter") CONFIG_FILES="$CONFIG_FILES share/rtrfilter" ;;
 
@@ -7581,6 +7584,7 @@ $as_echo X"$file" |
     "bin/tntrancid":F) chmod a+x $ac_file ;;
     "bin/trancid":F) chmod a+x $ac_file ;;
     "bin/xrancid":F) chmod a+x $ac_file ;;
+    "bin/xrrancid":F) chmod a+x $ac_file ;;
     "bin/zrancid":F) chmod a+x $ac_file ;;
     "share/rtrfilter":F) chmod a+x $ac_file ;;
 

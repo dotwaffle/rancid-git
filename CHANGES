@@ -1,3 +1,46 @@
+2.3.4
+	nracnid: fix serial number matching - Nathan Wallwork
+
+	nracnid: fix pager prompt filtering - Nathan Wallwork
+
+	rancid: remove sequences from IPv6 prefix-lists
+
+	clogin: adjust default ssh password prompt for ExtremeOS 12.3.3.6 -
+	from Sylvain 74
+
+	rancid: Accept '>' prompt, rather than just '#'
+
+	avologin: fix ssh command substitution - Ben O'Hara
+
+	fnrancid: filter application signature, System Time & conf_file_ver=
+	from GetSystem/GetConf
+
+	mrvrancid: filter other oscillating info from show version - Ben O'Hara
+
+	xrrancid: disable timestamps - from Per Carlson
+
+	hlogin: implement -autoenable for newer hp procurve releases
+
+	cat5rancid: snmp community may have multiple spaces b/t community name
+	and permissions - from David Adam
+
+	cat5rancid: filter local user password - from David Adam
+
+	f5rancid: filter Failover time stamps - from Ben O'Hara
+
+	hlogin: Add support for ssh identity file & passphrase for newer boxes
+
+	rancid: split IOS-XR into its own device type: cisco-xr
+
+	clogin: set term width for catos like for ios.
+
+	rancid: parse admin show diag for XR better with a separate function
+
+	hlogin: hpuifilter got omitted from the ssh spawn; replace it.
+
+	nxrancid: match unknown command errors appropriately & GC some junk
+	carried-over from IOS-rancid.
+
 2.3.3
 	rancid: check for device busy when opening flash fails, which seems to
 	occur on 6500s when some other command is run.

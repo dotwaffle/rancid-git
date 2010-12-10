@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: hlogin.in 2162 2010-03-15 21:20:31Z heas $
+## $Id: hlogin.in 2196 2010-04-27 17:47:16Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2009 by Terrapin Communications, Inc.
@@ -76,8 +76,6 @@ set avautoenable 0
 # tracks if we receive them on the command line.
 set do_passwd 1
 set do_enapasswd 1
-# attempt at platform switching.
-set platform ""
 # Save config, if prompted
 set do_saveconfig 0
 # Sometimes routers take awhile to answer (the default is 10 sec)
@@ -127,6 +125,12 @@ for {set i 0} {$i < $argc} {incr i} {
 		set userpasswd [ lindex $argv $i ]
 	    }
 	    set do_passwd 0
+	# passphrase
+	} -r* {
+	    if {! [  regexp .\[rR\](.+) $arg ignore passphrase]} {
+		incr i
+		set vapassphrase [ lindex $argv $i ]
+	    }
 	# VTY Password
 	} -v* {
 	    if {! [  regexp .\[vV\](.+) $arg ignore passwd]} {
@@ -217,9 +221,8 @@ for {set i 0} {$i < $argc} {incr i} {
 	    set avenable 0
 	# Does tacacs automatically enable us?
 	} -autoenable {
-	    # hp does not autoenable
-	    #set autoenable 1
-	    #set avenable 0
+	    set avautoenable 1
+	    set avenable 0
 	} -* {
 	    send_user "\nError: Unknown argument! $arg\n"
 	    send_user $usage
@@ -313,8 +316,8 @@ proc source_password_file { password_file } {
 
 # Log into the router.
 # returns: 0 on success, 1 on failure
-proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
-    global spawn_id in_proc do_command do_script platform
+proc login { router user userpswd passwd enapasswd cmethod cyphertype identfile } {
+    global spawn_id in_proc do_command do_script passphrase
     global prompt u_prompt p_prompt e_prompt sshcmd
     set in_proc 1
 
@@ -334,12 +337,16 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 		return 1
 	    }
 	} elseif [string match "ssh*" $prog] {
+	    # ssh to the router & try to login with or without an identfile.
 	    regexp {ssh(:([^[:space:]]+))*} $prog methcmd suffix port
 	    set cmd [join [lindex $sshcmd 0] " "]
 	    if {"$port" != ""} {
 		set cmd "$cmd -p $port"
 	    }
-	    set retval [ catch {eval spawn [split "$cmd -c $cyphertype -x -l $user $router" { }]} reason ]
+	    if {"$identfile" != ""} {
+		set cmd "$cmd -i $identfile"
+	    }
+	    set retval [ catch {eval spawn hpuifilter -- [split "$cmd -c $cyphertype -x -l $user $router" { }]} reason ]
 	    if { $retval } {
 		send_user "\nError: $sshcmd failed: $reason\n"
 		return 1
@@ -422,6 +429,12 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 	    catch {close}; catch {wait};
 	    send_user "\nError: Unknown host\n"; wait; return 1
 	}
+	-re "Enter passphrase.*: " {
+	    # sleep briefly to allow time for stty -echo
+	    sleep 1
+	    send -- "$passphrase\r"
+	    exp_continue
+	}
 	-re "$u_prompt"	{ send -- "$user\r"
 	    expect {
 		eof			{ send_user "\nError: Couldn't login\n"; wait; return 1 }
@@ -496,7 +509,7 @@ proc do_enable { enauser enapasswd } {
 
 # Run commands given on the command line.
 proc run_commands { prompt command } {
-    global do_saveconfig in_proc platform
+    global do_saveconfig in_proc
     set in_proc 1
 
     # Turn off the pager and escape regex meta characters in the $prompt
@@ -692,6 +705,19 @@ foreach router [lrange $argv $i end] {
 	set e_prompt [join [lindex $e_prompt 0] ""]
     }
 
+    # Figure out identity file to use
+    set identfile [join [lindex [find identity $router] 0] ""]
+
+    # Figure out passphrase to use
+    if {[info exists avpassphrase]} {
+	set passphrase $avpassphrase
+    } else {
+	set passphrase [join [lindex [find passphrase $router] 0] ""]
+    }
+    if { ! [string length "$passphrase"]} {
+	set passphrase $passwd
+    }
+
     # Figure out cypher type
     if {[info exists cypher]} {
       # command line cypher type
@@ -717,7 +743,7 @@ foreach router [lrange $argv $i end] {
     }
 
     # Login to the router
-    if {[login $router $ruser $userpswd $passwd $enapasswd $cmethod $cyphertype]} {
+    if {[login $router $ruser $userpswd $passwd $enapasswd $cmethod $cyphertype $identfile]} {
 	incr exitval
 	continue
     }

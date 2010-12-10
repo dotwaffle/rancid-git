@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: cat5rancid.in 2117 2009-11-02 21:02:59Z heas $
+## $Id: cat5rancid.in 2194 2010-04-26 17:05:54Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
@@ -907,6 +907,16 @@ sub WriteTerm {
 	    }
 	    next;
 	}
+	if (/^(set localuser user .*) password .* (privilege .*)/) {
+	    if (/^(set localuser user .*) password .* (privilege .*)/ &&
+		$filter_pwds >= 1) {
+		ProcessHistory("","","","! $1 password <removed> $2\n");
+	    } else {
+		ProcessHistory("","","","$_\n");
+	    }
+	    next;
+	}
+
 	if (/^set password / && $filter_pwds >= 2) {
 	    ProcessHistory("","","","! set password <removed>\n");
 	    next;
@@ -1000,7 +1010,7 @@ sub WriteTerm {
 	    }
 	    next;
 	}
-	if (/^(set snmp community) (\S+) (\S+)/) {
+	if (/^(set snmp community) (\S+)\s+(\S+)/) {
 	    if ($filter_commstr) {
 		ProcessHistory("SNMPSERVERCOMM","keysort","$_","!$1 $2 <removed>\n");
 	    } else {
