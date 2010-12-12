@@ -10,20 +10,20 @@
 	<style type="text/css">
 		body {
   		margin-top: 1.0em;
-  		background-color: #f59c0f;
+  		background-color: #0a63f0;
 		  font-family: "helvetica"; 
-  		color: #000000;
+  		color: #ffffff;
     }
     #container {
       margin: 0 auto;
       width: 700px;
     }
-		h1 { font-size: 3.8em; color: #0a63f0; margin-bottom: 3px; }
+		h1 { font-size: 3.8em; color: #f59c0f; margin-bottom: 3px; }
 		h1 .small { font-size: 0.4em; }
 		h1 a { text-decoration: none }
-		h2 { font-size: 1.5em; color: #0a63f0; }
-    h3 { text-align: center; color: #0a63f0; }
-    a { color: #0a63f0; }
+		h2 { font-size: 1.5em; color: #f59c0f; }
+    h3 { text-align: center; color: #f59c0f; }
+    a { color: #f59c0f; }
     .description { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; font-style: italic;}
     .download { float: right; }
 		pre { background: #000; color: #fff; padding: 15px;}
@@ -52,22 +52,35 @@
       RANCID - Really Awesome New Cisco confIg Differ
     </div>
 
-    <p>Source taken from git tree at: git://fedorapeople.org/home/fedora/jcollie/public_git/rancid.git<br /><br />
-rancid-2.3.2a9 applied from shrubbery.net/rancid<br /><br />
-Patch applied from http://www.gossamer-threads.com/lists/engine?do=post_attachment;postatt_id=2;list=rancid<br /><br />
-Additional coding as logged.</p><h2>Dependencies</h2>
-<p>expect<br />
-build-essential<br />
-exim4 | postfix | qmail</p>
-<h2>Install</h2>
-<p>adduser --home=/home/rancid rancid<br />
-./configure --prefix=/home/rancid<br />
-sudo checkinstall (or make && make install)<br />
-sudo chown -R rancid:rancid /home/rancid</p>
-<h2>Authors</h2>
-<p>Matthew Walster (matthew@walster.org)<br/>Tar Committer (tar@ocjtech.us)<br/>Rancid Developers (rancid@shrubbery.net)</p>
-<h2>Contact</h2>
-<p>Matthew Walster (matthew@walster.org)<br/>      </p>
+    <p>RANCID is a network configuration backup utility that stores away old configurations for (predominantly) routers and switches. It can also email out those differences, so that people know what has been changed when. This patch-set, started by Matthew Walster (myself) in January 2009 adds git-scm support and utilised colored HTML in the mailouts.</p>
+
+    <p>git patch taken from git tree at: git://fedorapeople.org/home/fedora/jcollie/public_git/rancid.git and applied to rancid-2.3.2a9 - mostly kept the same when merging in versions up to including rancid-2.3.4<br /><br />
+    "rancid" taken from original source at shrubbery.net/rancid<br /><br />
+    Additional coding as logged.</p>
+
+    <h2>Dependencies</h2>
+    <p>expect<br />
+    build-essential (for configure/make in debian build environments)<br />
+    An MTA, such as [ exim4 | postfix | qmail | sendmail | ssmtp ]</p>
+
+    <h2>Install</h2>
+    <p>adduser --home=/home/rancid rancid<br />
+    ./configure --prefix=/home/rancid<br />
+    sudo checkinstall (or make && make install)<br />
+    sudo chown -R rancid:rancid /home/rancid</p>
+
+    <h2>Authors</h2>
+    <p>
+        <ul>
+		<li>Rancid Developers (rancid@shrubbery.net)</li>
+		<li>Jeffrey C. Ollie for his git patch to 2.3.2a7 (and slightly amended to make it work with later versions by Matthew Walster). As well as “CVS” and “SVN”, you now have the option of using git, including potentially the use of “post-hooks” to do funky things with the configs once they have been stored.</li>
+		<li>Matthew Walster for the color-html patch, which converts the emails into HTML format and colorizes them. As many MUAs don’t use fixed-width fonts, this forces that font and presents the same coloring you would expect when using “git log” with auto color turned on. Makes it far easier to spot changes and mark out where one config ends and another begins</li>
+		<li>ansi2html from https://github.com/pixelb/scripts/blob/master/scripts/ansi2html.sh</li>
+	</ul>
+    </p>
+
+    <h2>Contact</h2>
+    <p>Matthew Walster (matthew@walster.org)</p>
 
 
     <h2>Download</h2>
@@ -80,12 +93,12 @@ sudo chown -R rancid:rancid /home/rancid</p>
       by running:
       <pre>$ git clone git://github.com/dotwaffle/rancid-git</pre>
     </p>
-      
+
     <div class="footer">
       get the source code on GitHub : <a href="http://github.com/dotwaffle/rancid-git">dotwaffle/rancid-git</a>
     </div>
-    
-  </div>
+
+</div>
 
   
 </body>
