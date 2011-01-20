@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: jlogin.in 2186 2010-04-08 22:30:47Z heas $
+## $Id: jlogin.in 2252 2010-10-01 19:27:02Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2009 by Terrapin Communications, Inc.
@@ -130,16 +130,19 @@ for {set i 0} {$i < $argc} {incr i} {
 		set userpasswd [ lindex $argv $i ]
 	    }
 	    set do_passwd 0
-	# Version string
-	} -V* {
-	    send_user "@PACKAGE@ @VERSION@\n"
-	    exit 0
-	# passphrase
+	# ssh passphrase
 	} -r* {
 	    if {! [  regexp .\[rR\](.+) $arg ignore passphrase]} {
 		incr i
 		set avpassphrase [ lindex $argv $i ]
 	    }
+	# VTY Password
+	} -v* {
+	    # ignore -v
+	# Version string
+	} -V* {
+	    send_user "@PACKAGE@ @VERSION@\n"
+	    exit 0
 	# Expect script to run.
 	} -s* {
 	    if {! [  regexp .\[sS\](.+) $arg ignore sfile]} {

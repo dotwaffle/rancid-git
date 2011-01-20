@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: zrancid.in 2117 2009-11-02 21:02:59Z heas $
+## $Id: zrancid.in 2246 2010-09-08 01:36:07Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
@@ -65,11 +65,14 @@ my($aclsort) = ("ipsort");		# ACL sorting mode
 my($filter_commstr);			# SNMP community string filtering
 my($filter_pwds);			# password filtering mode
 
+# force a terminal type so as not to confuse Linux
+$ENV{'TERM'} = "vt100";
+
 # This routine is used to print out the router configuration
 sub ProcessHistory {
     my($new_hist_tag,$new_command,$command_string,@string) = (@_);
     if ((($new_hist_tag ne $hist_tag) || ($new_command ne $command))
-	&& defined %history) {
+	&& scalar(%history)) {
 	print eval "$command \%history";
 	undef %history;
     }

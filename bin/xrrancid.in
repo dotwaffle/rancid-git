@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: xrrancid.in 2207 2010-06-23 19:17:33Z root $
+## $Id: xrrancid.in 2264 2010-11-04 23:35:17Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2010 by Terrapin Communications, Inc.
@@ -72,7 +72,7 @@ my($filter_pwds);			# password filtering mode
 sub ProcessHistory {
     my($new_hist_tag,$new_command,$command_string,@string) = (@_);
     if ((($new_hist_tag ne $hist_tag) || ($new_command ne $command))
-	&& defined %history) {
+	&& scalar(%history)) {
 	print eval "$command \%history";
 	undef %history;
     }
@@ -643,8 +643,14 @@ sub DirSlotN {
 	    next;
 	}
 	if (/.*\((\d+) bytes free\)/) {
-	    my($tmp) = int($1 / (1024 * 1024));
-	    s/$1 bytes free/$tmp MB free/;
+ 	    my($tmp) = $1;
+	    if ($tmp >= (1024 * 1024 * 1024)) {
+		$tmp = int($tmp / (1024 * 1024 * 1024));
+		s/$1 bytes free/$tmp GB free/;
+	    } else {
+		$tmp = int($tmp / (1024 * 1024));
+		s/$1 bytes free/$tmp MB free/;
+	    }
 	}
 
 	ProcessHistory("FLASH","","","!Flash: $dev: $_");
@@ -973,7 +979,7 @@ sub WriteTerm {
 	    while (<INPUT>) {
 		tr/\015//d;
 		last if (/^$prompt/);
-		last if (/^$prompt/ || ! /^(ip explicit-path name |[ !])/);
+		last if (! /^(ip explicit-path name |[ !])/);
 		if (/^ip explicit-path name (\S+)/) {
 		    ProcessHistory("EXPATH","keysort","$key","$expath");
 		    $key = $1;
@@ -1013,6 +1019,20 @@ sub WriteTerm {
 	    ProcessHistory("EACL $1 $2","$aclsort","$3","$_") && next;
 	/^access-list\s+(\d\d\d)\s+(\S+)\s+ip\s+any/ &&
 	    ProcessHistory("EACL $1 $2","$aclsort","0.0.0.0","$_") && next;
+	# sort ipv{4,6} access-lists
+	if (/^ipv(4|6) access-list (\S+)\s*$/) {
+	    my($nlri, $key) = ($1,$2);
+	    ProcessHistory("ACL $nlri $key","keysort","$key","$_");
+	    while (<INPUT>) {
+		tr/\015//d;
+		last if (/^$prompt/ || /^\S/);
+		if (/^\s+(\d+) (permit|deny) /) {
+		    ProcessHistory("ACL $nlri $key","keysort","$2"," $2 $'");
+		} else  {
+		    ProcessHistory("ACL $nlri $key","keysort","$key","$_");
+		}
+	    }
+	}
 	# order arp lists
 	/^arp\s+(\d+\.\d+\.\d+\.\d+)\s+/ &&
 	    ProcessHistory("ARP","$aclsort","$1","$_") && next;

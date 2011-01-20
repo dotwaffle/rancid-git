@@ -50,12 +50,13 @@ DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(srcdir)/control_rancid.in $(srcdir)/cssrancid.in \
 	$(srcdir)/elogin.in $(srcdir)/erancid.in \
 	$(srcdir)/f10rancid.in $(srcdir)/f5rancid.in \
-	$(srcdir)/flogin.in $(srcdir)/fnrancid.in $(srcdir)/francid.in \
-	$(srcdir)/hlogin.in $(srcdir)/hrancid.in $(srcdir)/htlogin.in \
-	$(srcdir)/htrancid.in $(srcdir)/jerancid.in \
-	$(srcdir)/jlogin.in $(srcdir)/jrancid.in $(srcdir)/mrancid.in \
-	$(srcdir)/mrvlogin.in $(srcdir)/mrvrancid.in \
-	$(srcdir)/nlogin.in $(srcdir)/nrancid.in $(srcdir)/nslogin.in \
+	$(srcdir)/flogin.in $(srcdir)/fnlogin.in $(srcdir)/fnrancid.in \
+	$(srcdir)/francid.in $(srcdir)/hlogin.in $(srcdir)/hrancid.in \
+	$(srcdir)/htlogin.in $(srcdir)/htrancid.in \
+	$(srcdir)/jerancid.in $(srcdir)/jlogin.in $(srcdir)/jrancid.in \
+	$(srcdir)/mrancid.in $(srcdir)/mrvlogin.in \
+	$(srcdir)/mrvrancid.in $(srcdir)/nlogin.in \
+	$(srcdir)/nrancid.in $(srcdir)/nslogin.in \
 	$(srcdir)/nsrancid.in $(srcdir)/nxrancid.in $(srcdir)/par.in \
 	$(srcdir)/prancid.in $(srcdir)/rancid-fe.in \
 	$(srcdir)/rancid.in $(srcdir)/rivlogin.in \
@@ -74,11 +75,11 @@ CONFIG_HEADER = $(top_builddir)/include/config.h
 CONFIG_CLEAN_FILES = control_rancid par rancid-fe agmrancid alogin \
 	arancid arrancid avologin avorancid blogin brancid cat5rancid \
 	clogin rancid cssrancid elogin erancid f5rancid f10rancid \
-	flogin francid fnrancid hlogin hrancid htlogin htrancid jlogin \
-	jrancid jerancid mrancid mrvlogin mrvrancid nlogin nrancid \
-	nslogin nsrancid nxrancid prancid rivlogin rivrancid rrancid \
-	srancid tlogin tntlogin tntrancid trancid xrancid xrrancid \
-	zrancid
+	flogin francid fnlogin fnrancid hlogin hrancid htlogin \
+	htrancid jlogin jrancid jerancid mrancid mrvlogin mrvrancid \
+	nlogin nrancid nslogin nsrancid nxrancid prancid rivlogin \
+	rivrancid rrancid srancid tlogin tntlogin tntrancid trancid \
+	xrancid xrrancid zrancid
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
@@ -245,12 +246,13 @@ top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = foreign
 bin_SCRIPTS = agmrancid alogin arancid arrancid avologin avorancid \
 	blogin brancid cat5rancid clogin control_rancid cssrancid \
-	elogin erancid f5rancid f10rancid flogin fnrancid francid \
-	hlogin hrancid htlogin htrancid jerancid jlogin jrancid \
-	mrancid mrvlogin mrvrancid nlogin nrancid nslogin nsrancid \
-	nxrancid par prancid rancid-fe rancid rivlogin rivrancid \
-	rrancid srancid tlogin tntlogin tntrancid trancid xrancid \
-	xrrancid zrancid lg.cgi lgform.cgi rancid-cvs rancid-run
+	elogin erancid f5rancid f10rancid flogin fnlogin fnrancid \
+	francid hlogin hrancid htlogin htrancid jerancid jlogin \
+	jrancid mrancid mrvlogin mrvrancid nlogin nrancid nslogin \
+	nsrancid nxrancid par prancid rancid-fe rancid rivlogin \
+	rivrancid rrancid srancid tlogin tntlogin tntrancid trancid \
+	xrancid xrrancid zrancid lg.cgi lgform.cgi rancid-cvs \
+	rancid-run
 EXTRA_DIST = lg.cgi.in lgform.cgi.in rancid-cvs.in rancid-run.in
 #dist_bin_SCRIPTS= $(bin_SCRIPTS:%=%.in)
 CLEANFILES = lg.cgi lgform.cgi rancid-cvs rancid-run
@@ -360,6 +362,8 @@ f10rancid: $(top_builddir)/config.status $(srcdir)/f10rancid.in
 flogin: $(top_builddir)/config.status $(srcdir)/flogin.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 francid: $(top_builddir)/config.status $(srcdir)/francid.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+fnlogin: $(top_builddir)/config.status $(srcdir)/fnlogin.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 fnrancid: $(top_builddir)/config.status $(srcdir)/fnrancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@

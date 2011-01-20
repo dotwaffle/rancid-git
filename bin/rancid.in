@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: rancid.in 2211 2010-07-07 23:15:10Z heas $
+## $Id: rancid.in 2272 2011-01-10 20:01:58Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2009 by Terrapin Communications, Inc.
@@ -73,7 +73,7 @@ my($filter_pwds);			# password filtering mode
 sub ProcessHistory {
     my($new_hist_tag,$new_command,$command_string,@string) = (@_);
     if ((($new_hist_tag ne $hist_tag) || ($new_command ne $command))
-	&& defined %history) {
+	&& scalar(%history)) {
 	print eval "$command \%history";
 	undef %history;
     }
@@ -194,7 +194,7 @@ sub ShowVersion {
 	    next;
 	}
 	if (/cisco ios .* IOS-XE/i) { $ios = "XE"; }
-	if (/^Application and Content Networking Software/) { $type = "CE"; }
+	if (/^Application and Content Networking .*Software/) { $type = "CE"; }
 	# treat the ACE like the Content Engines for matching endofconfig
 	if (/^Cisco Application Control Software/) { $type = "CE"; }
 	if (/^Cisco Storage Area Networking Operating System/) { $type = "SAN";}
@@ -203,6 +203,10 @@ sub ShowVersion {
 	    ProcessHistory("COMMENTS","keysort","F1", "!Image: $_") && next;
 	/^Cisco Secure PIX /i &&
 	    ProcessHistory("COMMENTS","keysort","F1", "!Image: $_") && next;
+	# ASA "time-based licenses" - eg: bot-net
+	/^This (PIX|platform) has a time-based license that will expire in\s+(\d{2,})\s+day.*$/ &&
+	    ProcessHistory("COMMENTS","keysort","D1",
+			   "!This $1 has a time-based license\n") && next;
 	# PIX 6 fail-over license, as in "This PIX has an Unrestricted (UR)
 	# license."  PIX 7 as "his platform has ..."
 	/^This (PIX|platform) has an?\s+(.*)$/ &&
@@ -226,8 +230,9 @@ sub ShowVersion {
 		"!CPU: $3\n");
 	    ProcessHistory("COMMENTS","keysort","B1", "!Memory: $2\n");
 	}
-	/^Serial Number:\s+(.*)$/ &&
-	    ProcessHistory("COMMENTS","keysort","C1", "!$_") && next;
+	/^serial number:\s+(.*)$/i &&
+	    ProcessHistory("COMMENTS","keysort","C1", "!Serial Number: $1") &&
+	    next;
 	# More PIX stuff
 	/^Encryption hardware device\s+:\s+(.*)/ &&
 	    ProcessHistory("COMMENTS","keysort","A3", "!Encryption: $1\n") &&
@@ -240,8 +245,8 @@ sub ShowVersion {
 	    ProcessHistory("COMMENTS","keysort","B2", "!Memory: Flash $2\n") &&
 	    next;
 	# CatOS 3500xl stuff
-	/^System serial number(:\s+.*)$/ &&
-	    ProcessHistory("COMMENTS","keysort","C1", "!Serial Number$1\n") &&
+	/^system serial number\s*:\s+(.*)$/i &&
+	    ProcessHistory("COMMENTS","keysort","C1", "!Serial Number: $1\n") &&
 	    next;
 	/^Model / &&
 	    ProcessHistory("COMMENTS","keysort","C2", "!$_") && next;
@@ -694,6 +699,7 @@ sub ShowFlash {
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if ($type =~ /^(12[40]|7)/);
+	return(1) if ($ios eq "XE");
 	return(1) if (/^\s*\^\s*$/);
 	return(1) if (/Line has invalid autocommand /);
 	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
@@ -703,6 +709,9 @@ sub ShowFlash {
 	    my($len) = length($1);
 	    s/^$1\s{$len}//;
 	}
+
+	# Filter dhcp database
+	next if (/dhcp_[^. ]*\.txt/);
 
 	/\s+(multiple-fs|nv_hdr|vlan\.dat)$/ && next;
 	ProcessHistory("FLASH","","","!Flash: $_");
@@ -741,14 +750,22 @@ sub DirSlotN {
 	    next if (/uptime_cont\s*$/);
 	}
 	# Filter dhcp database
-	if (/dhcp_[^. ]*\.txt/) {
-	    next;
-	}
+	next if (/dhcp_[^. ]*\.txt/);
+
 	if ($ios eq "XE" && /.*\((\d+) bytes free\)/) {
-	    my($tmp) = int($1 / (1024 * 1024));
-	    s/$1 bytes free/$tmp MB free/;
+	    my($tmp) = $1;
+	    if ($tmp >= (1024 * 1024 * 1024)) {
+		$tmp = int($tmp / (1024 * 1024 * 1024));
+		s/$1 bytes free/$tmp GB free/;
+	    } else { 
+		$tmp = int($tmp / (1024 * 1024));
+		s/$1 bytes free/$tmp MB free/;
+	    }
 	}
 	if ($ios eq "XE" && /^((\s+)?\d+\s+\S+)\s+\d+.*(tracelogs$)/) {
+	    $_ = "$1" . sprintf("%43s", "") . "$3\n";
+	}
+	if ($ios eq "IOS" && /^((\s+)?\d+\s+\S+)\s+\d+.*(sflog$)/) {
 	    $_ = "$1" . sprintf("%43s", "") . "$3\n";
 	}
 	# the pager can not be disabled per-session on the PIX
@@ -1325,7 +1342,7 @@ sub ShowInventory {
 	    next;
 	}
 	# split PID/VID/SN line
-	if (/^PID: (\S*)\s*, VID: (\S*)\s*, SN: (\S*)\s*$/) {
+	if (/^PID: (\S*)\s*,\s*VID: (\S*)\s*,\s*SN: (\S*)\s*$/) {
 	    my($entries) = "";
 	    $entries .= "!PID: $1\n" if ($1);
 	    $entries .= "!VID: $2\n" if ($2);
@@ -1528,9 +1545,11 @@ sub WriteTerm {
 	tr/\015//d;
 	last if (/^$prompt/);
 	return(1) if (!$linecnt && /^\s+\^\s*$/);
+	next if (/^\s*$cmd\s*$/);
 	return(1) if (/Line has invalid autocommand /);
 	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
 	return(1) if (/\%Error: No such file or directory/);
+	return(1) if (/(Open device \S+ failed|Error opening \S+:)/);
 	return(0) if ($found_end);		# Only do this routine once
 	return(-1) if (/command authorization failed/i);
 	return(-1) if (/% ?configuration buffer full/i);
@@ -1563,6 +1582,8 @@ sub WriteTerm {
 	    }
 	    tr/\015//d;
 	}
+	# skip ASA 5520 configuration author line
+	/^: written by /i && next;
 	# some versions have other crap mixed in with the bits in the
 	# block above
 	/^! (Last configuration|NVRAM config last)/ && next;
@@ -1625,6 +1646,8 @@ sub WriteTerm {
 	    }
 	    next;
 	}
+	# filter auto "rogue ap" configuration lines
+	/^rogue ap classify / && next;
 	if (/^( set session-key (in|out)bound ah \d+ )/ && $filter_pwds >= 1) {
 	    ProcessHistory("","","","!$1<removed>\n");
 	    next;
@@ -2003,7 +2026,7 @@ TOP: while(<INPUT>) {
 	$clean_run = 0;
 	last;
     }
-    while (/#\s*($cmds_regexp)\s*$/) {
+    while (/[>#]\s*($cmds_regexp)\s*$/) {
 	$cmd = $1;
 	if (!defined($prompt)) {
 	    $prompt = ($_ =~ /^([^#>]+[#>])/)[0];

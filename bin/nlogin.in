@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: nlogin.in 2161 2010-03-15 21:17:28Z root $
+## $Id: nlogin.in 2254 2010-10-01 19:27:48Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2009 by Terrapin Communications, Inc.
@@ -118,6 +118,9 @@ for {set i 0} {$i < $argc} {incr i} {
 		set userpasswd [ lindex $argv $i ]
 	    }
 	    set do_passwd 0
+	# ssh passphrase
+	} -r* {
+	    # ignore -r
 	# Environment variable to pass to -s scripts
 	} -E* {
 	    if {[ regexp .\[E\](.+)=(.+) $arg ignore varname varvalue]} {

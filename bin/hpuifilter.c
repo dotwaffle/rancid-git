@@ -1,5 +1,5 @@
 /*
- * $Id: hpuifilter.c 2037 2008-12-05 20:53:17Z heas $
+ * $Id: hpuifilter.c 2225 2010-07-22 21:12:36Z heas $
  *
  * Copyright (c) 1997-2008 by Terrapin Communications, Inc.
  * All rights reserved.
@@ -120,6 +120,7 @@ pid_t		child;
 
 int		expectmore(char *buf, int len);
 int		filter(char *, int);
+size_t		mystrcspn(const char *, const char *);
 RETSIGTYPE	reapchild(int);
 #if !HAVE_OPENPTY
 int		openpty(int *, int *, char *, struct termios *,
@@ -365,8 +366,8 @@ main(int argc, char **argv, char **ev)
 		hbuf[0] = '\0';
 		break;
 	    } else if (bytes > 0) {
-		strcpy(hbuf, hbuf + bytes);
 		hlen -= bytes;
+		memcpy(hbuf, hbuf + bytes, hlen + 1);
 		if (hlen < 1)
 		     pfds[2].events &= ~POLLOUT;
 	    }
@@ -387,7 +388,7 @@ main(int argc, char **argv, char **ev)
 	     * more data, write it anyway as filter() didnt match it.
 	     */
 	    bytes = tlen;
-	    idx = strcspn(tbuf, tbufstr);
+	    idx = mystrcspn(tbuf, tbufstr);
 	    if (idx) {
 		if (tbuf[idx] == ESC) {
 		    if (tlen - idx < 2 || expectmore(&tbuf[idx], tlen - idx)) {
@@ -421,8 +422,8 @@ main(int argc, char **argv, char **ev)
 		tbuf[0] = '\0';
 		break;
 	    } else if (bytes > 0) {
-		strcpy(tbuf, tbuf + bytes);
 		tlen -= bytes;
+		memcpy(tbuf, tbuf + bytes, tlen + 1);
 		if (tlen < 1)
 		    pfds[1].events &= ~POLLOUT;
 	    }
@@ -565,11 +566,13 @@ filter(char *buf, int len)
 			x;
     static int		init = 0;
 
-    if (len == 0 || (err = strcspn(buf, bufstr)) >= len)
+    if (len == 0 || mystrcspn(buf, bufstr) >= len)
 	return(len);
 
-    for (x = 0; x < N_REG - N_CRs; x++) {
-	if (! init) {
+    if (! init) {
+	init++;
+	for (x = 0; x < N_REG; x++) {
+	    memset(&preg[x], 0, sizeof(preg[x]));
 	    if ((err = regcomp(&preg[x], reg[x], REG_EXTENDED))) {
 		regerror(err, &preg[x], ebuf, 256);
 		fprintf(stderr, "%s: regex compile failed: %s\n", progname,
@@ -577,6 +580,9 @@ filter(char *buf, int len)
 		abort();
 	    }
 	}
+    }
+
+    for (x = 0; x < N_REG - N_CRs; x++) {
 	if ((err = regexec(&preg[x], buf, nmatch, pmatch, 0))) {
 	    if (err != REG_NOMATCH) {
 		regerror(err, &preg[x], ebuf, 256);
@@ -584,22 +590,19 @@ filter(char *buf, int len)
 		abort();
 	    }
 	} else {
-	    strcpy(buf + pmatch[0].rm_so, buf + pmatch[0].rm_eo);
+	    if (len - pmatch[0].rm_eo <= 0) {
+		buf[pmatch[0].rm_so] = '\0';
+	    } else {
+		memcpy(buf + pmatch[0].rm_so, buf + pmatch[0].rm_eo,
+		       len - pmatch[0].rm_eo + 1);
+	    }
+	    len -= pmatch[0].rm_eo - pmatch[0].rm_so;
 	    /* start over with the first regex */
 	    x = -1;
 	}
     }
 
     /* now the CR NL replacements */
-    if (! init++) {
-	for (x = N_REG - N_CRs; x < N_REG; x++)
-	    if ((err = regcomp(&preg[x], reg[x], REG_EXTENDED))) {
-		regerror(err, &preg[x], ebuf, 256);
-		fprintf(stderr, "%s: regex compile failed: %s\n", progname,
-			ebuf);
-		abort();
-	    }
-    }
     for (x = N_REG - N_CRs; x < N_REG; x++) {
 	if ((err = regexec(&preg[x], buf, nmatch, pmatch, 0))) {
 	    if (err != REG_NOMATCH) {
@@ -608,15 +611,38 @@ filter(char *buf, int len)
 		abort();
 	    }
 	} else {
-	    *(buf + pmatch[0].rm_so) = '\r';
-	    *(buf + pmatch[0].rm_so + 1) = '\n';
-	    strcpy(buf + pmatch[0].rm_so + 2, buf + pmatch[0].rm_eo);
+	    *(buf + pmatch[0].rm_so++) = '\r';
+	    *(buf + pmatch[0].rm_so++) = '\n';
+	    if (len - pmatch[0].rm_eo == 0) {
+		buf[pmatch[0].rm_so] = '\0';
+	    } else {
+		memcpy(buf + pmatch[0].rm_so, buf + pmatch[0].rm_eo,
+		       len - pmatch[0].rm_eo + 1);
+	    }
+	    len -= pmatch[0].rm_eo - pmatch[0].rm_so;
 	    /* start over with the first CR regex */
-	    x = N_REG - 3;
+	    x = N_REG - 1 - N_CRs;
 	}
     }
 
-    return(strlen(buf));
+    return(len);
+}
+
+/* like strcspn(), but works around a bug in a particular O/S */
+size_t
+mystrcspn(const char *s, const char *charset)
+{
+    size_t	len;
+    const char	*csp;
+
+    for (len = 0; *s != '\0'; s++) {
+	for (csp = charset; *csp != '\0'; csp++)
+	    if (*s == *csp)
+		return(len);
+	len++;
+    }
+
+    return(len);
 }
 
 RETSIGTYPE

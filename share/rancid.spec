@@ -1,6 +1,6 @@
 Name:           rancid
-Version:        2.3.2a8
-Release:        2%{?dist}
+Version:        2.3.4
+Release:        1%{?dist}
 Summary:        Really Awesome New Cisco confIg Differ
 
 Group:          Applications/System
@@ -8,11 +8,11 @@ License:        non-free
 URL:            http://www.shrubbery.net/rancid/
 Source:         rancid-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-root
-Requires:       cvs expect >= 5.40
+Requires:       cvs expect >=3D 5.40
 
 %package lg
 Summary:        RANCID Looking Glass CGI scripts
-Group:		Applications/System
+Group:          Applications/System
 
 %description
 Rancid is a "Really Awesome New Cisco confIg Differ" developed to
@@ -29,16 +29,16 @@ old-school folks who remember it. Our version has added functions, supports
 cisco, juniper, and foundry and uses the login scripts that come with
 rancid; so it can use telnet or ssh to connect to your devices(s).
 
-%prep 
+%prep
 %setup -q
 
 %build
-%configure --localstatedir=%{_localstatedir}/rancid
+%configure --localstatedir=3D%{_localstatedir}/rancid
 make
 
 %install
 rm -rf $RPM_BUILD_ROOT
-make install DESTDIR=$RPM_BUILD_ROOT
+make install DESTDIR=3D$RPM_BUILD_ROOT
 # Get rid of unwanted /usr/share/rancid install
 rm -rf $RPM_BUILD_ROOT/%{_datadir}/rancid
 # Move lg CGI scripts to CGI directory
@@ -52,13 +52,14 @@ cp cloginrc.sample $RPM_BUILD_ROOT/%{_localstatedir}/rancid/.cloginrc
 
 %pre
 if [ $1 -eq 1 ]; then
-    egrep -q '^rancid:' /etc/passwd || useradd -M -r -d %{_localstatedir}/rancid -c "RANCID User" rancid
+   egrep -q '^rancid:' /etc/passwd || useradd -M -r -d
+%{_localstatedir}/rancid -c "RANCID User" rancid
 fi
 
 %postun
 if [ $1 -eq 0 ]; then
-    # It's a matter of taste if we should remove the user on uninstall or not
-    userdel rancid
+   # It's a matter of taste if we should remove the user on uninstall or not
+   userdel rancid
 fi
 
 %clean
@@ -86,6 +87,9 @@ rm -rf $RPM_BUILD_ROOT
 %doc README.lg
 
 %changelog
+* Mon Jul 19 2010 Lance Vermilion <rancid@xxxxxxxx> 2.3.4
+- Modified Version to be 2.3.4 and Release to be 1%{?dist} instead of 2%{?dist}
+
 * Fri Feb 15 2008 Steve Snodgrass <ssnodgra@xxxxxxxx> 2.3.2a8-1
 - Install .cloginrc as a configuration file
 - Don't try to create the rancid user if it already exists
@@ -104,10 +108,10 @@ rm -rf $RPM_BUILD_ROOT
 - Original spec file by Dan Pfleger.
 - Add a changelog.
 - Make the formating of the spec file adhere to the Fedora Extras Packaging
-  guidelines.
+ guidelines.
 - New %description based on the README and the website.
 - Add cvs Requires.
 - Changed Group
 - Use macros in the files section. Simplify it.
 - Do not install the looking glass cgi's. Those make rpm pull in more perl
-  module dependencies.
+ module dependencies.

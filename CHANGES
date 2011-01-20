@@ -1,7 +1,76 @@
-2.3.4
-	nracnid: fix serial number matching - Nathan Wallwork
+2.3.6
+	rancid: fail on error opening nvram:
 
-	nracnid: fix pager prompt filtering - Nathan Wallwork
+	rancid: skip ASA 5520 configuration author line
+
+	control_rancid: for svn stupidity, run update (yes update) and commit
+	after setting svn:ignore, else . is out of date.
+
+	rancid: filter auto "rogue ap" configuration - Kevin Nesbitt
+
+	alogin: adjust match of active alarms msg at login
+
+	jrancid: patch for master/backup matching on EX series - Sven Engelhardt
+
+	rancid: update cisco WAE identity string match - from Jim Hock
+
+	{xr}rancid: summarize DirSlotN() bytes free as GB, else MB.
+
+	rancid: filter sflog from DirSlotN() for IOS on cisco 10k
+
+	fnrancid: update recent fortinet software - Diego Ercolani
+
+	rancid: ignore show flash on IOS XE - Marcus Stoegbauer
+
+	rancid: copy the dhcp database filter to ShowFlash() - From Lee
+
+	clogin: Fix pasto in IOS terminal width command.
+
+	hlogin: -r missing from usage o/p - Per-Olof Olsson
+
+	clogin: add -r and passphrase/identfile from cloginrc - Per-Olof Olsson
+
+	francid: remove system uptime line on CER 3000 - Simon Leinen
+
+2.3.5
+	alogin: respond to active alarms msg at login - Vincent Tamet
+
+	*rancid: update for grammar deprecated in perl 5.12
+
+	*login: handle noenable value consistently, '1' to turn it on
+
+	configure: look for -n <count> option to ping, for Windows ping (over
+	cygwin) - From Lee
+
+	rancid: missed case fpr accepting '>' prompt, rather than just '#'
+
+	xrrancid: filter sequences from ipv4/6 access-lists
+
+	zrancid: force terminal type vt100 so as not to confuse Linux
+
+	francid: filter system uptime on new Brocades - Matthias Cramer
+
+	rancid: filter ASA time-based license noise - Christopher DeRemer
+
+	rancid: filter command in WriteTerm if echoed - Arjan Oosting
+
+	configure: specifically look for ping in /sbin & /usr/sbin & fix typo
+	in test operator
+
+	rancid: handle a few IOS serial number formatting variants - Aaron Rees
+
+	hpuifilter: change filtering to avoid use of string functions due to a
+	Debian bug.  Should be faster too.
+
+	rancid: adjust show inventory matches for variables WS - Aaron Rees
+
+	nxrancid: show environment clock and show core vdc-all are not valid
+	commands on all platforms - Ryan West
+
+2.3.4
+	nrancid: fix serial number matching - Nathan Wallwork
+
+	nrancid: fix pager prompt filtering - Nathan Wallwork
 
 	rancid: remove sequences from IPv6 prefix-lists
 
