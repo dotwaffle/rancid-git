@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: jrancid.in 2160 2010-03-15 20:33:15Z root $
+## $Id: jrancid.in 2267 2010-11-12 00:04:58Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
@@ -72,7 +72,7 @@ my($ShowChassisSCB);			# Only run ShowChassisSCB() once
 sub ProcessHistory {
     my($new_hist_tag,$new_command,$command_string,@string) = (@_);
     if ((($new_hist_tag ne $hist_tag) || ($new_command ne $command))
-	&& defined %history) {
+	&& scalar(%history)) {
 	print eval "$command \%history";
 	undef %history;
     }
@@ -182,7 +182,7 @@ sub ShowChassisClocks {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^system (shutdown message from|going down )/i);
-	next if (/^\{(master|backup)}/);
+	next if (/^\{(master|backup)(:\d+)?\}/);
 
 	/error: the chassis subsystem is not running/ && return(-1);
 	/Couldn\'t initiate connection/ && return(-1);
@@ -224,7 +224,7 @@ sub ShowChassisEnvironment {
 	last if (/^$prompt/);
 	return 1 if (/^aborted!/i);
 	next if (/^system (shutdown message from|going down )/i);
-	next if (/^\{(master|backup)}/);
+	next if (/^\{(master|backup)(:\d+)?\}/);
 
 	/error: the chassis subsystem is not running/ && return(-1);
 	/Couldn\'t initiate connection/ && return(-1);
@@ -258,7 +258,7 @@ sub ShowChassisFirmware {
 	last if (/^$prompt/);
 	return 1 if (/^aborted!/i);
 	next if (/^system (shutdown message from|going down )/i);
-	next if (/^\{(master|backup)}/);
+	next if (/^\{(master|backup)(:\d+)?\}/);
 
 	/error: the chassis subsystem is not running/ && return(-1);
 	/Couldn\'t initiate connection/ && return(-1);
@@ -283,7 +283,7 @@ sub ShowChassisFpcDetail {
 	last if (/^$prompt/);
 	return 1 if (/^aborted!/i);
 	next if (/^system (shutdown message from|going down )/i);
-	next if (/^\{(master|backup)}/);
+	next if (/^\{(master|backup)(:\d+)?\}/);
 
 	/error: the chassis subsystem is not running/ && return(-1);
 	/Couldn\'t initiate connection/ && return(-1);
@@ -311,7 +311,7 @@ sub ShowChassisHardware {
 	last if (/^$prompt/);
 	return 1 if (/^aborted!/i);
 	next if (/^system (shutdown message from|going down )/i);
-	next if (/^\{(master|backup)}/);
+	next if (/^\{(master|backup)(:\d+)?\}/);
 
 	/error: the chassis subsystem is not running/ && return(-1);
 	/Couldn\'t initiate connection/ && return(-1);
@@ -336,7 +336,7 @@ sub ShowChassisRoutingEngine {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^system (shutdown message from|going down )/i);
-	next if (/^\{(master|backup)}/);
+	next if (/^\{(master|backup)(:\d+)?\}/);
 
 	/error: the chassis subsystem is not running/ && return(-1);
 	/Couldn\'t initiate connection/ && return(-1);
@@ -369,7 +369,7 @@ sub ShowChassisSCB {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^system (shutdown message from|going down )/i);
-	next if (/^\{(master|backup)}/);
+	next if (/^\{(master|backup)(:\d+)?\}/);
 
 	return(0) if ($ShowChassisSCB);
 	/error: the chassis subsystem is not running/ && return(-1);
@@ -402,7 +402,7 @@ sub ShowChassisAlarms {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^system (shutdown message from|going down )/i);
-	next if (/^\{(master|backup)}/);
+	next if (/^\{(master|backup)(:\d+)?\}/);
 
 	/Unrecognized command/ && return(1);
 	/command is not valid/ && return(1);
@@ -424,7 +424,7 @@ sub ShowSystemAutoinstall {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^system (shutdown message from|going down )/i);
-	next if (/^\{(master|backup)}/);
+	next if (/^\{(master|backup)(:\d+)?\}/);
 
 	/Unrecognized command/ && return(1);
 	/command is not valid/ && return(1);
@@ -467,7 +467,7 @@ sub ShowSystemLicense {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^system (shutdown message from|going down )/i);
-	next if (/^\{(master|backup)}/);
+	next if (/^\{(master|backup)(:\d+)?\}/);
 
 	/Unrecognized command/ && return(1);
 	/command is not valid/ && return(1);
@@ -489,7 +489,7 @@ sub ShowSystemLicenseKeys {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^system (shutdown message from|going down )/i);
-	next if (/^\{(master|backup)}/);
+	next if (/^\{(master|backup)(:\d+)?\}/);
 
 	/Unrecognized command/ && return(1);
 	/command is not valid/ && return(1);
@@ -511,7 +511,7 @@ sub ShowSystemBootMessages {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^system (shutdown message from|going down )/i);
-	next if (/^\{(master|backup)}/);
+	next if (/^\{(master|backup)(:\d+)?\}/);
 
 	/Unrecognized command/ && return(1);
 	/command is not valid/ && return(1);
@@ -539,7 +539,7 @@ sub ShowVersion {
 	last if (/^$prompt/);
 	next if (/^\s*$/);
 	next if (/^system (shutdown message from|going down )/i);
-	next if (/^\{(master|backup)}/);
+	next if (/^\{(master|backup)(:\d+)?\}/);
 
 	/^Juniper Networks is:/ && ProcessHistory("","","","# \n# $_") && next;
 	ProcessHistory("","","","# $_");
@@ -567,7 +567,7 @@ sub ShowConfiguration {
 	    last;
 	}
 	next if (/^system (shutdown message from|going down )/i);
-	next if (/^\{(master|backup)}/);
+	next if (/^\{(master|backup)(:\d+)?\}/);
 	$lines++;
 
 	/^database header mismatch: / && return(-1);

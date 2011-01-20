@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: rivlogin.in 2139 2010-02-10 19:29:27Z heas $
+## $Id: rivlogin.in 2245 2010-08-19 07:20:48Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2009 by Terrapin Communications, Inc.
@@ -858,7 +858,7 @@ foreach router [lrange $argv $idx end] {
     }
 
     # look for noenable option in .cloginrc
-    if { [find noenable $router] != "" } {
+    if { [find noenable $router] == "1" } {
 	set enable 0
     } else {
 	set enable $avenable

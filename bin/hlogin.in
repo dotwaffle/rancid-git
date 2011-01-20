@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: hlogin.in 2196 2010-04-27 17:47:16Z heas $
+## $Id: hlogin.in 2251 2010-10-01 19:26:36Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2009 by Terrapin Communications, Inc.
@@ -55,7 +55,7 @@
 # Usage line
 set usage "Usage: $argv0 \[-dSV\] \[-autoenable\] \[-noenable\] \[-c command\] \
 \[-Evar=x\] \[-e enable-password\] \[-f cloginrc-file\] \[-p user-password\] \
-\[-s script-file\] \[-t timeout\] \[-u username\] \
+\[-r passphrase\] \[-s script-file\] \[-t timeout\] \[-u username\] \
 \[-v vty-password\] \[-w enable-username\] \[-x command-file\] \
 \[-y ssh_cypher_type\] router \[router...\]\n"
 
@@ -125,7 +125,7 @@ for {set i 0} {$i < $argc} {incr i} {
 		set userpasswd [ lindex $argv $i ]
 	    }
 	    set do_passwd 0
-	# passphrase
+	# ssh passphrase
 	} -r* {
 	    if {! [  regexp .\[rR\](.+) $arg ignore passphrase]} {
 		incr i
@@ -636,7 +636,7 @@ foreach router [lrange $argv $i end] {
     }
 
     # look for noenable option in .cloginrc
-    if { [find noenable $router] != "" } {
+    if { [find noenable $router] == "1" } {
 	set enable 0
     }
 

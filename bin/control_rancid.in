@@ -1,6 +1,6 @@
 #! /bin/sh
 ##
-## $Id: control_rancid.in 2121 2009-11-11 21:45:21Z heas $
+## $Id: control_rancid.in 2270 2010-12-09 01:21:32Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
@@ -162,6 +162,8 @@ routers.up
 EOF
     if [ $RCSSYS = svn ] ; then
 	svn propset svn:ignore -F .cvsignore .
+	svn update .
+	svn commit -m 'set svn:ignores' .
     fi
 fi
 

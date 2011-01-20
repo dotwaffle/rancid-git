@@ -40,7 +40,7 @@
 #	then rsh.
 #	Default: {telnet} {ssh}
 #
-# add noenable <router name glob>
+# add noenable <router name glob> <1>
 #	equivalent of -noenable on the cmd line to not enable at login.
 #
 # add enableprompt <router name glob> <enable prompt>

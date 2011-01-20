@@ -5102,7 +5102,7 @@ do
 	    # since organized religion; see if -U 4 works.
 	    ${_diff}/diff -U 4 /dev/null /dev/null > /dev/null 2>&1
 	    if test $? -ne 0; then
-		if test "${ADIFF}" == "" ; then
+		if test "${ADIFF}" = "" ; then
 		    ADIFF="${_diff}/diff"
 		    ADIFF_CMD="diff -c -4"
 		fi
@@ -5423,7 +5423,7 @@ else
   ;;
   *)
   as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
+for as_dir in $PATH$PATH_SEPARATOR/sbin$PATH_SEPARATOR/usr/sbin
 do
   IFS=$as_save_IFS
   test -z "$as_dir" && as_dir=.
@@ -5459,19 +5459,24 @@ fi
 # BSD: ping -c N host
 # SVR: ping host N
 $PING_PATH -c 1 -v 127.0.0.1 > /dev/null 2>&1
-if test $? -ne 0 ; then
-    $PING_PATH 127.0.0.1 56 1 > /dev/null 2>&1
-    if test $? -ne 0 ; then
-        as_fn_error "can't figure out how to pass count == 1 to $PING_PATH." "$LINENO" 5
-	exit 1
-    else
-	LG_PING_CMD="$PING_PATH"
-
-    fi
-else
+if test $? -eq 0 ; then
     LG_PING_CMD="$PING_PATH -c 1"
-
+else
+    $PING_PATH 127.0.0.1 56 1 > /dev/null 2>&1
+    if test $? -eq 0 ; then
+	LG_PING_CMD="$PING_PATH"
+    else
+	# cygwin using windows ping?
+	$PING_PATH -n 1 127.0.0.1 > /dev/null 2>&1
+	if test $? -eq 0 ; then
+	    LG_PING_CMD="$PING_PATH -n 1"
+	else
+            as_fn_error "can't figure out how to pass count == 1 to $PING_PATH." "$LINENO" 5
+	    exit 1
+	fi
+    fi
 fi
+
 rd_cv_lg_ping_cmd=$LG_PING_CMD
 
 # locate tools to build $PATH for rancid.conf.  order is significant.  want
@@ -6042,7 +6047,7 @@ ac_config_files="$ac_config_files bin/f10rancid"
 
 ac_config_files="$ac_config_files bin/flogin bin/francid"
 
-ac_config_files="$ac_config_files bin/fnrancid"
+ac_config_files="$ac_config_files bin/fnlogin bin/fnrancid"
 
 ac_config_files="$ac_config_files bin/hlogin bin/hrancid"
 
@@ -6829,6 +6834,7 @@ do
     "bin/f10rancid") CONFIG_FILES="$CONFIG_FILES bin/f10rancid" ;;
     "bin/flogin") CONFIG_FILES="$CONFIG_FILES bin/flogin" ;;
     "bin/francid") CONFIG_FILES="$CONFIG_FILES bin/francid" ;;
+    "bin/fnlogin") CONFIG_FILES="$CONFIG_FILES bin/fnlogin" ;;
     "bin/fnrancid") CONFIG_FILES="$CONFIG_FILES bin/fnrancid" ;;
     "bin/hlogin") CONFIG_FILES="$CONFIG_FILES bin/hlogin" ;;
     "bin/hrancid") CONFIG_FILES="$CONFIG_FILES bin/hrancid" ;;
@@ -7558,6 +7564,7 @@ $as_echo X"$file" |
     "bin/f10rancid":F) chmod a+x $ac_file ;;
     "bin/flogin":F) chmod a+x $ac_file ;;
     "bin/francid":F) chmod a+x $ac_file ;;
+    "bin/fnlogin":F) chmod a+x $ac_file ;;
     "bin/fnrancid":F) chmod a+x $ac_file ;;
     "bin/hlogin":F) chmod a+x $ac_file ;;
     "bin/hrancid":F) chmod a+x $ac_file ;;
