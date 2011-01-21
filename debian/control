@@ -10,13 +10,13 @@ Homepage: http://www.shrubbery.net/rancid/
 
 Package: rancid
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, expect, perl, cvs | subversion,
+Depends: ${shlibs:Depends}, ${misc:Depends}, expect, perl, cvs | subversion | git-core,
  passwd, openssh-client | ssh, iputils-ping | ping, 
  debconf (>= 0.2.26) | debconf-2.0, adduser
 Suggests: diffstat
 Provides: rancid-core, rancid-util
-Replaces: rancid-core (<< 2.3.2-1), rancid-util (<< 2.3.2-1)
-Conflicts: rancid-core (<< 2.3.2-1), rancid-util (<< 2.3.2-1)
+Replaces: rancid-core (<< 2.3.5), rancid-util (<< 2.3.5)
+Conflicts: rancid-core (<< 2.3.5, rancid-util (<< 2.3.5)
 Description: Really Awesome New Cisco confIg Differ
  This is a popular ISP toolkit, based on expect and shell scripts,
  for managing router configurations.
