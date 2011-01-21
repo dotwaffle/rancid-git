@@ -83,4 +83,7 @@ man/rancid.conf.5
 share/Makefile
 share/downreport
 share/rtrfilter
+bin/fnlogin
+include/version.h
+
 
