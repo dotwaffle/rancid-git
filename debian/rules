@@ -26,6 +26,8 @@ endif
 build: build-stamp
 build-stamp: patch-stamp
 	dh_testdir
+	aclocal
+	autoconf
 
 	env CFLAGS="$(OPTIMIZE) -g" \
 	   ./configure \
