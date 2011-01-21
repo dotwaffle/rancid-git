@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: mrvrancid.in 2199 2010-06-08 18:15:48Z heas $
+## $Id: mrvrancid.in 2246 2010-09-08 01:36:07Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
@@ -77,7 +77,7 @@ my($filter_pwds);			# password filtering mode
 sub ProcessHistory {
     my($new_hist_tag,$new_command,$command_string,@string) = (@_);
     if ((($new_hist_tag ne $hist_tag) || ($new_command ne $command))
-	&& defined %history) {
+	&& scalar(%history)) {
 	print eval "$command \%history";
 	undef %history;
     }
