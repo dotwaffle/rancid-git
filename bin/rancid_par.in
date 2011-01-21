@@ -42,7 +42,7 @@
 #
 # PAR - parallel processing of command
 #
-# par -q -n # -l logfile -c command -x -d
+# rancid_par -q -n # -l logfile -c command -x -d
 #   -q = quiet mode (don't log anything to the logfiles)
 #   -n # = number of processes to run at once (default = 3)
 #   -l logfile = logfile to store par logging into (.0-.n)

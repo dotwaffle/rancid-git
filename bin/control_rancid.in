@@ -459,7 +459,7 @@ cd $DIR/configs
 # tailored to the specific installation.
 echo ""
 echo "Trying to get all of the configs."
-par -q -n $PAR_COUNT -c "rancid-fe {}" $devlistfile
+rancid_par -q -n $PAR_COUNT -c "rancid-fe {}" $devlistfile
 
 # This section will generate a list of missed routers
 # and try to grab them again.  It will run through
