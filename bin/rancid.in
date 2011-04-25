@@ -827,7 +827,7 @@ sub ShowContAll {
 	/^buffer size \d+  (Universal Serial: .*)/ &&
 	    ProcessHistory("INT","","","!\t$1\n") && next;
 	/^Hardware is (.*)/ &&
-	    ProcessHistory("INT","","","!Interface: $INT$1\n") && next;
+	    ProcessHistory("INT","","","!Interface: $INT\n") && next;
 	/^(QUICC Serial unit \d),/ &&
 	    ProcessHistory("INT","","","!$1\n") && next;
 	/^QUICC Ethernet .*/ &&
