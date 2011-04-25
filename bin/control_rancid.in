@@ -528,15 +528,15 @@ do
 done
 
 if [ $alt_mailrcpt -eq 1 ] ; then
-    subject="router config diffs - courtesy of $mailrcpt"
+    subject="router config diffs - courtesy of $mailrcpt $ALT_COMMIT"
 else
-    subject="router config diffs"
+    subject="router config diffs $ALT_COMMIT"
 fi
 if [ "X$device" != "X" ] ; then
-    message="updates of group $GROUP - courtesy of $mailrcpt"
+    message="updates of group $GROUP - courtesy of $mailrcpt $ALT_COMMIT"
     subject="$GROUP/$device $subject"
 else
-    message="updates of group $GROUP"
+    message="updates of group $GROUP $ALT_COMMIT"
     subject="$GROUP $subject"
 fi
 
