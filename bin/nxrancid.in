@@ -1029,7 +1029,7 @@ sub DoNothing {print STDOUT;}
 	{'show debug'			=> 'ShowDebug'},
 	{'show cores vdc-all'		=> 'ShowCores'},
 	{'show processes log vdc-all'	=> 'ShowProcLog'},
-	{'show running-config'		=> 'WriteTerm'},
+	{'show running-config vdc-all'	=> 'WriteTerm'},
 );
 # Use an array to preserve the order of the commands and a hash for mapping
 # commands to the subroutine and track commands that have been completed.
