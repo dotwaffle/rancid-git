@@ -71,6 +71,14 @@ install: build-stamp
 	(cd debian/rancid/usr/share/man/man1; mv par.1 rancid_par.1)
 	(cd debian/rancid/usr/lib/rancid/bin; mv par rancid_par)
 
+#	some scripts to bin directory
+	mv debian/rancid/var/lib/rancid/downreport \
+	   debian/rancid/usr/lib/rancid/bin/
+	mv debian/rancid/var/lib/rancid/getipacctg \
+	   debian/rancid/usr/lib/rancid/bin/
+	mv debian/rancid/var/lib/rancid/rtrfilter \
+	   debian/rancid/usr/lib/rancid/bin/	
+
 #	rancid-cgi:
 	mv debian/rancid/usr/lib/rancid/bin/lg.cgi \
 	   debian/rancid-cgi/usr/lib/cgi-bin/lg/
