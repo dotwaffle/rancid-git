@@ -2,7 +2,7 @@ Source: rancid
 Section: net
 Priority: optional
 Maintainer: Roland Rosenfeld <roland@debian.org>
-Build-Depends: debhelper (>= 5.0.0), expect, perl, openssh-client, cvs, 
+Build-Depends: debhelper (>= 5.0.0), autoconf, expect, perl, openssh-client, cvs, 
  iputils-ping | ping, po-debconf, dpatch, exim4 | mail-transport-agent,
  telnet
 Standards-Version: 3.8.1
