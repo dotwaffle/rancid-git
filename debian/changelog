@@ -1,3 +1,21 @@
+rancid (2.3.6-5) unstable; urgency=low
+
+  * use full path to par to prevent conflicts with other par
+  * New commands to rancid
+    show snmp mib ifmib ifindex
+    show snmp engineID
+    show crypto pki certificates
+  * Unwanted diff from cisco 'show controllers'
+  * New commands to nxrancid
+    Replace 'show running-config' with 'show running-config vdc-all'
+    show snmp engineID
+  * With git patch
+  * fix Bug in downreport wildcard MAILPUS was not replaced
+  * some scripts to bin directory insted of install prefix dir
+  * Additional info to commit message over environment variable    
+
+ -- Stefan Kublik <stku@kublik.net>  Fri, 06 Mai 2011 14:18:17 +0200
+
 rancid (2.3.6-ubuntu4) lucid; urgency=low
 
   * reverted to rancid_par
