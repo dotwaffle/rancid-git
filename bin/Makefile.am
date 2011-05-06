@@ -57,11 +57,11 @@ bin_SCRIPTS = agmrancid alogin arancid arrancid avologin avorancid blogin \
 	rivlogin rivrancid rrancid srancid tlogin tntlogin tntrancid trancid \
 	xrancid xrrancid zrancid
 
-bin_SCRIPTS += lg.cgi lgform.cgi rancid-cvs rancid-run
-EXTRA_DIST= lg.cgi.in lgform.cgi.in rancid-cvs.in rancid-run.in
+bin_SCRIPTS += lg.cgi lgform.cgi rancid-cvs rancid-run control_rancid
+EXTRA_DIST= lg.cgi.in lgform.cgi.in rancid-cvs.in rancid-run.in control_rancid.in
 #dist_bin_SCRIPTS= $(bin_SCRIPTS:%=%.in)
 
-CLEANFILES= lg.cgi lgform.cgi rancid-cvs rancid-run
+CLEANFILES= lg.cgi lgform.cgi rancid-cvs rancid-run control_rancid
 #CLEANFILES= $(bin_SCRIPTS)
 
 hpuifilter_SOURCES = hpuifilter.c
@@ -89,6 +89,7 @@ YFLAGS = -d
 # This is a bit of a PITA, but is the method recommended by the autoconf
 # documentation.
 auto_edit = sed \
+	-e 's,@bindir\@,$(bindir),g' \
 	-e 's,@prefix\@,$(prefix),g' \
 	-e 's,@localstatedir\@,$(localstatedir),g' \
 	-e 's,@sysconfdir\@,$(sysconfdir),g' \
@@ -125,5 +126,11 @@ rancid-run: Makefile $(srcdir)/rancid-run.in
 	$(auto_edit) $(srcdir)/rancid-run.in >rancid-run.tmp; \
 	chmod +x rancid-run.tmp; \
 	mv rancid-run.tmp rancid-run
+
+control_rancid: Makefile $(srcdir)/control_rancid.in
+	rm -f control_rancid control_rancid.tmp; \
+	$(auto_edit) $(srcdir)/control_rancid.in >control_rancid.tmp; \
+	chmod +x control_rancid.tmp; \
+	mv control_rancid.tmp control_rancid
 
 $(bin_PROGRAMS) $(bin_SCRIPTS): ../include/version.h
