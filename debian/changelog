@@ -2,7 +2,7 @@ rancid (2.3.6-6) unstable; urgency=low
 
   * fix Bug in makefile for diff command in control_rancid
 
- -- Stefan Kublik <stku@kublik.net> Sat, 21 May 2011 10:53:04 +0200
+ -- Stefan Kublik <stku@kublik.net>  Sat, 21 May 2011 10:53:04 +0200
 
 rancid (2.3.6-5) unstable; urgency=low
 
@@ -20,7 +20,7 @@ rancid (2.3.6-5) unstable; urgency=low
   * some scripts to bin directory insted of install prefix dir
   * Additional info to commit message over environment variable    
 
- -- Stefan Kublik <stku@kublik.net>  Fri, 06 Mai 2011 14:18:17 +0200
+ -- Stefan Kublik <stku@kublik.net>  Fri, 06 May 2011 14:18:17 +0200
 
 rancid (2.3.6-ubuntu4) lucid; urgency=low
 
