@@ -1,3 +1,9 @@
+rancid (2.3.6-6) unstable; urgency=low
+
+  * fix Bug in makefile for diff command in control_rancid
+
+ -- Stefan Kublik <stku@kublik.net> Sat, 21 May 2011 10:53:04 +0200
+
 rancid (2.3.6-5) unstable; urgency=low
 
   * use full path to par to prevent conflicts with other par

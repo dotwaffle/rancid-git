@@ -101,6 +101,7 @@ auto_edit = sed \
 	-e 's,@MAILPLUS\@,$(MAILPLUS),g' \
 	-e 's,@PACKAGE\@,$(PACKAGE),g' \
 	-e 's,@SVN_FSTYPE\@,$(SVN_FSTYPE),g' \
+	-e 's,@DIFF_CMD\@,$(DIFF_CMD),g' \
 	-e 's,@VERSION\@,$(VERSION),g'
 
 lg.cgi: Makefile $(srcdir)/lg.cgi.in
