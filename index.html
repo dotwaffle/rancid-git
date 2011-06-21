@@ -64,6 +64,13 @@
     An MTA, such as [ exim4 | postfix | qmail | sendmail | ssmtp ]</p>
 
     <h2>Install</h2>
+    <p>For Debian users that are feeling adventurous, try running:</p>
+    <p>git clone git://github.com/dotwaffle/rancid-git<br />
+    cd rancid-git<br />
+    dpkg-buildpackage -uc -rfakeroot<br />
+    cd ..<br />
+    dpkg -i rancid*.deb</p>
+    <p>Otherwise, try:</p>
     <p>adduser --home=/home/rancid rancid<br />
     autoreconf (or aclocal && autoconf)<br/>
     ./configure --prefix=/home/rancid<br />
@@ -78,6 +85,7 @@
 		<li>Matthew Walster for the color-html patch, which converts the emails into HTML format and colorizes them. As many MUAs don’t use fixed-width fonts, this forces that font and presents the same coloring you would expect when using “git log” with auto color turned on. Makes it far easier to spot changes and mark out where one config ends and another begins</li>
 		<li>ansi2html from https://github.com/pixelb/scripts/blob/master/scripts/ansi2html.sh</li>
 		<li><a href=http://users.utcluj.ro/~mcristi/>cristim</a> for his work on debian support, and keeping it all up to date when I miss a release!</li>
+		<li><a href=https://github.com/stku/rancid-git>Stefan Kublik</a> for his work in various areas, not just with debian support, but also for adding various additional features. German users may find his article very interesting reading: http://kublik.net/blog/rancid/</li>
 	</ul>
     </p>
 
