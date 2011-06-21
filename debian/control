@@ -2,7 +2,7 @@ Source: rancid
 Section: net
 Priority: optional
 Maintainer: Roland Rosenfeld <roland@debian.org>
-Build-Depends: debhelper (>= 5.0.0), expect, perl, openssh-client, cvs, 
+Build-Depends: debhelper (>= 5.0.0), autoconf, expect, perl, openssh-client, cvs, 
  iputils-ping | ping, po-debconf, dpatch, exim4 | mail-transport-agent,
  telnet, automake, build-essential
 Standards-Version: 3.8.1
@@ -17,7 +17,7 @@ Suggests: diffstat
 Provides: rancid-core, rancid-util
 Replaces: rancid-core (<< 2.3.5), rancid-util (<< 2.3.5)
 Conflicts: rancid-core (<< 2.3.5), rancid-util (<< 2.3.5)
-Description: Really Awesome New Cisco confIg Differ
+Description: Really Awesome New Cisco config Differ
  This is a popular ISP toolkit, based on expect and shell scripts,
  for managing router configurations.
  .

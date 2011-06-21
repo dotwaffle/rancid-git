@@ -828,7 +828,7 @@ sub ShowContAll {
 	/^buffer size \d+  (Universal Serial: .*)/ &&
 	    ProcessHistory("INT","","","!\t$1\n") && next;
 	/^Hardware is (.*)/ &&
-	    ProcessHistory("INT","","","!Interface: $INT$1\n") && next;
+	    ProcessHistory("INT","","","!Interface: $INT\n") && next;
 	/^(QUICC Serial unit \d),/ &&
 	    ProcessHistory("INT","","","!$1\n") && next;
 	/^QUICC Ethernet .*/ &&
@@ -895,6 +895,56 @@ sub ShowContCbus {
 	}
     }
     return(0);
+}
+
+# This routine parses "show snmp mib ifmib ifindex"
+sub ShowIfIndex {
+	print STDERR "    In ShowIfIndex: $_" if ($debug);
+
+	while (<INPUT>) {
+		tr/\015//d;
+		last if (/^$prompt/);
+		next if (/^(\s*|\s*$cmd\s*)$/);
+		return(1) if (/(Invalid (input|command) detected|Type help or )/i);
+		return(-1) if (/command authorization failed/i);
+		# the pager can not be disabled per-session on the PIX
+		if (/^(<-+ More -+>)/) {
+			my($len) = length($1);
+			s/^$1\s{$len}//;
+		}
+		if (/(.+?):\sIfindex\s=\s(\d+)/) {
+			unless ($Ifindex) { ProcessHistory("IFINDEX","","","!\n"); }
+			ProcessHistory("IFINDEX","","","!Ifindex $1 = $2\n");
+			$Ifindex++;
+			next;
+		}
+	}
+	return(0);
+}
+
+# This routine parses "show snmp engineID"
+sub ShowEngineID {
+	print STDERR "    In ShowEngineID: $_" if ($debug);
+
+	while (<INPUT>) {
+		tr/\015//d;
+		last if (/^$prompt/);
+		next if (/^(\s*|\s*$cmd\s*)$/);
+		return(1) if (/(Invalid (input|command) detected|Type help or )/i);
+		return(-1) if (/command authorization failed/i);
+		# the pager can not be disabled per-session on the PIX
+		if (/^(<-+ More -+>)/) {
+			my($len) = length($1);
+			s/^$1\s{$len}//;
+		}
+		if (/Local\sSNMP\sengineID:\s(.+)$/) {
+			unless ($EngineId) { ProcessHistory("ENGINEID","","","!\n"); }
+			ProcessHistory("ENGINEID","","","!SNMP engineID: $1\n");
+			$EngineId++;
+			next;
+		}
+	}
+	return(0);
 }
 
 # This routine parses "show debug"
@@ -1537,6 +1587,41 @@ sub ShowVLAN {
     return(0);
 }
 
+# This routine processes "show crypto pki certificates"
+sub ShowCert {
+	print STDERR "    In ShowCert: $_" if ($debug);
+
+	my ($certcout, $certtype, $trustpoint,$enddate);
+	while (<INPUT>) {
+		tr/\015//d;
+		last if (/^$prompt/);
+		next if (/^(\s*|\s*$cmd\s*)$/);
+		return(1) if /^\s*\^\s*$/;
+		return(1) if (/Line has invalid autocommand /);
+		return(1) if (/(Invalid (input|command) detected|Type help or )/i);
+		return(1) if (/Ambiguous command/i);
+		return(-1) if (/command authorization failed/i);
+		# the pager can not be disabled per-session on the PIX
+		if (/^(<-+ More -+>)/) {
+			my($len) = length($1);
+			s/^$1\s{$len}//;
+		}
+
+		if (/^((CA\s)?Certificate)/) { $certtype = $1 };
+		if (/Associated\sTrustpoints:\s(\w+)/) { $trustpoint = $1 };
+		if (/end\s+date:\s\d+:\d+:\d+\s\w+\s(\w+\s\d+\s\d+)/) { $enddate = $1 };
+		if ($trustpoint && $enddate) { 
+			ProcessHistory("CERT","","","!CERT: $certtype $trustpoint end date: $enddate\n");
+			$trustpoint = ''; $enddate = '';
+			$certcout++;
+		}
+	}
+	if ($certcout >= 1) { 
+		ProcessHistory("CERT","","","!\n"); 
+	}
+	return(0);
+}
+
 # This routine processes a "write term"
 sub WriteTerm {
     print STDERR "    In WriteTerm: $_" if ($debug);
@@ -1939,6 +2024,8 @@ sub DoNothing {print STDOUT;}
 	{'dir /all sec-disk2:'		=> 'DirSlotN'},
 	{'show controllers'		=> 'ShowContAll'},
 	{'show controllers cbus'	=> 'ShowContCbus'},
+	{'show snmp mib ifmib ifindex'  => 'ShowIfIndex'},
+	{'show snmp engineID'           => 'ShowEngineID'},
 	{'show diagbus'			=> 'ShowDiagbus'},
 	{'show diag'			=> 'ShowDiag'},
 	{'show module'			=> 'ShowModule'},	# cat 6500-ios
@@ -1948,6 +2035,7 @@ sub DoNothing {print STDOUT;}
 	{'show vtp status'		=> 'ShowVTP'},
 	{'show vlan'			=> 'ShowVLAN'},
 	{'show vlan-switch'		=> 'ShowVLAN'},
+	{'show crypto pki certificates' => 'ShowCert'},
 	{'show debug'			=> 'ShowDebug'},
 	{'more system:running-config'	=> 'WriteTerm'},	# ASA/PIX
 	{'show running-config'		=> 'WriteTerm'},

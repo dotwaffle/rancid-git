@@ -508,6 +508,32 @@ sub ShowInventory {
     return(0);
 }
 
+# This routine parses "show snmp engineID"
+sub ShowEngineID {
+    print STDERR "    In ShowEngineID: $_" if ($debug);
+
+    while (<INPUT>) {
+        tr/\015//d;
+        last if (/^$prompt/);
+        next if (/^(\s*|\s*$cmd\s*)$/);
+        return(1) if (/(Invalid (input|command) detected|Type help or )/i);
+        return(-1) if (/command authorization failed/i);
+        # the pager can not be disabled per-session on the PIX
+        if (/^(<-+ More -+>)/) {
+            my($len) = length($1);
+            s/^$1\s{$len}//;
+        }
+        if (/Local\sSNMP\sengineID:\s\[Hex\]\s(.+)$/) {
+                ProcessHistory("ENGINEID","","","!SNMP engineID: $1\n");
+                $EngineId++;
+                next;
+            }
+        }
+        if ($EngineId) { ProcessHistory("ENGINEID","","","!\n"); }
+
+        return(0);
+}
+
 # This routine parses "show vtp status"
 sub ShowVTP {
     print STDERR "    In ShowVTP: $_" if ($debug);
@@ -1024,12 +1050,13 @@ sub DoNothing {print STDOUT;}
 	{'show module'			=> 'ShowModule'},
 	{'show module xbar'		=> 'ShowModule'},
 	{'show inventory'		=> 'ShowInventory'},
+    {'show snmp engineID'   => 'ShowEngineID'},
 	{'show vtp status'		=> 'ShowVTP'},		# drop?
 	{'show vlan'			=> 'ShowVLAN'},
 	{'show debug'			=> 'ShowDebug'},
 	{'show cores vdc-all'		=> 'ShowCores'},
 	{'show processes log vdc-all'	=> 'ShowProcLog'},
-	{'show running-config'		=> 'WriteTerm'},
+	{'show running-config vdc-all'	=> 'WriteTerm'},
 );
 # Use an array to preserve the order of the commands and a hash for mapping
 # commands to the subroutine and track commands that have been completed.
