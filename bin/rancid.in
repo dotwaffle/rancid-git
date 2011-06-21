@@ -698,6 +698,7 @@ sub ShowFlash {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
+	next if (/coredumpinfo\/coredump\.cfg$/);
 	return(1) if ($type =~ /^(12[40]|7)/);
 	return(1) if ($ios eq "XE");
 	return(1) if (/^\s*\^\s*$/);
