@@ -519,9 +519,11 @@ proc run_commands { prompt command } {
     set num_commands [llength $commands]
     for {set i 0} {$i < $num_commands} { incr i} {
 	send -h -- "[subst [lindex $commands $i]]\r"
+	regsub -all {^(.{1,11}).*([#>])$} $prompt {\1([^#>\r\n]+)?[#>](\\([^)\\r\\n]+\\))?} reprompt
 	expect {
 	    -re "^\[^\n\r]*$prompt."	{ exp_continue }
 	    -re "^\[^\n\r *]*$prompt"	{}
+	    -re $reprompt               {}
 	    -re "\[\n\r]"		{ exp_continue }
 	    -- "---More---"		{ # EdgeIron cant disable pager
 					  send " "
