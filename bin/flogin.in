@@ -647,7 +647,7 @@ foreach router [lrange $argv $i end] {
 	set e_prompt [join [lindex $e_prompt 0] ""]
     }
 
-    # Figure out cypher tpye
+    # Figure out cypher type
     if {[info exists cypher]} {
       # command line cypher type
       set cyphertype $cypher
