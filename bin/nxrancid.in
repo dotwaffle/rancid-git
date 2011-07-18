@@ -1,0 +1,1157 @@
+#! @PERLV_PATH@
+##
+## $Id: nxrancid.in 2246 2010-09-08 01:36:07Z heas $
+##
+## @PACKAGE@ @VERSION@
+## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
+## All rights reserved.
+##
+## This code is derived from software contributed to and maintained by
+## Terrapin Communications, Inc. by Henry Kilmer, John Heasley, Andrew Partan,
+## Pete Whiting, Austin Schutz, and Andrew Fort.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted provided that the following conditions
+## are met:
+## 1. Redistributions of source code must retain the above copyright
+##    notice, this list of conditions and the following disclaimer.
+## 2. Redistributions in binary form must reproduce the above copyright
+##    notice, this list of conditions and the following disclaimer in the
+##    documentation and/or other materials provided with the distribution.
+## 3. All advertising materials mentioning features or use of this software
+##    must display the following acknowledgement:
+##        This product includes software developed by Terrapin Communications,
+##        Inc. and its contributors for RANCID.
+## 4. Neither the name of Terrapin Communications, Inc. nor the names of its
+##    contributors may be used to endorse or promote products derived from
+##    this software without specific prior written permission.
+## 5. It is requested that non-binding fixes and modifications be contributed
+##    back to Terrapin Communications, Inc.
+##
+## THIS SOFTWARE IS PROVIDED BY Terrapin Communications, INC. AND CONTRIBUTORS
+## ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+## TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+## PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COMPANY OR CONTRIBUTORS
+## BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+## CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+## SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+## INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+## POSSIBILITY OF SUCH DAMAGE.
+# 
+#  RANCID - Really Awesome New Cisco confIg Differ
+#
+# usage: rancid [-dV] [-l] [-f filename | hostname]
+#
+use Getopt::Std;
+getopts('dflV');
+if ($opt_V) {
+    print "@PACKAGE@ @VERSION@\n";
+    exit(0);
+}
+$log = $opt_l;
+$debug = $opt_d;
+$file = $opt_f;
+$host = $ARGV[0];
+$clean_run = 0;
+$found_end = 0;
+$timeo = 90;				# clogin timeout in seconds
+
+my(@commandtable, %commands, @commands);# command lists
+my($aclsort) = ("ipsort");		# ACL sorting mode
+my($filter_commstr);			# SNMP community string filtering
+my($filter_pwds);			# password filtering mode
+
+# This routine is used to print out the router configuration
+sub ProcessHistory {
+    my($new_hist_tag,$new_command,$command_string,@string) = (@_);
+    if ((($new_hist_tag ne $hist_tag) || ($new_command ne $command))
+	&& scalar(%history)) {
+	print eval "$command \%history";
+	undef %history;
+    }
+    if (($new_hist_tag) && ($new_command) && ($command_string)) {
+	if ($history{$command_string}) {
+	    $history{$command_string} = "$history{$command_string}@string";
+	} else {
+	    $history{$command_string} = "@string";
+	}
+    } elsif (($new_hist_tag) && ($new_command)) {
+	$history{++$#history} = "@string";
+    } else {
+	print "@string";
+    }
+    $hist_tag = $new_hist_tag;
+    $command = $new_command;
+    1;
+}
+
+sub numerically { $a <=> $b; }
+
+# This is a sort routine that will sort numerically on the
+# keys of a hash as if it were a normal array.
+sub keynsort {
+    local(%lines) = @_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $key (sort numerically keys(%lines)) {
+	$sorted_lines[$i] = $lines{$key};
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# This is a sort routine that will sort on the
+# keys of a hash as if it were a normal array.
+sub keysort {
+    local(%lines) = @_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $key (sort keys(%lines)) {
+	$sorted_lines[$i] = $lines{$key};
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# This is a sort routine that will sort on the
+# values of a hash as if it were a normal array.
+sub valsort {
+    local(%lines) = @_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $key (sort values %lines) {
+	$sorted_lines[$i] = $key;
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# This is a numerical sort routine (ascending).
+sub numsort {
+    local(%lines) = @_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $num (sort {$a <=> $b} keys %lines) {
+	$sorted_lines[$i] = $lines{$num};
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# This is a sort routine that will sort on the
+# ip address when the ip address is anywhere in
+# the strings.
+sub ipsort {
+    local(%lines) = @_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $addr (sort sortbyipaddr keys %lines) {
+	$sorted_lines[$i] = $lines{$addr};
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# These two routines will sort based upon IP addresses
+sub ipaddrval {
+    my(@a) = ($_[0] =~ m#^(\d+)\.(\d+)\.(\d+)\.(\d+)$#);
+    $a[3] + 256 * ($a[2] + 256 * ($a[1] +256 * $a[0]));
+}
+sub sortbyipaddr {
+    &ipaddrval($a) <=> &ipaddrval($b);
+}
+
+# This routine parses "show version"
+sub ShowVersion {
+    print STDERR "    In ShowVersion: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	if (/^$prompt/) { last};
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /Line has invalid autocommand /;
+	return(1) if /(Invalid input detected|Type help or )/;
+	return(-1) if (/\% Invalid command at /);
+	return(-1) if (/command authorization failed/i);
+
+	if (/^Cisco Nexus Operating System/) { $type = "NXOS";}
+	if (/^Software$/) {
+	    while (<INPUT>) {
+		tr/\015//d;
+		if (/^$prompt/) { last};
+		next if (/^\s*$cmd\s*$/);
+
+		if (/^$/) {
+		    goto EndSoftware;
+		}
+		/\s*([^:]*:)\s*(.*)$/ && ProcessHistory("COMMENTS","keysort","C1", "!Software: $1 $2\n") && next;
+	    }
+	}
+EndSoftware:
+	if (/^Hardware$/) {
+	    while (<INPUT>) {
+		tr/\015//d;
+		if (/^$prompt/) { last};
+		next if (/^\s*$cmd\s*$/);
+
+		if (/^$/) {
+		    goto EndHardware;
+		}
+		if (/^\s*(.*) CPU\s*with (\d*) kB(.*)$/) {
+		    my($tmp) = int($2 / 1024);
+		    ProcessHistory("COMMENTS","keysort","A2", "!Hardware: $1 CPU with $tmp MB$3\n");
+		    next;
+		}
+		if (/^\s*(.*)\s*with (\d*) kB(.*)$/) {
+		    my($tmp) = int($2 / 1024);
+		    ProcessHistory("COMMENTS","keysort","A2", "!Hardware: $1with $tmp MB$3\n");
+		    next;
+		}
+		/^\s*(.*)$/ && ProcessHistory("COMMENTS","keysort","A2", "!Hardware: $1\n") && next;
+	    }
+	}
+EndHardware:
+	if (/^\s+(bootflash|slot0):\s+(\d+) kB(.*)$/) {
+	    my($tmp) = int($2 / 1024);
+	    ProcessHistory("COMMENTS","keysort","B1", "!Memory: $1: $tmp MB$3\n");
+	    next;
+	}
+
+    }
+
+    print STDERR "TYPE = $type\n" if ($debug);
+    ProcessHistory("COMMENTS","keysort","A1", "!Chassis type: $proc - a $type router\n");
+    ProcessHistory("COMMENTS","keysort","B0", "!\n");
+    ProcessHistory("COMMENTS","keysort","C0", "!\n");
+    ProcessHistory("COMMENTS","","", "!\n");
+    return(0);
+}
+
+# This routine parses "show version build-info"
+sub ShowVersionBuild {
+    print STDERR "    In ShowVersionBuild: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	if (/^$prompt/) { last};
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /Line has invalid autocommand /;
+	return(1) if /(Invalid input detected|Type help or )/;
+	return(1) if (/\% Invalid command at /);
+	return(-1) if (/command authorization failed/i);
+
+	/^Built By / && ProcessHistory("COMMENTS","","", "!Build: $_");
+	/^On Date / && ProcessHistory("COMMENTS","","", "!Build: $_");
+	/^From Tree / && ProcessHistory("COMMENTS","","", "!Build: $_");
+	/^Base Tag / && ProcessHistory("COMMENTS","","", "!Build: $_");
+	/^Release for / && ProcessHistory("COMMENTS","","", "!Build: $_");
+    }
+    ProcessHistory("COMMENTS","","","!\n");
+    return(0);
+}
+
+# This routine parses "show license *"
+sub ShowLicense {
+    print STDERR "    In ShowLicense: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /(Invalid input detected|Type help or )/;
+	return(1) if (/\% Invalid command at /);
+	return(-1) if (/command authorization failed/i);
+
+	/^-+$/ && next;		# Skip lines of all dashes.
+	s/ Grace .+$/ Grace/;	# Drop anything after Grace.
+	ProcessHistory("COMMENTS","","", "!LIC: $_");
+    }
+    ProcessHistory("COMMENTS","","","!\n");
+    return(0);
+}
+
+# This routine parses "show system redundancy status"
+sub ShowRedundancy {
+    print STDERR "    In ShowRedundancy: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /Line has invalid autocommand /;
+	return(1) if /(Invalid input detected|Type help or )/;
+	return(-1) if (/\% Invalid command at /);
+	return(-1) if (/command authorization failed/i);
+
+	s/ +$//;	# Drop trailing ' '
+	ProcessHistory("COMMENTS","","","!Red: $_");
+    }
+    ProcessHistory("COMMENTS","","","!\n");
+    return(0);
+}
+
+# This routine parses "show environment"
+sub ShowEnv {
+    print STDERR "    In ShowEnv: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	if (/^$prompt/) { last; };
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /Line has invalid autocommand /;
+	return(1) if /(Invalid input detected|Type help or )/;
+	return(1) if (/\% Invalid command at /);
+	return(-1) if (/command authorization failed/i);
+
+	s/ +$//;	# Drop trailing ' '
+	ProcessHistory("COMMENTS","","","!Env: $_");
+    }
+    ProcessHistory("COMMENTS","","","!\n");
+    return(0);
+}
+
+# This routine parses "show environment temperature"
+sub ShowEnvTemp {
+    print STDERR "    In ShowEnvTemp: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	if (/^$prompt/) { last};
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /Line has invalid autocommand /;
+	return(1) if /(Invalid input detected|Type help or )/;
+	return(-1) if (/\% Invalid command at /);
+	return(-1) if (/command authorization failed/i);
+
+# Cut out CurTemp - drop the 2nd to last field.
+#--------------------------------------------------------------------
+#Module   Sensor        MajorThresh   MinorThres   CurTemp     Status
+#                       (Celsius)     (Celsius)    (Celsius)         
+#5        Outlet1 (s1)    125             125         33         Ok
+#5        QEng1Sn1(s10)   115             105         39         Ok
+	s/^(.+\s)(\S+\s+)(\S+\s*)$/$1$3/;
+
+	s/ +$//;	# Drop trailing ' '
+	ProcessHistory("COMMENTS","","","!Env: $_");
+    }
+    ProcessHistory("COMMENTS","","","!\n");
+    return(0);
+}
+
+# This routine parses "show environment power"
+sub ShowEnvPower {
+    print STDERR "    In ShowEnvPower: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	if (/^$prompt/) { last};
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /Line has invalid autocommand /;
+	return(1) if /(Invalid input detected|Type help or )/;
+	return(-1) if (/\% Invalid command at /);
+	return(-1) if (/command authorization failed/i);
+
+# Cut out Actual Output/Draw.
+#Power                              Actual        Total
+#Supply    Model                    Output     Capacity    Status
+#                                 (Watts )     (Watts )
+#-------  -------------------  -----------  -----------  --------------
+#1        ------------                 0 W          0 W     Absent    
+#3                                   749 W       5480 W     Ok        
+#                                  Actual        Power      
+#Module    Model                     Draw    Allocated    Status
+#                                 (Watts )     (Watts )     
+#-------  -------------------  -----------  -----------  --------------
+#2        NURBURGRING                N/A          573 W    Powered-Up
+#fan1                                N/A          720 W    Powered-Up
+	s/      Actual /  /;
+	s/      Output /  /;
+	s/    \(Watts \) /  /;
+	s/        Draw /  /;
+	s/ ----------- /  /;
+	s/        N\/A  /  / ||
+	s/ \d+ W /  /;		# Does not chop enough to line up.
+
+	/actual draw/ && next;	# Drop changing total power output.
+
+	s/ +$//;	# Drop trailing ' '
+	ProcessHistory("COMMENTS","","","!Env: $_");
+    }
+    ProcessHistory("COMMENTS","","","!\n");
+    return(0);
+}
+
+# This routine parses "show boot"
+sub ShowBoot {
+    print STDERR "    In ShowBoot: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /^\s*\^\s*$/;
+	return(1) if /Line has invalid autocommand /;
+	return(1) if /(Invalid input detected|Type help or )/;
+	return(1) if /Ambiguous command/i;
+	return(-1) if (/\% Invalid command at /);
+	return(-1) if (/command authorization failed/i);
+
+	s/ variable = / = /;
+	ProcessHistory("COMMENTS","","","!Variable: $_");
+    }
+    ProcessHistory("COMMENTS","","","!\n");
+    return(0);
+}
+
+# This routine parses "dir /all ((disk|slot)N|bootflash|nvram):"
+sub DirSlotN {
+    print STDERR "    In DirSlotN: $_" if ($debug);
+
+    my($dev) = (/\s([^\s]+):/);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /^\s*\^\s*$/;
+	return(1) if /Line has invalid autocommand /;
+	return(1) if /(Invalid input detected|Type help or )/;
+	return(1) if (/\% Invalid command at /);
+	return(1) if /(No such device|Error Sending Request)/i;
+	return(1) if /\%Error: No such file or directory/;
+	return(1) if /No space information available/;
+	return(1) if / is either not present or not formatted/;
+	return(-1) if /\%Error calling/;
+	return(-1) if /(: device being squeezed|ATA_Status time out)/i; # busy
+	return(-1) if (/command authorization failed/i);
+	return(1) if /(Open device \S+ failed|Error opening \S+:)/;
+
+	if (/^\s*(\d+) bytes /) {
+	    my($tmp) = int($1 / (1024 * 1024));
+	    s/$1 bytes /$tmp MB /;
+	}
+
+	ProcessHistory("COMMENTS","","","!Flash: $dev: $_");
+    }
+    ProcessHistory("COMMENTS","","","!\n");
+    return(0);
+}
+
+# This routine parses "show module".
+sub ShowModule {
+    print STDERR "    In ShowModule: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	return if (/^\s*\^$/);
+	last if (/online diag status/i);
+	last if (/^$prompt/);
+	next if (/^\s*$cmd\s*$/);
+	return(1) if (/\% Invalid command at /);
+	return(-1) if (/command authorization failed/i);
+
+	s/(.*) \*$/$1/;	# Drop a trailing '*'
+	/^\* this terminal session/ && next;
+	s/ +$//;	# Drop trailing ' '
+	ProcessHistory("COMMENTS","","","!Mod: $_");
+    }
+    ProcessHistory("COMMENTS","","","!\n");
+
+    return(0);
+}
+
+# This routine parses "show inventory".
+sub ShowInventory {
+    print STDERR "    In ShowInventory: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	return if (/^\s*\^$/);
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /Line has invalid autocommand /;
+	return(1) if /(Invalid input detected|Type help or )/;
+	return(1) if (/\% Invalid command at /);
+	return(-1) if (/command authorization failed/i);
+
+	if (/^(NAME: "[^"]*",)\s+(DESCR: "[^"]+")/) {
+	    ProcessHistory("COMMENTS","","", sprintf("!%-30s %s\n", $1, $2));
+	    next;
+	}
+	# split PID/VID/SN line
+	if (/^PID: (\S*)\s*,\s+VID: (\S*)\s*,\s+SN: (\S*)\s*$/) {
+	    my($entries) = "";
+	    $entries .= "!PID: $1\n" if ($1);
+	    $entries .= "!VID: $2\n" if ($2);
+	    $entries .= "!SN: $3\n" if ($3);
+	    ProcessHistory("COMMENTS","","", "$entries");
+	    next;
+	}
+	# split broken PID/VID/SN lines.
+	if (/^PID: (\S*)\s*,\s+VID: (\S*)\s*$/) {
+	    my($entries) = "";
+	    $entries .= "!PID: $1\n" if ($1);
+	    $entries .= "!VID: $2\n" if ($2);
+	    <INPUT>;
+	    tr/\015//d;
+	    /^\s*,\s+SN: (\S*)\s*$/;
+	    $entries .= "!SN: $1\n" if ($1);
+	    ProcessHistory("COMMENTS","","", "$entries");
+	    next;
+	}
+	ProcessHistory("COMMENTS","","","!$_");
+    }
+    ProcessHistory("COMMENTS","","","!\n");
+
+    return(0);
+}
+
+# This routine parses "show vtp status"
+sub ShowVTP {
+    print STDERR "    In ShowVTP: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /^\s*\^\s*$/;
+	return(1) if /Line has invalid autocommand /;
+	return(1) if /(Invalid input detected|Type help or )/;
+	return(1) if (/\% Invalid command at /);
+	return(-1) if (/command authorization failed/i);
+	next if (/^Configuration last modified by/);
+	# the pager can not be disabled per-session on the PIX
+	if (/^(<-+ More -+>)/) {
+	    my($len) = length($1);
+	    s/^$1\s{$len}//;
+	}
+
+	if (/^VTP Operating Mode\s+:\s+(Transparent|Server)/) {
+	    $DO_SHOW_VLAN = 1;
+	}
+	ProcessHistory("COMMENTS","","","!VTP: $_");
+    }
+    ProcessHistory("COMMENTS","","","!\n");
+    return(0);
+}
+
+# This routine parses "show vlan"
+sub ShowVLAN {
+    print STDERR "    In ShowVLAN: $_" if ($debug);
+
+    ($_ = <INPUT>, return(1)) if (!$DO_SHOW_VLAN);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /^\s*\^\s*$/;
+	return(1) if /Line has invalid autocommand /;
+	return(1) if /(Invalid input detected|Type help or )/;
+	return(-1) if (/\% Invalid command at /);
+	return(1) if /Ambiguous command/i;
+	# newer releases (~12.1(9)) place the vlan config in the normal
+	# configuration (write term).
+	return(1) if ($type =~ /^(3550|4500)$/);
+	return(-1) if (/command authorization failed/i);
+	# the pager can not be disabled per-session on the PIX
+	if (/^(<-+ More -+>)/) {
+	    my($len) = length($1);
+	    s/^$1\s{$len}//;
+	}
+
+	ProcessHistory("COMMENTS","","","!VLAN: $_");
+    }
+    ProcessHistory("COMMENTS","","","!\n");
+    return(0);
+}
+
+# This routine parses "show debug"
+sub ShowDebug {
+    print STDERR "    In ShowDebug: $_" if ($debug);
+    my($lines) = 0;
+
+    while (<INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /Line has invalid autocommand /;
+	return(1) if /(Invalid input detected|Type help or )/;
+	return(-1) if (/\% Invalid command at /);
+	return(-1) if (/command authorization failed/i);
+
+	/^No matching debug flags set$/ && next;
+	/^No debug flags set$/ && next;
+	ProcessHistory("COMMENTS","","","!DEBUG: $_");
+	$lines++;
+    }
+    if ($lines) {
+	ProcessHistory("COMMENTS","","","!\n");
+    }
+    return(0);
+}
+
+# This routine parses "show cores"
+sub ShowCores {
+    print STDERR "    In ShowCores: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /Line has invalid autocommand /;
+	return(1) if /(Invalid input detected|Type help or )/;
+	return(1) if (/\% Invalid command at /);
+	return(-1) if (/command authorization failed/i);
+
+	ProcessHistory("COMMENTS","","","!CORES: $_");
+    }
+    ProcessHistory("COMMENTS","","","!\n");
+    return(0);
+}
+
+# This routine parses "show processes log"
+sub ShowProcLog {
+    print STDERR "    In ShowProcLog: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /Line has invalid autocommand /;
+	return(1) if /(Invalid input detected|Type help or )/;
+	return(-1) if (/\% Invalid command at /);
+	return(-1) if (/command authorization failed/i);
+
+	ProcessHistory("COMMENTS","","","!PROC_LOGS: $_");
+    }
+    ProcessHistory("COMMENTS","","","!\n");
+    return(0);
+}
+
+# This routine processes a "write term"
+sub WriteTerm {
+    print STDERR "    In WriteTerm: $_" if ($debug);
+    my($lineauto,$comment,$linecnt) = (0,0,0);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	return(1) if /Line has invalid autocommand /;
+	return(1) if (/(Invalid input detected|Type help or )/i);
+	return(-1) if (/\% Invalid command at /);
+	return(0) if ($found_end);		# Only do this routine once
+	return(-1) if (/command authorization failed/i);
+
+#	/Non-Volatile memory is in use/  && return(-1); # NvRAM is locked
+	$linecnt++;
+	$lineauto = 0 if (/^[^ ]/);
+#	# skip the crap
+#	if (/^(##+$|(Building|Current) configuration)/i) {
+#	    while (<INPUT>) {
+#		next if (/^Current configuration\s*:/i);
+#		next if (/^:/);
+#		next if (/^([%!].*|\s*)$/);
+#		next if (/^ip add.*ipv4:/);	# band-aid for 3620 12.0S
+#		last;
+#	    }
+#	    if (defined($config_register)) {
+#		ProcessHistory("","","","!\nconfig-register $config_register\n");
+#	    }
+#	    tr/\015//d;
+#	}
+#	# some versions have other crap mixed in with the bits in the
+#	# block above
+#	/^! (Last configuration|NVRAM config last)/ && next;
+
+#	# skip consecutive comment lines to avoid oscillating extra comment
+#	# line on some access servers.  grrr.
+#	if (/^!/) {
+#	    next if ($comment);
+#	    ProcessHistory("","","",$_);
+#	    $comment++;
+#	    next;
+#	}
+#	$comment = 0;
+
+	# Dog gone Cool matches to process the rest of the config
+	/^!Command: show running-config/ && next; # kill this junk
+	/^!Time: /		&& next; # kill this junk
+#	/^tftp-server flash /   && next; # kill any tftp remains
+#	/^ntp clock-period /    && next; # kill ntp clock-period
+#	/^ length /		&& next; # kill length on serial lines
+#	/^ width /		&& next; # kill width on serial lines
+#	$lineauto = 1 if /^ modem auto/;
+#	/^ speed / && $lineauto	&& next; # kill speed on serial lines
+#	/^ clockrate /		&& next; # kill clockrate on serial interfaces
+#	if (/^(enable )?(password|passwd)( level \d+)? / && $filter_pwds >= 1) {
+#	    ProcessHistory("ENABLE","","","!$1$2$3 <removed>\n");
+#	    next;
+#	}
+#	if (/^(enable secret) / && $filter_pwds >= 2) {
+#	    ProcessHistory("ENABLE","","","!$1 <removed>\n");
+#	    next;
+#	}
+#	if (/^username (\S+)(\s.*)? secret /) {
+#	    if ($filter_pwds >= 2) {
+#		ProcessHistory("USER","keysort","$1","!username $1$2 secret <removed>\n");
+#	    } else {
+#		ProcessHistory("USER","keysort","$1","$_");
+#	    }
+#	    next;
+#	}
+	# Sort username and delete passwords.
+	if (/^username (\S+) password (\d) (\S+)(\s.*)$/) {
+	    if ($filter_pwds >= 2) {
+		ProcessHistory("USER","keysort","$1","!username $1 password <removed>$4\n");
+	    } elsif ($filter_pwds >= 1 && $2 ne "5") {
+		ProcessHistory("USER","keysort","$1","!username $1 password <removed>$4\n");
+	    } else {
+		ProcessHistory("USER","keysort","$1","$_");
+	    }
+	    next;
+	}
+	# Sort any other username info.
+	/^username (\S+) .*$/ && ProcessHistory("USER","keysort","$1","$_") && next;
+	# Sort snmp user and delete passwords.
+	if (/^snmp-server user (\S+) (\S+) auth md5 (\S+) priv (\S+) localizedkey$/) {
+	    if ($filter_pwds >= 2) {
+		ProcessHistory("SNMP-USER","keysort","$1","!snmp-server user $1 $2 auth md5 <removed> priv <removed> localizedkey\n");
+	    } else {
+		ProcessHistory("SNMP-USER","keysort","$1","$_");
+	    }
+	    next;
+	}
+	# Sort any other snmp user info.
+	/^snmp-server user (\S+) .*$/ && ProcessHistory("SNMP-USER","keysort","$1","$_") && next;
+	# Delete bgp passwords.
+	if (/^(\s*)password (\d) (\S+)(\s.*)?$/) {
+	    if ($filter_pwds >= 2) {
+		ProcessHistory("","","","!$1password <removed>$4");
+	    } elsif ($filter_pwds >= 1 && $2 ne "5") {
+		ProcessHistory("","","","!$1password <removed>$4");
+	    } else {
+		ProcessHistory("","","","$_");
+	    }
+	    next;
+	}
+#	# cisco AP w/ IOS
+#	if (/^(wlccp \S+ username (\S+)(\s.*)? password) (\d \S+|\S+)/) {
+#	    if ($filter_pwds >= 1) {
+#		ProcessHistory("USER","keysort","$2","!$1 <removed>\n");
+#	    } else {
+#		ProcessHistory("USER","keysort","$2","$_");
+#	    }
+#	    next;
+#	}
+#	if (/^( set session-key (in|out)bound ah \d+ )/ && $filter_pwds >= 1) {
+#	    ProcessHistory("","","","!$1<removed>\n");
+#	    next;
+#	}
+#	if (/^( set session-key (in|out)bound esp \d+ (authenticator|cypher) )/ && $filter_pwds >= 1) {
+#	    ProcessHistory("","","","!$1<removed>\n");
+#	    next;
+#	}
+#	if (/^(\s*)password / && $filter_pwds >= 1) {
+#	    ProcessHistory("LINE-PASS","","","!$1password <removed>\n");
+#	    next;
+#	}
+#	if (/^(\s*)secret / && $filter_pwds >= 2) {
+#	    ProcessHistory("LINE-PASS","","","!$1secret <removed>\n");
+#	    next;
+#	}
+#	if (/^\s*neighbor (\S*) password / && $filter_pwds >= 1) {
+#	    ProcessHistory("","","","! neighbor $1 password <removed>\n");
+#	    next;
+#	}
+#	if (/^(ppp .* password) 7 .*/ && $filter_pwds >= 1) {
+#	    ProcessHistory("","","","!$1 <removed>\n"); next;
+#	}
+#	if (/^(ip ftp password) / && $filter_pwds >= 1) {
+#	    ProcessHistory("","","","!$1 <removed>\n"); next;
+#	}
+#	if (/^( ip ospf authentication-key) / && $filter_pwds >= 1) {
+#	    ProcessHistory("","","","!$1 <removed>\n"); next;
+#	}
+#	# isis passwords appear to be completely plain-text
+#	if (/^\s+isis password (\S+)( .*)?/ && $filter_pwds >= 1) {
+#	    ProcessHistory("","","","!isis password <removed>$2\n"); next;
+#	}
+#	if (/^\s+(domain-password|area-password) (\S+)( .*)?/
+#							&& $filter_pwds >= 1) {
+#	    ProcessHistory("","","","!$1 <removed>$3\n"); next;
+#	}
+#	# this is reversable, despite 'md5' in the cmd
+#	if (/^( ip ospf message-digest-key \d+ md5) / && $filter_pwds >= 1) {
+#	    ProcessHistory("","","","!$1 <removed>\n"); next;
+#	}
+#	# this is also reversable, despite 'md5 encrypted' in the cmd
+#	if (/^(  message-digest-key \d+ md5 (7|encrypted)) / && $filter_pwds >= 1) {
+#	    ProcessHistory("","","","!$1 <removed>\n"); next;
+#	}
+#	if (/^((crypto )?isakmp key) \S+ / && $filter_pwds >= 1) {
+#	    ProcessHistory("","","","!$1 <removed> $'"); next;
+#	}
+#	# filter HSRP passwords
+#	if (/^(\s+standby \d+ authentication) / && $filter_pwds >= 1) {
+#	    ProcessHistory("","","","!$1 <removed>\n"); next;
+#	}
+#	# this appears in "measurement/sla" images
+#	if (/^(\s+key-string \d?)/ && $filter_pwds >= 1) {
+#	    ProcessHistory("","","","!$1 <removed>\n"); next;
+#	}
+#	if (/^( l2tp tunnel \S+ password)/ && $filter_pwds >= 1) {
+#	    ProcessHistory("","","","!$1 <removed>\n"); next;
+#	}
+#	# i am told these are plain-text on the PIX
+#	if (/^(vpdn username (\S+) password)/) {
+#	    if ($filter_pwds >= 1) {
+#		ProcessHistory("USER","keysort","$2","!$1 <removed>\n");
+#	    } else {
+#		ProcessHistory("USER","keysort","$2","$_");
+#	    }
+#	    next;
+#	}
+#	if (/^( cable shared-secret )/ && $filter_pwds >= 1) {
+#	    ProcessHistory("","","","!$1 <removed>\n");
+#	    next;
+#	}
+#	/fair-queue individual-limit/ && next;
+#	# sort ip explicit-paths.
+#	if (/^ip explicit-path name (\S+)/) {
+#	    my($key) = $1;
+#	    my($expath) = $_;
+#	    while (<INPUT>) {
+#		tr/\015//d;
+#		last if (/^$prompt/);
+#		last if (/^$prompt/ || ! /^(ip explicit-path name |[ !])/);
+#		if (/^ip explicit-path name (\S+)/) {
+#		    ProcessHistory("EXPATH","keysort","$key","$expath");
+#		    $key = $1;
+#		    $expath = $_;
+#		} else  {
+#		    $expath .= $_;
+#		}
+#	    }
+#	    ProcessHistory("EXPATH","keysort","$key","$expath");
+#	}
+#	# sort route-maps
+#	if (/^route-map (\S+)/) {
+#	    my($key) = $1;
+#	    my($routemap) = $_;
+#	    while (<INPUT>) {
+#		tr/\015//d;
+#		last if (/^$prompt/ || ! /^(route-map |[ !])/);
+#		if (/^route-map (\S+)/) {
+#		    ProcessHistory("ROUTEMAP","keysort","$key","$routemap");
+#		    $key = $1;
+#		    $routemap = $_;
+#		} else  {
+#		    $routemap .= $_;
+#		}
+#	    }
+#	    ProcessHistory("ROUTEMAP","keysort","$key","$routemap");
+#	}
+#	# filter out any RCS/CVS tags to avoid confusing local CVS storage
+#	s/\$(Revision|Id):/ $1:/;
+#	# order access-lists
+#	/^access-list\s+(\d\d?)\s+(\S+)\s+(\S+)/ &&
+#	    ProcessHistory("ACL $1 $2","$aclsort","$3","$_") && next;
+#	# order extended access-lists
+#	/^access-list\s+(\d\d\d)\s+(\S+)\s+ip\s+host\s+(\S+)/ &&
+#	    ProcessHistory("EACL $1 $2","$aclsort","$3","$_") && next;
+#	/^access-list\s+(\d\d\d)\s+(\S+)\s+ip\s+(\d\S+)/ &&
+#	    ProcessHistory("EACL $1 $2","$aclsort","$3","$_") && next;
+#	/^access-list\s+(\d\d\d)\s+(\S+)\s+ip\s+any/ &&
+#	    ProcessHistory("EACL $1 $2","$aclsort","0.0.0.0","$_") && next;
+#	# order arp lists
+#	/^arp\s+(\d+\.\d+\.\d+\.\d+)\s+/ &&
+#	    ProcessHistory("ARP","$aclsort","$1","$_") && next;
+#	/^ip prefix-list\s+(\S+)\s+seq\s+(\d+)\s+(permit|deny)\s+(\d\S+)(\/.*)$/ &&
+#	    ProcessHistory("PACL $1 $3","$aclsort","$4","ip prefix-list $1 $3 $4$5\n")
+#	    && next;
+#	# order logging statements
+#	/^logging (\d+\.\d+\.\d+\.\d+)/ &&
+#	    ProcessHistory("LOGGING","ipsort","$1","$_") && next;
+	# order cli alias names
+	/^cli alias name (\S+) .*$/ &&
+	    ProcessHistory("CLI-ALIAS","keysort","$1","$_") && next;
+	# order snmp-server enable trap statements
+	/^snmp-server enable traps (.*)$/ &&
+	    ProcessHistory("SNMP-TRAPS","keysort","$1","$_") && next;
+#	# order/prune snmp-server host statements
+#	# we only prune lines of the form
+#	# snmp-server host a.b.c.d <community>
+#	if (/^snmp-server host (\d+\.\d+\.\d+\.\d+) /) {
+#	    if ($filter_commstr) {
+#		my($ip) = $1;
+#		my($line) = "snmp-server host $ip";
+#		my(@tokens) = split(' ', $');
+#		my($token);
+#		while ($token = shift(@tokens)) {
+#		    if ($token eq 'version') {
+#			$line .= " " . join(' ', ($token, shift(@tokens)));
+#			if ($token eq '3') {
+#			    $line .= " " . join(' ', ($token, shift(@tokens)));
+#			}
+#		    } elsif ($token eq 'vrf') {
+#			$line .= " " . join(' ', ($token, shift(@tokens)));
+#		    } elsif ($token =~ /^(informs?|traps?|(no)?auth)$/) {
+#			$line .= " " . $token;
+#		    } else {
+#			$line = "!$line " . join(' ', ("<removed>", join(' ',@tokens)));
+#			last;
+#		    }
+#		}
+#		ProcessHistory("SNMPSERVERHOST","ipsort","$ip","$line\n");
+#	    } else {
+#		ProcessHistory("SNMPSERVERHOST","ipsort","$1","$_");
+#	    }
+#	    next;
+#	}
+#	if (/^(snmp-server community) (\S+)/) {
+#	    if ($filter_commstr) {
+#		ProcessHistory("SNMPSERVERCOMM","keysort","$_","!$1 <removed>$'") && next;
+#	    } else {
+#		ProcessHistory("SNMPSERVERCOMM","keysort","$_","$_") && next;
+#	    }
+#	}
+#	# prune tacacs/radius server keys
+#	if (/^((tacacs|radius)-server\s(\w*[-\s(\s\S+])*\s?key) (\d )?\w+/
+#	    && $filter_pwds >= 1) {
+#	    ProcessHistory("","","","!$1 <removed>$'"); next;
+#	}
+#	# order clns host statements
+#	/^clns host \S+ (\S+)/ &&
+#	    ProcessHistory("CLNS","keysort","$1","$_") && next;
+#	# order alias statements
+#	/^alias / && ProcessHistory("ALIAS","keysort","$_","$_") && next;
+#	# delete ntp auth password - this md5 is a reversable too
+#	if (/^(ntp authentication-key \d+ md5) / && $filter_pwds >= 1) {
+#	    ProcessHistory("","","","!$1 <removed>\n"); next;
+#	}
+#	# order ntp peers/servers
+#	if (/^ntp (server|peer) (\d+)\.(\d+)\.(\d+)\.(\d+)/) {
+#	    $sortkey = sprintf("$1 %03d%03d%03d%03d",$2,$3,$4,$5);
+#	    ProcessHistory("NTP","keysort",$sortkey,"$_");
+#	    next;
+#	}
+#	# order ip host statements
+#	/^ip host (\S+) / &&
+#	    ProcessHistory("IPHOST","keysort","$1","$_") && next;
+#	# order ip nat source static statements
+#	/^ip nat (\S+) source static (\S+)/ &&
+#	    ProcessHistory("IP NAT $1","ipsort","$2","$_") && next;
+#	# order atm map-list statements
+#	/^\s+ip\s+(\d+\.\d+\.\d+\.\d+)\s+atm-vc/ &&
+#	    ProcessHistory("ATM map-list","ipsort","$1","$_") && next;
+#	# order ip rcmd lines
+#	/^ip rcmd/ && ProcessHistory("RCMD","keysort","$_","$_") && next;
+#
+#	# system controller
+#	/^syscon address (\S*) (\S*)/ &&
+#	    ProcessHistory("","","","!syscon address $1 <removed>\n") &&
+#	    next;
+#	if (/^syscon password (\S*)/ && $filter_pwds >= 1) {
+#	    ProcessHistory("","","","!syscon password <removed>\n");
+#	    next;
+#	}
+
+	# catch anything that wasnt matched above.
+	ProcessHistory("","","","$_");
+	# end of config.  the ": " game is for the PIX
+	if (/^(: +)?end$/) {
+	    $found_end = 1;
+	    return(0);
+	}
+    }
+    # The ContentEngine lacks a definitive "end of config" marker.  If we
+    # know that it is a CE, SAN, or NXOS and we have seen at least 5 lines
+    # of write term output, we can be reasonably sure that we got the config.
+    if (($type == "CE" || $type == "SAN" || $type == "NXOS" ) && $linecnt > 5) {
+	$found_end = 1;
+	return(0);
+    }
+
+    return(0);
+}
+
+# This routine parses a single command that returns no required info.
+sub RunCommand {
+    print STDERR "    In RunCommand: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	return(1) if /Line has invalid autocommand /;
+	return(1) if (/(Invalid input detected|Type help or )/i);
+    }
+    return(0);
+}
+
+# dummy function
+sub DoNothing {print STDOUT;}
+
+##############################
+# add these:
+# show version module X - wait until can show all
+# show version module X epld - wait until can show all
+##############################
+
+# Main
+@commandtable = (
+	{'term no monitor-force'	=> 'RunCommand'},
+	{'show version'			=> 'ShowVersion'},
+	{'show version build-info all'	=> 'ShowVersionBuild'},
+	{'show license'			=> 'ShowLicense'},
+	{'show license usage'		=> 'ShowLicense'},
+	{'show license host-id'		=> 'ShowLicense'},
+	{'show system redundancy status' => 'ShowRedundancy'},
+	{'show environment clock'	=> 'ShowEnv'},
+	{'show environment fan'		=> 'ShowEnv'},
+	{'show environment temperature'	=> 'ShowEnvTemp'},
+	{'show environment power'	=> 'ShowEnvPower'},
+	{'show boot'			=> 'ShowBoot'},
+	{'dir bootflash:'		=> 'DirSlotN'},
+	{'dir debug:'			=> 'DirSlotN'},
+	{'dir logflash:'		=> 'DirSlotN'},
+	{'dir slot0:'			=> 'DirSlotN'},
+	{'dir usb1:'			=> 'DirSlotN'},
+	{'dir usb2:'			=> 'DirSlotN'},
+	{'dir volatile:'		=> 'DirSlotN'},
+	{'show module'			=> 'ShowModule'},
+	{'show module xbar'		=> 'ShowModule'},
+	{'show inventory'		=> 'ShowInventory'},
+	{'show vtp status'		=> 'ShowVTP'},		# drop?
+	{'show vlan'			=> 'ShowVLAN'},
+	{'show debug'			=> 'ShowDebug'},
+	{'show cores vdc-all'		=> 'ShowCores'},
+	{'show processes log vdc-all'	=> 'ShowProcLog'},
+	{'show running-config'		=> 'WriteTerm'},
+);
+# Use an array to preserve the order of the commands and a hash for mapping
+# commands to the subroutine and track commands that have been completed.
+@commands = map(keys(%$_), @commandtable);
+%commands = map(%$_, @commandtable);
+
+$cisco_cmds = join(";",@commands);
+$cmds_regexp = join("|", map quotemeta($_), @commands);
+
+if (length($host) == 0) {
+    if ($file) {
+	print(STDERR "Too few arguments: file name required\n");
+	exit(1);
+    } else {
+	print(STDERR "Too few arguments: host name required\n");
+	exit(1);
+    }
+}
+open(OUTPUT,">$host.new") || die "Can't open $host.new for writing: $!\n";
+select(OUTPUT);
+# make OUTPUT unbuffered if debugging
+if ($debug) { $| = 1; }
+
+if ($file) {
+    print STDERR "opening file $host\n" if ($debug);
+    print STDOUT "opening file $host\n" if ($log);
+    open(INPUT,"<$host") || die "open failed for $host: $!\n";
+} else {
+    print STDERR "executing clogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($debug);
+    print STDOUT "executing clogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($log);
+    if (defined($ENV{NOPIPE})) {
+	system "clogin -t $timeo -c \"$cisco_cmds\" $host </dev/null > $host.raw 2>&1" || die "clogin failed for $host: $!\n";
+	open(INPUT, "< $host.raw") || die "clogin failed for $host: $!\n";
+    } else {
+	open(INPUT,"clogin -t $timeo -c \"$cisco_cmds\" $host </dev/null |") || die "clogin failed for $host: $!\n";
+    }
+}
+
+# determine ACL sorting mode
+if ($ENV{"ACLSORT"} =~ /no/i) {
+    $aclsort = "";
+}
+# determine community string filtering mode
+if (defined($ENV{"NOCOMMSTR"}) &&
+    ($ENV{"NOCOMMSTR"} =~ /yes/i || $ENV{"NOCOMMSTR"} =~ /^$/)) {
+    $filter_commstr = 1;
+} else {
+    $filter_commstr = 0;
+}
+# determine password filtering mode
+if ($ENV{"FILTER_PWDS"} =~ /no/i) {
+    $filter_pwds = 0;
+} elsif ($ENV{"FILTER_PWDS"} =~ /all/i) {
+    $filter_pwds = 2;
+} else {
+    $filter_pwds = 1;
+}
+
+ProcessHistory("","","","!RANCID-CONTENT-TYPE: cisco-nx\n!\n");
+TOP: while(<INPUT>) {
+    tr/\015//d;
+
+    if (/[>#]\s?exit$/) {
+	print STDERR ("$host: found exit\n") if ($debug);
+	$clean_run = 1;
+	last;
+    }
+    if (/^Error:/) {
+	print STDOUT ("$host clogin error: $_");
+	print STDERR ("$host clogin error: $_") if ($debug);
+	$clean_run = 0;
+	last;
+    }
+    while (/#\s*($cmds_regexp)\s*$/) {
+	$cmd = $1;
+	if (!defined($prompt)) {
+	    $prompt = ($_ =~ /^([^#]+#)/)[0];
+	    $prompt =~ s/([][}{)(\\])/\\$1/g;
+	    print STDERR ("PROMPT MATCH: $prompt\n") if ($debug);
+	}
+	print STDERR ("HIT COMMAND:$_") if ($debug);
+	if (! defined($commands{$cmd})) {
+	    print STDERR "$host: found unexpected command - \"$cmd\"\n";
+	    $clean_run = 0;
+	    last TOP;
+	}
+	$rval = &{$commands{$cmd}};
+	delete($commands{$cmd});
+	if ($rval == -1) {
+	    $clean_run = 0;
+	    print STDERR ("$host: $cmd failed: $rval\n") if ($debug);
+	    last TOP;
+	}
+	if (/[>#]\s?exit$/) {
+	    print STDERR ("$host: found exit\n") if ($debug);
+	    $clean_run = 1;
+	    last TOP;
+	}
+    }
+}
+print STDOUT "Done $logincmd: $_\n" if ($log);
+# Flush History
+ProcessHistory("","","","");
+# Cleanup
+close(INPUT);
+close(OUTPUT);
+
+if (defined($ENV{NOPIPE})) {
+    unlink("$host.raw") if (! $debug);
+}
+
+# check for completeness
+if (scalar(%commands) || !$clean_run || !$found_end) {
+    if (scalar(%commands)) {
+	printf(STDOUT "$host: missed cmd(s): %s\n", join(',', keys(%commands)));
+	printf(STDERR "$host: missed cmd(s): %s\n", join(',', keys(%commands))) if ($debug);
+    }
+    if (!$clean_run || !$found_end) {
+	print STDOUT "$host: End of run not found\n";
+	print STDERR "$host: End of run not found\n" if ($debug);
+	print STDERR "$host: clean: $clean_run, end: $found_end\n" if ($debug);
+	system("/usr/bin/tail -1 $host.new");
+    }
+    unlink "$host.new" if (! $debug);
+}

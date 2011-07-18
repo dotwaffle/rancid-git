@@ -1,0 +1,58 @@
+.\"
+.hys 50
+.TH "rancid-cvs" "1" "5 October 2006"
+.SH NAME
+rancid-cvs \- initialize CVS or Subversion and rancid group files and directories
+.SH SYNOPSIS
+.B rancid-cvs
+[\fB\-V\fR] [group [group ...]]
+.SH DESCRIPTION
+.B rancid-cvs
+creates the directories and
+.BR router.db (5)
+for each rancid group and handles the revision control system (CVS or
+Subversion) set-up.
+It must be run after installation and whenever a rancid group is added.
+.\"
+.PP
+.B rancid-cvs
+reads
+.BR rancid.conf (5)
+to configure itself, then proceeds with the initialization.
+First of the CVS or Subversion repository, if necessary, and then for each
+of the rancid groups listed on the command-line or those in the variable
+.I LIST_OF_GROUPS
+from
+.BR rancid.conf (5),
+if the argument is omitted.
+.\"
+.PP
+Running
+.B rancid-cvs
+for groups which already exist will not cause problems.  If the group's
+directory already exists, the import into the revision control system
+will be skipped, and if it's
+.BR router.db (5)
+already exists, it will not be altered.
+.\"
+.PP
+.\"
+The command-line options are as follows:
+.TP
+.B \-V
+Prints package name and version strings.
+.\"
+.PP
+The best method for adding groups is add the group name to
+.I LIST_OF_GROUPS
+in
+.BR rancid.conf (5),
+then run
+.B rancid-cvs.  Do not create the directories manually, allow rancid-cvs
+to do it.
+.\"
+.SH "SEE ALSO"
+.BR cvs (1),
+.BR rancid.conf (5),
+.BR router.db (5),
+.BR svn (1)

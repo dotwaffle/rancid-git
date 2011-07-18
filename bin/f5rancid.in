@@ -1,0 +1,648 @@
+#! @PERLV_PATH@
+##
+## $Id: f5rancid.in 2246 2010-09-08 01:36:07Z heas $
+##
+## @PACKAGE@ @VERSION@
+## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
+## All rights reserved.
+##
+## This code is derived from software contributed to and maintained by
+## Terrapin Communications, Inc. by Henry Kilmer, John Heasley, Andrew Partan,
+## Pete Whiting, Austin Schutz, and Andrew Fort.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted provided that the following conditions
+## are met:
+## 1. Redistributions of source code must retain the above copyright
+##    notice, this list of conditions and the following disclaimer.
+## 2. Redistributions in binary form must reproduce the above copyright
+##    notice, this list of conditions and the following disclaimer in the
+##    documentation and/or other materials provided with the distribution.
+## 3. All advertising materials mentioning features or use of this software
+##    must display the following acknowledgement:
+##        This product includes software developed by Terrapin Communications,
+##        Inc. and its contributors for RANCID.
+## 4. Neither the name of Terrapin Communications, Inc. nor the names of its
+##    contributors may be used to endorse or promote products derived from
+##    this software without specific prior written permission.
+## 5. It is requested that non-binding fixes and modifications be contributed
+##    back to Terrapin Communications, Inc.
+##
+## THIS SOFTWARE IS PROVIDED BY Terrapin Communications, INC. AND CONTRIBUTORS
+## ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+## TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+## PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COMPANY OR CONTRIBUTORS
+## BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+## CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+## SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+## INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+## POSSIBILITY OF SUCH DAMAGE.
+#
+# This version of rancid tries to deal with F5 BigIPs.
+#
+#  RANCID - Really Awesome New Cisco confIg Differ
+#
+# usage: rancid [-dV] [-l] [-f filename | hostname]
+#
+use Getopt::Std;
+getopts('dflV');
+if ($opt_V) {
+    print "@PACKAGE@ @VERSION@\n";
+    exit(0);
+}
+$log = $opt_l;
+$debug = $opt_d;
+$file = $opt_f;
+$host = $ARGV[0];
+$clean_run = 0;
+$found_end = 0;
+$timeo = 90;				# clogin timeout in seconds
+
+# force a terminal type so as not to confuse the POS
+$ENV{'TERM'} = "vt100";
+
+my(@commandtable, %commands, @commands);# command lists
+my($aclsort) = ("ipsort");		# ACL sorting mode
+my($filter_commstr);			# SNMP community string filtering
+my($filter_pwds);			# password filtering mode
+
+# This routine is used to print out the router configuration
+sub ProcessHistory {
+    my($new_hist_tag,$new_command,$command_string,@string) = (@_);
+    if ((($new_hist_tag ne $hist_tag) || ($new_command ne $command))
+	&& scalar(%history)) {
+	print eval "$command \%history";
+	undef %history;
+    }
+    if (($new_hist_tag) && ($new_command) && ($command_string)) {
+	if ($history{$command_string}) {
+	    $history{$command_string} = "$history{$command_string}@string";
+	} else {
+	    $history{$command_string} = "@string";
+	}
+    } elsif (($new_hist_tag) && ($new_command)) {
+	$history{++$#history} = "@string";
+    } else {
+	print "@string";
+    }
+    $hist_tag = $new_hist_tag;
+    $command = $new_command;
+    1;
+}
+
+sub numerically { $a <=> $b; }
+
+# This is a sort routine that will sort numerically on the
+# keys of a hash as if it were a normal array.
+sub keynsort {
+    local(%lines) = @_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $key (sort numerically keys(%lines)) {
+	$sorted_lines[$i] = $lines{$key};
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# This is a sort routine that will sort on the
+# keys of a hash as if it were a normal array.
+sub keysort {
+    local(%lines) = @_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $key (sort keys(%lines)) {
+	$sorted_lines[$i] = $lines{$key};
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# This is a sort routine that will sort on the
+# values of a hash as if it were a normal array.
+sub valsort{
+    local(%lines) = @_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $key (sort values %lines) {
+	$sorted_lines[$i] = $key;
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# This is a numerical sort routine (ascending).
+sub numsort {
+    local(%lines) = @_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $num (sort {$a <=> $b} keys %lines) {
+	$sorted_lines[$i] = $lines{$num};
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# This is a sort routine that will sort on the
+# ip address when the ip address is anywhere in
+# the strings.
+sub ipsort {
+    local(%lines) = @_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $addr (sort sortbyipaddr keys %lines) {
+	$sorted_lines[$i] = $lines{$addr};
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# These two routines will sort based upon IP addresses
+sub ipaddrval {
+    my(@a) = ($_[0] =~ m#^(\d+)\.(\d+)\.(\d+)\.(\d+)$#);
+    $a[3] + 256 * ($a[2] + 256 * ($a[1] +256 * $a[0]));
+}
+sub sortbyipaddr {
+    &ipaddrval($a) <=> &ipaddrval($b);
+}
+
+# This routine parses "bigpipe base list"
+sub ShowBaseRun {
+    my($line) = (0);
+    print STDERR "    In ShowBaseRun: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /^\s*\^\s*$/;
+	return(1) if /(Invalid input detected|Type help or )/;
+	return(-1) if (/command authorization failed/i);
+
+	if (!$line++) {
+	    ProcessHistory("SHOWBASE","","","#\n#base:\n");
+	}
+	ProcessHistory("SHOWBASE","","","# $_") && next;
+    }
+    return(0);
+}
+
+# This routine parses "bigpipe db show"
+sub ShowDb {
+    my($line) = (0);
+    print STDERR "    In ShowDb: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /^\s*\^\s*$/;
+	return(1) if /(Invalid input detected|Type help or )/;
+	return(-1) if (/command authorization failed/i);
+
+	if (!$line++) {
+	    ProcessHistory("SHOWDB","","","#\n#database:\n");
+	}
+	/UCS.LoadTime/ && next;
+	/Configsync\..*Time/ && next;
+	/Configsync.peerupdatedstatus/ && next;
+	/Failover\..*Time/ && next;
+	/LTM.ConfigTime/ && next;
+
+	if (/^(snmp\..*\.community\..* =) (.+)/i) {
+	    if ($filter_commstr) {
+		ProcessHistory("SHOWDB","","","# $1 <removed>\n") && next;
+	    } else {
+		ProcessHistory("SHOWDB","","","# $1 $2\n") && next;
+	    }
+	}
+
+	ProcessHistory("SHOWDB","","","# $_") && next;
+    }
+    return(0);
+}
+
+# This routine parses "cat /config/bigip.license"
+sub ShowLicense {
+    my($line) = (0);
+    print STDERR "    In ShowLicense: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	# v9 software license does not have CR at EOF
+	s/^#-+($prompt.*)/$1/;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /^\s*\^\s*$/;
+	return(1) if /(Invalid input detected|Type help or )/;
+	return(-1) if (/command authorization failed/i);
+
+	if (!$line++) {
+	    ProcessHistory("LICENSE","","","#\n#/config/bigip.license:\n");
+	}
+	ProcessHistory("LICENSE","","","# $_") && next;
+    }
+    return(0);
+}
+
+# This routine parses "bigpipe monitor list all"
+sub ShowMonitor {
+    my($line) = (0);
+    print STDERR "    In ShowMonitor: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /^\s*\^\s*$/;
+	return(1) if /(Invalid input detected|Type help or )/;
+	return(-1) if (/command authorization failed/i);
+
+	if (!$line++) {
+	    ProcessHistory("MONITOR","","","#\n");
+	}
+	if (/^(snmp\.[^ ]+\.community) = (.+)/i) {
+	    if ($filter_commstr) {
+		ProcessHistory("SHOWDB","","","# $1 <removed>\n") && next;
+	    } else {
+		ProcessHistory("SHOWDB","","","# $1 $2\n") && next;
+	    }
+	}
+	if (/^(\s*)password / && $filter_pwds >= 1) {
+	    ProcessHistory("LINE-PASS","","","# $1password <removed>\n");
+	    next;
+	}
+
+	ProcessHistory("MONITOR","","","# $_") && next;
+    }
+    return(0);
+}
+
+# This routine parses "bigpipe platform"
+sub ShowPlatform {
+    print STDERR "    In ShowPlatform: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /^\s*\^\s*$/;
+	return(1) if /(Invalid input detected|Type help or )/;
+	return(-1) if (/command authorization failed/i);
+
+	/fan speed/i && next;
+	/chassis temperature/i && next;
+	/degC/ && next;
+	s/\d+rpm//ig;
+	s/^\|//;
+	/Type: / && ProcessHistory("COMMENTS","keysort","A0",
+				   "#Chassis type: $'");
+
+	ProcessHistory("COMMENTS","keysort","B1","#$_") && next;
+    }
+    return(0);
+}
+
+# This routine parses "bigpipe profile list"
+sub ShowProfile {
+    print STDERR "    In ShowProfile: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /^\s*\^\s*$/;
+	return(1) if /(Invalid input detected|Type help or )/;
+	return(-1) if (/command authorization failed/i);
+
+	ProcessHistory("PROFILE","",""," $_") && next;
+    }
+    return(0);
+}
+
+# This routine parses "ls --full-time --color=never /config/ssl/ssl.key"
+sub ShowSslKey {
+    print STDERR "    In ShowSslKey: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	# v9 software license does not have CR at EOF
+	s/^#-+($prompt.*)/$1/;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /^\s*\^\s*$/;
+	return(1) if /(Invalid input detected|Type help or )/;
+	return(-1) if (/command authorization failed/i);
+
+	ProcessHistory("SSLKEY","","","# $_") && next;
+    }
+    return(0);
+}
+
+# This routine parses "ls --full-time --color=never /config/ssl/ssl.crt"
+sub ShowSslCrt {
+    print STDERR "    In ShowSslCrt: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	# v9 software license does not have CR at EOF
+	s/^#-+($prompt.*)/$1/;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /^\s*\^\s*$/;
+	return(1) if /(Invalid input detected|Type help or )/;
+	return(-1) if (/command authorization failed/i);
+
+	ProcessHistory("SSLCRT","","","# $_") && next;
+    }
+    return(0);
+}
+
+# This routine parses "bigpipe route static show"
+sub ShowRouteStatic {
+    print STDERR "    In ShowRouteStatic: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /^\s*\^\s*$/;
+	return(1) if /(Invalid input detected|Type help or )/;
+	return(-1) if (/command authorization failed/i);
+
+	ProcessHistory("ROUTE","",""," $_") && next;
+    }
+    return(0);
+}
+
+# This routine parses "bigpipe version"
+sub ShowVersion {
+    print STDERR "    In ShowVersion: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(-1) if (/command authorization failed/i);
+
+	/^kernel:/i && ($_ = <INPUT>) &&
+	    ProcessHistory("COMMENTS","keysort","A3","#Image: Kernel: $_") &&
+	    next;
+	if (/^package:/i) {
+	    my($line);
+
+	    while ($_ = <INPUT>) {
+		tr/\015//d;
+		last if (/:/);
+		last if (/^$prompt/);
+		chomp;
+		$line .= " $_";
+	    }
+	    ProcessHistory("COMMENTS","keysort","A2",
+			   "#Image: Package:$line\n");
+	}
+
+	if (/:/) {
+	    ProcessHistory("COMMENTS","keysort","C1","#$_");
+	} else {
+	    ProcessHistory("COMMENTS","keysort","C1","#\t$_");
+	}
+    }
+    return(0);
+}
+
+# This routine processes a "bigpipe list"
+sub WriteTerm {
+    my($lines) = 0;
+    print STDERR "    In WriteTerm: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	next if (/^\s*$/);
+	# end of config - hopefully.  f5 does not have a reliable end-of-config
+	# tag.
+	if (/^$prompt/) {
+	    $found_end++;
+	    last;
+	}
+	return(-1) if (/command authorization failed/i);
+	# the pager can not be disabled per-session on the PIX
+	s/^<-+ More -+>\s*//;
+	/Non-Volatile memory is in use/  && return(-1); # NvRAM is locked
+	# filter out any RCS/CVS tags to avoid confusing local CVS storage
+	s/\$(Revision|Id):/ $1:/;
+	$lines++;
+
+	if (/^(enable )?(password|passwd) / && $filter_pwds >= 1) {
+	    ProcessHistory("ENABLE","","","! $1$2 <removed>\n");
+	    next;
+	}
+	if (/^(enable secret) / && $filter_pwds >= 2) {
+	    ProcessHistory("ENABLE","","","# $1 <removed>\n");
+	    next;
+	}
+	if (/^username (\S+)(\s.*)? secret /) {
+	    if ($filter_pwds >= 2) {
+		ProcessHistory("USER","keysort","$1","# username $1$2 secret <removed>\n");
+	    } else {
+		ProcessHistory("USER","keysort","$1","$_");
+	    }
+	    next;
+	}
+	if (/^username (\S+)(\s.*)? password ((\d) \S+|\S+)/) {
+	    if ($filter_pwds == 2) {
+		ProcessHistory("USER","keysort","$1","# username $1$2 password <removed>\n");
+	    } elsif ($filter_pwds == 1 && $4 ne "5"){
+		ProcessHistory("USER","keysort","$1","# username $1$2 password <removed>\n");
+	    } else {
+		ProcessHistory("USER","keysort","$1","$_");
+	    }
+	    next;
+	}
+	if (/^(\s*)password / && $filter_pwds >= 1) {
+	    ProcessHistory("LINE-PASS","","","# $1password <removed>\n");
+	    next;
+	}
+	if (/^\s*neighbor (\S*) password / && $filter_pwds >= 1) {
+	    ProcessHistory("","","","# neighbor $1 password <removed>\n");
+	    next;
+	}
+	# order logging statements
+	/^logging (\d+\.\d+\.\d+\.\d+)/ &&
+	    ProcessHistory("LOGGING","ipsort","$1","$_") && next;
+	# order/prune tacacs/radius server statements
+	if (/^(tacacs-server|radius-server) key / && $filter_pwds >= 1) {
+	    ProcessHistory("","","","# $1 key <removed>\n"); next;
+	}
+	# order clns host statements
+	/^clns host \S+ (\S+)/ &&
+	    ProcessHistory("CLNS","keysort","$1","$_") && next;
+	# order alias statements
+	/^alias / && ProcessHistory("ALIAS","keysort","$_","$_") && next;
+	# delete ntp auth password - this md5 is a reversable too
+	if (/^(ntp authentication-key \d+ md5) / && $filter_pwds >= 1) {
+	    ProcessHistory("","","","# $1 <removed>\n"); next;
+	}
+	# order ntp peers/servers
+	if (/^ntp (server|peer) (\d+)\.(\d+)\.(\d+)\.(\d+)/) {
+	    $sortkey = sprintf("$1 %03d%03d%03d%03d",$2,$3,$4,$5);
+	    ProcessHistory("NTP","keysort",$sortkey,"$_");
+	    next;
+	}
+	# order ip host line statements
+	/^ip host line(\d+)/ &&
+	    ProcessHistory("IPHOST","numsort","$1","$_") && next;
+	# order ip nat source static statements
+	/^ip nat (\S+) source static (\S+)/ &&
+	    ProcessHistory("IP NAT $1","ipsort","$2","$_") && next;
+
+	# catch anything that wasnt matched above.
+	ProcessHistory("","","","$_");
+    }
+
+    if ($lines < 3) {
+	printf(STDERR "ERROR: $host configuration appears truncated.\n");
+	$found_end = 0;
+	return(-1);
+    }
+
+    return(0);
+}
+
+# dummy function
+sub DoNothing {print STDOUT;}
+
+# Main
+@commandtable = (
+	{'bigpipe version'		=> 'ShowVersion'},
+	{'bigpipe platform'		=> 'ShowPlatform'},
+	{'cat /config/bigip.license'	=> 'ShowLicense'},
+	{'bigpipe monitor list all'	=> 'ShowMonitor'},
+	{'bigpipe profile list'		=> 'ShowProfile'},
+	{'bigpipe base list'		=> 'ShowBaseRun'},
+	{'bigpipe db show'		=> 'ShowDb'},
+	{'bigpipe route static show'	=> 'ShowRouteStatic'},
+	{'ls --full-time --color=never /config/ssl/ssl.crt' => 'ShowSslCrt'},
+	{'ls --full-time --color=never /config/ssl/ssl.key' => 'ShowSslKey'},
+	{'bigpipe list'			=> 'WriteTerm'}
+);
+# Use an array to preserve the order of the commands and a hash for mapping
+# commands to the subroutine and track commands that have been completed.
+@commands = map(keys(%$_), @commandtable);
+%commands = map(%$_, @commandtable);
+
+$cisco_cmds=join(";",@commands);
+$cmds_regexp = join("|", map quotemeta($_), @commands);
+
+if (length($host) == 0) {
+    if ($file) {
+	print(STDERR "Too few arguments: file name required\n");
+	exit(1);
+    } else {
+	print(STDERR "Too few arguments: host name required\n");
+	exit(1);
+    }
+}
+open(OUTPUT,">$host.new") || die "Can't open $host.new for writing: $!\n";
+select(OUTPUT);
+# make OUTPUT unbuffered if debugging
+if ($debug) { $| = 1; }
+
+if ($file) {
+    print STDERR "opening file $host\n" if ($debug);
+    print STDOUT "opening file $host\n" if ($log);
+    open(INPUT,"<$host") || die "open failed for $host: $!\n";
+} else {
+    print STDERR "executing clogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($debug);
+    print STDOUT "executing clogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($log);
+    if (defined($ENV{NOPIPE})) {
+	system "clogin -t $timeo -c \"$cisco_cmds\" $host </dev/null > $host.raw 2>&1" || die "clogin failed for $host: $!\n";
+	open(INPUT, "< $host.raw") || die "clogin failed for $host: $!\n";
+    } else {
+	open(INPUT,"clogin -t $timeo -c \"$cisco_cmds\" $host </dev/null |") || die "clogin failed for $host: $!\n";
+    }
+}
+
+# determine ACL sorting mode
+if ($ENV{"ACLSORT"} =~ /no/i) {
+    $aclsort = "";
+}
+# determine community string filtering mode
+if (defined($ENV{"NOCOMMSTR"}) &&
+    ($ENV{"NOCOMMSTR"} =~ /yes/i || $ENV{"NOCOMMSTR"} =~ /^$/)) {
+    $filter_commstr = 1;
+} else {
+    $filter_commstr = 0;
+}
+# determine password filtering mode
+if ($ENV{"FILTER_PWDS"} =~ /no/i) {
+    $filter_pwds = 0;
+} elsif ($ENV{"FILTER_PWDS"} =~ /all/i) {
+    $filter_pwds = 2;
+} else {
+    $filter_pwds = 1;
+}
+
+ProcessHistory("","","","#RANCID-CONTENT-TYPE: bigip\n#\n");
+ProcessHistory("COMMENTS","keysort","A1","#\n");
+ProcessHistory("COMMENTS","keysort","B0","#\n");
+ProcessHistory("COMMENTS","keysort","C0","#\n");
+TOP: while(<INPUT>) {
+    tr/\015//d;
+    if (/^Error:/) {
+	print STDOUT ("$host clogin error: $_");
+	print STDERR ("$host clogin error: $_") if ($debug);
+	$clean_run=0;
+	last;
+    }
+    while (/#\s*($cmds_regexp)\s*$/) {
+	$cmd = $1;
+	if (!defined($prompt)) {
+	    $prompt = ($_ =~ /^([^#]+#)/)[0];
+	    $prompt =~ s/([][}{)(\\])/\\$1/g;
+	    print STDERR ("PROMPT MATCH: $prompt\n") if ($debug);
+	}
+	print STDERR ("HIT COMMAND:$_") if ($debug);
+	if (! defined($commands{$cmd})) {
+	    print STDERR "$host: found unexpected command - \"$cmd\"\n";
+	    $clean_run = 0;
+	    last TOP;
+	}
+	$rval = &{$commands{$cmd}};
+	delete($commands{$cmd});
+	if ($rval == -1) {
+	    $clean_run = 0;
+	    last TOP;
+	}
+    }
+    if (/\#\s?exit$/) {
+	$clean_run=1;
+	last;
+    }
+}
+print STDOUT "Done $logincmd: $_\n" if ($log);
+# Flush History
+ProcessHistory("","","","");
+# Cleanup
+close(INPUT);
+close(OUTPUT);
+
+if (defined($ENV{NOPIPE})) {
+    unlink("$host.raw") if (! $debug);
+}
+
+# check for completeness
+if (scalar(%commands) || !$clean_run || !$found_end) {
+    if (scalar(%commands)) {
+	printf(STDOUT "$host: missed cmd(s): %s\n", join(',', keys(%commands)));
+	printf(STDERR "$host: missed cmd(s): %s\n", join(',', keys(%commands))) if ($debug);
+    }
+    if (!$clean_run || !$found_end) {
+	print STDOUT "$host: End of run not found\n";
+	print STDERR "$host: End of run not found\n" if ($debug);
+	system("/usr/bin/tail -1 $host.new");
+    }
+    unlink "$host.new" if (! $debug);
+}

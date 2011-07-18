@@ -1,0 +1,230 @@
+.\"
+.hys 50
+.TH "router.db" "5" "8 April 2010"
+.SH NAME
+router.db \- rancid group configuration file
+.SH DESCRIPTION
+.B router.db
+contains information for devices which are members of a rancid group.
+.IR control_rancid (1)
+reads this file to compile a list of devices which it should collect.
+.\"
+.SH SYNTAX
+One device is listed per-line, where the syntax is:
+.PP
+.in +1i
+.nf
+<device_name>:<device_type>:<state>[:comments]
+.fi
+.in -1i
+.PP
+For example:
+.in +1i
+.nf
+scooby.shrubbery.net:cisco:up
+.fi
+.in -1i
+.PP
+.\"
+The fields are as follows:
+.TP
+.B <device_name>
+The name of the device, which must resolve via
+.I gethostbyname\c
+, used as the argument to
+.IR telnet (1),
+.IR rsh (1),
+or
+.IR ssh (1),
+to connect to the device.  Once converted to lower-case, this
+also becomes the name of the file used to store the configuration under
+\fI$BASEDIR/<group>/configs\fR.
+.sp
+Experience has shown that using the device's FQDN (Fully Qualified
+Domain Name) works best, as in the example above.
+.\"
+.TP
+.B <device_type>
+The type of device from the set:
+.RS 8n
+.TP
+.ID 15n
+.B agm
+A Cisco Anomoly Guard Module (aka Riverhead).
+Suspect that at some point the UI will become more cisco-like and it
+can be merged with the IOS rancid module.
+.TP
+.ID 15n
+.B alteon
+An Alteon WebOS switches.
+.TP
+.ID 15n
+.B arista
+An Arista Networks device.
+.TP
+.ID 15n
+.B avocent
+An Avocent Cyclades console server.
+.TP
+.ID 15n
+.B baynet
+A Bay Networks router.
+.TP
+.ID 15n
+.B cat5
+A Cisco catalyst series 5000 and 4000 switches (i.e.: running the catalyst OS,
+not IOS).
+.TP
+.ID 15n
+.B cisco
+A Cisco router, PIX, or switch such as the 3500XL or 6000 running IOS (or
+IOS-like) OS, but not IOS-XR.
+.TP
+.ID 15n
+.B cisco-nx
+A Cisco Nexus switch/router.
+.TP
+.ID 15n
+.B cisco-xr
+A Cisco device running IOS-XR.
+.TP
+.ID 15n
+.B css
+A Cisco content services switch.
+.TP
+.ID 15n
+.B enterasys
+An enterasys NAS.  This is currently an alias for the
+.B riverstone
+device type.
+.TP
+.ID 15n
+.B erx
+A Juniper E-series edge router.
+.TP
+.ID 15n
+.B extreme
+An Extreme switch.
+.TP
+.ID 15n
+.B ezt3
+An ADC-Kentrox EZ-T3 mux.
+.TP
+.ID 15n
+.B f5
+A F5 BigIP switch.
+.TP
+.ID 15n
+.B force10
+A Force10 router.
+.TP
+.ID 15n
+.B fortigate
+A Fortinet firewall.
+.TP
+.ID 15n
+.B foundry
+A Foundry router, switch, or router-switch.  This includes HP
+Procurve switches that are OEMs of Foundry products, such as the
+HP9304M.
+.TP
+.ID 15n
+.B hitachi
+A Hitachi router.
+.TP
+.ID 15n
+.B hp
+A HP Procurve switch such as the 2524 or 4108 procurve switches.  Also see the
+.B foundry
+type.
+.TP
+.ID 15n
+.B juniper
+A Juniper router.
+.TP
+.B mrtd
+A host running the (Merit) MRTd daemon.
+.TP
+.ID 15n
+.B netscalar
+A Netscalar load balancer.
+.TP
+.ID 15n
+.B netscreen
+A Netscreen firewall.
+.TP
+.ID 15n
+.B procket
+A Procket router.
+.TP
+.ID 15n
+.B redback
+A Redback router, NAS, etc.
+.TP
+.ID 15n
+.B riverstone
+A Riverstone NAS or Cabletron (starting with version ~9.0.3) router.
+.TP
+.ID 15n
+.B smc
+A SMC switch (some Dell OEMs).
+.TP
+.ID 15n
+.B tnt
+A Lucent TNT.
+.TP
+.ID 15n
+.B zebra
+Zebra routing software.
+.RE
+.\"
+.TP
+.B <state>
+The state is either "up", or some other arbitrary value, e.g. "down".
+If the device is not marked "up" the device's configuration will not be
+collected.
+It is highly recommended that comments are made for 
+any router not listed as up, so as to indicate the
+reason a router is not to be polled, e.g.:
+.sp
+dial1.paris:cisco:up:
+.br
+core1.paris:cisco:down:in testing until 5/5/2001.
+.br
+core2.paris:cisco:ticketed:Ticket 6054234, 5/3/2001
+.br
+border1.paris:juniper:up:
+.sp
+The script "downreport" in util/ can be used to produce a
+report of routers in router.db that are not marked "up".
+.PP
+.TP
+.B [comments]
+Freeform string to describe the current state of the router.
+.PP
+A ``#'' at the begining of a line is a comment; the entire line is
+ignored.
+.PP
+If a device is deleted from the 
+.B router.db
+file, then
+.B rancid
+will clean up by removing the device's config file from
+\fI$BASEDIR/<group>/configs\fR.
+The device will be removed from the revision control system.
+It is possible, in most cases, to resurrect or check-out copies of
+deleted device configurations.
+.PP
+.SH FILES
+.ta \w'xBASEDIR/<group>/router.db  'u
+.TP
+.B $BASEDIR/<group>/router.db
+Configuration file described here, where <group> is a device group name
+defined in the variable
+.I LIST_OF_GROUPS
+within \fI$BASEDIR/etc/rancid.conf\fR.
+.El
+.SH "SEE ALSO"
+.BR control_rancid (1),
+.BR rancid (1),
+.BR rancid.conf (5)

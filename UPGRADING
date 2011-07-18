@@ -1,0 +1,85 @@
+Rancid 2.3 introduces a new directory layout.  It has been changed to more
+closely follow the standard path hierarchy, which is defined by the FHS
+standard and autoconf, and/or make these locations more easily configurable
+within rancid.
+
+The obvious advantage of this is making rancid more easily packagable; i.e.:
+NetBSD pkgsrc, FreeBSD port, Linux RPM, etc.
+
+Make sure your rancid repository is quiet before upgrading; disable rancid
+cron jobs, wait for running jobs to complete, etc.
+
+Autoconf defines the following (see configure --help):
+ Installation directories:
+  --prefix=PREFIX         install architecture-independent files in PREFIX
+                          [/usr/local/rancid]
+  --exec-prefix=EPREFIX   install architecture-dependent files in EPREFIX
+                          [PREFIX]
+
+ Fine tuning of the installation directories:
+  --bindir=DIR          user executables [EPREFIX/bin]
+  --sbindir=DIR         system admin executables [EPREFIX/sbin]
+  --libexecdir=DIR      program executables [EPREFIX/libexec]
+  --datadir=DIR         read-only architecture-independent data [PREFIX/share]
+  --sysconfdir=DIR      read-only single-machine data [PREFIX/etc]
+  --localstatedir=DIR   modifiable single-machine data [PREFIX/var]
+  --mandir=DIR          man documentation [PREFIX/man]
+
+ Also defined, though not mentioned above, is:
+  pkgdatadir		same as datadir, but datadir/rancid
+
+File and directory movement:
+  bin/env		the rancid configuration file has moved to
+			sysconfdir/rancid.conf
+  util/lg/lg.conf	the looking glass configuration has moved to
+			sysconfdir/lg.conf
+  util/lg/lg.cgi
+  util/lg/lgform.cgi	the looking glass CGI scripts have moved to bindir
+  util/lg/*		the remainder of looking glass html, README, etc
+			files have moved to pkgdatadir
+  util/*		misc examples, scripts, etc have moved to pkgdatadir
+  cloginrc.sample	moved to pkgdatadir
+
+For those upgrading, there is one basic choice to make; to move your CVS
+repository and logs or not.  Prior to rancid 2.3, these were placed in
+<PREFIX>.  They are now in "localstatedir".  The user who runs rancid will
+need write access to this directory.
+
+To maintain the same location as was used prior to rancid 2.3, provide
+the --localstatedir option to configure.  e.g.:
+
+	./configure --localstatedir=/usr/local/rancid
+
+/usr/local/rancid is, and has been, the default <PREFIX>.
+
+To move them elsewhere, accept the default (e.g.: /usr/local/rancid/var) or
+specify your own and move the existing directories.  e.g.:
+
+	./configure --localstatedir=/var/rancid
+	make install
+	edit <SYSCONFDIR>/rancid.conf		# merge with your old bin/env
+						# configuration file
+	mv /usr/local/rancid/logs /var/rancid
+	mv /usr/local/rancid/CVS /var/rancid
+	cd /var/rancid
+	su - rancid_user
+	/bin/sh
+	. <SYSCONFDIR>/rancid.conf
+	for grp in $LIST_OF_GROUPS; do
+		cvs -d /var/rancid/CVS co $grp
+	done
+
+Note that the first rancid-run will send messages about routers being added,
+marked up or down, etc., because the routers.{all,down,up} will have been
+lost.  Afterward, it will be back to normal.
+
+Note also that any non-rancid files that may have been placed in these CVS
+trees will be lost.  You have been warned.
+
+*** We strongly suggest that if a DIR used as the install prefix, as in
+    --prefix=DIR, is not dedicated to rancid that "/rancid" should be
+    appended to the --localstatedir, as in the example above.
+
+Note that not all operating systems have a mv command that will move
+directories across file systems.  It may be necessary to use 'cp -r' or
+'tar cf - <GROUPS> | (cd <SYSCONFDIR>; tar xpf -)'.

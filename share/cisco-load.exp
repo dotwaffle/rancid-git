@@ -1,0 +1,369 @@
+##
+## $Id: cisco-load.exp 2096 2009-06-17 21:49:46Z heas $
+##
+##
+## Copyright (c) 1997-2007 by Terrapin Communications, Inc.
+## All rights reserved.
+##
+## This code is derived from software contributed to and maintained by
+## Terrapin Communications, Inc. by Henry Kilmer, John Heasley, Andrew Partan,
+## Pete Whiting, Austin Schutz, and Andrew Fort.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted provided that the following conditions
+## are met:
+## 1. Redistributions of source code must retain the above copyright
+##    notice, this list of conditions and the following disclaimer.
+## 2. Redistributions in binary form must reproduce the above copyright
+##    notice, this list of conditions and the following disclaimer in the
+##    documentation and/or other materials provided with the distribution.
+## 3. All advertising materials mentioning features or use of this software
+##    must display the following acknowledgement:
+##        This product includes software developed by Terrapin Communications,
+##        Inc. and its contributors for RANCID.
+## 4. Neither the name of Terrapin Communications, Inc. nor the names of its
+##    contributors may be used to endorse or promote products derived from
+##    this software without specific prior written permission.
+## 5. It is requested that non-binding fixes and modifications be contributed
+##    back to Terrapin Communications, Inc.
+##
+## THIS SOFTWARE IS PROVIDED BY Terrapin Communications, INC. AND CONTRIBUTORS
+## ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+## TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+## PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COMPANY OR CONTRIBUTORS
+## BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+## CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+## SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+## INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+## POSSIBILITY OF SUCH DAMAGE.
+# 
+#  The expect login scripts were based on Erik Sherk's gwtn, by permission.
+# 
+#  The original looking glass software was written by Ed Kern, provided by
+#  permission and modified beyond recognition.
+#
+# This expect snippet is sourced by clogin (-s option) to load a configuration
+# file (named <routername>-confg into nvram from an rcp/tftp host.  This is an
+# _example_ as it not guaranteed to work for all applications.  PLEASE test
+# for your environment.
+#
+# It expects the following variables via the -E option:
+#	rcphost		='host to rcp from' such as 'foo.org' or '192.168.0.1'
+#	confgpath	='path under /tftpboot where configs are held'
+#
+# The config file is expected to be routername-confg, where routername is the
+# name as grok'd from the router's cmd-line prompt
+#
+# example usage:
+# % clogin -s ./cisco-load.exp -Ercphost=foo.shrubbery.net router
+# router
+# loading router config from foo.shrubbery.net
+#
+# exit is called at the end, so only one router can be handled per clogin.
+#
+# Keep in mind that it is important to NOT polute the global variable space.
+# Particularly, do not use variables used within clogin.  This may result in
+# indeterministic results.  An easy way to avoid this is to use a variable
+# name prefix (like 'E' or '_').
+#
+# Useful variables from clogin global space:
+#	router		router name as provided on the cmd-line
+#	prompt		cmd-line prompt as determined by clogin
+#
+# note: the tcl/expect parser is extremely stoopid.  Comment lines are NOT
+#	completely ignored!!  so, a '{' or '}' in a comment might produce
+#	unexpected results.
+##
+# log_user 1
+# exp_internal 1
+
+# sometimes this is a bit slow.  note: this overrides clogin -t
+set timeout 90
+
+# take rcp host from -Ercphost='foo'
+if ([info exists Ercphost]) {
+	#puts "CONFGHOST == $Ercphost"
+	set confghost [string tolower $Ercphost]
+} else {
+	send_error "ERROR: -Ercphost= was not set on the command-line.\n"
+	exit
+}
+
+#
+# logout of the router
+#
+proc logout { ecode } {
+    global prompt
+
+    send "quit\r"
+    expect {
+	"$prompt"	{ logout $ecode }
+	timeout { send_error "Error: timeout waiting for EOF after quit\n"}
+	eof		{
+			  send_user "\n"
+			  exit $ecode
+			}
+    }
+}
+
+#
+# erase the nvram
+#
+proc erase { } {
+    global prompt
+
+    send "\r"
+    expect $prompt {}
+    send "write erase\r"
+    expect {
+	-re " Continue\[^\n\]\*confirm\]" {
+			  send "\r"
+			  exp_continue
+			}
+	"$prompt"	{ }
+	timeout		{
+			  send_error "Error: timeout waiting for write erase.\n"
+			  logout 1
+			}
+	eof		{ logout 1 }
+    }
+}
+
+#
+# load a config via rcp into nvram
+#
+proc doload { confghost routername config retry } {
+    global prompt
+
+    # send a return just to be sure we have a prompt.
+    send "\r"
+    expect	"$prompt"
+    # start the copy and send the host to load from
+    # use tftp if retry == 1
+    if { $retry == 0 } {
+	send "copy tftp startup-config\r"
+    } else {
+	send "copy rcp startup-config\r"
+    }
+    expect {
+		timeout	{
+			send_error	"\nError: timeout exceeded waiting for rcp/tftp host prompt\r"
+			logout 1 }
+		"mbiguous command" {
+			if { $retry == 0 } {
+			    send "copy tftp: startup-config\r"
+			} else {
+			    send "copy rcp: startup-config\r"
+			}
+			exp_continue }
+		-re "Host or network .*\]\?" {
+			send	"host\r"
+			exp_continue }
+		"\]\?" {
+			send	"$confghost\r" }
+    }
+
+    #
+    # fill in the rest of the blanks.  username (12.0), filename, dest, etc.
+    #
+    expect	{
+	-re "Source username .\*\]\?" {
+		send	"$routername\r";
+		exp_continue }
+	-re "Source filename .\*\]\?" {
+		send	"$config\r";
+		exp_continue }
+	-re "Name of configur.\*\]\?" {
+		send	"$config\r";
+		exp_continue }
+	-re "Destination filename .\*\]\?" {
+		send	"startup-config\r";
+		exp_continue }
+	-re "Configure using .\*confirm\]"	{ send	"\r" }
+	"proceed\? \\\["			{ send	"yes\r" }
+	-re "Do you want to over write.\*confirm\]"	{ send	"\r" }
+	-re "Accessing (rcp|tftp):"		{ }
+	timeout {
+		send_error "\n\tError: timeout exceeded while matching load prompts\n";
+		send "" }
+    }
+
+    expect {
+	timeout {
+		send_error "Error: timeout exceeded while loading config\n"
+		logout 1 }
+	-re "\[^\n\]*Connection refused" {
+		send_error "Error: $expect_out(0,string)\n"
+		logout 1 }
+	-re "\[^\n\]*Destination unreachable" {
+		send_error "Error: $expect_out(0,string)\n"
+		logout 1 }
+	-re "\[^\n\]*Permission denied" {
+		send_error "Error: $expect_out(0,string)\n"
+		logout 1 }
+	-re "\[^\n]*No such file or directory" {
+		send_error "Error: $expect_out(0,string)\n"
+		logout 1 }
+	-re "\[^\n]*Error copying\[^\n]*Not enough space on device\[^\n]*\r" {
+		send_error "Error: $expect_out(0,string)\n"
+		if { $retry == 2 } {
+# erase stomps ssh rsa key
+#    			send_user "erasing nvram\n"
+#			erase
+    			send_user "retrying load\n"
+			doload $confghost $routername $config 1
+		} elseif { $retry == 1 } {
+# erase stomps ssh rsa key
+#    			send_user "erasing nvram\n"
+#			erase
+    			send_user "retrying load with tftp.\n"
+			doload $confghost $routername $config 0
+		} else {
+			send_error "Error: $expect_out(0,string)\n"
+			logout 1
+		} }
+	-re "\[^\n]*.*configuration is too large.*\n" {
+		send_error "Error: $expect_out(0,string)\n"
+		expect {
+			-re "\[^\n]*Truncate config.*:" { send "no\r" }
+			}
+		logout 1 }
+	-re "\[^\n]*Error (opening|copying).*\r" {
+		send_error "Error: $expect_out(0,string)\n"
+		logout 1 }
+	-nocase -re "\[^\n]* error\[^a-z\n]+\[^\n]*" {
+			  send_error "$expect_out(0,string)\n"
+			  logout 1
+			}
+	"\n"		{ exp_continue }
+	-re "^\[^ ]*\#"	{
+		send_user "load successful.\n"
+		}
+    }
+
+    return 0;
+}
+
+send_user "loading $router config from $confghost\n";
+
+# look for router hostname in prompt (i.e.: deal with fqdn)
+send "\r"
+expect {
+    timeout 	{
+	send_error "Error: did not receive prompt\n"
+	exit }
+    "\n"	{ exp_continue }
+    -re "^(\[^ ]*)\#" {
+	set routername $expect_out(1,string) }
+}
+
+# deal with config subdir?  from Econfgpath
+if ([info exists confgpath]) {
+	set config	"$confgpath/$routername-confg"
+} else {
+	set config	"$routername-confg"
+}
+
+# load the config
+if { [doload $confghost $routername $config 1] != 0 } {
+    logout 1
+}
+
+logout 0
+
+# these were my original transcripts of performing loads.  it is a useful
+# example of info you may collect to get an idea of what needs to be handled
+# in the expect{}s
+#
+#  pdx-oob#
+#  pdx-oob#copy rcp start
+#  Address of remote host [255.255.255.255]? 205.238.52.35
+#  Name of configuration file [a]? pdx-oob-confg
+#  Configure using pdx-oob-confg from 205.238.52.35? [confirm]
+#
+#  Connected to 205.238.52.35
+#  Loading 8131 byte file pdx-oob-confg: !!!! [OK]
+#  Compressing configuration from 8131 bytes to 3886 bytes
+#  [OK]
+#  pdx-oob#
+#
+
+#  12.0S-isms
+#  pao2#cop rcp sta
+#  Address or name of remote host []? eng0
+#  Translating "eng0"...domain server (205.238.52.46) [OK]
+#
+#  Source username [pao2]? 
+#  Source filename []? pao2-confg
+#  Destination filename [startup-config]? 
+#  Warning: Copying this config directly into the nvram from a network server may
+#           cause damage the the startup config. It is advisable to copy the file
+#           into the running config first, and then save it using copy run start.
+#  Do you wish to proceed? [no]: yes
+#  Accessing rcp://pao2@eng0/pao2-confg...
+#  Connected to 205.238.52.35
+#  Loading 30138 byte file pao2-confg: !!!!!! [OK]
+#
+#  30138 bytes copied in 2.576 secs (15069 bytes/sec)
+#  pao2#
+# OR IS IT
+#  sea0#cop rcp sta
+#  Address or name of remote host []? eng0
+#  Source username [sea0]? 
+#  Source filename []? sea0-confg
+#  Destination filename [startup-config]? 
+#  Accessing rcp://sea0@eng0/sea0-confg...!!!!!!!!!!!!!!!!!!
+#  89794 bytes copied in 0.704 secs
+#  sea0#q
+#  Connection closed by foreign host.
+
+#  pdx-oob#copy rcp start
+#  Address of remote host [255.255.255.255]? 205.238.52.35
+#  Name of configuration file [a]? pdx-oob-confg
+#  Configure using pdx-oob-confg from 205.238.52.35? [confirm]
+#
+#  Connected to 205.238.52.35
+#  Loading 8131 byte file pdx-oob-confg: !!!! [OK]
+#  Compressing configuration from 8131 bytes to 3886 bytes
+#  [OK]
+#  pdx-oob#copy rcp start
+#  Address of remote host [205.238.52.35]? 205.238.52.35
+#  Name of configuration file [pdx-oob-confg]? pdx-oob-confg
+#  Configure using pdx-oob-confg from 205.238.52.35? [confirm]
+#
+#  Connected to 205.238.52.35
+#  %rcp: /tftpboot/pdx-oob-confg: No such file or directory
+#  pdx-oob#
+#
+
+#  pdx-oob#copy rcp start
+#  Address of remote host [205.238.52.35]? 205.238.52.35 
+#  Name of configuration file [pdx-oob-confg]? pdx-oob-confg 
+#  Configure using pdx-oob-confg from 205.238.52.35? [confirm]
+#
+#  Connected to 205.238.52.35
+#  %rcp: /tftpboot/pdx-oob-confg: Permission denied
+#  pdx-oob#
+#
+
+#  *** response from filtered pkt
+#  pdx-oob#copy rcp sta
+#  Address of remote host [205.238.52.35]? 205.238.1.94
+#  Name of configuration file [pdx-oob-confg]? 
+#  Configure using pdx-oob-confg from 205.238.1.94? [confirm]
+#  % Destination unreachable; gateway or host down
+#
+#  pdx-oob#
+#
+
+#  *** response from host w/o rcp daemon
+#  pdx-oob#cop rcp sta 
+#  Address of remote host [205.238.52.35]? 205.238.1.66
+#  Name of configuration file [pdx-oob-confg]? 
+#  Configure using pdx-oob-confg from 205.238.1.66? [confirm]
+#  % Connection refused by remote host
+#
+#  pdx-oob#
+#

@@ -1,0 +1,138 @@
+.\"
+.\" $Id: rancid_intro.1 2101 2009-07-14 19:19:51Z heas $
+.\"
+.hys 50
+.TH "rancid_intro" "1" "14 july 2009"
+.SH NAME
+rancid_intro \- introduction to the Really Awesome New Cisco confIg Differ
+.SH INTRODUCTION
+.B rancid
+is really more than just a Cisco configuration differ.  It handles several
+different device's configurations; currently including
+Alteon,
+Arista,
+Bay Networks (Nortel),
+Cisco,
+Extreme,
+F5 BigIP,
+Force10,
+Fortinet,
+Foundry,
+HP Procurve switches,
+Hitachi,
+Juniper Routers and edge (ERX) routers,
+Lucent TNT,
+MRTd daemon,
+Netscalar load balancers,
+Netscreen firewalls,
+Procket,
+Redback,
+SMC switches,
+Zebra routing software,
+and the ADC-Kentrox EZ-T3 mux.
+.PP
+.B rancid
+uses an expect script to login to each of a list of devices and run a set of
+commands for that device-type and collects the output.  The output
+is run through some filtering to summarize, reformat, and/or snip
+unwanted or security related data such as chassis temperature and easily
+reverse-able passwords.
+.PP
+Named after the device's name in the group's configuration file (\c
+.IR router.db ),
+the resulting files are saved in the directory <group>/configs.  Except for
+the data filtered from the configuration file for security reasons, such as
+reversable passwords, these files are suitable for loading directly to restore
+a lost configuration.  See
+.BR rancid.conf (5)
+for more information on <group>s.
+.PP
+After filtering, a uni-diff (see 
+.BR diff (1))
+of the result is produced
+for each of the devices in a group against that of the previous run of
+.B rancid
+and is e-mailed to that group's mail list, "rancid-<group>".  This e-mail
+will also include any differences of the device list in the group's
+configuration file,
+.IR "router.db".
+.PP
+Lastly, all the updated files are checked into the revision control system
+(CVS or Subversion).
+.PP
+Additional utilities, including a looking glass, come with rancid.  See
+rancid's share directory (
+.IR share/rancid ).
+.SH "EXAMPLE E-MAIL"
+Below is a sample of a uni-diff produced from the group "shrubbery"
+for the device named dfw.shrubbery.net, which happens to be a Cisco GSR.
+.PP
+.nf
+From: rancid 
+To: rancid-shrubbery@shrubbery.net
+Subject: shrubbery router config diffs
+Precedence: bulk
+  
+Index: configs/dfw.shrubbery.net
+===================================================================
+retrieving revision 1.144
+diff -u -4 -r1.144 dfw.shrubbery.net
+@@ -57,14 +57,8 @@
+  !Slot 2/MBUS: hvers 1.1
+  !Slot 2/MBUS: software 01.36 (RAM) (ROM version is 01.33)
+  !Slot 2/MBUS: 128 Mbytes DRAM, 16384 Kbytes SDRAM
+  !
+- !Slot 6: 1 Port Gigabit Ethernet
+- !Slot 6/PCA: part 73-3302-03 rev C0 ver 3, serial CAB031216OL
+- !Slot 6/PCA: hvers 1.1
+- !Slot 6/MBUS: part 73-2146-07 rev B0 dev 0, serial CAB031112SB
+- !Slot 6/MBUS: hvers 1.2
+- !Slot 6/MBUS: software 01.36 (RAM) (ROM version is 01.33)
+  !Slot 7: Route Processor
+  !Slot 7/PCA: part 73-2170-03 rev B0 ver 3, serial CAB024901SI
+  !Slot 7/PCA: hvers 1.4
+  !Slot 7/MBUS: part 73-2146-06 rev A0 dev 0, serial CAB02060044
+.fi
+.PP
+In this example, we see that a Gigabit Ethernet linecard was removed
+from slot 6.  However, since this data is collected from "show" commands on
+the router, it could just as easily be that the card crashed so the RP
+can not communicate with it to collect information.
+.SH "GETTING STARTED"
+Installation instructions are included in the distribution's top-level
+directory in the README file (which will be installed in share/rancid).
+Once the installation is complete, start by reading the man pages listed
+below or follow the basic instructions included in the README file.
+.PP
+See http://www.shrubbery.net/rancid for information on new versions,
+mail lists, etc.
+.SH "ADDING NEW GROUPS"
+Follow this procedure for adding new groups:
+.TP
+o
+Update the
+.IR LIST_OF_GROUPS
+variable in
+.IR etc/rancid.conf
+(see
+.BR rancid.conf (5)).
+.TP
+o
+Run
+.BR rancid-cvs (1).
+.TP
+o
+Update the system's mail aliases file
+.IR /etc/aliases
+(see 
+.BR rancid.conf (5)).
+.\"
+.SH "SEE ALSO"
+.BR clogin (1),
+.BR cloginrc (5),
+.BR control_rancid (1),
+.BR lg_intro (1),
+.BR rancid (1),
+.BR rancid-run (1),
+.BR rancid.conf (5),
+.BR router.db (5)

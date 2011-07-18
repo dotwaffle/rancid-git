@@ -1,0 +1,124 @@
+# comments are cool, as is whitespace
+# clogin supports a number of add directives:
+#	password
+#	user
+#	userprompt
+#	userpassword
+#	passprompt
+#	method
+#	noenable
+#	enauser
+#	enableprompt
+#	autoenable
+#	cyphertype
+#	identity
+#
+# Details on each of these follows.  Also see cloginrc(5).
+#
+# add password <router name glob> <vty passwd> <enable passwd>
+#
+# add user <router name glob> <username>
+#	The default user is $USER (i.e.: the user running clogin).
+#
+# add userprompt <router name glob> <username prompt>
+#	What the router prints to prompt for the username.
+#	Default: {"(Username|login|user name):"}
+#
+# add userpassword <router name glob> <user password>
+#	The password for user if different than the password set
+#	using 'add password'.
+#
+# add passprompt <router name glob> <password prompt>
+#	What the router prints to prompt for the password.
+#	Default: {"(\[Pp]assword|passwd):"}
+#
+# add method <router name glob> {ssh} [...]
+#	Defines, in order, which connection method(s) to use for a device
+#	from the set {ssh,telnet,rsh}.  e.g.: add method * {ssh} {telnet} {rsh}
+#	will attempt ssh connection first.  if ssh fails with connection
+#	refused (i.e.: not due to authentication failure), then try telnet,
+#	then rsh.
+#	Default: {telnet} {ssh}
+#
+# add noenable <router name glob> <1>
+#	equivalent of -noenable on the cmd line to not enable at login.
+#
+# add enableprompt <router name glob> <enable prompt>
+#	What the router prints to prompt for the enable password.
+#	Default: {"\[Pp]assword:"}
+#
+# add enauser <router name glob> <username>
+#	This is only needed if enable asks for a username and this
+#	username is different from what user is set to.
+#
+# add autoenable <router name glob> <1/0>
+#	This is used if you are automatically enabled by the login process.
+#
+# add cyphertype <router name glob> <ssh encryption type>
+#	Default is 3des.
+#
+# add identity <router name glob> <path to ssh identity file>
+#	Default is your default ssh identity.
+#
+# include <file>
+#	include a secondary .cloginrc file
+#
+#
+# Note: The first match for a hostname takes precedence.
+
+#add password sl-bb*-dc	cow24
+#add password sl-gw*-dc	geeks
+#add password sl*	hank	dog
+#add password at*	pete	cow
+#add password sdn*	mujahid	horse
+#add password icm*	peter
+#add password *		anything
+#
+#add user sl-gw*-dc	twit
+#add user sdn*		sdn_auto
+#add user sdn-bb*	ops_eng
+#add user *		$env(USER)
+
+# customer x
+# these routers ask for a username and password.  we automatically get
+# enable access after successful authentication.
+add user *.custx.net		roger
+add password *.custx.net	{doger}
+add autoenable *.custx.net	1
+
+# customer y
+# this is the normal cisco login.  a password followed by and enable password.
+# try ssh first, then rlogin.
+add password *.custy.net	{vector}	{victor}
+add method *.custy.net		ssh rlogin
+
+# customer z; they use ssh only.
+add user *.custz.net		shirley
+add password *.custz.net	{jive}		{surely}
+add method *.custz.net		ssh
+
+# the route-server's do not provide enable access.  cmdline -noenable
+# equivalent.
+add noenable route-server*	1
+
+# all our routers, i.e.: everything else
+add password *			{clearance}	{clarence}
+
+# set ssh encryption type, dflt: 3des
+add cyphertype *		{3des}
+
+# set the username prompt to "router login:"
+#add userprompt *		{"router login:"}
+
+# ssh identity for a juniper; used with jlogin
+add identity	my.juniper	$env(HOME)/.ssh/juniper
+
+# riverstone / enterasys / cabletron (rivlogin) example
+# these boxes are 'back-to-front' from cisco (i.e., ask
+# for vty password always, then tac+/radius if configured).
+#
+# vty password and last resort (enable) password for rivlogin
+add password rs3000		{vtypass}	{lastresort}
+# if using tac+ or radius login, include these lines
+add user rs3000			{monster}
+add userpassword rs3000		{scary}

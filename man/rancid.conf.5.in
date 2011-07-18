@@ -1,0 +1,273 @@
+.\"
+.\" $Id: rancid.conf.5.in 2096 2009-06-17 21:49:46Z heas $
+.\"
+.hys 50
+.TH "rancid.conf" "5" "18 December 2007"
+.SH NAME
+rancid.conf \- rancid environment configuration file
+.SH DESCRIPTION
+.B rancid.conf
+contains environment configuration information for
+.BR rancid-run (1)
+and
+.BR rancid-cvs (1),
+including shell PATH, list of rancid groups, etc.
+It is read by several scripts at run-time and others inherit the
+configration from a parent process which has read it.
+.PP
+The syntax of
+.B rancid.conf
+is that of
+.IR sh (1).
+.B rancid.conf
+is used to set environment variables used by other rancid scripts to
+effect their run-time behavior or to enable them to find their resources.
+.PP
+.SH VARIABLES
+The following variables are used (listed alphabetically):
+.PP
+.Bl -tag -width flag
+.\"
+.TP
+.B ACLSORT
+Permits disabling of access-list sorting, which could alter statement order
+that had been cleverly crafted by the administrator for optimal performance,
+thus making recovery and comparsion more difficult.
+.sp
+Default: YES
+.\"
+.TP
+.B BASEDIR
+BASEDIR is the directory where
+.B rancid-run's
+log directory, the revision control system's repository, and rancid group
+directories will be placed.
+.sp
+Its value is configure's localstatedir and should be modified if rancid is
+moved to a new location in the file system without re-installing from the
+distribution.
+.sp
+Default: @localstatedir@
+.\"
+.TP
+.B CVSROOT
+.IR cvs (1)
+and
+.IR rancid-cvs (1)
+use this environment variable to locate the CVS repository.
+In some cases, and for Subversion, it is used as an argument to commands.
+It should not be necessary to alter it.
+.sp
+Default: $BASEDIR/CVS
+.\"
+.TP
+.B FILTER_PWDS
+Determines which passwords will be filtered from configs.  The value may be
+"NO", "YES", or "ALL" to filter none of the passwords, only those which are
+reversable or plain-text, or all (plus ssh keys, etc), respectively.
+.sp
+Default: YES
+.sp
+Note: a value of "NO" could be a security issue since diffs are sent via
+e-mail.  A value of "ALL" is encouraged.
+.sp
+Note:
+.B FILTER_PWDS
+does not affect the handling of SNMP community strings.  see
+.B NOCOMMSTR
+below.
+.sp
+Note: passwords whose value cycles and would produce erroneous diffs
+are always filtered (e.g.: Alteon passwords).
+.\"
+.TP
+.B LIST_OF_GROUPS
+Defines a list of group names of routers separated by white-space.  These
+names become the directory names in $BASEDIR which contain the data
+for that set of devices.
+.BR rancid-run (1)
+also uses this variable to determine which device groups it should collect.
+Choose these names to be descriptive of the set of devices and do not use
+spaces, unprintable characters, etc.
+.sp
+Example: LIST_OF_GROUPS="UofO USFS"
+.sp
+Two groups are defined; UofO (University of Oregon) and USFS (US Forest
+Service).  Each will have a directory created (see
+.IR rancid-cvs (1))
+$BASEDIR/UofO and $BASEDIR/USFS respectively, which will contain their data.
+.sp
+Each group must also have aliases for the administrative and diff recipients
+set-up in
+.IR /etc/aliases .
+For example:
+.sp
+.in +1i
+.nf
+@MAILPLUS@uofo:            frank
+@ADMINMAILPLUS@uofo:      joe,bob
+@MAILPLUS@usfs:            frank
+@ADMINMAILPLUS@usfs:      joe,bob
+.fi
+.sp
+.in -1i
+.\"
+.TP
+.B LOCKTIME
+Defines the number of hours a group's lock file may age before rancid
+starts to complain about a hung collection.  The default is 4 hours.
+.\"
+.TP
+.B LOGDIR
+Directory where
+.B rancid-run
+places log files.
+.sp
+Default: $BASEDIR/logs
+.\"
+.TP
+.B MAILDOMAIN
+Define the domain part of addresses for administrative and diff e-mail.
+The value of this variable is simply appended to the normal mail addresses.
+For example @MAILPLUS@usfs@example.com, if
+.B MAILDOMAIN
+had been set to "@example.com".
+.\"
+.TP
+.B MAILHEADERS
+Define additional mail headers to be added to rancid mail, such as Precedence
+or X- style headers.
+Individual headers must be separated by a \\n (new line).
+.sp
+Default: Precedence: bulk
+.sp
+Example: Precedence: bulk\\nX-clamation: beef cake
+.\"
+.TP
+.B MAX_ROUNDS
+Defines how many times rancid should retry collection of devices that fail.
+The minimum is 1.
+.sp
+Default: 4.
+.\"
+.TP
+.B NOCOMMSTR
+If set,
+.IR rancid (1)
+will filter SNMP community strings from configs.  Otherwise, they will
+be retained and may appear in clear-text in e-mail diffs.  By default,
+this is not set.
+.\"
+.TP
+.B NOPIPE
+If set,
+.IR rancid (1)
+will use temporary files to save the output from the router and then read
+these to build the file which will be saved in CVS (or Subversion).
+Otherwise, an IPC pipe will be used.  We have found that the buffering
+mechanisms used in perl and expect are heinous.
+Using temporary files may result in a noticeable improvement in speed.
+By default, this is not set.
+.\"
+.TP
+.B OLDTIME
+Specified as a number of hours, OLDTIME defines how many hours should pass
+since a successful collection of a device's configuration and when
+.IR control_rancid (1)
+should start complaining about failures.  The value should be greater than
+the number of hours between
+.B rancid-run
+cron runs.
+.sp
+Default: 24
+.\"
+.TP
+.B PAR_COUNT
+Defines the number of rancid processes that
+.IR par (1)
+will start simultaneously as
+.IR control_rancid (1)
+attempts to perform collections.  Raising this value will decrease the amount
+of time necessary for a complete collection of a (or all) rancid groups at the
+expense of system load.  The default is relatively cautious.  If collections
+are not completing quickly enough for users, use trial and error of speed
+versus system load to find a suitable value.
+.sp
+Default: 5
+.\"
+.TP
+.B PATH
+Is a colon separate list of directory pathnames in the the file system
+where rancid's
+.IR sh (1)
+and
+.IR perl (1)
+scripts should look for the programs that it needs, such as
+.IR telnet (1).
+Its value is set by configure.  Should it be necessary to modify PATH,
+note that it must include @bindir@.
+.\"
+.TP
+.B RCSSYS
+Sets which revision control system is in use.
+Valid values are
+.B cvs
+for CVS
+or
+.B svn
+for Subversion.
+.sp
+Default: cvs
+.\"
+.TP
+.B TERM
+Some Unix utilities require TERM, the terminal type, to be set to a sane
+value.  Some clients, such as
+.IR telnet (1)
+and
+.IR ssh (1) ,
+communicate this to the server (i.e.: the remote device), thus this can
+affect the behavior of login sessions on a device.  The default should
+suffice.
+.sp
+Default: network
+.\"
+.TP
+.B TMPDIR
+Some Unix utilities recognize TMPDIR as a directory where temporary files
+can be stored.  In some cases, rancid utilizes this directory for lock
+files and other temporary files.
+.sp
+Default: /tmp
+.\"
+.PP
+Each of these are simply environment variables.  In order for them to be
+present in the environment of child processes, each must be exported.  See
+.IR sh (1)
+for more information on the built-in command export.
+.SH ERRORS
+.B rancid.conf
+is interpreted directly by 
+.IR sh (1),
+so its syntax follows that of the bourne shell.  Errors
+may produce quite unexpected results.
+.SH FILES
+.Bl -tag -width @sysconfdir@/rancid.conf -compact
+.TP
+.B @sysconfdir@/rancid.conf
+Configuration file described here.
+.El
+.\"
+.SH "SEE ALSO"
+.BR control_rancid (1),
+.BR rancid (1),
+.BR rancid-cvs (1),
+.BR rancid-run (1)
+.\"
+.SH HISTORY
+In RANCID releases prior to 2.3,
+.B rancid.conf
+was named
+.B env
+and located in the bin directory.  This was changed to be more consistent
+with common file location practices.

@@ -1,0 +1,508 @@
+#! /bin/sh
+##
+## $Id: control_rancid.in 2270 2010-12-09 01:21:32Z heas $
+##
+## @PACKAGE@ @VERSION@
+## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
+## All rights reserved.
+##
+## This code is derived from software contributed to and maintained by
+## Terrapin Communications, Inc. by Henry Kilmer, John Heasley, Andrew Partan,
+## Pete Whiting, Austin Schutz, and Andrew Fort.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted provided that the following conditions
+## are met:
+## 1. Redistributions of source code must retain the above copyright
+##    notice, this list of conditions and the following disclaimer.
+## 2. Redistributions in binary form must reproduce the above copyright
+##    notice, this list of conditions and the following disclaimer in the
+##    documentation and/or other materials provided with the distribution.
+## 3. All advertising materials mentioning features or use of this software
+##    must display the following acknowledgement:
+##        This product includes software developed by Terrapin Communications,
+##        Inc. and its contributors for RANCID.
+## 4. Neither the name of Terrapin Communications, Inc. nor the names of its
+##    contributors may be used to endorse or promote products derived from
+##    this software without specific prior written permission.
+## 5. It is requested that non-binding fixes and modifications be contributed
+##    back to Terrapin Communications, Inc.
+##
+## THIS SOFTWARE IS PROVIDED BY Terrapin Communications, INC. AND CONTRIBUTORS
+## ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+## TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+## PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COMPANY OR CONTRIBUTORS
+## BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+## CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+## SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+## INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+## POSSIBILITY OF SUCH DAMAGE.
+# 
+# control_rancid $GROUP
+#
+
+# print a usage message to stderr
+pr_usage() {
+    echo "usage: $0 [-V] [-r device_name] [-m mail rcpt] group" >&2;
+}
+
+# command-line options
+# -V print version string
+# -m <mail recipients>
+# -r <device name>
+alt_mailrcpt=0
+if [ $# -ge 1 ] ; then
+
+    while [ 1 ] ; do
+	case $1 in
+	-V)
+	    echo "@PACKAGE@ @VERSION@"
+	    exit 0
+	    ;;
+	-m)
+	    shift
+	    # next arg is the mail recipient
+	    alt_mailrcpt=1
+	    if [ -z "$mailrcpt" ] ; then
+		mailrcpt="$1"
+	    else
+		mailrcpt="$mailrcpt,$1"
+	    fi
+	    shift
+	    ;;
+	-r)
+	    shift
+	    # next arg is the device name
+	    device="$1"
+	    shift
+	    ;;
+	--)
+	    shift; break;
+	    ;;
+	-h)
+	    pr_usage
+	    exit 0
+	    ;;
+	-*)
+	    echo "unknown option: $1" >&2
+	    pr_usage
+	    exit 1
+	    ;;
+	*)
+	    break;
+	    ;;
+	esac
+    done
+fi
+
+# Must specify a group on which to run rancid
+if [ $# -lt 1 ] ; then
+    echo 'must specify group'; exit 1
+else
+    GROUP=$1
+fi
+DIR=$BASEDIR/$GROUP
+TMP=${TMPDIR:=/tmp}/rancid.$GROUP.$$
+trap 'rm -fr $TMP;' 1 2 15
+
+# disable noclobber
+unset noclobber > /dev/null 2>&1
+
+# RCS system
+RCSSYS=${RCSSYS:=cvs};
+if [ $RCSSYS != "cvs" -a $RCSSYS != "svn" ] ; then
+    echo "$RCSSYS is not a valid value for RCSSYS."
+    exit 1
+fi
+
+# the receipient(s) of diffs & mail options
+mailrcpt=${mailrcpt:-"@MAILPLUS@${GROUP}${MAILDOMAIN}"}; export mailrcpt
+adminmailrcpt=${adminmailrcpt:-"@ADMINMAILPLUS@${GROUP}${MAILDOMAIN}"};
+export adminmailrcpt
+set | grep MAILHEADERS= > /dev/null 2>&1
+if [ $? -ne 0 ] ; then
+    MAILHEADERS="Precedence: bulk\n"; export MAILHEADERS
+fi
+
+# Number of things par should run in parallel.
+PAR_COUNT=${PAR_COUNT:-5}
+# Number of times failed collections should be retried.  Minimum 1.
+MAX_ROUNDS=${MAX_ROUNDS:-4}
+if [ $MAX_ROUNDS -lt 1 ] ; then
+    echo "Error: MAX_ROUNDS must be at least 1."
+    MAX_ROUNDS=1
+fi
+
+# Bail if we do not have the necessary info to run
+if [ ! -d $DIR ] ; then
+    echo "$DIR does not exist."
+    echo "Run bin/rancid-cvs $GROUP to make all of the needed directories."
+    (
+	echo "To: $adminmailrcpt"
+	echo "Subject: no $GROUP directory"
+	echo "$MAILHEADERS" | awk '{L = "";LN = $0;while (LN ~ /\\n/) { I = index(LN,"\\n");L = L substr(LN,0,I-1) "\n";LN = substr(LN,I+2,length(LN)-I-1);}print L LN;}'
+	echo ""
+	echo "$DIR does not exist."
+	echo "Run bin/rancid-cvs $GROUP to make all of the needed directories."
+    ) | sendmail -t
+    exit 1
+fi
+cd $DIR
+
+# create a .cvsignore
+if [ ! -f .cvsignore ] ; then
+    rm -f .cvsignore
+    cat >.cvsignore <<EOF
+.cvsignore
+routers.all
+routers.down
+routers.up
+EOF
+    if [ $RCSSYS = svn ] ; then
+	svn propset svn:ignore -F .cvsignore .
+	svn update .
+	svn commit -m 'set svn:ignores' .
+    fi
+fi
+
+# do cvs update of router.db in case anyone has fiddled.
+$RCSSYS update router.db > $TMP 2>&1
+grep "^C" $TMP > /dev/null
+if [ $? -eq 0 ] ; then
+    echo "There were $RCSSYS conflicts during update."
+    echo ""
+    cat $TMP
+    rm -f $TMP
+    exit 1
+fi
+rm -f $TMP
+
+if [ ! -f $DIR/router.db ] ; then
+    echo "$DIR/router.db does not exist."
+    (
+	echo "To: $adminmailrcpt"
+	echo "Subject: no $GROUP/router.db file"
+	echo "$MAILHEADERS" | awk '{L = "";LN = $0;while (LN ~ /\\n/) { I = index(LN,"\\n");L = L substr(LN,0,I-1) "\n";LN = substr(LN,I+2,length(LN)-I-1);}print L LN;}'
+	echo ""
+	echo "$DIR/router.db does not exist."
+    ) | sendmail -t
+    exit 1;
+fi
+
+# generate the list of all, up, & down routers
+cd $DIR
+trap 'rm -fr routers.db routers.all.new routers.down.new routers.up.new \
+	routers.mail routers.added routers.deleted $TMP;' 1 2 15
+sed -e '/^#/d' -e 's/^ *//' -e 's/ *$//' -e 's/ *: */:/g' router.db |
+	tr '[A-Z]' '[a-z]' | sort -u > routers.db
+cut -d: -f1,2 routers.db > routers.all.new
+if [ ! -f routers.all ] ; then touch routers.all; fi
+@DIFF_CMD@ routers.all routers.all.new > /dev/null 2>&1; RALL=$?
+@PERLV@ -F: -ane '{$F[2] =~ s/\s*\$//; ($F[0] =~ tr@A-Z@a-z@, print $_)
+    if ($F[2] !~ /^up$/i);}' routers.db > routers.down.new
+if [ ! -f routers.down ] ; then touch routers.down; fi
+@DIFF_CMD@ routers.down routers.down.new > /dev/null 2>&1; RDOWN=$?
+@PERLV@ -F: -ane '{$F[2] =~ s/\s*\$//; ($F[0] =~ tr@A-Z@a-z@,
+    print "$F[0]:$F[1]\n") if ($F[2] =~ /^up$/i);}' routers.db > routers.up.new
+if [ ! -f routers.up ] ; then touch routers.up; fi
+@DIFF_CMD@ routers.up routers.up.new > /dev/null 2>&1; RUP=$?
+
+if [ $RALL -ne 0 -o $RDOWN -ne 0 -o $RUP -ne 0 ] ; then
+    (
+	if [ $RUP -ne 0 ] ; then
+	    if [ ! -s routers.up ] ; then
+		echo Routers changed to up:
+		sed -e 's/^/        /' routers.up.new
+		echo
+	    else
+		WCUP=`comm -13 routers.up routers.up.new | wc -l | \
+			sed -e 's/^ *\([^ ]*\)/\1/'`
+		if [ $WCUP -gt 0 ] ; then
+		    echo Routers changed to up:
+		    comm -13 routers.up routers.up.new | sed -e 's/^/        /'
+		    echo
+		fi
+	    fi
+	fi
+	if [ $RDOWN -ne 0 ] ; then
+	    if [ ! -s routers.down ] ; then
+		echo Routers changed to down:
+		sed -e 's/^/        /' routers.down.new
+		echo
+	    else
+		WCDOWN=`comm -13 routers.down routers.down.new | wc -l | \
+			sed -e 's/^ *\([^ ]*\)/\1/'`
+		if [ $WCDOWN -eq 1 ] ; then
+		    echo Routers changed to down:
+		    comm -13 routers.down routers.down.new | \
+			sed -e 's/^/        /'
+		    echo
+		fi
+	    fi
+	fi
+	if [ $RALL -eq 1 ] ; then
+	    comm -13 routers.all routers.all.new | sed -e 's/^/        /' \
+		> routers.added
+	    comm -23 routers.all routers.all.new | sed -e 's/^/        /' \
+		> routers.deleted
+
+	    WCADDED=`wc -l routers.added | sed -e 's/^ *\([^ ]*\) .*$/\1/'`
+	    WCDELETED=`wc -l routers.deleted | sed -e 's/^ *\([^ ]*\) .*$/\1/'`
+
+	    if [ $WCADDED -gt 0 ] ; then
+		echo Added routers:
+		cat routers.added
+		echo
+	    fi
+	    if [ $WCDELETED -gt 0 ] ; then
+		echo Deleted routers:
+		cat routers.deleted
+		echo
+	    fi
+
+	    rm -f routers.added routers.deleted
+	fi
+    ) > routers.mail
+
+    if [ -s routers.mail ] ; then
+	(
+	  echo "To: $adminmailrcpt"
+	  echo "Subject: changes in $GROUP routers"
+	  echo "$MAILHEADERS" | awk '{L = "";LN = $0;while (LN ~ /\\n/) { I = index(LN,"\\n");L = L substr(LN,0,I-1) "\n";LN = substr(LN,I+2,length(LN)-I-1);}print L LN;}'
+	  echo ""
+	  cat routers.mail
+	) | sendmail -t
+    fi
+    rm -f routers.mail
+
+    cd $DIR/configs
+
+    # Add new routers to the CVS structure.
+    for router in `comm -13 $DIR/routers.up $DIR/routers.up.new`
+    do
+	OFS=$IFS
+	IFS=:
+	set $router
+	IFS=$OFS
+	router=$1
+
+	touch $router
+	if [ $RCSSYS = cvs ] ; then
+	    cvs add -ko $router
+	else
+	    svn add $router
+	fi
+	$RCSSYS commit -m 'new router' $router
+	echo "Added $router"
+    done
+    echo
+    cd $DIR
+
+fi
+mv -f routers.all.new routers.all
+if [ $? -ne 0 ] ; then
+    echo "Error: could not rename routers.all.new"
+fi
+mv -f routers.down.new routers.down
+if [ $? -ne 0 ] ; then
+    echo "Error: could not rename routers.down.new"
+fi
+mv -f routers.up.new routers.up
+if [ $? -ne 0 ] ; then
+    echo "Error: could not rename routers.up.new"
+fi
+rm -f routers.db
+trap 'rm -fr $TMP;' 1 2 15
+
+cd $DIR/configs
+# check for 'up' routers missing in RCS.  no idea how this happens to some folks
+for router in `cut -d: -f1 ../routers.up` ; do
+    if [ $RCSSYS = cvs ] ; then
+	cvs status $router | grep -i 'status: unknown' > /dev/null 2>&1
+    else
+	svn status $router | grep '^?' > /dev/null 2>&1
+    fi
+    if [ $? -eq 0 ] ; then
+	touch $router
+	if [ $RCSSYS = cvs ] ; then
+	    cvs add -ko $router
+	else
+	    svn add $router
+	fi
+	echo "$RCSSYS added missing router $router"
+    fi
+done
+echo
+# delete configs from RCS for routers not listed in routers.up.
+for router in `find . \( -name \*.new -prune -o -name CVS -prune -o -name .svn -prune \) -o -type f -print | sed -e 's/^.\///'` ; do
+    grep -i "^$router:" ../router.db > /dev/null 2>&1
+    if [ $? -eq 1 ] ; then
+	rm -f $router
+	$RCSSYS delete $router
+	$RCSSYS commit -m 'deleted router' $router
+	echo "Deleted $router"
+    fi
+done
+cd $DIR
+
+# no routers, empty list or all 'down'
+if [ ! -s routers.up ]
+then
+    # commit router.db
+    $RCSSYS commit -m updates router.db
+    exit;
+fi
+
+# if a device (-r) was specified, see if that device is in this group
+if [ "X$device" != "X" ] ; then
+    trap 'rm -fr $TMP $DIR/routers.single;' 1 2 15
+    devlistfile="$DIR/routers.single"
+    grep -i "^$device:" routers.up > $devlistfile
+    if [ $? -eq 1 ] ; then
+	exit;
+    fi
+else
+    devlistfile="$DIR/routers.up"
+fi
+
+# Now we can actually try to get the configs
+cd $DIR/configs
+
+# The number of processes running at any given time can be
+# tailored to the specific installation.
+echo ""
+echo "Trying to get all of the configs."
+par -q -n $PAR_COUNT -c "rancid-fe {}" $devlistfile
+
+# This section will generate a list of missed routers
+# and try to grab them again.  It will run through
+# $pass times.
+pass=$MAX_ROUNDS
+round=1
+if [ -f $DIR/routers.up.missed ] ; then
+    rm -f $DIR/routers.up.missed
+fi
+while [ $round -le $pass ]
+do
+    for router in `cat $devlistfile`
+    do
+	OFS=$IFS
+	IFS=':'
+	set $router
+	IFS=$OFS
+	router=$1; mfg=$2
+
+	if [ ! -s $router.new ]
+	then
+	    echo "$router:$mfg" >> $DIR/routers.up.missed
+	    rm -f $router.new
+	fi
+    done
+
+    if [ -f $DIR/routers.up.missed ] ; then
+	echo "====================================="
+	echo "Getting missed routers: round $round."
+	par -q -n $PAR_COUNT -c "rancid-fe \{}" $DIR/routers.up.missed
+	rm -f $DIR/routers.up.missed
+	round=`expr $round + 1`
+    else
+	echo "All routers sucessfully completed."
+	round=`expr $pass + 1`
+    fi
+done
+echo
+
+# Make sure that no empty/truncated configs are accepted.  The remainder are
+# renamed from device_name.new -> device_name.
+for router in `cat $devlistfile`
+do
+    OFS=$IFS
+    IFS=':'
+    set $router
+    IFS=$OFS
+    router=$1;
+
+    if [ ! -s $router.new ] ; then
+	rm -f $router.new
+    else
+	notcomment=`egrep -v "^[-*\!\;#]|\/\*" $router.new | wc -l`
+	if [ $notcomment -gt 10 ]; then
+	    lines=1;
+	else
+	    lines=0;
+	fi
+
+	if [ ! $lines ] ; then
+	    rm -f $router.new
+	else
+	    mv $router.new $router
+	    if [ $? -ne 0 ] ; then
+		echo "Error: could not rename $router.new to $router"
+		rm -f $router.new
+	    fi
+	fi
+    fi
+done
+
+# This has been different for different machines...
+# Diff the directory and then checkin.
+trap 'rm -fr $TMP $TMP.diff $DIR/routers.single;' 1 2 15
+cd $DIR
+if [ $RCSSYS = "cvs" ] ; then
+    cvs -f @DIFF_CMD@ -ko | sed -e '/^RCS file: /d' -e '/^--- /d' \
+	-e '/^+++ /d' -e 's/^\([-+ ]\)/\1 /' >$TMP.diff
+else
+    svn diff | sed -e '/^+++ /d' -e 's/^\([-+ ]\)/\1 /' >$TMP.diff
+fi
+
+if [ $alt_mailrcpt -eq 1 ] ; then
+    subject="router config diffs - courtesy of $mailrcpt"
+else
+    subject="router config diffs"
+fi
+if [ "X$device" != "X" ] ; then
+    $RCSSYS commit -m "updates - courtesy of $mailrcpt"
+    subject="$GROUP/$device $subject"
+else
+    $RCSSYS commit -m updates
+    subject="$GROUP $subject"
+fi
+
+# Mail out the diffs (if there are any).
+if [ -s $TMP.diff ] ; then
+	(
+	  echo "To: $mailrcpt"
+	  echo "Subject: $subject"
+	  echo "$MAILHEADERS" | awk '{L = "";LN = $0;while (LN ~ /\\n/) { I = index(LN,"\\n");L = L substr(LN,0,I-1) "\n";LN = substr(LN,I+2,length(LN)-I-1);}print L LN;}'
+	  echo ""
+	  cat $TMP.diff
+	) | sendmail -t
+fi
+
+# If any machines have not been reached within the last $OLDTIME
+# hours, mail out a list of them.
+cd $DIR/configs
+rm -f $DIR/routers.failed
+if [ "X$OLDTIME" = "X" ] ; then
+    OLDTIME=24
+fi
+@PERLV@ -F: -ane "{\$t = (stat(\$F[0]))[9]; print \`ls -ld \$F[0]\`
+	if (time() - \$t >= $OLDTIME*60*60);}" $devlistfile | sort -u > $DIR/routers.failed
+if [ -s $DIR/routers.failed ] ; then
+	(
+	  echo "To: $adminmailrcpt"
+	  echo "Subject: config fetcher problems - $GROUP"
+	  echo "$MAILHEADERS" | awk '{L = "";LN = $0;while (LN ~ /\\n/) { I = index(LN,"\\n");L = L substr(LN,0,I-1) "\n";LN = substr(LN,I+2,length(LN)-I-1);}print L LN;}'
+	  echo ""
+	  echo "The following routers have not been successfully contacted for"
+	  echo "more than $OLDTIME hours."
+
+	  cat $DIR/routers.failed
+	) | sendmail -t
+fi
+
+# Cleanup
+rm -f $TMP.diff $DIR/routers.single $DIR/routers.failed
+trap '' 1 2 15

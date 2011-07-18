@@ -1,0 +1,91 @@
+This is a looking glass based on Ed Kern's which used to be available on
+http://nitrous.digex.net/.  This version supports cisco, juniper, and
+foundry, using rancid's [cfj]login to login (so rcmd is not necessary,
+it can use telnet, ssh, or rsh), and has some additional commands
+implemented.  There are a few cisco commands where either no juniper or
+foundry equivalent exists or we have not had time to implement yet.
+
+packing list:
+README          This file.
+index.html	often the default document the server will load, contains
+		an html redirect to load lgform.cgi
+lg.conf		looking glass configuration file
+lg.cgi          work horse of the looking glass
+lgform.cgi      front-end form for the looking glass engine
+lgnotes.html    user info for the looking glass
+
+The looking glass requires the CGI and LockFile-Simple perl modules.
+these can be retrieved from CPAN, http://www.cpan.org/.  CGI's home is
+ftp://ftp-genome.wi.mit.edu/pub/software/WWW/.  It also requires
+the POSIX module (for strftime) and Sys::Syslog, which I believe comes
+with perl5 and/or are converted with h2ph(1).
+
+basic installation instructions:
+
+The configure and make install process will make variable substitutions
+and install the looking glass bits.  Assuming configure was run without
+directory options, such as --prefix, the default install prefix is
+/usr/local/rancid.  So, the bits will be installed in
+/usr/local/rancid/etc/lg.conf, /usr/local/rancid/bin, and
+/usr/local/rancid/share/rancid (i.e.: <prefix>/etc/lg.conf, etc.).
+
+1) Make the scripts and html files available to your server (httpd) by
+   creating a directory in your server's document root directory
+   (apache's httpd.conf "DocumentRoot" variable).  For example:
+
+	mkdir /usr/local/htdocs/lg
+
+   Then either:
+	- copy the files <PREFIX>/share/rancid/{index.html,lgnotes.html} and
+	  <PREFIX>/bin/{lg.cgi,lgform.cgi} to /usr/local/htdocs/lg
+     OR
+	- create symlinks from /usr/local/htdocs/lg to each of these files.
+
+   Note on links: if you use symlinks, you have to configure apache to
+   allow following symlinks.  e.g.:
+	% cat /usr/local/htdocs/lg/.htaccess
+	Options FollowSymLinks ExecCGI
+
+   Note on index.html: index.html is typically the default file loaded
+   when a url ends with a '/'.  index.html can be used to redirect this
+   to lgform.cgi using a netscape meta refresh.  Though this is supported
+   by many browsers, it is supposedly netscape specific and non-standard.
+   In apache, the same thing can be acheived by altering the default
+   directory index like this:
+
+	% cat /usr/local/htdocs/lg/.htaccess
+	Options ExecCGI
+	DirectoryIndex lgform.cgi
+
+2) The looking glass scripts need to be able to find and read lg.conf.  By
+   default it is installed as <SYSCONFDIR>/lg.conf (<PREFIX>/etc/lg.conf)
+   and the scripts will first look in their CWD (Current Working Directory)
+   and then <SYSCONFDIR>/lg.conf, if it does not exist in the CWD.  However,
+   the LG_CONF environment variable can be used to move it elsewhere.
+
+   To get LG_CONF into the CGI enviroment, you can use SetEnvIf in apache's
+   httpd.conf.  For example:
+	SetEnvIf Request_URI "\/lg/.*.cgi" LG_CONF=/usr/local/htdocs/lg/lg.conf
+
+   Note: if you have chosen to locate your router.db (or other possibly
+   sensitive files in the http docs heirarchy, you may wish to restrict
+   download permission for these files.  Something like:
+
+	% cat /usr/local/htdocs/lg/.htaccess
+	<Files ~ "^router.db">
+	  Order allow,deny
+	  Deny from all
+	  Satisfy All
+	</Files>
+
+3) Edit <SYSCONFIGDIR>/lg.conf (usually <PREFIX>/etc/lg.conf).  See lg.conf(5)
+   for additional information.
+
+4) Set-up cron jobs to rotate the log file and clean out old cache files.
+   See LG_CACHE_DIR & LG_LOG in lg.conf.  Something like (YMMV):
+
+	# rotate lookingglass log
+	#0 0 * * * cd /usr/local/htdocs/lg/tmp; /usr/local/etc/savelog -m 666 -c14 lg.log
+	0 0 * * * cd /usr/local/htdocs/lg/tmp; /bin/mv lg.log lg.log.0
+	# clean out the lookingglass cache
+	0 0 * * * cd /usr/local/htdocs/lg/tmp; /usr/local/bin/find . -type f -maxdepth 1 \( \! -name lg.log\* \) -mtime +1 -exec rm -f {} \;

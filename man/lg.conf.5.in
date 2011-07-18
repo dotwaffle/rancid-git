@@ -1,0 +1,177 @@
+.\"
+.hys 50
+.TH "lg.conf" "5" "7 Jan 2004"
+.SH NAME
+lg.conf \- looking glass configuration file
+.SH DESCRIPTION
+.B lg.conf
+contains configuration for the looking glass scripts.
+.PP
+The syntax is that of
+.IR perl (1).
+It is used to set variables that affect run-time behavior and/or to locate
+resources.
+.\"
+.SH VARIABLES
+The following variables are used (alphabetically):
+.Bl -tag -width flag
+.\"
+.TP
+.B LG_AS_REG
+*** not implemented.
+.\"
+.TP
+.B LG_BGP_RT
+Allows show ip bgp neighbor commands that can produce heavy output, such as
+sh ip bgp neighbor <ip> advertised-routes for a transit customer when the
+neighbor address is followed by 'advertised-routes' for the sh ip bgp neighbor
+query.
+.\"
+.TP
+.B LG_CACHE_DIR
+Sets the location of the cache directory.  The looking glass uses this
+to hold lock files, log files, and output from cached commands.
+.sp
+Default: ./tmp
+.sp
+Note that the default is relative to the directory where 
+.IR lg.cgi
+runs in the server's document root (e.g.: /usr/local/www/data/lg/tmp).
+.\"
+.TP
+.B LG_CACHE_TIME
+Sets the number of seconds that the looking glass should cache output from
+commands that tend to produce a lot of output, such as 'show ip bgp
+dampened-paths'.
+.sp
+Default: 600
+.\"
+.TP
+.B LG_CLOGINRC
+Defines the location of the
+.BR cloginrc (5)
+that the looking glass should use.  The path may be relative to the directory
+where the CGI scripts run in the server's document root.
+.sp
+Default: $HOME/.cloginrc
+.sp
+Note that the .cloginrc must be readable by the user or group that will be
+running the CGI and that
+.BR clogin (1)
+will not allow a world readable
+.IR .cloginrc .
+The user is normally that of the http server (httpd).
+.\"
+.TP
+.B LG_IMAGE
+Defines a html image tag (<img>) which, if defined, will be included at
+the top of the looking glass pages.  It may contain any html as it is
+simply handed off to print().
+.sp
+Example: $LG_IMAGE="<img src=/icons/rancid.gif hspace=0>\\n <font size=+2>FOO</font>";
+.\"
+.TP
+.B LG_INFO
+Defines information in html format which, if defined, will be included at
+the bottom of the looking glass form page.  It may contain any html as it is
+simply handed off to print().
+.sp
+Example: $LG_INFO="For Support contact <a href=mailto:webmaster\@localhost>webmaster</a>";
+.\"
+.TP
+.B LG_LOG
+Defines the fully qualified path name (i.e.: begins with '/') for the log file
+or the
+.BR syslog (3)
+facility to use for logging.  For syslog, the argument is the lowercase name
+of a syslog facility (see syslog.h) without the 'LOG_' prefix.
+.sp
+Example: local0
+.sp
+Default: $LG_CACHE_DIR/lg.log
+.\"
+.TP
+.B LG_ROUTERDB
+Sets the location for the
+.IR router.db
+file in rancid's
+.BR router.db (5)
+format.  It lists the devices that should be available to the looking glass
+users.  Only those devices of supported types and with state 'up' are made
+available.  If not defined and the default file does not exist, the looking
+glass will compile a list from the router.db files of all the groups present
+in rancid, that is, the list will be a concatenation of the available
+.IR router.db (5)
+files.
+.sp
+Note that if the concatenation method is used, it may be necessary to alter
+the mode of the router.db files in the rancid group directories, since rancid's
+default umask is 027 (see
+.BR rancid.conf (5)).
+.\"
+.TP
+.B LG_STRIP
+Causes the LG to strip login information from the looking glass results.
+Since Expect often munges disabling echo when passwords are entered,
+this is a SECURITY CONCERN!  However, this output can be very useful for
+debugging clogin problems.
+.\"
+.TP
+.B LG_STYLE
+Defines the URL of a style sheet to be used for HTML formatting.
+.\"
+.TP
+.B PATH
+Is a colon separated list of directory pathnames in the file system
+where rancid's login scripts,
+.IR clogin (1)
+etc.)
+and programs needed within these, such as
+.IR telnet (1),
+are located.
+Its value is set by configure.  Should it be necessary to modify PATH,
+note that it must include $BASEDIR/bin (see above).
+.\"
+.TP
+Queries		...................................
+.\"
+.El
+.\"
+.SH ENVIRONMENT
+.Bl -tag -width LG_CONF -compact
+.TP
+.B LG_CONF
+Location of
+.B lg.conf
+file.  See the
+.IR FILES
+section for more information.
+.El
+.\"
+.SH ERRORS
+.B lg.conf
+is interpreted directly by 
+.IR perl (1),
+so its syntax follows that of perl.  Syntax errors may produce quite unexpected
+results.
+.SH FILES
+.Bl -tag -width @sysconfdir@/rancid.conf -compact
+.TP
+.B @sysconfdir@/lg.conf
+Configuration file described here.
+.sp
+.B lg.conf
+is located by the value of the environment variable LG_CONF, in the CWD
+(current working directory), or the sysconfdir defined when rancid was
+installed, in that order.
+.El
+.SH "SEE ALSO"
+.BR cloginrc (5),
+.BR lg_intro (1),
+.BR router.db (5)
+.\"
+.SH HISTORY
+In RANCID releases prior to 2.3,
+.B lg.conf
+was located in the util/lg sub-directory of the install path.  This was
+changed to be more consistent with common file location practices.

@@ -1,0 +1,146 @@
+#! /bin/sh
+##
+## $Id: getipacctg 2096 2009-06-17 21:49:46Z heas $
+##
+## Copyright (c) 1997-2007 by Terrapin Communications, Inc.
+## All rights reserved.
+##
+## This code is derived from software contributed to and maintained by
+## Terrapin Communications, Inc. by Henry Kilmer, John Heasley, Andrew Partan,
+## Pete Whiting, Austin Schutz, and Andrew Fort.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted provided that the following conditions
+## are met:
+## 1. Redistributions of source code must retain the above copyright
+##    notice, this list of conditions and the following disclaimer.
+## 2. Redistributions in binary form must reproduce the above copyright
+##    notice, this list of conditions and the following disclaimer in the
+##    documentation and/or other materials provided with the distribution.
+## 3. All advertising materials mentioning features or use of this software
+##    must display the following acknowledgement:
+##        This product includes software developed by Terrapin Communications,
+##        Inc. and its contributors for RANCID.
+## 4. Neither the name of Terrapin Communications, Inc. nor the names of its
+##    contributors may be used to endorse or promote products derived from
+##    this software without specific prior written permission.
+## 5. It is requested that non-binding fixes and modifications be contributed
+##    back to Terrapin Communications, Inc.
+##
+## THIS SOFTWARE IS PROVIDED BY Terrapin Communications, INC. AND CONTRIBUTORS
+## ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+## TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+## PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COMPANY OR CONTRIBUTORS
+## BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+## CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+## SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+## INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+## POSSIBILITY OF SUCH DAMAGE.
+# 
+#  The expect login scripts were based on Erik Sherk's gwtn, by permission.
+# 
+#  The original looking glass software was written by Ed Kern, provided by
+#  permission and modified beyond recognition.
+#
+# getipacctg uses clogin to login to a cisco router, collect the o/p of
+# show ip accounting, and sort by the greatest number of bytes.  If a
+# second argument is supplied, it is a number indicating the top N producers.
+# a third (3 to N) argument(s) specify a prefix(es) to match/select src/dst
+# IPs, while others will be filtered.
+#
+# usage: getipacctg <router name> [<number of lines off the top>] \
+#						[<src/dest prefix filter> [...]]
+# example:
+#	getipacctg router 25 192.168.0.0/24
+#	will display the top 25 for src or dst ip's within prefix
+#	192.168.0.0/24
+#
+# Contributed to rancid by Steve Neighorn of SCN Reasearch.
+
+TMP="/tmp/ipacct.$$.prefixes"
+TMP2="/tmp/ipacct.$$.sorted"
+TMP3="/tmp/ipacct.$$.pl"
+
+if [ $# -eq 0 ] ; then
+    echo "usage: getipacctg router_name [<number of lines off the top>] [<src/dest prefix filter> [...]]" >&2
+    exit 1;
+fi
+
+trap 'rm -fr /tmp/ipacct.$$ $TMP $TMP2 $TMP3;' 1 2 15
+clogin -c 'show ip accounting' $1 > /tmp/ipacct.$$
+
+if [ $? -ne 0 ] ; then
+    echo "clogin failed." >&2
+    exit 1
+fi
+# rest of the command-line options
+exec 6>$TMP
+HEAD="cat"
+shift
+while [ $# -ne 0 ] ; do
+    echo $1 | grep '/' > /dev/null
+    if [ $? -eq 1 ] ; then
+	HEAD="head -$1"
+    else
+	echo $1 1>&6
+    fi
+    shift
+done
+6>&-
+
+egrep '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+ +[0-9]+\.[0-9]+\.' /tmp/ipacct.$$ | \
+	sed -e 's/^ *//' -e 's/  */ /g' -e 's/.$//' | \
+	awk '{print $4":"$0;}' | sort -nr | \
+	sed -e 's/^[^:]*://' > $TMP2
+
+if [ -s $TMP ] ; then
+cat > $TMP3 <<PERL
+	my(@prefs);
+	my(\$nprefs) = 0;
+	sub ip_to_int {
+	    # Given xxx.xxx.xxx.xxx return corresponding integer.
+	    my(\$int);
+	    my(\$ip) = shift;
+	    \$ip=~s/\s*//g;
+	    \$ip =~ /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})\$/;
+	    my (\$a,\$b,\$c,\$d) = (int(\$1),int(\$2),int(\$3),int(\$4));
+	    return 0 + ((\$a << 24) + (\$b << 16) + (\$c << 8) + \$d) ;
+	}
+	open(PREFS, "< \$ARGV[0]") || die "could not open \$ARGV[0]\n";
+	while (<PREFS>) {
+	    chomp;
+	    s/\s*//g;
+	    /(.*)\/(.*)\$/;
+	    my(\$ip) = \$1; my(\$mask) = \$2;
+	    \$ip = ip_to_int(\$ip);
+	    \$mask = (~0) << (32 - \$mask);
+	    \$ip = \$ip & (\$mask);
+	    \$prefs[\$nprefs++] = \$ip;
+	    \$prefs[\$nprefs++] = \$mask;
+	}
+	close(PREFS);
+	open(DATA, "< \$ARGV[1]") || die "could not open \$ARGV[1]\n";
+	while (<DATA>) {
+	    chomp;
+	    @A = split(/ /);
+	    \$A[0] = ip_to_int(\$A[0]);
+	    \$A[1] = ip_to_int(\$A[1]);
+	    for (\$f = 0; \$f < \$nprefs; \$f += 2) {
+		if ((\$A[0] & \$prefs[\$f + 1]) == \$prefs[\$f] ||
+		    (\$A[1] & \$prefs[\$f + 1]) == \$prefs[\$f]) {
+		    print "\$_\n";
+		    break;
+		}
+	    }
+	}
+PERL
+    perl $TMP3 $TMP $TMP2 | $HEAD
+else
+    $HEAD $TMP2
+fi
+
+rm -fr /tmp/ipacct.$$ $TMP $TMP2 $TMP3
+trap ';' 1 2 15
+exit 0

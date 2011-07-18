@@ -1,0 +1,119 @@
+.\"
+.hys 50
+.TH "par" "1" "18 December 2007"
+.SH NAME
+par \- parallel command processing
+.SH SYNOPSIS
+.B par
+[\fB\-dfiqx\fP]
+[\c
+.BI \-c\ 
+command]
+[\c
+.BI \-l\ 
+logfile]
+[\c
+.BI \-n\c
+ #]
+file
+[file...]
+.SH DESCRIPTION
+.B par
+takes a list of files to run a command on.  The first line of each file begins
+with a colon (:) or a pound-sign (#).  If a colon, the remainder of the
+line is a command to run for each of the subsequent lines.  If a pound-sign,
+then each subsequent line is a (self-contained) command, unless the 
+.B \-c
+option was specified, in which case it operates as if the argument to
+.B \-c
+had followed a colon on the first line.
+.PP
+In each of the cases where the lines of the file following the first are
+not commands (i.e.: colon or -c), instances of open-close braces ({}) in the
+command will be replaced by these values.
+.PP
+For example, a inputfile whose contents is:
+.sp
+	: echo {}
+.br
+	a
+.br
+	b
+.br
+	c
+.sp
+run with
+.B par
+like so:
+.sp
+	%par -q inputfile
+.sp
+will produce the following output (order will vary):
+.sp
+	b
+.br
+	a
+.br
+	c
+.PP
+The command-line options are as follows:
+.PP
+.TP
+.B \-c
+Command to be run on each of the arguments following the command-line
+options, where the first line of the input file(s) begins with a pound-sign
+(#).
+.\"
+.TP
+.B \-d
+Print debugging information on standard error (stderr).
+.\"
+.TP
+.B \-f
+No file or STDIN, just run a quantity of the command specified with -c.
+.\"
+.TP
+.B \-i
+Run commands interactively through (multiple) 
+.BR xterm (1)
+processes.
+.\"
+.TP
+.B \-l
+Prefix of logfile name, as in prefix.N where N is the
+.B par
+process number ([0..]).
+.sp
+Default: par.log.<time>.[0..]
+.\"
+.TP
+.B \-n
+Number of simultaneous processes.
+.sp
+Default: 3
+.\"
+.TP
+.B \-q
+Quiet mode.  Do not log anything.
+.B \-q
+is mutually exclusive with the
+.B \-x
+and
+.B \-l
+options and the option appearing last will take precedence.
+.\"
+.TP
+.B \-x
+View par logs in real-time via an 
+.BR xterm (1).
+.El
+.SH FILES
+.br
+.nf
+.\" set tabstop to longest possible filename, plus a wee bit
+.ta \w'par.log.1006028679.00  'u
+\fIpar.log.T.N\fR Log file; where T is the current time in seconds since the
+epoch and N is the par process number ([0..]).
+.\"
+.\" .SH "SEE ALSO"
+.\" .BR expect (1)

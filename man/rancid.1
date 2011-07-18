@@ -1,0 +1,167 @@
+.\"
+.hys 50
+.TH "rancid" "1" "8 April 2010"
+.SH NAME
+rancid \- Cisco configuration filter
+.SH SYNOPSIS
+.B rancid
+[\fB\-dlV\fP]
+(\fB\-f\fP filename | hostname)
+.SH DESCRIPTION
+.B rancid
+is a
+.BR perl (1)
+script which uses the login scripts (see
+.BR clogin (1))
+to login to a device, execute commands to display the configuration, etc,
+then filters the output for formatting, security, and so on.
+.B rancid's
+product is a file with the name of it's last argument plus the suffix .new.
+For example,
+.IR hostname.new .
+.PP
+There are complementary scripts for other platforms and/or manufacturers
+that are supported by
+.BR rancid (1).
+Briefly, these are:
+.sp
+.TP 15
+.B agmrancid
+Cisco Anomaly Guard Module (AGM)
+.TP 15
+.B arancid
+Alteon WebOS switches
+.TP 15
+.B arrancid
+Arista Networks devices
+.TP
+.B brancid
+Bay Networks (nortel)
+.TP
+.B cat5rancid
+Cisco catalyst switches
+.TP
+.B cssrancid
+Cisco content services switches
+.TP
+.B erancid
+ADC-kentrox EZ-T3 mux
+.TP
+.B f10rancid
+Force10
+.TP
+.B f5rancid
+F5 BigIPs
+.TP
+.B fnrancid
+Fortinet Firewalls
+.TP
+.B francid
+Foundry and HP procurve OEMs of Foundry
+.TP
+.B hrancid
+HP Procurve Switches
+.TP
+.B htranicd
+Hitachi Routers
+.TP
+.B jerancid
+Juniper Networks E-series
+.TP
+.B jrancid
+Juniper Networks
+.TP
+.B mrancid
+MRTd
+.TP
+.B mrvrancid
+MRV optical switches
+.TP
+.B nrancid
+Netscreen firewalls
+.TP
+.B nsrancid
+Netscaler
+.TP
+.B nxrancid
+Cisco Nexus boxes
+.TP
+.B prancid
+Procket Networks
+.TP
+.B rivrancid
+Riverstone
+.TP
+.B rrancid
+Redback
+.TP
+.B srancid
+SMC switch (some Dell OEMs)
+.TP
+.B trancid
+Netopia sDSL/T1 routers
+.TP
+.B tntrancid
+Lucent TNT
+.TP
+.B xrancid
+Extreme switches
+.TP
+.B xrrancid
+Cisco IOS-XR boxes
+.TP
+.B zrancid
+Zebra routing software
+.PP
+The command-line options are as follows:
+.TP
+.B \-V
+Prints package name and version strings.
+.TP
+.B \-d
+Display debugging information.
+.\"
+.TP
+.B \-l
+Display somewhat less debugging information.
+.\"
+.TP
+.B \-f
+.B rancid
+should interpret the next argument as a filename which contains the
+output it would normally collect from the device (
+.I hostname\c
+) with
+.IR clogin (1).
+.SH "SEE ALSO"
+.BR control_rancid (1),
+.BR clogin (1),
+.BR rancid.conf (5)
+.\"
+.SH "CAVEATS"
+Cisco IOS offers a DHCP server that maintains a text database which can be
+stored remotely or on local storage.
+If stored locally, the file changes constantly and causes constant diffs
+from rancid.
+If this file's name ('ip dhcp database') matches the regex
+dhcp_[^[:space:].]\.txt, it will be filtered.
+.Pp
+For Catalyst switches running CatOS, type
+.B cat5,
+the prompt must end with '>'.
+.BR clogin (1)
+looks for '>' to determine when a login is successful.  For example:
+.sp
+.in +1i
+.nf
+cat5k>
+cat5k> enable
+Password: 
+cat5k> (enable) 
+.fi
+.in -1i
+.PP
+.B rancid
+works on Cisco Catalyst 1900 series switches that are running Enterprise
+Edition software.  This software provides a menu at connection time that
+allows a command line interface to be used by entering 'K' at the prompt.

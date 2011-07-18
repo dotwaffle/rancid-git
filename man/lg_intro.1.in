@@ -1,0 +1,65 @@
+.\"
+.hys 50
+.TH "lg_intro" "1" "24 Jan 2001"
+.SH NAME
+lg_intro \- introduction to the looking glass
+.\"
+.SH INTRODUCTION
+The
+.B looking glass
+offers a web based interface to routers to users without their needing
+permission to login to the router.  This may be a perfect interface for customer
+support or less savvy folks, and many ISPs have given public access to such
+an interface as a "route server."
+.\"
+.SH DESCRIPTION
+The looking glass consists of two CGI
+.BR perl (1)
+scripts,
+.IR lg.cgi
+and
+.IR lgform.cgi ,
+and the
+.BR lg.conf (5)
+configuration file.
+.PP
+Both of these scripts begin with reading the configuration file.  If
+there is an error in the file's syntax or if the file can not be found, error
+messages will be displayed on standard-error.  The Apache http server
+redirects standard-error to its error log file by default.
+.PP
+lgform.cgi displays a html form consisting of a list of possible 
+router commands that can be run and a scrolling list of routers that
+these commands may be run on.  When the form is submitted, lg.cgi is
+run.
+.PP
+lg.cgi begins by performing some basic checks on the
+arguments passed to it.  If these checks pass, lg.cgi either displays
+cached data from a previous invocation, if that data exists and is
+within the cache interval, or uses
+.BR clogin (1)
+to login to the device and execute the command.  The
+results of the command are cached if applicable and displayed for the
+user.
+.\"
+.SH "GETTING STARTED"
+Besides 
+.BR lg.conf (5),
+additional instructions for setting up the looking glass can be found
+in the README file under
+.IR @pkgdatadir@/README.lg .
+.PP
+Note that the looking glass scripts require a few perl modules not
+included with rancid.  Rancid's configure process does not check for
+these.  See the README file.
+.\"
+.SH "SEE ALSO"
+.BR cloginrc (5),
+.BR clogin (1),
+.BR lg.conf (5)
+.SH HISTORY
+Rancid's looking glass is based on Ed Kern's (included by permission,
+thanks Ed!), which could once be found on http://nitrous.digex.net/ but
+has apparently been removed.  Support for Juniper and Foundry devices,
+use of rancid's device login scripts, and additional commands and checks
+have been added to the original.

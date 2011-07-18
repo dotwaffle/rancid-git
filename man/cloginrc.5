@@ -1,0 +1,307 @@
+.\"
+.\" $Id: cloginrc.5 2139 2010-02-10 19:29:27Z heas $
+.\"
+.hys 50
+.TH "cloginrc" "5" "9 February 2009"
+.SH NAME
+ \.cloginrc \- clogin configuration file
+.SH DESCRIPTION
+.B .cloginrc
+contains configuration information for
+.BR alogin (1),
+.BR blogin (1),
+.BR clogin (1),
+.BR elogin (1),
+.BR flogin (1),
+.BR hlogin (1),
+.BR htlogin (1),
+.BR jlogin (1),
+.BR nlogin (1),
+.BR nslogin (1),
+.BR rivlogin (1),
+and
+.BR tntlogin (1),
+such as usernames, passwords, ssh encryption type, etc., and is read at
+run-time.
+.PP
+Each line contains either white-space (blank line), a comment which begins
+with the comment character '#' and may be preceded by white-space, or one
+of the directives listed below.
+.PP
+Each line containing a directive is of the form:
+.PP
+.in +1i
+.nf
+add <directive> <hostname glob> {<value>} [{<value>} ...]
+.sp
+or
+.sp
+include {<file>}
+.fi
+.in -1i
+.PP
+Note: the braces ({}) surrounding the values is significant when the values
+include TCL meta-characters.  Best common practice is to always enclose the
+values in braces.  If a value includes a (left or right) brace or space
+character, it must be backslash-escaped, as in:
+.PP
+.in +1i
+.nf
+add user <hostname glob> {foo\\}bar}
+add user <hostname glob> {foo\\ bar}
+.fi
+.in -1i
+.PP
+As
+.B .cloginrc
+is searched for a directive matching a hostname, it is always the first
+matching instance of a directive, one whose hostname glob expression matches
+the hostname, which is used.  For example; looking up the "password"
+directive for hostname foo in a
+.B .cloginrc
+file containing
+.sp
+.in +1i
+.nf
+add password *   {bar} {table}
+add password foo {bar} {table}
+.fi
+.in -1i
+.sp
+would return the first line, even though the second is an exact match.
+.PP
+.B .cloginrc
+is expected to exist in the user's home directory and
+must not be readable, writable, or executable by "others".
+.B .cloginrc
+should be
+mode 0600, or 0640 if it is to be shared with other users who are members
+of the same unix group.  See
+.BR chgrp (1)
+and
+.BR chmod (1)
+for more information on ownership and file modes.
+.SH DIRECTIVES
+The accepted directives are (alphabetically):
+.PP
+.\"
+.TP
+.B add autoenable <router name glob> {[01]}
+When using locally defined usernames or AAA, it is possible to have a login
+which is automatically enabled.  This is, that user has enable privileges
+without the need to execute the enable command.  The router's prompt is
+different for enabled mode, ending with a # rather than a >.
+.sp
+Example: add autoenable * {1}
+.sp
+Default: 0
+.sp
+zero, meaning that
+the user is not automatically enabled and 
+.IR clogin
+should execute the enable command to gain enable privileges, unless
+negated by the noenable directive or \-noenable command\-line option.
+.sp
+Also see the
+.B noenable
+directive.
+.\"
+.TP
+.B add cyphertype <router name glob> {<ssh encryption type>}
+cyphertype defines which encryption algorithm is used with ssh.  A device
+may not support the type ssh uses by default.  See
+.BR ssh (1)'s\c
+ \-c option for details.
+.sp
+Default: {3des}
+.\"
+.TP
+.B add enableprompt <router name glob> {"<enable prompt>"}
+When using AAA with a Cisco router or switch, it is possible to redefine the
+prompt the device presents to the user for the enable password.  enableprompt
+may be used to adjust the prompt that
+.IR clogin
+should look for when trying to login.  Note that enableprompt can be a Tcl
+style regular expression.
+.sp
+Example: add enableprompt rc*.example.net {"\\[Ee]nter\\ the\\ enable\\ password:"}
+.sp
+Default: "\\[Pp]assword:"
+.\"
+.TP
+.B add enauser <router name glob> {<username>}
+This is only needed if a device prompts for a username when gaining
+enable privileges and where this username is different from that defined
+by or the default of the user directive.
+.\"
+.TP
+.B add identity <router name glob> {<ssh identity file path>}
+May be used to specify an alternate identity file for use with ssh(1).
+See ssh's \-i option for details.
+.sp
+Default: your default identity file.  see ssh(1).
+.\"
+.TP
+.B add method <router name glob> {ssh} [{...}]
+Defines, in order, the connection methods to use for a device from the
+set {ssh, telnet, rsh}.  Method telnet may have a suffix, indicating an
+alternate TCP port, of the form ":port".
+.sp
+Note: Different versions of telnet treat the specification of a
+port differently.  In particular, BSD derived telnets do not do
+option negotiation when a port is given.  Some devices, Extreme
+switches for example, have undesirable telnet default options such
+as linemode.  In the BSD case, to enable option negotiation when
+specifying a port the method should be "{telnet:-23}" or you should
+add "mode character" to .telnetrc.  See
+.BR telnet (1)
+for more information on telnet command-line syntax, telnet options,
+and .telnetrc.
+.sp
+Example: add method * {ssh} {telnet:-3000} {rsh}
+.sp
+Which would cause
+.IR clogin
+to first attempt an ssh connection to the device and if that were
+to fail with connection refused, a telnet connection to port 3000
+would be tried, and then a rsh connection.
+.sp
+Note that not all platforms support all of these connection methods.
+.sp
+Default: {telnet} {ssh}
+.\"
+.TP
+.B add noenable <router name glob> {1}
+.IR clogin
+will not try to gain enable privileges when noenable is matched for a
+device.  This is equivalent to
+.IR "clogin" 's
+-noenable command-line option.
+.sp
+Note that this directive is meaningless for
+.BR jlogin (1),
+.BR nlogin (1)
+and
+.BR clogin (1)
+[for Extreme]
+which do not have the concept of "enabled" and/or no way to elevate
+privleges once logged in; a user either has the necessary privleges or
+doesn't.
+.\"
+.TP
+.B add passphrase <router name glob> {"<SSH passphrase>"}
+Specify the SSH passphrase.  Note that this may be particular to an
+.B identity
+directive.  The passphrase will default to the
+.B password
+for the given router.
+.sp
+Example: add passphrase rc*.example.net {the\\ bird\\ goes\\ tweet}
+.\"
+.TP
+.B add passprompt <router name glob> {"<password prompt>"}
+When using AAA with a Cisco router or switch, it is possible to redefine the
+prompt the device presents to the user for the password.  passprompt may be
+used to adjust the prompt that
+.IR clogin
+should look for when trying to login.  Note that passprompt can be a Tcl
+style regular expression.
+.sp
+Example: add passprompt rc*.example.net {"\\[Ee]nter\\ the\\ password:"}
+.sp
+Default: "(\\[Pp]assword|passwd):"
+.\"
+.TP
+.B add password <router name glob> {<vty passwd>} [{<enable passwd>}]
+Specifies a vty password, that which is prompted for upon the connection
+to the router.  The last argument is the enable password and need not be
+specified if the device also has a matching noenable or autoenable
+directive or the corresponding command-line options are used.
+.\"
+.TP
+.B add sshcmd <router name glob> {<ssh>}
+<ssh> is the name of the ssh executable.  OpenSSH uses a command-line
+option to specify the protocol version, but other implementations use
+a separate binary such as "ssh1".
+.B sshcmd
+allows this to be adjusted as necessary for the local environment.
+.sp
+Default: ssh
+.\"
+.TP
+.B add timeout <router name glob> {<seconds>}
+Time in seconds that the login script will wait for input from the device
+before timeout.
+.sp
+Default: device dependent
+.\"
+.\" .TP
+.\" .B add rc <router name glob> {<cmd;cmd>}
+.\" rc is used to specifies a command that will be run by
+.\" .IR clogin
+.\" immediately after logging into the device.  Multiple commands may be
+.\" specified by separating them with semi-colons (;).  The command must
+.\" not be one which expects additional input from the user, such as 'copy
+.\" rcp startup-config' on a Cisco.
+.\" .sp
+.\" Example: add rc *.domain.net {terminal monitor;show version}
+.\"
+.TP
+.B add user <router name glob> {<username>}
+Specifies a username
+.IR clogin
+should use if or when prompted for one.
+.sp
+Default: $USER (or $LOGNAME), i.e.: your Unix username.
+.\"
+.TP
+.B add userpassword <router name glob> {<user password>}
+Specifies a password to be associated with a user, if different from that
+defined with the password directive.
+.\"
+.TP
+.B add userprompt <router name glob> {"<username prompt>"}
+When using AAA with a Cisco router or switch, it is possible to redefine the
+prompt the device presents to the user for the username.  userprompt may be
+used to adjust the prompt that
+.IR clogin
+should look for when trying to login.  Note that userprompt can be a Tcl
+style regular expression.
+.sp
+Example: add userprompt rc*.example.net {"\\[Ee]nter\\ your\\ username:"}
+.sp
+Default: "(Username|login|user name):"
+.\"
+.TP
+.B include {<file>}
+<file> is the pathname of an additional
+.B .cloginrc
+file to include at that point.  It is evaluated immediately.  That is
+important with regard to the order of matching hostnames for a given
+directive, as mentioned above.  This is useful if you have your own
+.B .cloginrc
+plus an additional
+.B .cloginrc
+file that is shared among a group of folks.
+.sp
+If <file> is not a full pathname, $HOME/ will be prepended.
+.sp
+Example: include {.cloginrc.group}
+.El
+.SH FILES
+.br
+.nf
+.\" set tabstop to longest possible filename, plus a wee bit
+.ta \w'xHOME/xcloginrc  'u
+\fI$HOME/.cloginrc\fR               Configuration file described here.
+.\"
+\fIshare/rancid/cloginrc.sample\fR  A sample \fB.cloginrc\fR.
+.\"
+.SH ERRORS
+.B .cloginrc
+is interpreted directly by Tcl, so its syntax follows that of Tcl.  Errors
+may produce quite unexpected results.
+.SH "SEE ALSO"
+.BR clogin (1),
+.BR glob (3),
+.BR tclsh (1)

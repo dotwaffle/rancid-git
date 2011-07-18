@@ -1,0 +1,378 @@
+#! @PERLV_PATH@
+##
+## $Id: nrancid.in 2246 2010-09-08 01:36:07Z heas $
+##
+## @PACKAGE@ @VERSION@
+## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
+## All rights reserved.
+##
+## This code is derived from software contributed to and maintained by
+## Terrapin Communications, Inc. by Henry Kilmer, John Heasley, Andrew Partan,
+## Pete Whiting, Austin Schutz, and Andrew Fort.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted provided that the following conditions
+## are met:
+## 1. Redistributions of source code must retain the above copyright
+##    notice, this list of conditions and the following disclaimer.
+## 2. Redistributions in binary form must reproduce the above copyright
+##    notice, this list of conditions and the following disclaimer in the
+##    documentation and/or other materials provided with the distribution.
+## 3. All advertising materials mentioning features or use of this software
+##    must display the following acknowledgement:
+##        This product includes software developed by Terrapin Communications,
+##        Inc. and its contributors for RANCID.
+## 4. Neither the name of Terrapin Communications, Inc. nor the names of its
+##    contributors may be used to endorse or promote products derived from
+##    this software without specific prior written permission.
+## 5. It is requested that non-binding fixes and modifications be contributed
+##    back to Terrapin Communications, Inc.
+##
+## THIS SOFTWARE IS PROVIDED BY Terrapin Communications, INC. AND CONTRIBUTORS
+## ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+## TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+## PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COMPANY OR CONTRIBUTORS
+## BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+## CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+## SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+## INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+## POSSIBILITY OF SUCH DAMAGE.
+# 
+# Amazingly hacked version of Hank's rancid - this one tries to
+# deal with Netscreen firewalls
+#
+# Original Netscreen hacks implemented by Stephen Gill [gillsr@yahoo.com]
+#
+#  RANCID - Really Awesome New Cisco confIg Differ
+#
+# usage: rancid [-dV] [-l] [-f filename | hostname]
+#
+use Getopt::Std;
+getopts('dflV');
+if ($opt_V) {
+    print "@PACKAGE@ @VERSION@\n";
+    exit(0);
+}
+$log = $opt_l;
+$debug = $opt_d;
+$file = $opt_f;
+$host = $ARGV[0];
+$found_end = 0;
+$timeo = 90;				# nlogin timeout in seconds
+
+my(@commandtable, %commands, @commands);# command lists
+my($aclsort) = ("ipsort");		# ACL sorting mode
+my($filter_commstr);			# SNMP community string filtering
+my($filter_pwds);			# password filtering mode
+
+# This routine is used to print out the router configuration
+sub ProcessHistory {
+    my($new_hist_tag,$new_command,$command_string,@string) = (@_);
+    if ((($new_hist_tag ne $hist_tag) || ($new_command ne $command))
+	&& scalar(%history)) {
+	print eval "$command \%history";
+	undef %history;
+    }
+    if (($new_hist_tag) && ($new_command) && ($command_string)) {
+	if ($history{$command_string}) {
+	    $history{$command_string} = "$history{$command_string}@string";
+	} else {
+	    $history{$command_string} = "@string";
+	}
+    } elsif (($new_hist_tag) && ($new_command)) {
+	$history{++$#history} = "@string";
+    } else {
+	print "@string";
+    }
+    $hist_tag = $new_hist_tag;
+    $command = $new_command;
+    1;
+}
+
+sub numerically { $a <=> $b; }
+
+# This is a sort routine that will sort numerically on the
+# keys of a hash as if it were a normal array.
+sub keynsort {
+    local(%lines) = @_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $key (sort numerically keys(%lines)) {
+	$sorted_lines[$i] = $lines{$key};
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# This is a sort routine that will sort on the
+# keys of a hash as if it were a normal array.
+sub keysort {
+    local(%lines) = @_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $key (sort keys(%lines)) {
+	$sorted_lines[$i] = $lines{$key};
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# This is a sort routine that will sort on the
+# values of a hash as if it were a normal array.
+sub valsort{
+    local(%lines) = @_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $key (sort values %lines) {
+	$sorted_lines[$i] = $key;
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# This is a numerical sort routine (ascending).
+sub numsort {
+    local(%lines) = @_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $num (sort {$a <=> $b} keys %lines) {
+	$sorted_lines[$i] = $lines{$num};
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# This is a sort routine that will sort on the
+# ip address when the ip address is anywhere in
+# the strings.
+sub ipsort {
+    local(%lines) = @_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $addr (sort sortbyipaddr keys %lines) {
+	$sorted_lines[$i] = $lines{$addr};
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# These two routines will sort based upon IP addresses
+sub ipaddrval {
+    my(@a) = ($_[0] =~ m#^(\d+)\.(\d+)\.(\d+)\.(\d+)$#);
+    $a[3] + 256 * ($a[2] + 256 * ($a[1] +256 * $a[0]));
+}
+sub sortbyipaddr {
+    &ipaddrval($a) <=> &ipaddrval($b);
+}
+
+# This routine parses "get system"
+sub GetSystem {
+    print STDERR "    In GetSystem: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	next if /^\s*$/;
+	last if(/$prompt/);
+	# throw away the pager prompts
+	s/^--- more ---[\s\b]*//g;
+
+	/^Serial Number: (\S+), Control Number: [0-9a-f]+$/ &&
+		ProcessHistory("SYSTEM","","", "#SN: $1\n") && next;
+	/^Product Name: (\S+)$/ &&
+		ProcessHistory("SYSTEM","","", "#Product: $1\n") && next;
+	/^Hardware Version: (\S+), / &&
+		ProcessHistory("SYSTEM","","", "#HW: $1\n") && next;
+	/^Software Version: (\S+), Type: (\S+)$/ &&
+		ProcessHistory("SYSTEM","","", "#Netscreen Type: $2\n#Software Version: $1\n") && next;
+	/^Image: (\S+), / &&
+		ProcessHistory("SYSTEM","","", "#Image: $1\n") && next;
+	/^Feature: (\S+)$/ &&
+		ProcessHistory("SYSTEM","","", "#Feature: $1\n") && next;
+	/^File Name: (\S+), Checksum: (\S+)$/ &&
+		ProcessHistory("SYSTEM","","", "#File Name: $1, Checksum: $2\n") && next;
+
+    }
+    ProcessHistory("SYSTEM","","","#\n");
+    return(0);
+}
+
+sub GetFile {
+    print STDERR "    In GetFile: $_" if ($debug);
+    while (<INPUT>) {
+	last if(/$prompt/);
+    }
+    ProcessHistory("FILE","","","#\n");
+    return(0);
+}
+
+sub GetConf {
+    print STDERR "    In GetConf: $_" if ($debug);
+    while (<INPUT>) {
+	tr/\015//d;
+	next if /^\s*$/;
+	next if /^Total Config.+$/i;
+	last if(/$prompt/);
+	# throw away the pager prompts
+	s/^--- more ---[\s\b]*//g;
+
+ 	if (/^set admin name "(\S+)"$/ && $filter_pwds >= 1) {
+	    ProcessHistory("ADMIN","","","#set admin name <removed>\n");
+	    next;
+	}
+ 	if (/^set admin password (\S+)$/ && $filter_pwds >= 1) {
+	    ProcessHistory("ADMIN","","","#set admin password <removed>\n");
+	    next;
+	}
+ 	if (/^set admin user (\S+) password (\S+) privilege (\S+)$/ &&
+							$filter_pwds >= 1) {
+	    ProcessHistory("ADMIN","","",
+		"#set admin user $1 password <removed> privilege $3\n");
+	    next;
+	}
+	if (/^set auth-server (\S+) radius secret / && $filter_pwds >= 1 ) {
+	    ProcessHistory("ADMIN","","",
+			   "#set auth-server $1 radius secret <removed>\n");
+	    next;
+	}
+	if (/^set ike gateway (.*) username (\S+)(.*) password (\S+)(.*)$/ &&
+							$filter_pwds >= 1) {
+	    ProcessHistory("ADMIN","","",
+		"#set ike gateway $1 username <removed>$3 password <removed>$5\n");
+	    next;
+	}
+	if (/^set ike gateway (.*) preshare "(\S+)"(.*)$/ &&
+							$filter_pwds >= 1) {
+	    ProcessHistory("ADMIN","","",
+		"#set ike gateway $1 preshare <removed>$3\n");
+	    next;
+	}
+	if (/^set auth-server (.*) secret "(\S+)"(.*)$/ &&
+							$filter_pwds >= 1) {
+	    ProcessHistory("ADMIN","","",
+		"#set auth-server $1 secret <removed>$3\n");
+	    next;
+	}
+	ProcessHistory("","","","$_");
+    }
+    $found_end=1;
+    return(1);
+}
+
+# dummy function
+sub DoNothing {print STDOUT;}
+
+# Main
+@commandtable = (
+	{'get system'		=> 'GetSystem'},
+	{'get conf'		=> 'GetConf'}
+);
+# Use an array to preserve the order of the commands and a hash for mapping
+# commands to the subroutine and track commands that have been completed.
+@commands = map(keys(%$_), @commandtable);
+%commands = map(%$_, @commandtable);
+
+$cisco_cmds=join(";",@commands);
+$cmds_regexp = join("|", map quotemeta($_), @commands);
+
+if (length($host) == 0) {
+    if ($file) {
+	print(STDERR "Too few arguments: file name required\n");
+	exit(1);
+    } else {
+	print(STDERR "Too few arguments: host name required\n");
+	exit(1);
+    }
+}
+open(OUTPUT,">$host.new") || die "Can't open $host.new for writing: $!\n";
+select(OUTPUT);
+# make OUTPUT unbuffered if debugging
+if ($debug) { $| = 1; }
+
+if ($file) {
+    print STDERR "opening file $host\n" if ($debug);
+    print STDOUT "opening file $host\n" if ($log);
+    open(INPUT,"<$host") || die "open failed for $host: $!\n";
+} else {
+    print STDERR "executing nlogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($debug);
+    print STDOUT "executing nlogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($log);
+    if (defined($ENV{NOPIPE})) {
+	system "nlogin -t $timeo -c \"$cisco_cmds\" $host </dev/null > $host.raw 2>&1" || die "nlogin failed for $host: $!\n";
+	open(INPUT, "< $host.raw") || die "nlogin failed for $host: $!\n";
+    } else {
+	open(INPUT,"nlogin -t $timeo -c \"$cisco_cmds\" $host </dev/null |") || die "nlogin failed for $host: $!\n";
+    }
+}
+
+# determine ACL sorting mode
+if ($ENV{"ACLSORT"} =~ /no/i) {
+    $aclsort = "";
+}
+# determine community string filtering mode
+if (defined($ENV{"NOCOMMSTR"}) &&
+    ($ENV{"NOCOMMSTR"} =~ /yes/i || $ENV{"NOCOMMSTR"} =~ /^$/)) {
+    $filter_commstr = 1;
+} else {
+    $filter_commstr = 0;
+}
+# determine password filtering mode
+if ($ENV{"FILTER_PWDS"} =~ /no/i) {
+    $filter_pwds = 0;
+} elsif ($ENV{"FILTER_PWDS"} =~ /all/i) {
+    $filter_pwds = 2;
+} else {
+    $filter_pwds = 1;
+}
+
+ProcessHistory("","","","#RANCID-CONTENT-TYPE: netscreen\n#\n");
+TOP: while(<INPUT>) {
+    tr/\015//d;
+    if (/^Error:/) {
+	print STDOUT ("$host nlogin error: $_");
+	print STDERR ("$host nlogin error: $_") if ($debug);
+	last;
+    }
+    while (/>\s*($cmds_regexp)\s*$/) {
+	$cmd = $1;
+	if (!defined($prompt)) {
+	    $prompt = ($_ =~ /^([^>]+->)/)[0];
+	    $prompt =~ s/([][}{)(\\])/\\$1/g;
+	    print STDERR ("PROMPT MATCH: $prompt\n") if ($debug);
+	}
+	print STDERR ("HIT COMMAND:$_") if ($debug);
+	if (!defined($commands{$cmd})) {
+	    print STDERR "$host: found unexpected command - \"$cmd\"\n";
+	    last TOP;
+	}
+	$rval = &{$commands{$cmd}};
+	delete($commands{$cmd});
+	if ($rval == -1) {
+	    last TOP;
+	}
+    }
+}
+print STDOUT "Done $logincmd: $_\n" if ($log);
+# Flush History
+ProcessHistory("","","","");
+# Cleanup
+close(INPUT);
+close(OUTPUT);
+
+if (defined($ENV{NOPIPE})) {
+    unlink("$host.raw") if (! $debug);
+}
+
+# check for completeness
+if (scalar(%commands) || !$found_end) {
+    if (scalar(%commands)) {
+	printf(STDOUT "$host: missed cmd(s): %s\n", join(',', keys(%commands)));
+	printf(STDERR "$host: missed cmd(s): %s\n", join(',', keys(%commands))) if ($debug);
+    }
+    if (!$found_end) {
+	print STDOUT "$host: End of run not found\n";
+	print STDERR "$host: End of run not found\n" if ($debug);
+	system("/usr/bin/tail -1 $host.new");
+    }
+    unlink "$host.new" if (! $debug);
+}

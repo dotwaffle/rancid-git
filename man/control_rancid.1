@@ -1,0 +1,57 @@
+.\"
+.hys 50
+.TH "control_rancid" "1" "5 October 2006"
+.SH NAME
+control_rancid \- run rancid for devices of a group
+.SH SYNOPSIS
+.B control_rancid
+[\fB\-V\fR] [\c
+.BI \-m\ \c
+mail_rcpt]\ \c
+[\c
+.BI \-r\ \c
+device_name]\ \c
+group
+.SH DESCRIPTION
+.B control_rancid
+is a
+.IR sh (1)
+script to parse a group's
+.BR router.db (5),
+run rancid for each of the devices, possibly re-run rancid for devices
+that failed collection, e-mail diffs, and e-mail error reports.
+.\"
+.PP
+.\"
+The command-line options are as follows:
+.TP
+.B \-V
+Prints package name and version strings.
+.TP
+.B \-m mail_rcpt
+Specify the recipient of diff mail, which is normally rancid-<group>.  The
+argument may be a single address, multiple comma separated addresses, or
+.B \-m
+may be specified multiple times.
+.\"
+.TP
+.B \-r device_name
+Specify the name, as it appears in the router.db, of a particular device 
+to collect and generate diffs for.  The device must be marked "up".
+.sp
+The 
+.B \-r
+option alters the subject line of the diff mail.  It will begin
+with <group name>/<device name> rather than just the group name alone.
+.\"
+.PP
+.B control_rancid
+is normally (and best) run via
+.BR rancid-run (1)
+which provides a locking mechanism on a group basis and saves output
+in a log file for each group.
+.\"
+.SH "SEE ALSO"
+.BR rancid-run (1),
+.BR rancid.conf (5),
+.BR router.db (5)

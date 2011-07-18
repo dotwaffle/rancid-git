@@ -1,0 +1,138 @@
+.\"
+.hys 50
+.TH "rancid-run" "1" "5 October 2006"
+.SH NAME
+rancid-run \- run rancid for each of the groups
+.SH SYNOPSIS
+.B rancid-run
+[\fB\-V\fR] [\c
+.BI \-f\ \c
+rancid.conf]\ \c
+[\c
+.BI \-f\ \c
+rancid.conf]\ \c
+[\c
+.BI \-m\ \c
+mail_rcpt]\ \c
+[\c
+.BI \-r\ \c
+device_name]\ \c
+[group [group ...]]
+.SH DESCRIPTION
+.B rancid-run
+is a
+.IR sh (1)
+script to run
+.IR rancid (1)
+for a set of rancid group(s).
+.PP
+.B rancid-run
+reads
+.BR rancid.conf (5)
+to configure itself, then uses
+.IR control_rancid (1)
+to run
+.IR rancid (1)
+for each rancid group.  The set of rancid groups can either be provided
+as command-line arguments or via the
+.I LIST_OF_GROUPS
+variable in
+.BR rancid.conf (5),
+if the group argument is omitted.
+.PP
+A lock file is maintained per-group to prevent simultaneous runs for a given
+group by
+.IR rancid-run (1).
+The lock file will be named
+.IR .<group>.run.lock
+and will be located in
+.IR $TMPDIR
+(see below).
+.PP
+A log file is produced under
+.IR $LOGDIR/logs
+for each rancid group processed.  The file name will be <group>.YYYYMMDD.HHMMSS
+(year month day . hour minute second).
+.PP
+.B rancid-run
+is normally used to run rancid from
+.BR cron (8).
+For example:
+.PP
+.in +1i
+.nf
+0 * * * *      /usr/local/rancid/bin/rancid-run
+.fi
+.in -1i
+.\"
+.PP
+.\"
+The command-line options are as follows:
+.TP
+.B \-V
+Prints package name and version strings.
+.TP
+.B \-f rancid.conf
+Specify an alternate configuration file.
+.TP
+.B \-m mail_rcpt
+Specify the recipient of diff mail, which is normally rancid-<group>.  The
+argument may be a single address, multiple comma separated addresses, or
+.B \-m
+may be specified multiple times.
+.\"
+.TP
+.B \-r device_name
+Run rancid for a single device,
+.IR device_name .
+.IR device_name
+should be name, as it appears in a group's router.db.  The device must be
+marked "up".  If a group is not specified on the command-line, rancid will
+be run against any group in which the device_name appears.
+.sp
+The 
+.B \-r
+option alters the subject line of the diff mail.  It will begin
+with <group name>/<device name> rather than just the group name alone.
+.\"
+.SH ENVIRONMENT
+.B rancid-run
+utilizes the following environment variables from
+.BR rancid.conf (5).
+.\"
+.TP
+.B BASEDIR
+Location of group directories, etc.  This is set to the "localstatedir"
+by the configure script at installation time.
+.\"
+.TP
+.B LIST_OF_GROUPS
+List of rancid groups to collect.
+.\"
+.TP
+.B PATH
+Search path for utilities.
+.\"
+.TP
+.B TMPDIR
+Directory to hold temporary and lock files.
+.SH ERRORS
+If rancid fails to run or collect a device's configuration, the particular
+group's log file (mentioned above) should be consulted.  Any errors produced
+by the revision control system (CVS or Subversion) or any of the rancid
+scripts should be included there, whether they be a botched cvs tree, login
+authentication failure, rancid configuration error, etc.
+If the log file produces no clues, the next debugging step should be run the
+commands manually.  For example, can the user who runs rancid login to the
+device with 'clogin hostname', and so on.
+.BR 
+.SH FILES
+.TP
+.B $BASEDIR/etc/rancid.conf
+.B rancid-run
+configuration file.
+.El
+.SH "SEE ALSO"
+.BR control_rancid (1),
+.BR rancid.conf (5),
+.BR router.db (5)

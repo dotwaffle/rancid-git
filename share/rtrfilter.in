@@ -1,0 +1,189 @@
+#! @PERLV_PATH@
+##
+## $Id: rtrfilter.in 2096 2009-06-17 21:49:46Z heas $
+##
+## Copyright (c) 1997-2007 by Terrapin Communications, Inc.
+## All rights reserved.
+##
+## This code is derived from software contributed to and maintained by
+## Terrapin Communications, Inc. by Henry Kilmer, John Heasley, Andrew Partan,
+## Pete Whiting, Austin Schutz, and Andrew Fort.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted provided that the following conditions
+## are met:
+## 1. Redistributions of source code must retain the above copyright
+##    notice, this list of conditions and the following disclaimer.
+## 2. Redistributions in binary form must reproduce the above copyright
+##    notice, this list of conditions and the following disclaimer in the
+##    documentation and/or other materials provided with the distribution.
+## 3. All advertising materials mentioning features or use of this software
+##    must display the following acknowledgement:
+##        This product includes software developed by Terrapin Communications,
+##        Inc. and its contributors for RANCID.
+## 4. Neither the name of Terrapin Communications, Inc. nor the names of its
+##    contributors may be used to endorse or promote products derived from
+##    this software without specific prior written permission.
+## 5. It is requested that non-binding fixes and modifications be contributed
+##    back to Terrapin Communications, Inc.
+##
+## THIS SOFTWARE IS PROVIDED BY Terrapin Communications, INC. AND CONTRIBUTORS
+## ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+## TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+## PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COMPANY OR CONTRIBUTORS
+## BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+## CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+## SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+## INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+## POSSIBILITY OF SUCH DAMAGE.
+# 
+#  The expect login scripts were based on Erik Sherk's gwtn, by permission.
+# 
+#  The original looking glass software was written by Ed Kern, provided by
+#  permission and modified beyond recognition.
+#
+# rtrtfilter - "| rtrfilter -x <perl regex> -i <perl regex> -f <regex file> \
+#	-u <From address> -s <subject> <rcpts>"
+#	expects to read an email message on stdin containing a diff from
+# rancid and emails a filtered copy to <rcpts> with the subject of the
+# original msg or the contents of -s <subject>.  the perl regex(es) specified
+# via -x or -i (exclusive and inclusive, respectively) are applied to the
+# router names (i.e.: files) from the "Index:" of the diff o/p.  alternatively,
+# the regex's may be specified in -f <regex file> in the form:
+#	# comment
+#	x <regex>
+#	# comment
+#	i <regex>
+# do not include /'s in the regex's.
+# e.g.:
+#	#i	inc1
+#	i	a0[12]\.
+#	i	a0[34]\.
+#	# comment
+#	x router\.db
+#	x ^r0[0-9]
+#	#i foo
+#
+# exclusion takes precedence and defaults to nothing.  inclusion defaults to
+# everything.
+#
+# this program requires the Mail::Mailer module which can be found on CPAN.
+##
+BEGIN {
+$me = $0;
+$me =~ s/.*\/(\S+)$/$1/;
+}
+
+require 'newgetopt.pl';
+use Mail::Mailer;
+
+# process command line options
+$newgetopt'ignorecase=0;
+$newgetopt'autoabbrev=1;
+$result = &NGetOpt('h','x=s@','i=s@','f=s','s=s');
+&usage($result) if (defined($opt_h) || $result == 0);
+
+if ($#ARGV < 0) {
+    usage;
+}
+my($rcpts) = join(',', @ARGV);
+
+# if specified, read the regex file and append to @opt_i / @opt_x
+if (defined($opt_f)) {
+    open(FILE, "< $opt_f") || die "Cant open the regex file $opt_f: $!";
+
+    while (<FILE>) {
+	next if (! /^(i|x)\s+(.*$)/);
+	#/(i|x)\s+(.*)$/;
+	if ($1 eq "i" ) {
+	    push(@opt_i, $2);
+	} else {
+	    push(@opt_x, $2);
+	}
+    }
+    close(FILE);
+}
+
+# read the header, grok the subject line
+my($subject, $from);
+while (<STDIN>) {
+    last if (/^$/);
+    if (s/^from: //i) {
+	chomp;
+	$from = $_;
+    }
+    if (s/^subject: //i) {
+	chomp;
+	$subject = $_;
+    }
+}
+if (defined($opt_s)) { $subject = $opt_s;}
+if (defined($opt_u)) { $from = $opt_u;}
+
+# filter the remainder of the mail.  save mail in memory to avoid empty msgs
+my(@mail);
+my($skip) = 1;
+while (<STDIN>) {
+    # look for /^Index: ", the filtering key
+    if (/^Index: (.*)$/) {
+	# strip the directory before passing to filter()
+	my($line) = ($1 =~ /.*\/([^\/\s]*)$/);
+	$skip = filter($line);
+    }
+
+    next if ($skip);
+
+    push(@mail, $_);
+}
+
+# send mail, if any
+if ($#mail < 0) { exit; }
+$mailer = new Mail::Mailer 'sendmail', ('-t');
+$headers{From} = $from;
+$headers{"Reply-To"} = $from;
+$headers{"Errors-To"} = $from;
+$headers{Subject} = $subject;
+$headers{To} = $rcpts;
+$headers{Precedence} = "bulk";
+
+$mailer->open(\%headers);
+print $mailer @mail;
+$mailer->close;
+
+exit;
+
+# filter $line inclusive/exclusive (0 / 1)
+sub filter {
+    my($line) = shift;
+
+    # exclusion
+    if (defined(@opt_x)) {
+	foreach $regex (@opt_x) {
+	    if ($line =~ /$regex/) { return(1); }
+	}
+    }
+
+    # inclusion / default inclusion
+    if (! @opt_i) { return(0); }
+    foreach $regex (@opt_i) {
+	if ($line =~ /$regex/) { return(0); }
+    }
+
+    # inclusion regex specified, but fall through
+    return(1);
+}
+
+sub usage {
+    print STDERR <<USAGE;
+usage: $me [-h] [-i <perl regex>] [-x <perl regex>] [-f <regex file>] [-u <From: address>] [-s <subject>] <mail rcpt> [<rcpt> ...]
+	-h prints this message
+	-f file containing perl regex matching router names (mind the cwd())
+	-i perl regex matching router names (inclusive)
+	-u From: address
+	-s mail subject
+	-x perl regex matching router names (exclusive)
+USAGE
+ exit $_;
+}

@@ -1,0 +1,173 @@
+##
+## $Id: cisco-reload.exp 2096 2009-06-17 21:49:46Z heas $
+##
+## Copyright (c) 1997-2007 by Terrapin Communications, Inc.
+## All rights reserved.
+##
+## This code is derived from software contributed to and maintained by
+## Terrapin Communications, Inc. by Henry Kilmer, John Heasley, Andrew Partan,
+## Pete Whiting, Austin Schutz, and Andrew Fort.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted provided that the following conditions
+## are met:
+## 1. Redistributions of source code must retain the above copyright
+##    notice, this list of conditions and the following disclaimer.
+## 2. Redistributions in binary form must reproduce the above copyright
+##    notice, this list of conditions and the following disclaimer in the
+##    documentation and/or other materials provided with the distribution.
+## 3. All advertising materials mentioning features or use of this software
+##    must display the following acknowledgement:
+##        This product includes software developed by Terrapin Communications,
+##        Inc. and its contributors for RANCID.
+## 4. Neither the name of Terrapin Communications, Inc. nor the names of its
+##    contributors may be used to endorse or promote products derived from
+##    this software without specific prior written permission.
+## 5. It is requested that non-binding fixes and modifications be contributed
+##    back to Terrapin Communications, Inc.
+##
+## THIS SOFTWARE IS PROVIDED BY Terrapin Communications, INC. AND CONTRIBUTORS
+## ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+## TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+## PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COMPANY OR CONTRIBUTORS
+## BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+## CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+## SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+## INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+## POSSIBILITY OF SUCH DAMAGE.
+# 
+#  The expect login scripts were based on Erik Sherk's gwtn, by permission.
+# 
+#  The original looking glass software was written by Ed Kern, provided by
+#  permission and modified beyond recognition.
+#
+# This expect snippet is sourced by clogin (-s option) to issue a reload
+# command on a cisco router.  It DOES NOT save the config if it has been
+# modified.  This is an _example_ as it not guaranteed to work for all
+# applications.  PLEASE test for your environment.
+#
+# It expects the following variables via the -E option:
+#	reload_arg	='command argument' such as 'at 05:00' or 'cancel
+#
+# e.g. usage:
+# % clogin -s cisco-reload.exp -Ereload_arg='at 01:00' router
+# router
+#	Reload scheduled for 01:00:00 UTC Sat Jun 23 2001 (in 7 hours and 16 minutes)
+# % clogin -s cisco-reload.exp -Ereload_arg='at cancel' router
+# router
+#	% Ambiguous command:  "reload at cancel"
+#
+# % clogin -s cisco-reload.exp -Ereload_arg='cancel' router
+# router
+#	SHUTDOWN ABORTED
+#
+# exit is called at the end, so only one router can be handled per clogin.
+#
+# Keep in mind that it is important to NOT polute the global variable space.
+# Particularly, do not use variables used within clogin.  This may result in
+# indeterministic results.  An easy way to avoid this is to use a variable
+# name prefix (like 'E' or '_').
+#
+# Useful variables from clogin global space:
+#	router		router name as provided on the cmd-line
+#	prompt		cmd-line prompt as determined by clogin
+#
+# note: the tcl/expect parser is extremely stoopid.  Comment lines are NOT
+#	completely ignored!!  So, a '{' or '}' in a comment might produce
+#	unexpected results.
+##
+# exp_internal 1
+# log_user 1
+
+# take reload command from -Ereload_arg='at 05:00'
+if ([info exists Ereload_arg]) {
+	#puts "reload_arg == $Ereload_arg"
+	set reloadcmd "reload $Ereload_arg"
+} else {
+	send_error "ERROR: -Ereload_arg= was not set on the command-line.\n"
+	exit
+}
+
+#send_user "$router\n"
+
+send "\r"
+expect {
+    timeout 			{ send_error "Error: did not receive prompt\n"
+				  exit }
+    -re "^.*$prompt"		{ send "$reloadcmd\r"
+				  expect * {} }
+}
+# look for response
+expect	{
+    -re "configuration has been modified.*no.:"	{ send "no\r";
+					  exp_continue }
+    -re "Reload scheduled .*\r"		{ set sched $expect_out(0,string)
+					  exp_continue }
+    -re "SHUTDOWN ABORTED"		{ set sched $expect_out(0,string) }
+    -re "Proceed with .*confirm\]"	{ send "\r" }
+    -re "\n.*No reload "		{ set sched "no reload scheduled"
+					  send "\r" }
+    -re "% Ambig\[^\n\r]*"		{ set sched $expect_out(0,string) }
+}
+send "\r"
+expect "$prompt"
+if ([info exists sched]) {
+	send_user "\t$sched\n"
+}
+send "quit\r"
+expect {
+	timeout		{ send_error "Error: timeout waiting for EOF after quit\n"}
+	eof	{ exit 0 }
+}
+
+## dennis#reload in ?
+## Delay before reload (mmm or hhh:mm)
+##
+## dennis#reload in 100:10
+##
+## System configuration has been modified. Save? [yes/no]: no
+## Reload scheduled in 100 hours and 9 minutes
+## Proceed with reload? [confirm]
+## dennis#reload ca
+## dennis#reload cancel
+## dennis#
+##
+##
+## ***
+## *** --- SHUTDOWN ABORTED ---
+## ***
+##
+## dennis#wr
+## Building configuration...
+## [OK]
+## dennis#reload in 100:10
+## Reload scheduled in 100 hours and 10 minutes
+## Proceed with reload? [confirm]
+## dennis#rel
+## dennis#reload can
+## dennis#reload cancel
+## dennis#
+##
+##
+## ***
+## *** --- SHUTDOWN ABORTED ---
+## ***
+## System configuration has been modified. Save? [yes/no]: no
+## Reload scheduled for 11:51:48 PST Thu Dec 10 1998 (in 299 hours and 59 minutes)
+## Proceed with reload? [confirm]
+## ultra#reload can
+## ultra#
+##
+##
+## ***
+## *** --- SHUTDOWN ABORTED ---
+## ***
+## ultra# reload at 8:10 10 dec
+##
+## System configuration has been modified. Save? [yes/no]: no
+## Reload scheduled for 08:10:00 PST Thu Dec 10 1998 (in 296 hours and 17 minutes)
+## Proceed with reload? [confirm]
+## ultra#
+##

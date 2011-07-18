@@ -1,0 +1,279 @@
+Rancid is a "Really Awesome New Cisco confIg Differ" developed to
+maintain CVS controlled copies of router configs.
+
+*** The Following Information is Very Important ****
+Rancid 2.3 introduces a new directory layout.  It has been changed to more
+closely follow the standard path hierarchy, which is defined by the FHS
+standard and autoconf, and/or make these locations more easily configurable
+within rancid.
+
+The obvious advantage of this is making rancid more easily packagable; i.e.:
+NetBSD pkgsrc, FreeBSD port, Linux RPM, etc.
+
+Please please please please read the UPGRADING file for more information.
+**********
+
+The following is the packing list for Rancid, excluding files supporting
+configure (autoconf) and make.  .in is stripped from the files below by
+configure as substitutions are completed:
+
+README		This file.
+README.lg	Information about the Looking Glass.
+BUGS		Bug list.
+CHANGES		List of changes to Rancid.
+COPYING		RANCID license.
+FAQ		Frequently Asked Questions
+Todo		Partial list of what needs to be done.
+UPGRADING	Notes on upgrading rancid to a new version.
+cloginrc.sample	TCL commands to set passwords, usernames etc. used by clogin
+		and jlogin.  See cloginrc(5)
+etc/
+	lg.conf.sample		Sample Looking Glass configuration
+	rancid.conf.sample	Sample RANCID configuration
+bin/
+	clogin.in	Expect script that logs into routers and either presents
+			an interactive shell, runs a set of commands, or runs
+			another expect script.  It handles Cisco, Extreme,
+			Force10, Juniper E-series, Procket, Redback, Zebra/MRT.
+	control_rancid.in
+			Builds router list, calls rancid on each router and
+			handles cvs routines.
+	hpuifilter.c	HP procurve login filter - see hlogin(1).
+	par.in		Parallel processing of commands - any commands.
+	rancid-cvs.in	Creates all of the CVS and config directories.
+	rancid-run.in	Script designed to be run from cron.
+	rancid-fe.in	Chooses between rancid/[abefhjrx]rancid/cat5rancid.
+	rancid.in	Runs commands on cisco routers and processes the output.
+
+	agmrancid.in	Version of rancid.in for Cisco Anomaly Guard Module (AGM)
+	arancid.in	Version of rancid.in for Alteon switches.
+	brancid.in	Version of rancid.in for baynet/nortel routers.
+	cat5rancid.in	Version of rancid.in for Cisco Catalyst switches.
+	cssrancid.in	Version of rancid.in for Cisco CSS switches.
+	erancid.in	Version of rancid.in for ADC EZ-T3 muxes.
+	f10rancid.in	Version of rancid.in for Force10 routers.
+	f5rancid.in	Version of rancid.in for F5 BigIPs.
+	fnrancid.in	Version of rancid.in for Fortinet Firewalls.
+	francid.in	Version of rancid.in for Foundry switches.
+	hrancid.in	Version of rancid.in for HP Procurve switches.
+	htrancid.in	Version of rancid.in for Hitatchi routers.
+	jerancid.in	Version of rancid.in for Juniper E-series routers.
+	jrancid.in	Version of rancid.in for Juniper routers.
+	mrancid.in	Version of rancid.in for MRT daemons.
+	nrancid.in	Version of rancid.in for Netscreen firewalls.
+	nsrancid.in	Version of rancid.in for Netscalars.
+	prancid.in	Version of rancid.in for Procket routers.
+	rivancid.in	Version of rancid.in for Riverstone routers.
+	rrancid.in	Version of rancid.in for Redback routers.
+	srancid.in	Version of rancid.in for SMC switches.
+	tntrancid.in	Version of rancid.in for TNT access servers.
+	xrancid.in	Version of rancid.in for Extreme switches.
+	zrancid.in	Version of rancid.in for Zebra routers.
+
+	alogin.in	Version of clogin.in for Alteon switches.
+	blogin.in	Version of clogin.in for baynet/Nortel routers.
+	elogin.in	Version of clogin.in for ADC EZ-T3 muxes.
+	flogin.in	Version of clogin.in for Foundry switches.  If foundry
+			cleaned-up their bloody UI, clogin should do the job.
+	hlogin.in	Version of clogin.in for HP procurve switches.
+	htlogin.in	Version of clogin.in for Hitatchi routers.
+	jlogin.in	Version of clogin.in for Juniper routers.
+	nlogin.in	Version of clogin.in for Netscreen firewalls.
+	nslogin.in	Version of clogin.in for Netscalars.
+	rivlogin.in	Version of clogin.in for Riverstone routers.
+	tntlogin.in	Version of clogin.in for TNT access servers.
+man/		man pages
+share/		Readmes, samples, utilities, contribs, etc
+include/	Include files and rancid version.h
+
+Also see rancid_intro(1), rancid(1), and clogin(1).
+
+The following (non-exhaustive list) are included as part of the installation
+and configuration tools:
+
+Makefile.am	processed by automake to produce Makefile.in
+Makefile.in	processed by configure to produce Makefile
+acinclude.m4	sets some GNU autoconf options
+aclocal.m4	Output of GNU autoconf script
+configure	GNU autoconf script
+configure.in	Input file for autoconf to procide configure
+depcomp		part of GNU autoconf
+install-sh	GNU autoconf shell script to simulate BSD style install
+missing		part of GNU autoconf
+mkinstalldirs	GNU autoconf shell script to make installation directories
+
+rancid will also need to have the following packages:
+cvs		Code revision system available from prep.ai.mit.edu:/pub/gnu
+gnudiff		gnudiff provides the uni-diff (-u) option.  If you do not have
+		a diff that supports -u, configure will set-up rancid to use
+		'diff -c' or 'diff -C'.
+perl5		perl version 5 or greater available from www.cpan.org
+expect		http://expect.nist.gov/  We highly suggest that you stick to
+		expect 5.24.1 (or so).  This seems to work best.  Note that
+		you need to have the accompanying tcl &/ tk.
+svn		Code revision system, an alternative to cvs.  Available from
+		http://subversion.tigris.org/tarballs/.  Use the configure
+		option --with-svn to configure for Subversion.
+tcl		Required by expect.
+
+Bill Fenner (now maintained by others) has a cgi script for interacting
+with CVS repositories via a web interface.  This provides a great way to
+view rancid diffs and full configs, especially for those unfamiliar with
+cvs.  The package is not included, but can be found here:
+
+	http://www.freebsd.org/projects/cvsweb.html
+
+
+Quick Installation Guide (an example):
+
+1) ./configure [--prefix=<basedir>]
+   By default, rancid will be installed under /usr/local/rancid (the default
+   "prefix").  This can be overridden with the --prefix option.  E.g.:
+
+	./configure --prefix=/home/rancid
+
+   Rancid uses autoconf's "localstatedir" as the location of it's logs,
+   CVS or Subversion respository, and directories where it's groups are
+   placed.  The user who will run rancid (from cron, etc) will need write
+   access to these directories.  By default, this is <prefix>/var, or
+   /home/rancid/var following the example above.
+
+   We realize that this is not optimal, but it follows the standards.  We
+   suggest that this be altered to include the package name, like so:
+
+	./configure --prefix=/home/rancid \
+			--localstatedir=/home/rancid/var/rancid
+
+   The user who will run rancid must have write permission in "localstatedir".
+
+   See ./configure --help for other configure options.
+
+2) make install
+
+3) Modify <sysconfdir>/rancid.conf (e.g.: <basedir>/etc/rancid.conf).  The
+   variable LIST_OF_GROUPS is a space delimited list of router "groups".
+   E.g.:
+	LIST_OF_GROUPS="backbone aggregation switches"
+
+4) Put .cloginrc in the home directory of the user who will run rancid.
+   .cloginrc must be not be readable/writable/executable by "others",
+   i.e.: .cloginrc must be mode 0600 or 0640.
+
+5) Modify .cloginrc.
+
+   Test to make sure that you can log into every router.
+
+   Note: the juniper user you use *must* log into a cli shell (which
+   is the default on a juniper).
+
+   See the file cloginrc.sample, located in <datadir> (<basedir>/share/rancid),
+   for examples and good starting point.  Also take a look at the cloginrc
+   manual page, 'man -M <basedir>/man cloginrc'.
+
+6) Modify /etc/aliases
+   Rancid sends the diffs and other administrative emails to rancid-<GROUP>
+   and problems to rancid-admin-<GROUP>, where <GROUP> is the "GROUP" of
+   routers.  This way you can separate your backbone routers from your
+   access routers or separate based upon network etc...  Different router
+   uses forced different people being interested in router "groups" -
+   thus this setup.  Make sure email to rancid-<GROUP> works.  /etc/aliases
+   can be maintainable by Majordomo stuff, but make sure the user that
+   runs rancid can post to the list.
+
+   The Precedence header set to bulk or junk *hopefully* avoids replies from
+   auto-responders and vacation type mail filters.
+
+   The --enable-mail-plus option to configure will set each of the "rancid-"
+   addresses mentioned above to "rancid+".  See sendmail's operation manual
+   for more information on handling of '+'.
+
+   The --enable-adminmail-plus configure option will set each of the
+   "rancid-admin-" addresses mentioned above to "rancid-admin+".  If this
+   option is not used, the value of --enable-mail-plus is assumed.  That is,
+   the addresses will be "rancid+", if it is specified.
+
+7) Run rancid-cvs.
+   This creates all of the necessary directories and config files for
+   each of the groups in LIST_OF_GROUPS and imports them into CVS (or
+   Subversion).  This will also be run each time a new group is added.  Do
+   not create the directories or CVS repository manually, allow rancid-cvs
+   do it.  Also see 'man -M <basedir>/man rancid-cvs'.
+
+8) For each "group", modify the router.db file in the group directory.
+   The file is of the form "router:mfg:state" where "router" is
+   the name (we use FQDN) of the router, mfg is the manufacturer
+   from the set of (cat5|cisco|juniper) (see router.db.5 for a complete
+   list and description), and "state" is either up or down.  Each router
+   listed as "up" will have the configuration grabbed.  Note: manufacturer
+   cat5 is intended only for cisco catalyst switches running catalyst (not
+   IOS) code.
+
+   e.g.: <localstatedir>/<group>/router.db:
+	cisco-router.domain.com:cisco:up
+	adc-mux.domain.com:ezt3:up
+	foundry-switch-router.domain.com:foundry:up
+	juniper-router.domain.com:juniper:up
+	redback-dsl-router.domain.com:redback:down
+	extreme-switch.domain.com:extreme:down
+
+9) For first-time users or new installations, run bin/rancid-run (with no
+   arguments) and check the resulting log file(s) (in logs/*) for errors.
+   Repeat until there are no errors.
+
+10) Put rancid-run in cron to be called however often you want it to
+   run for each group (rancid-run [<GROUP>]).  If you run it less
+   often than once/hour, check the setting of OLDTIME in etc/rancid.conf.
+   E.g.:
+	# run config differ hourly
+	1 * * * * <BASEDIR>/bin/rancid-run
+	# clean out config differ logs
+	50 23 * * * /usr/bin/find <localstatedir>/logs -type f -mtime +2 -exec rm {} \;
+
+11) Note: If you are using any of these programs (other than
+    rancid-run) out of cron, make sure that you set your $PATH
+    correctly so that they work.  E.g.: if you are using clogin,
+    it can call id, telnet, ssh, and/or rsh.
+
+    configure already makes sure that $PATH is set correctly in
+    etc/rancid.conf for rancid-run, so you could use the $PATH from there. e.g.:
+
+	50 23 * * * . <sysconfdir>/rancid.conf; clogin -c 'sh vers' router
+
+12) Send any bugs, suggestions or updates to rancid@shrubbery.net.
+    See the web page at http://www.shrubbery.net/rancid.  We have
+    created the standard mailing lists for those interested;
+    rancid-announce@shrubbery.net and rancid-discuss@shrubbery.net.
+    Subscribe by sending an email whose body contains "subscribe
+    rancid-<announce or discuss>" to majordomo@shrubbery.net.
+
+    If you are reporting problems, please include the version of rancid,
+    expect, and your OS in the email.
+
+
+Problem with clogin/telnet hanging within rancid or scripts?
+
+If you have experienced rancid (or more precisely, telnet) hanging on a
+solaris 2.6 box; check to be sure you have the following two o/s patches
+installed (see showrev -p).  There may be more recent versions of these
+patches and they are likely included with 2.7 and 2.8: 
+
+Patch-ID# 105529-08
+Keywords: security tcp rlogin TCP ACK FIN packet listen
+Synopsis: SunOS 5.6: /kernel/drv/tcp patch
+
+Patch-ID# 105786-11
+Keywords: security ip tcp_priv_stream routing ip_enable_group_ifs ndd
+Synopsis: SunOS 5.6: /kernel/drv/ip patch
+
+Another contributor to rancid "hanging", with or without the o/s patches
+mentioned above, is a bug in expect/tcl.  We've noticed that expect (from
+5.24.1 forward), and whatever tcl happens to compile with it, exhibits a
+problem on Linux and Solaris where rancid's scripts hang waiting for input
+from the device.  Patches to expect are available on the rancid web page.
+
+Also, for rancid 2.3 and later, changes were made to the login scripts
+which use some more elaborate regexes that have failed with expect versions
+prior to 5.40.  While 5.40 works, it still seems to need the patch offered
+on the rancid web page for Linux and Solaris.
+
+See www.shrubbery.net/rancid for additional notes on this.
