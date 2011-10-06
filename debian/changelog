@@ -1,3 +1,9 @@
+rancid (2.3.6-7) unstable; urgency=low
+
+  * add a configuration switch for htmlmails
+
+ -- Stefan Kublik <stku@kublik.net>  Thu, 06 Oct 2011 13:30:21 +0200
+
 rancid (2.3.6-6) unstable; urgency=low
 
   * fix Bug in makefile for diff command in control_rancid

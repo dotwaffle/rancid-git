@@ -77,6 +77,9 @@ RCSSYS=@RCSSYS@; export RCSSYS
 # appended to recipients specified in rancid-run's -m option.
 #MAILDOMAIN="@example.com"; export MAILDOMAIN
 #
+# If you want to have colorised html mails with the diffs set this to YES
+#HTMLMAILS=YES; export HTMLMAILS
+#
 # By default, rancid mail is marked with precedence "bulk".  This may be
 # changed by setting the MAILHEADERS variable; for example no header by setting
 # it to "" or adding X- style headers.  Individual headers must be separated

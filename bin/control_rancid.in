@@ -771,18 +771,32 @@ echo "</pre>
 </html>"
 }
 
+# Disable HTML Mails by default
+if [ ! $HTMLMAILS ]; then
+    HTMLMAILS=NO; export HTMLMAILS
+fi
+
 # This has been different for different machines...
 # Diff the directory and then checkin.
 trap 'rm -fr $TMP $TMP.diff $DIR/routers.single;' 1 2 15
 cd $DIR
 case $RCSSYS in
     cvs )
-	cvs -f @DIFF_CMD@ -ko | sed -e '/^RCS file: /d' -e '/^--- /d' \
-	    -e '/^+++ /d' -e 's/^\([-+ ]\)/\1 /' | ansi2html >$TMP.diff
+    if [ $HTMLMAILS == YES ]; then
+        cvs -f @DIFF_CMD@ -ko | sed -e '/^RCS file: /d' -e '/^--- /d' \
+            -e '/^+++ /d' -e 's/^\([-+ ]\)/\1 /' | ansi2html >$TMP.diff
+    else
+        cvs -f @DIFF_CMD@ -ko | sed -e '/^RCS file: /d' -e '/^--- /d' \
+            -e '/^+++ /d' -e 's/^\([-+ ]\)/\1 /' >$TMP.diff
+    fi
 	cvs commit -m "$message"
 	;;
     svn )
-	svn diff | sed -e '/^+++ /d' -e 's/^\([-+ ]\)/\1 /' | ansi2html >$TMP.diff
+    if [ $HTMLMAILS == YES ]; then
+        svn diff | sed -e '/^+++ /d' -e 's/^\([-+ ]\)/\1 /' | ansi2html >$TMP.diff
+    else
+        svn diff | sed -e '/^+++ /d' -e 's/^\([-+ ]\)/\1 /' >$TMP.diff
+    fi
 	svn commit -m "$message"
 	;;
     git )
@@ -797,7 +811,11 @@ case $RCSSYS in
 	    git commit -m "$message"
 	    if [ $? -eq 0 ]; then
 		# only generate a diff if the commit was successful
-		git diff --color --patch-with-stat HEAD^ HEAD -- .  | ansi2html >$TMP.diff
+            if [ $HTMLMAILS == YES ]; then 
+                git diff --color --patch-with-stat HEAD^ HEAD -- .  | ansi2html >$TMP.diff
+            else
+                git diff --patch-with-stat HEAD^ HEAD -- . >$TMP.diff
+            fi
 	    fi
 	) 200>$BASEDIR/.lockfile
 	;;
@@ -805,16 +823,26 @@ esac
 
 # Mail out the diffs (if there are any).
 if [ -s $TMP.diff ] ; then
-	(
-	  echo "To: $mailrcpt"
-	  echo "Subject: $subject"
-	  echo "Mime-Version: 1.0"
-	  echo "Content-type: text/html"
-	  echo "Content-transfer-encoding: 8bit"
-	  echo "$MAILHEADERS" | awk '{L = "";LN = $0;while (LN ~ /\\n/) { I = index(LN,"\\n");L = L substr(LN,0,I-1) "\n";LN = substr(LN,I+2,length(LN)-I-1);}print L LN;}'
-	  echo ""
-	  cat $TMP.diff
-	) | sendmail -oi -t
+    if [ $HTMLMAILS == YES ]; then
+        (
+          echo "To: $mailrcpt"
+          echo "Subject: $subject"
+          echo "Mime-Version: 1.0"
+          echo "Content-type: text/html"
+          echo "Content-transfer-encoding: 8bit"
+          echo "$MAILHEADERS" | awk '{L = "";LN = $0;while (LN ~ /\\n/) { I = index(LN,"\\n");L = L substr(LN,0,I-1) "\n";LN = substr(LN,I+2,length(LN)-I-1);}print L LN;}'
+          echo ""
+          cat $TMP.diff
+        ) | sendmail -oi -t
+    else
+        (
+          echo "To: $mailrcpt"
+          echo "Subject: $subject"
+          echo "$MAILHEADERS" | awk '{L = "";LN = $0;while (LN ~ /\\n/) { I = index(LN,"\\n");L = L substr(LN,0,I-1) "\n";LN = substr(LN,I+2,length(LN)-I-1);}print L LN;}'
+          echo ""
+          cat $TMP.diff
+        ) | sendmail -t
+    fi
 fi
 
 # If any machines have not been reached within the last $OLDTIME
