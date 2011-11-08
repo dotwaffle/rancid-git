@@ -726,6 +726,61 @@ sub ShowInventory {
     return(0);
 }
 
+# This routine parses "show vtp domain"
+sub ShowVTP {
+    print STDERR "    In ShowVTP: $_" if ($debug);
+
+    ProcessHistory("COMMENTS","keysort","I0","!\n");
+    while (<INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /^\s*\^\s*$/;
+	return(1) if (/Line has invalid autocommand /);
+	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
+	return(-1) if (/command authorization failed/i);
+	next if (/^Configuration last modified by/);
+	# the pager can not be disabled per-session on the PIX
+	if (/^(<-+ More -+>)/) {
+	    my($len) = length($1);
+	    s/^$1\s{$len}//;
+	}
+
+	if (/^VLAN\s+(Transparent|Server)/) {
+	    $DO_SHOW_VLAN = 1;
+	}
+	ProcessHistory("COMMENTS","keysort","I0","!VTP: $_");
+    }
+    return(0);
+}
+
+# This routine parses "show vlan"
+sub ShowVLAN {
+    print STDERR "    In ShowVLAN: $_" if ($debug);
+
+    ($_ = <INPUT>, return(1)) if (!$DO_SHOW_VLAN);
+
+    ProcessHistory("COMMENTS","keysort","IO","!\n");
+    while (<INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /^\s*\^\s*$/;
+	return(1) if (/Line has invalid autocommand /);
+	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
+	return(1) if (/Ambiguous command/i);
+	return(-1) if (/command authorization failed/i);
+	# the pager can not be disabled per-session on the PIX
+	if (/^(<-+ More -+>)/) {
+	    my($len) = length($1);
+	    s/^$1\s{$len}//;
+	}
+
+	ProcessHistory("COMMENTS","keysort","IO","!VLAN: $_");
+    }
+    return(0);
+}
+
 # This routine parses "show module"
 sub ShowModule {
     my($slot);
@@ -1076,6 +1131,8 @@ sub DoNothing {print STDOUT;}
 	{'dir sup-microcode:'	=> 'DirSlotN'},
 	{'show module'		=> 'ShowModule'},
 	{'show inventory raw'	=> 'ShowInventory'},
+	{'show vtp domain'		=> 'ShowVTP'},
+	{'show vlan'			=> 'ShowVLAN'},
 	{'show port ifindex'	=> 'ShowPortIfindex'},
 	{'write term all'	=> 'WriteTerm'},
 	{'write term'		=> 'WriteTerm'},
