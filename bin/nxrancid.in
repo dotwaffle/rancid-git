@@ -554,9 +554,6 @@ sub ShowVTP {
 	    s/^$1\s{$len}//;
 	}
 
-	if (/^VTP Operating Mode\s+:\s+(Transparent|Server)/) {
-	    $DO_SHOW_VLAN = 1;
-	}
 	ProcessHistory("COMMENTS","","","!VTP: $_");
     }
     ProcessHistory("COMMENTS","","","!\n");
@@ -566,8 +563,6 @@ sub ShowVTP {
 # This routine parses "show vlan"
 sub ShowVLAN {
     print STDERR "    In ShowVLAN: $_" if ($debug);
-
-    ($_ = <INPUT>, return(1)) if (!$DO_SHOW_VLAN);
 
     while (<INPUT>) {
 	tr/\015//d;
@@ -1051,7 +1046,7 @@ sub DoNothing {print STDOUT;}
 	{'show module xbar'		=> 'ShowModule'},
 	{'show inventory'		=> 'ShowInventory'},
     {'show snmp engineID'   => 'ShowEngineID'},
-	{'show vtp status'		=> 'ShowVTP'},		# drop?
+	{'show vtp status'		=> 'ShowVTP'},
 	{'show vlan'			=> 'ShowVLAN'},
 	{'show debug'			=> 'ShowDebug'},
 	{'show cores vdc-all'		=> 'ShowCores'},
