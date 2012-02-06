@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: rancid.in 2361 2012-01-12 16:26:41Z heas $
+## $Id: rancid.in 2377 2012-01-31 22:55:13Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2009 by Terrapin Communications, Inc.
@@ -68,6 +68,8 @@ my($aclsort) = ("ipsort");		# ACL sorting mode
 my($config_register);			# configuration register value
 my($filter_commstr);			# SNMP community string filtering
 my($filter_pwds);			# password filtering mode
+my($supbootdisk) = 0;			# skip sup-bootflash if sup-bootdisk
+					# worked
 
 # This routine is used to print out the router configuration
 sub ProcessHistory {
@@ -745,6 +747,12 @@ sub DirSlotN {
 	return(-1) if (/\%Error opening \S+:\S+ \(Device or resource busy\)/i);
 	return(-1) if (/command authorization failed/i);
 	return(1) if (/(Open device \S+ failed|Error opening \S+:)/);
+	# skip dir sup-bootflash if dir sup-bootdisk was successful, duplicates
+	if ($cmd =~ / sup-bootdisk/) {
+	    $supbootdisk++;
+	} elsif ($supbootdisk && $cmd =~ / sup-bootflash/) {
+	    return(0);
+	}
 	# filter frequently changing files from IOX bootflash
 	if ($dev =~ /bootflash/) {
 	    next if (/temp_cont\s*$/);
@@ -1344,10 +1352,18 @@ sub ShowInventory {
 	}
 	# split PID/VID/SN line
 	if (/^PID: (\S*)\s*,\s*VID: (\S*)\s*,\s*SN: (\S*)\s*$/) {
+	    my($pid,$vid,$sn) = ($1, $2, $3);
 	    my($entries) = "";
-	    $entries .= "!PID: $1\n" if ($1);
-	    $entries .= "!VID: $2\n" if ($2);
-	    $entries .= "!SN: $3\n" if ($3);
+	    # filter <empty>, "0x" and "N/A" lines
+	    if ($pid !~ /^(|0x|N\/A)$/) {
+		$entries .= "!PID: $pid\n";
+	    }
+	    if ($vid !~ /^(|0x|N\/A)$/) {
+		$entries .= "!VID: $vid\n";
+	    }
+	    if ($sn !~ /^(|0x|N\/A)$/) {
+		$entries .= "!SN: $sn\n";
+	    }
 	    ProcessHistory("INVENTORY","","", "$entries");
 	    next;
 	}

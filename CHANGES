@@ -1,3 +1,10 @@
+2.3.8
+	rancid: filter sup-bootflash if sup-bootdisk worked
+
+	*login: fix match of (yes/no) prompts from ssh
+
+	rancid: carry-over additional inventory filtering from XR
+
 2.3.7
 	xrrancid: change some "admin show" sorting to reflect previous code
 
