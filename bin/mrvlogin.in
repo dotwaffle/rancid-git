@@ -1,9 +1,9 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: mrvlogin.in 2254 2010-10-01 19:27:48Z heas $
+## $Id: mrvlogin.in 2370 2012-01-30 21:59:23Z heas $
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) 1997-2009 by Terrapin Communications, Inc.
+## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -336,7 +336,7 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 	    }
 	} elseif [string match "ssh*" $prog] {
 	    regexp {ssh(:([^[:space:]]+))*} $prog methcmd suffix port
-	    set cmd [join [lindex $sshcmd 0] " "]
+	    set cmd $sshcmd
 	    if {"$port" != ""} {
 		set cmd "$cmd -p $port"
 	    }
@@ -410,18 +410,22 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 	    catch {close}; catch {wait};
 	    return 1
 	}
-	-re "(Host key not found |The authenticity of host .* be established).*\(yes\/no\)\?" {
+	-re "(Host key not found |The authenticity of host .* be established).*\(yes\/no\)\\?" {
 	    send "yes\r"
 	    send_user "\nHost $router added to the list of known hosts.\n"
 	    exp_continue
 	}
-	-re "HOST IDENTIFICATION HAS CHANGED.* \(yes\/no\)\?" {
+	-re "HOST IDENTIFICATION HAS CHANGED.* \(yes\/no\)\\?" {
 	    send "no\r"
 	    send_user "\nError: The host key for $router has changed.  Update the SSH known_hosts file accordingly.\n"
 	    catch {close}; catch {wait};
 	    return 1
 	}
-	-re "Offending key for .* \(yes\/no\)\?" {
+	-re "HOST IDENTIFICATION HAS CHANGED\[^\n\r]+" {
+	    send_user "\nError: The host key for $router has changed.  Update the SSH known_hosts file accordingly.\n"
+	    return 1
+	}
+	-re "Offending key for .* \(yes\/no\)\\?" {
 	    send "no\r"
 	    send_user "\nError: host key mismatch for $router.  Update the SSH known_hosts file accordingly.\n"
 	    catch {close}; catch {wait};
@@ -726,7 +730,7 @@ foreach router [lrange $argv $i end] {
     if { "$cmethod" == "" } { set cmethod {{telnet} {ssh}} }
 
     # Figure out the SSH executable name
-    set sshcmd [find sshcmd $router]
+    set sshcmd [join [lindex [find sshcmd $router] 0] ""]
     if { "$sshcmd" == "" } { set sshcmd {ssh} }
 
     # Login to the router

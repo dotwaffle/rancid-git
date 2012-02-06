@@ -1,9 +1,9 @@
 #! /bin/sh
 ##
-## $Id: rancid-cvs.in 2096 2009-06-17 21:49:46Z heas $
+## $Id: rancid-cvs.in 2340 2011-11-29 22:30:30Z heas $
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
+## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -39,7 +39,7 @@
 ## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 # Create all of the misc files & dirs needed for each group and import them
 # into CVS or Subversion.
 #
@@ -93,11 +93,20 @@ if [ $RCSSYS != "cvs" -a $RCSSYS != "svn" ] ; then
 fi
 
 # Top level CVS stuff
-if [ ! -d $CVSROOT ]; then
-    if [ $RCSSYS = cvs ]; then
+if [ $RCSSYS = cvs ]; then
+    if [ ! -d $CVSROOT ]; then
 	cvs -d $CVSROOT init
+    fi
+else
+    if echo "$CVSROOT" | grep -q "://"; then
+	# do nothing because CVSROOT is some sort of a URL
+	# also assume the repository has already been provisioned
+	:
     else
-	svnadmin create $CVSROOT @SVN_FSTYPE@
+	if ! svn ls "file://$CVSROOT" >/dev/null 2>&1; then
+	    svnadmin create $CVSROOT @SVN_FSTYPE@
+	fi
+	CVSROOT="file://$CVSROOT"
     fi
 fi
 
@@ -128,9 +137,11 @@ do
 	    cd $BASEDIR
 	    cvs checkout $GROUP
 	else
-	    svn import -m "$GROUP" . file:///$CVSROOT/$GROUP
+	    svn import -m "$GROUP" . $CVSROOT/$GROUP
 	    cd $BASEDIR
-	    svn checkout file:///$CVSROOT/$GROUP $GROUP
+	    svn checkout $CVSROOT/$GROUP $GROUP
+	    cd $DIR
+	    svn update
 	fi
     fi
     cd $DIR

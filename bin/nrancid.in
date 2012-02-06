@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: nrancid.in 2214 2010-07-15 21:01:40Z heas $
+## $Id: nrancid.in 2362 2012-01-26 16:20:02Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
@@ -71,7 +71,7 @@ my($filter_pwds);			# password filtering mode
 sub ProcessHistory {
     my($new_hist_tag,$new_command,$command_string,@string) = (@_);
     if ((($new_hist_tag ne $hist_tag) || ($new_command ne $command))
-	&& defined %history) {
+	&& scalar(%history)) {
 	print eval "$command \%history";
 	undef %history;
     }
@@ -191,8 +191,10 @@ sub GetSystem {
 	/^Feature: (\S+)$/ &&
 		ProcessHistory("SYSTEM","","", "#Feature: $1\n") && next;
 	/^File Name: (\S+), Checksum: (\S+)$/ &&
-		ProcessHistory("SYSTEM","","", "#File Name: $1, Checksum: $2\n") && next;
-
+		ProcessHistory("SYSTEM","","", "#File Name: $1, Checksum: $2\n")
+		&& next;
+	/^, Total Memory: (\S+)$/ &&
+		ProcessHistory("SYSTEM","","", "#Memory: $1\n") && next;
     }
     ProcessHistory("SYSTEM","","","#\n");
     return(0);
@@ -297,7 +299,7 @@ if ($file) {
 } else {
     print STDERR "executing nlogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($debug);
     print STDOUT "executing nlogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($log);
-    if (defined($ENV{NOPIPE})) {
+    if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
 	system "nlogin -t $timeo -c \"$cisco_cmds\" $host </dev/null > $host.raw 2>&1" || die "nlogin failed for $host: $!\n";
 	open(INPUT, "< $host.raw") || die "nlogin failed for $host: $!\n";
     } else {
@@ -359,7 +361,7 @@ ProcessHistory("","","","");
 close(INPUT);
 close(OUTPUT);
 
-if (defined($ENV{NOPIPE})) {
+if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
     unlink("$host.raw") if (! $debug);
 }
 

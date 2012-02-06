@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: nxrancid.in 2246 2010-09-08 01:36:07Z heas $
+## $Id: nxrancid.in 2321 2011-07-29 20:40:40Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
@@ -169,18 +169,19 @@ sub ShowVersion {
 
     while (<INPUT>) {
 	tr/\015//d;
-	if (/^$prompt/) { last};
+	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
 	return(-1) if (/\% Invalid command at /);
+	return(-1) if (/\% Permission denied/);
 	return(-1) if (/command authorization failed/i);
 
 	if (/^Cisco Nexus Operating System/) { $type = "NXOS";}
 	if (/^Software$/) {
 	    while (<INPUT>) {
 		tr/\015//d;
-		if (/^$prompt/) { last};
+		last if (/^$prompt/);
 		next if (/^\s*$cmd\s*$/);
 
 		if (/^$/) {
@@ -193,7 +194,7 @@ EndSoftware:
 	if (/^Hardware$/) {
 	    while (<INPUT>) {
 		tr/\015//d;
-		if (/^$prompt/) { last};
+		last if (/^$prompt/);
 		next if (/^\s*$cmd\s*$/);
 
 		if (/^$/) {
@@ -235,11 +236,12 @@ sub ShowVersionBuild {
 
     while (<INPUT>) {
 	tr/\015//d;
-	if (/^$prompt/) { last};
+	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
 	return(1) if (/\% Invalid command at /);
+	return(-1) if (/\% Permission denied/);
 	return(-1) if (/command authorization failed/i);
 
 	/^Built By / && ProcessHistory("COMMENTS","","", "!Build: $_");
@@ -262,6 +264,7 @@ sub ShowLicense {
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if /(Invalid input detected|Type help or )/;
 	return(1) if (/\% Invalid command at /);
+	return(-1) if (/\% Permission denied/);
 	return(-1) if (/command authorization failed/i);
 
 	/^-+$/ && next;		# Skip lines of all dashes.
@@ -282,7 +285,8 @@ sub ShowRedundancy {
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
-	return(-1) if (/\% Invalid command at /);
+	return(1) if (/\% Invalid command at /);
+	return(-1) if (/\% Permission denied/);
 	return(-1) if (/command authorization failed/i);
 
 	s/ +$//;	# Drop trailing ' '
@@ -298,11 +302,12 @@ sub ShowEnv {
 
     while (<INPUT>) {
 	tr/\015//d;
-	if (/^$prompt/) { last; };
+	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
 	return(1) if (/\% Invalid command at /);
+	return(-1) if (/\% Permission denied/);
 	return(-1) if (/command authorization failed/i);
 
 	s/ +$//;	# Drop trailing ' '
@@ -318,11 +323,12 @@ sub ShowEnvTemp {
 
     while (<INPUT>) {
 	tr/\015//d;
-	if (/^$prompt/) { last};
+	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
 	return(-1) if (/\% Invalid command at /);
+	return(-1) if (/\% Permission denied/);
 	return(-1) if (/command authorization failed/i);
 
 # Cut out CurTemp - drop the 2nd to last field.
@@ -346,11 +352,13 @@ sub ShowEnvPower {
 
     while (<INPUT>) {
 	tr/\015//d;
-	if (/^$prompt/) { last};
+	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
+	next if (/^\s*\^\s*$/);
 	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
-	return(-1) if (/\% Invalid command at /);
+	return(1) if (/\% Invalid command at /);
+	return(-1) if (/\% Permission denied/);
 	return(-1) if (/command authorization failed/i);
 
 # Cut out Actual Output/Draw.
@@ -396,6 +404,7 @@ sub ShowBoot {
 	return(1) if /(Invalid input detected|Type help or )/;
 	return(1) if /Ambiguous command/i;
 	return(-1) if (/\% Invalid command at /);
+	return(-1) if (/\% Permission denied/);
 	return(-1) if (/command authorization failed/i);
 
 	s/ variable = / = /;
@@ -425,6 +434,7 @@ sub DirSlotN {
 	return(1) if / is either not present or not formatted/;
 	return(-1) if /\%Error calling/;
 	return(-1) if /(: device being squeezed|ATA_Status time out)/i; # busy
+	return(-1) if (/\% Permission denied/);
 	return(-1) if (/command authorization failed/i);
 	return(1) if /(Open device \S+ failed|Error opening \S+:)/;
 
@@ -450,6 +460,7 @@ sub ShowModule {
 	last if (/^$prompt/);
 	next if (/^\s*$cmd\s*$/);
 	return(1) if (/\% Invalid command at /);
+	return(-1) if (/\% Permission denied/);
 	return(-1) if (/command authorization failed/i);
 
 	s/(.*) \*$/$1/;	# Drop a trailing '*'
@@ -474,6 +485,7 @@ sub ShowInventory {
 	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
 	return(1) if (/\% Invalid command at /);
+	return(-1) if (/\% Permission denied/);
 	return(-1) if (/command authorization failed/i);
 
 	if (/^(NAME: "[^"]*",)\s+(DESCR: "[^"]+")/) {
@@ -520,6 +532,7 @@ sub ShowVTP {
 	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
 	return(1) if (/\% Invalid command at /);
+	return(-1) if (/\% Permission denied/);
 	return(-1) if (/command authorization failed/i);
 	next if (/^Configuration last modified by/);
 	# the pager can not be disabled per-session on the PIX
@@ -555,6 +568,7 @@ sub ShowVLAN {
 	# newer releases (~12.1(9)) place the vlan config in the normal
 	# configuration (write term).
 	return(1) if ($type =~ /^(3550|4500)$/);
+	return(-1) if (/\% Permission denied/);
 	return(-1) if (/command authorization failed/i);
 	# the pager can not be disabled per-session on the PIX
 	if (/^(<-+ More -+>)/) {
@@ -580,6 +594,7 @@ sub ShowDebug {
 	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
 	return(-1) if (/\% Invalid command at /);
+	return(-1) if (/\% Permission denied/);
 	return(-1) if (/command authorization failed/i);
 
 	/^No matching debug flags set$/ && next;
@@ -604,6 +619,7 @@ sub ShowCores {
 	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
 	return(1) if (/\% Invalid command at /);
+	return(-1) if (/\% Permission denied/);
 	return(-1) if (/command authorization failed/i);
 
 	ProcessHistory("COMMENTS","","","!CORES: $_");
@@ -623,6 +639,7 @@ sub ShowProcLog {
 	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
 	return(-1) if (/\% Invalid command at /);
+	return(-1) if (/\% Permission denied/);
 	return(-1) if (/command authorization failed/i);
 
 	ProcessHistory("COMMENTS","","","!PROC_LOGS: $_");
@@ -643,6 +660,7 @@ sub WriteTerm {
 	return(1) if (/(Invalid input detected|Type help or )/i);
 	return(-1) if (/\% Invalid command at /);
 	return(0) if ($found_end);		# Only do this routine once
+	return(-1) if (/\% Permission denied/);
 	return(-1) if (/command authorization failed/i);
 
 #	/Non-Volatile memory is in use/  && return(-1); # NvRAM is locked
@@ -1011,6 +1029,7 @@ sub DoNothing {print STDOUT;}
 	{'show system redundancy status' => 'ShowRedundancy'},
 	{'show environment clock'	=> 'ShowEnv'},
 	{'show environment fan'		=> 'ShowEnv'},
+	{'show environment fex all fan'	=> 'ShowEnv'},
 	{'show environment temperature'	=> 'ShowEnvTemp'},
 	{'show environment power'	=> 'ShowEnvPower'},
 	{'show boot'			=> 'ShowBoot'},
@@ -1060,7 +1079,7 @@ if ($file) {
 } else {
     print STDERR "executing clogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($debug);
     print STDOUT "executing clogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($log);
-    if (defined($ENV{NOPIPE})) {
+    if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
 	system "clogin -t $timeo -c \"$cisco_cmds\" $host </dev/null > $host.raw 2>&1" || die "clogin failed for $host: $!\n";
 	open(INPUT, "< $host.raw") || die "clogin failed for $host: $!\n";
     } else {
@@ -1137,7 +1156,7 @@ ProcessHistory("","","","");
 close(INPUT);
 close(OUTPUT);
 
-if (defined($ENV{NOPIPE})) {
+if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
     unlink("$host.raw") if (! $debug);
 }
 

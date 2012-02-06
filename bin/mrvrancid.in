@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: mrvrancid.in 2199 2010-06-08 18:15:48Z heas $
+## $Id: mrvrancid.in 2368 2012-01-30 19:02:16Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
@@ -77,7 +77,7 @@ my($filter_pwds);			# password filtering mode
 sub ProcessHistory {
     my($new_hist_tag,$new_command,$command_string,@string) = (@_);
     if ((($new_hist_tag ne $hist_tag) || ($new_command ne $command))
-	&& defined %history) {
+	&& scalar(%history)) {
 	print eval "$command \%history";
 	undef %history;
     }
@@ -202,6 +202,7 @@ sub ShowVersion {
 # This routine parses "show chassis" for the gsr
 # This will create arrays for hw info.
 sub ShowChassis {
+    my($newfmt) = 0;
     # Skip if this is not a 1200n.
     print STDERR "    In ShowChassis: $_" if ($debug);
 
@@ -212,13 +213,22 @@ sub ShowChassis {
 	return(1) if /(Invalid input detected|Type help or )/;
 	return(-1) if (/command authorization failed/i);
 
+	s/\s+$//;
+	$newfmt = 1 if (/\s+Serial Num$/);
+
 	if (/Chassis +Model/ || /=======/) {
-	    ProcessHistory("COMMENTS","keysort","C1","!$_");
+	    ProcessHistory("COMMENTS","keysort","C1","!$_\n");
 	    next;
 	}
 	# Trim the temp from the end of the slot line
-	chomp; s/\s+$//;
-	s/\S+$//;
+	if ($newfmt) {
+	    s/(-?\d+)(\s+\w+)$//;
+	    my($fmt) = "%-" . length($1) . "s";
+	    $_ = $_ . sprintf($fmt, "") . $2;
+	} else {
+	    # the old format
+	    s/\S+$//;
+	}
 	ProcessHistory("COMMENTS","keysort","C1","!$_\n");
     }
     ProcessHistory("COMMENTS","","","!\n");
@@ -436,7 +446,7 @@ if ($file) {
 } else {
     print STDERR "executing clogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($debug);
     print STDOUT "executing clogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($log);
-    if (defined($ENV{NOPIPE})) {
+    if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
 	system "mrvlogin -t $timeo -c \"$cisco_cmds\" $host </dev/null > $host.raw 2>&1" || die "clogin failed for $host: $!\n";
 	open(INPUT, "< $host.raw") || die "clogin failed for $host: $!\n";
     } else {
@@ -507,7 +517,7 @@ ProcessHistory("","","","");
 close(INPUT);
 close(OUTPUT);
 
-if (defined($ENV{NOPIPE})) {
+if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
     unlink("$host.raw") if (! $debug);
 }
 

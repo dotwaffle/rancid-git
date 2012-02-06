@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: hrancid.in 2117 2009-11-02 21:02:59Z heas $
+## $Id: hrancid.in 2328 2011-10-31 18:05:46Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
@@ -72,7 +72,7 @@ my($systeminfo) = 0;			# show system-information
 sub ProcessHistory {
     my($new_hist_tag,$new_command,$command_string,@string) = (@_);
     if ((($new_hist_tag ne $hist_tag) || ($new_command ne $command))
-	&& defined %history) {
+	&& scalar(%history)) {
 	print eval "$command \%history";
 	undef %history;
     }
@@ -166,6 +166,22 @@ sub ipaddrval {
 }
 sub sortbyipaddr {
     &ipaddrval($a) <=> &ipaddrval($b);
+}
+
+# This routine parses "show config files"
+sub ShowConfigFiles {
+    print STDERR "    In ShowConfigFiles: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(-1) if (/command authorization failed/i);
+	return(1) if /^(Invalid|Ambiguous) input:/i;
+
+	ProcessHistory("COMMENTS","keysort","H0",";$_");
+    }
+    return(0);
 }
 
 # This routine parses "show version"
@@ -283,15 +299,56 @@ sub ShowStack {
     return(0);
 }
 
+# This routine parses "show tech transceivers"
+sub ShowTechTransceivers {
+    print STDERR "    In ShowTransceivers: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(-1) if (/command authorization failed/i);
+	return(1) if /^(Invalid|Ambiguous) input:/i;
+
+	s/ Technical Information//i;
+
+	ProcessHistory("COMMENTS","keysort","G0",";$_");
+    }
+    return(0);
+}
+
+# This routine parses "show config status"
+sub ShowConfigStatus {
+    print STDERR "    In ShowConfigStatus: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(-1) if (/command authorization failed/i);
+	return(1) if /^(Invalid|Ambiguous) input:/i;
+
+	next if (/^Running configuration is same as /);
+	next if (/^$/);
+
+	ProcessHistory("COMMENTS","keysort","H0","; $_");
+    }
+    return(0);
+}
+
 # This routine processes a "write term"
 sub WriteTerm {
     print STDERR "    In WriteTerm: $_" if ($debug);
 
     while (<INPUT>) {
 	tr/\015//d;
+	if (/$prompt\s*(exit|logout)\s*$/i) {
+	    $clean_run=1;
+	    last;
+	}
 	last if(/^$prompt/);
 	return(-1) if (/command authorization failed/i);
-	# the pager can not be disabled per-session on the PIX
+	# the pager can not be disabled per-session
 	s/^<-+ More -+>\s*//;
 	s/^$/;/;
 
@@ -302,6 +359,7 @@ sub WriteTerm {
 	s/\$(Revision|Id):/ $1:/;
 	/^; (\S+) configuration editor;/i &&
 	    ProcessHistory("COMMENTS","keysort","A0",";Chassis type: $1\n") &&
+	    ProcessHistory("","","",";\n;Running config file:\n$_") &&
 	    next;
 
 	# order logging statements - doesnt appear to do syslog as of right now
@@ -474,6 +532,9 @@ sub DoNothing {print STDOUT;}
 	{'show system information'	=> 'ShowSystem'},
 	{'show module'			=> 'ShowModule'},
 	{'show stack'			=> 'ShowStack'},
+	{'show tech transceivers'	=> 'ShowTechTransceivers'},
+	{'show config files'		=> 'ShowConfigFiles'},
+	{'show config status'		=> 'ShowConfigStatus'},
 	{'write term'			=> 'WriteTerm'}
 );
 # Use an array to preserve the order of the commands and a hash for mapping
@@ -505,7 +566,7 @@ if ($file) {
 } else {
     print STDERR "executing hlogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($debug);
     print STDOUT "executing hlogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($log);
-    if (defined($ENV{NOPIPE})) {
+    if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
 	system "hlogin -t $timeo -c \"$cisco_cmds\" $host </dev/null > $host.raw 2>&1" || die "hlogin failed for $host: $!\n";
 	open(INPUT, "< $host.raw") || die "hlogin failed for $host: $!\n";
     } else {
@@ -539,10 +600,12 @@ ProcessHistory("COMMENTS","keysort","C0",";\n");	# showversion
 ProcessHistory("COMMENTS","keysort","D0",";\n");	# showflash
 ProcessHistory("COMMENTS","keysort","E0",";\n");	# showmodule
 ProcessHistory("COMMENTS","keysort","F0",";\n");	# showstack
-ProcessHistory("COMMENTS","keysort","G0",";\n");
+ProcessHistory("COMMENTS","keysort","G0",";\n");	# showtechtransceivers
+ProcessHistory("COMMENTS","keysort","H0",";\n");	# showconfigfiles
+ProcessHistory("COMMENTS","keysort","I0",";\n");
 TOP: while(<INPUT>) {
     tr/\015//d;
-    if (/$prompt\s*exit\s*$/i) {
+    if (/$prompt\s*(exit|logout)\s*$/i) {
 	$clean_run=1;
 	last;
     }
@@ -581,7 +644,7 @@ ProcessHistory("","","","");
 close(INPUT);
 close(OUTPUT);
 
-if (defined($ENV{NOPIPE})) {
+if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
     unlink("$host.raw") if (! $debug);
 }
 

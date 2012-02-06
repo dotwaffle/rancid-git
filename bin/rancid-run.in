@@ -1,9 +1,9 @@
 #! /bin/sh
 ##
-## $Id: rancid-run.in 2096 2009-06-17 21:49:46Z heas $
+## $Id: rancid-run.in 2334 2011-11-17 21:09:37Z heas $
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
+## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by

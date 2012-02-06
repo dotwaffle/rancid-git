@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: srancid.in 2117 2009-11-02 21:02:59Z heas $
+## $Id: srancid.in 2279 2011-01-31 22:41:00Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
@@ -69,7 +69,7 @@ my($filter_pwds);			# password filtering mode
 sub ProcessHistory {
     my($new_hist_tag,$new_command,$command_string,@string) = (@_);
     if ((($new_hist_tag ne $hist_tag) || ($new_command ne $command))
-	&& defined %history) {
+	&& scalar(%history)) {
 	print eval "$command \%history";
 	undef %history;
     }
@@ -368,7 +368,7 @@ if ($file) {
     open(INPUT,"<$host") || die "open failed for $host: $!\n"; } else {
     print STDERR "executing hlogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($debug);
     print STDOUT "executing hlogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($log);
-    if (defined($ENV{NOPIPE})) {
+    if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
 	system "hlogin -t $timeo -c \"$cisco_cmds\" $host </dev/null > $host.raw 2>&1" || die "hlogin failed for $host: $!\n";
 	open(INPUT, "< $host.raw") || die "hlogin failed for $host: $!\n";
     } else {
@@ -434,7 +434,7 @@ ProcessHistory("","","","");
 close(INPUT);
 close(OUTPUT);
 
-if (defined($ENV{NOPIPE})) {
+if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
     unlink("$host.raw") if (! $debug);
 }
 
