@@ -767,7 +767,7 @@ foreach router [lrange $argv $i end] {
 	send_user -- "\nError: no password for $router in $password_file.\n"
 	continue
       }
-      if { $enable && $do_enapasswd && $autoenable == 0 && [llength $pswd] < 2 } {
+      if { $enable && $do_enapasswd && $avautoenable == 0 && [llength $pswd] < 2 } {
 	send_user -- "\nError: no enable password for $router in $password_file.\n"
 	continue
       }
