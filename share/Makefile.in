@@ -91,6 +91,7 @@ CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
 COMM = @COMM@
+COPYYEARS = @COPYYEARS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CVS = @CVS@
@@ -197,13 +198,13 @@ top_srcdir = @top_srcdir@
 
 #AUTOMAKE_OPTIONS=foreign no-dependencies
 AUTOMAKE_OPTIONS = foreign
-pkgdata_SCRIPTS = rtrfilter downreport
+pkgdata_SCRIPTS = rancid-cvspurge rtrfilter downreport
 dist_pkgdata_SCRIPTS = getipacctg
 dist_pkgdata_DATA = README.misc cisco-load.exp cisco-reload.exp \
 	index.html lgnotes.html
 
-EXTRA_DIST = rancid.spec rtrfilter.in downreport.in
-CLEANFILES = downreport
+EXTRA_DIST = rancid-cvspurge.in rancid.spec rtrfilter.in downreport.in
+CLEANFILES = rancid-cvspurge downreport
 
 # auto_edit does the autoconf variable substitution.  This allows the
 # substitution to have the full expansion of the variables, e.g.: $sysconfdir
@@ -503,6 +504,12 @@ downreport: Makefile $(srcdir)/downreport.in
 	$(auto_edit) $(srcdir)/downreport.in >downreport.tmp; \
 	chmod +x downreport.tmp; \
 	mv downreport.tmp downreport
+
+rancid-cvspurge: Makefile $(srcdir)/rancid-cvspurge.in
+	rm -f rancid-cvspurge rancid-cvspurge.tmp; \
+	$(auto_edit) $(srcdir)/rancid-cvspurge.in >rancid-cvspurge.tmp; \
+	chmod +x rancid-cvspurge.tmp; \
+	mv rancid-cvspurge.tmp rancid-cvspurge
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

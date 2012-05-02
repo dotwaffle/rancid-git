@@ -1,9 +1,9 @@
 #! /bin/bash
 ##
-## $Id: rancid-cvs.in 2096 2009-06-17 21:49:46Z heas $
+## $Id: rancid-cvs.in 2340 2011-11-29 22:30:30Z heas $
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
+## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -39,7 +39,7 @@
 ## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 # Create all of the misc files & dirs needed for each group and import them
 # into CVS or Subversion.
 #
