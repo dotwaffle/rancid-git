@@ -1,9 +1,9 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: nlogin.in 2254 2010-10-01 19:27:48Z heas $
+## $Id: nlogin.in 2376 2012-01-31 22:42:14Z heas $
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) 1997-2009 by Terrapin Communications, Inc.
+## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -77,23 +77,23 @@ set do_saveconfig 0
 set timeoutdflt 45
 
 # Find the user in the ENV, or use the unix userid.
-if {[ info exists env(CISCO_USER) ]} {
+if {[info exists env(CISCO_USER)]} {
     set default_user $env(CISCO_USER)
-} elseif {[ info exists env(USER) ]} {
+} elseif {[info exists env(USER)]} {
     set default_user $env(USER)
-} elseif {[ info exists env(LOGNAME) ]} {
+} elseif {[info exists env(LOGNAME)]} {
     set default_user $env(LOGNAME)
 } else {
     # This uses "id" which I think is portable.  At least it has existed
     # (without options) on all machines/OSes I've been on recently -
     # unlike whoami or id -nu.
-    if [ catch {exec id} reason ] {
+    if [catch {exec id} reason] {
 	send_error "\nError: could not exec id: $reason\n"
 	exit 1
     }
     regexp {\(([^)]*)} "$reason" junk default_user
 }
-if {[ info exists env(CLOGINRC) ]} {
+if {[info exists env(CLOGINRC)]} {
     set password_file $env(CLOGINRC)
 }
 
@@ -107,15 +107,15 @@ for {set i 0} {$i < $argc} {incr i} {
 	    exp_internal 1
 	# Username
 	} -u* {
-	    if {! [  regexp .\[uU\](.+) $arg ignore user]} {
+	    if {! [regexp .\[uU\](.+) $arg ignore user] } {
 		incr i
-		set username [ lindex $argv $i ]
+		set username [lindex $argv $i]
 	    }
 	# VTY Password
 	} -p* {
-	    if {! [  regexp .\[pP\](.+) $arg ignore userpasswd]} {
+	    if {! [regexp .\[pP\](.+) $arg ignore userpasswd]} {
 		incr i
-		set userpasswd [ lindex $argv $i ]
+		set userpasswd [lindex $argv $i]
 	    }
 	    set do_passwd 0
 	# ssh passphrase
@@ -123,7 +123,7 @@ for {set i 0} {$i < $argc} {incr i} {
 	    # ignore -r
 	# Environment variable to pass to -s scripts
 	} -E* {
-	    if {[ regexp .\[E\](.+)=(.+) $arg ignore varname varvalue]} {
+	    if {[regexp .\[E\](.+)=(.+) $arg ignore varname varvalue]} {
 		set E$varname $varvalue
 	    } else {
 		send_user "\nError: invalid format for -E in $arg\n"
@@ -131,18 +131,18 @@ for {set i 0} {$i < $argc} {incr i} {
 	    }
 	# Command to run.
 	} -c* {
-	    if {! [  regexp .\[cC\](.+) $arg ignore command]} {
+	    if {! [regexp .\[cC\](.+) $arg ignore command]} {
 		incr i
-		set command [ lindex $argv $i ]
+		set command [lindex $argv $i]
 	    }
 	    set do_command 1
 	# Expect script to run.
 	} -s* {
-	    if {! [  regexp .\[sS\](.+) $arg ignore sfile]} {
+	    if {! [regexp .\[sS\](.+) $arg ignore sfile]} {
 		incr i
-		set sfile [ lindex $argv $i ]
+		set sfile [lindex $argv $i]
 	    }
-	    if { ! [ file readable $sfile ] } {
+	    if { ! [file readable $sfile] } {
 		send_user "\nError: Can't read $sfile\n"
 		exit 1
 	    }
@@ -151,39 +151,41 @@ for {set i 0} {$i < $argc} {incr i} {
 	} -S* {
 	    set do_saveconfig 1
 	# cypher type
-        } -y* {
-            if {! [  regexp .\[eE\](.+) $arg ignore cypher]} {
-                incr i
-                set cypher [ lindex $argv $i ]
-            }
+	} -y* {
+	    if {! [regexp .\[eE\](.+) $arg ignore cypher]} {
+		incr i
+		set cypher [lindex $argv $i]
+	    }
 	# alternate cloginrc file
 	} -f* {
-	    if {! [ regexp .\[fF\](.+) $arg ignore password_file]} {
+	    if {! [regexp .\[fF\](.+) $arg ignore password_file]} {
 		incr i
-		set password_file [ lindex $argv $i ]
+		set password_file [lindex $argv $i]
 	    }
+	# Timeout
 	} -t* {
 	    incr i
-	    set timeoutdflt [ lindex $argv $i ]
-        } -x* {
-            if {! [  regexp .\[xX\](.+) $arg ignore cmd_file]} {
-                incr i
-                set cmd_file [ lindex $argv $i ]
-            }
-	    if [ catch {set cmd_fd [open $cmd_file r]} reason ] {
+	    set timeoutdflt [lindex $argv $i]
+	# Command file
+	} -x* {
+	    if {! [regexp .\[xX\](.+) $arg ignore cmd_file]} {
+		incr i
+		set cmd_file [lindex $argv $i]
+	    }
+	    if [catch {set cmd_fd [open $cmd_file r]} reason] {
 		send_user "\nError: $reason\n"
 		exit 1
 	    }
-            set cmd_text [read $cmd_fd]
-            close $cmd_fd
-            set command [join [split $cmd_text \n] \;]
-            set do_command 1
+	    set cmd_text [read $cmd_fd]
+	    close $cmd_fd
+	    set command [join [split $cmd_text \n] \;]
+	    set do_command 1
 	# Version string
 	} -V* {
 	    send_user "@PACKAGE@ @VERSION@\n"
 	    exit 0
 	# Does tacacs automatically enable us?
-        } -autoenable {
+	} -autoenable {
 	    # ignore autoenable
 	} -* {
 	    send_user "\nError: Unknown argument! $arg\n"
@@ -223,20 +225,20 @@ proc label { host } {
 	if [regexp \^(xterm|vs) $env(TERM) ignore ] {
 	    send_user "\033]1;[lindex [split $host "."] 0]\a"
 	    send_user "\033]2;$host\a"
-        }
+	}
     }
 }
 
 # This is a helper function to make the password file easier to
 # maintain.  Using this the password file has the form:
-# add password sl* 	pete cow
-# add password at* 	steve
+# add password sl*	pete cow
+# add password at*	steve
 # add password *	hanky-pie
 proc add {var args} { global int_$var ; lappend int_$var $args}
 proc include {args} {
     global env
     regsub -all "(^{|}$)" $args {} args
-    if { [ regexp "^/" $args ignore ] == 0 } {
+    if { [regexp "^/" $args ignore] == 0 } {
 	set args $env(HOME)/$args
     }
     source_password_file $args
@@ -246,7 +248,7 @@ proc find {var router} {
     upvar int_$var list
     if { [info exists list] } {
 	foreach line $list {
-	    if { [string match [lindex $line 0] $router ] } {
+	    if { [string match [lindex $line 0] $router] } {
 		return [lrange $line 1 end]
 	    }
 	}
@@ -270,7 +272,7 @@ proc source_password_file { password_file } {
 	send_user "\nError: $password_file must not be world readable/writable\n"
 	exit 1
     }
-    if [ catch {source $password_file} reason ] {
+    if [catch {source $password_file} reason] {
 	send_user "\nError: $reason\n"
 	exit 1
     }
@@ -278,35 +280,40 @@ proc source_password_file { password_file } {
 
 # Log into the firewall.
 # returns: 0 on success, 1 on failure
-proc login { router user userpswd passwd enapasswd prompt cmethod cyphertype } {
-    global spawn_id in_proc do_command do_script sshcmd
+proc login { router user userpswd passwd enapasswd cmethod cyphertype identfile } {
+    global command spawn_id in_proc do_command do_script passphrase
+    global prompt prompt_match u_prompt p_prompt sshcmd
     set in_proc 1
     set uprompt_seen 0
 
-    # Telnet to the firewall & try to login.
+    # try each of the connection methods in $cmethod until one is successful
     set progs [llength $cmethod]
     foreach prog [lrange $cmethod 0 end] {
 	incr progs -1
 	if [string match "telnet*" $prog] {
-	    regexp {telnet(:([^[:space:]]+))*} $prog command suffix port
+	    regexp {telnet(:([^[:space:]]+))*} $prog methcmd suffix port
 	    if {"$port" == ""} {
-		set retval [ catch {spawn telnet $router} reason ]
+		set retval [catch {spawn telnet $router} reason]
 	    } else {
-		set retval [ catch {spawn telnet $router $port} reason ]
+		set retval [catch {spawn telnet $router $port} reason]
 	    }
 	    if { $retval } {
 		send_user "\nError: telnet failed: $reason\n"
 		return 1
 	    }
 	} elseif [string match "ssh*" $prog] {
+	    # ssh to the router & try to login with or without an identfile.
 	    regexp {ssh(:([^[:space:]]+))*} $prog methcmd suffix port
-	    set cmd [join [lindex $sshcmd 0] " "]
+	    set cmd $sshcmd
 	    if {"$port" != ""} {
 		set cmd "$cmd -p $port"
 	    }
-	    set retval [ catch {eval spawn [split "$cmd -c $cyphertype -x -l $user $router" { }]} reason ]
+	    if {"$identfile" != ""} {
+		set cmd "$cmd -i $identfile"
+	    }
+	    set retval [catch {eval spawn [split "$cmd -c $cyphertype -x -l $user $router" { }]} reason]
 	    if { $retval } {
-		send_user "\nError: $sshcmd failed: $reason\n"
+		send_user "\nError: $cmd failed: $reason\n"
 		return 1
 	    }
 	} elseif ![string compare $prog "rsh"] {
@@ -328,19 +335,19 @@ proc login { router user userpswd passwd enapasswd prompt cmethod cyphertype } {
 	    send_user "\nError: TIMEOUT reached\n"
 	    catch {close}; catch {wait};
 	    if { $in_proc} {
-	        return 1
+		return 1
 	    } else {
-	        continue
+		continue
 	    }
-        } eof {
+	} eof {
 	    send_user "\nError: EOF received\n"
 	    catch {close}; catch {wait};
 	    if { $in_proc} {
-	        return 1
+		return 1
 	    } else {
-	        continue
+		continue
 	    }
-        }
+	}
     }
 
     # Here we get a little tricky.  There are several possibilities:
@@ -381,17 +388,22 @@ proc login { router user userpswd passwd enapasswd prompt cmethod cyphertype } {
 	    catch {close}; catch {wait};
 	    return 1
 	}
-	-re "(Host key not found |The authenticity of host .* be established).*\(yes\/no\)\?" {
+	-re "(Host key not found |The authenticity of host .* be established).* \\(yes/no\\)\\?" {
 	    send "yes\r"
 	    send_user "\nHost $router added to the list of known hosts.\n"
-	    exp_continue }
-	-re "HOST IDENTIFICATION HAS CHANGED.* \(yes\/no\)\?" {
+	    exp_continue
+	}
+	-re "HOST IDENTIFICATION HAS CHANGED.* \\(yes/no\\)\\?" {
 	    send "no\r"
 	    send_user "\nError: The host key for $router has changed.  Update the SSH known_hosts file accordingly.\n"
 	    catch {close}; catch {wait};
 	    return 1
 	}
-	-re "Offending key for .* \(yes\/no\)\?" {
+	-re "HOST IDENTIFICATION HAS CHANGED\[^\n\r]+" {
+	    send_user "\nError: The host key for $router has changed.  Update the SSH known_hosts file accordingly.\n"
+	    return 1
+	}
+	-re "Offending key for .* \\(yes/no\\)\\?" {
 	    send "no\r"
 	    send_user "\nError: host key mismatch for $router.  Update the SSH known_hosts file accordingly.\n"
 	    catch {close}; catch {wait};
@@ -402,7 +414,7 @@ proc login { router user userpswd passwd enapasswd prompt cmethod cyphertype } {
 				  catch {close}; catch {wait}; return 1
 				}
 	"Login failed"		{
-				  send_user "\nError: Check your passwd for $router\n";
+				  send_user "\nError: Check your passwd for $router\n"
 				  catch {close}; catch {wait}; return 1
 				 }
 	-re "(login:)"			{
@@ -429,6 +441,7 @@ proc login { router user userpswd passwd enapasswd prompt cmethod cyphertype } {
 	-- "$prompt"			{ break; }
      }
     }
+
     set in_proc 0
     return 0
 }
@@ -444,10 +457,10 @@ proc run_commands { prompt command } {
     set commands [split $command \;]
     set num_commands [llength $commands]
     for {set i 0} {$i < $num_commands} { incr i} {
-	send -- "[subst [lindex $commands $i]]\r"
+	send -- "[subst -nocommands [lindex $commands $i]]\r"
 	expect {
 	    -re "\[\n\r]+"			{ exp_continue }
-            -re "$prompt"			{}
+	    -re "$prompt"			{}
 	    -gl "--- more ---"			{ send " "
 						  exp_continue
 						}
@@ -480,7 +493,7 @@ set in_proc 0
 set exitval 0
 foreach router [lrange $argv $i end] {
     set router [string tolower $router]
-    send_user "$router\n"
+    send_user -- "$router\n"
 
     # device timeout
     set timeout [find timeout $router]
@@ -492,13 +505,13 @@ foreach router [lrange $argv $i end] {
 
     # Figure out passwords
     if { $do_passwd || $do_enapasswd } {
-      set pswd [find password $router]
-      if { [llength $pswd] == 0 } {
-        send_user "\nError: no password for $router in $password_file.\n"
-        continue
-      }
-     set passwd [join [lindex $pswd 0] ""]
-     set enapasswd [join [lindex $pswd 1]  ""]
+	set pswd [find password $router]
+	if { [llength $pswd] == 0 } {
+	    send_user -- "\nError: no password for $router in $password_file.\n"
+	    continue
+	}
+	set passwd [join [lindex $pswd 0] ""]
+	set enapasswd [join [lindex $pswd 1]  ""]
     } else {
 	set passwd $userpasswd
 	set enapasswd $enapasswd
@@ -522,14 +535,16 @@ foreach router [lrange $argv $i end] {
       if { "$userpswd" == "" } { set userpswd $passwd }
     }
 
+    # Figure out identity file to use
+    set identfile [join [lindex [find identity $router] 0] ""]
 
     # Figure out cypher type
     if {[info exists cypher]} {
-      # command line cypher type
-      set cyphertype $cypher
+	# command line cypher type
+	set cyphertype $cypher
     } else {
-      set cyphertype [find cyphertype $router]
-      if { "$cyphertype" == "" } { set cyphertype "3des" }
+	set cyphertype [find cyphertype $router]
+	if { "$cyphertype" == "" } { set cyphertype "3des" }
     }
 
     # Figure out connection method
@@ -537,12 +552,13 @@ foreach router [lrange $argv $i end] {
     if { "$cmethod" == "" } { set cmethod {{telnet} {ssh}} }
 
     # Figure out the SSH executable name
-    set sshcmd [find sshcmd $router]
+    set sshcmd [join [lindex [find sshcmd $router] 0] ""]
     if { "$sshcmd" == "" } { set sshcmd {ssh} }
 
     # Login to the router
-    if {[login $router $ruser $userpswd $passwd $enapasswd $prompt $cmethod $cyphertype]} {
+    if {[login $router $ruser $userpswd $passwd $enapasswd $cmethod $cyphertype $identfile]} {
 	incr exitval
+	# if login failed, move on to the next device
 	continue
     }
 

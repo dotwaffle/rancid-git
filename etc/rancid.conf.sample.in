@@ -5,6 +5,9 @@
 #
 TERM=network;export TERM
 #
+# Collating locale
+LC_COLLATE="POSIX"; export LC_COLLATE
+#
 # Create files w/o world read/write/exec permissions, but read/exec permissions
 # for group.
 umask 027
@@ -17,10 +20,18 @@ umask 027
 # Use a full path (no sym-links) for BASEDIR.
 #
 TMPDIR=/tmp; export TMPDIR
-# Be careful changing this, it affects CVSROOT below.
+# Be careful changing this, it affects CVSROOT below.  It should be a FQPN, not
+# relative.
 BASEDIR=@localstatedir@; export BASEDIR
 PATH=@bindir@:@ENV_PATH@; export PATH
 # Location of the CVS/SVN repository.  Be careful changing this.
+# If RCSSYS is svn, this can be:
+# - an (absolute) path (a subdirectory of BASEDIR by default).
+# - any URL that subversion understands, but beware that:
+#   - no attempt will be made to create the repository when running rancid-cvs.
+#   - authentication credentials, if necessary, MUST be cached (see the SVN
+#     book, Ch. 3, Network Model, Caching credentials) before non-interactive
+#     commands can run, e.g. by running rancid-cvs after installation.
 CVSROOT=$BASEDIR/CVS; export CVSROOT
 # Location of log files produced by rancid-run(1).
 LOGDIR=$BASEDIR/logs; export LOGDIR

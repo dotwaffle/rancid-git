@@ -3,7 +3,7 @@ Frequently Asked Questions about rancid - last updated 20091111.
 This FAQ contains information that may not apply directly to versions of
 rancid prior to 2.3.  It also contains paths containing tags such as
 <PREFIX>, which refer to paths that are site-specific and are determined
-by how rancid is or was configured at installation time.  These are explained
+by how rancid was configured at installation time.  These are explained
 briefly in the configure --help output.  Below are the defaults used in
 rancid.
 
@@ -155,7 +155,7 @@ A. CVS does not provide a way (AFAIK) to rename files or to rename or delete
 
 
 Q. I am new to svn.  Where can I find more information?
-Q. The svn so-called "red book" is the definitive guide.
+A. The svn so-called "red book" is the definitive guide.
    http://svnbook.red-bean.com/en/1.5/svn-book.html 
 
 
