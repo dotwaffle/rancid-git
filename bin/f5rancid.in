@@ -631,8 +631,8 @@ sub DoNothing {print STDOUT;}
 	{'bigpipe base list'		=> 'ShowBaseRun'},
 	{'bigpipe db show'		=> 'ShowDb'},
 	{'bigpipe route static show'	=> 'ShowRouteStatic'},
-	{'ls --full-time --color=never /config/ssl/ssl.crt' => 'ShowSslCrt'},
-	{'ls --full-time --color=never /config/ssl/ssl.key' => 'ShowSslKey'},
+	#{'ls --full-time --color=never /config/ssl/ssl.crt' => 'ShowSslCrt'},
+	#{'ls --full-time --color=never /config/ssl/ssl.key' => 'ShowSslKey'},
 	{'bigpipe list'			=> 'WriteTermBIGPIPE'}
 );
 
@@ -644,8 +644,8 @@ sub DoNothing {print STDOUT;}
         {'cat /config/ZebOS.conf'                           => 'ShowZebOSconf'},
         {'lsof -i :179'                                     => 'ShowZebOSsockets'},
         {'tmsh show /net route static'                      => 'ShowRouteStatic'},
-        {'ls --full-time --color=never /config/ssl/ssl.crt' => 'ShowSslCrt'},
-        {'ls --full-time --color=never /config/ssl/ssl.key' => 'ShowSslKey'},
+	#{'ls --full-time --color=never /config/ssl/ssl.crt' => 'ShowSslCrt'},
+	#{'ls --full-time --color=never /config/ssl/ssl.key' => 'ShowSslKey'},
         {'tmsh -q list'                                        => 'WriteTermTMSH'},
 );
 # Use an array to preserve the order of the commands and a hash for mapping
