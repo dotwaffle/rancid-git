@@ -61,6 +61,7 @@ $vendor =~ tr/[A-Z]/[a-z]/;
     'cisco-nx'		=> 'nxrancid',
     'cisco-xr'		=> 'xrrancid',
     'css'		=> 'cssrancid',
+    'dell'		=> 'drancid',
     'enterasys'		=> 'rivrancid',
     'erx'		=> 'jerancid',
     'extreme'		=> 'xrancid',
