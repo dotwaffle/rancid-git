@@ -25,7 +25,7 @@
 #
 
 # Usage line
-set usage "Usage: $argv0 \[-dV\] \[-autoenable\] \[-noenable\] \[-c command\] \
+set usage "Usage: $argv0 \[-dSV\] \[-autoenable\] \[-noenable\] \[-c command\] \
 \[-Evar=x\] \[-e enable-password\] \[-f cloginrc-file\] \[-p user-password\] \
 \[-s script-file\] \[-t timeout\] \[-u username\] \
 \[-v vty-password\] \[-w enable-username\] \[-x command-file\] \
@@ -48,6 +48,8 @@ set avautoenable 0
 # tracks if we receive them on the command line.
 set do_passwd 1
 set do_enapasswd 1
+# Save config, if prompted
+set do_saveconfig 0
 # attempt at platform switching.
 set platform ""
 
@@ -144,8 +146,7 @@ for {set i 0} {$i < $argc} {incr i} {
             }
             set do_command 1
         # Expect script to run.
-        } -s* -
-        -S* {
+        } -s* {
             if {! [  regexp .\[sS\](.+) $arg ignore sfile]} {
                 incr i
                 set sfile [ lindex $argv $i ]
@@ -155,6 +156,9 @@ for {set i 0} {$i < $argc} {incr i} {
                 exit 1
             }
             set do_script 1
+        # save config on exit
+        } -S* {
+            set do_saveconfig 1
         # 'ssh -c' cypher type
         } -y* -
         -Y* {
@@ -546,7 +550,7 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 
 # Enable
 proc do_enable { enauser enapasswd } {
-    global prompt in_proc
+    global prompt do_saveconfig in_proc
     global u_prompt e_prompt
     set in_proc 1
 
@@ -604,7 +608,7 @@ proc processCommandOutput {prompt reprompt} {
 
 # Run commands given on the command line.
 proc run_commands { prompt command } {
-    global in_proc platform
+    global do_saveconfig in_proc platform
     set in_proc 1
 
     # escape any parens in the prompt, such as "(enable)"
@@ -652,7 +656,11 @@ proc run_commands { prompt command } {
             exp_continue;
         }
         "Do you wish to save your configuration changes" {
-            dsend "n\r"
+            if {$do_saveconfig} {
+                catch {dsend "y\r"}
+            } else {
+                catch {dsend "n\r"}
+            }
             exp_continue
         }
         -re "\[\n\r]+" { exp_continue }
