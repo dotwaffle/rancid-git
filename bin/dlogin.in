@@ -25,7 +25,7 @@
 #
 
 # Usage line
-set usage "Usage: $argv0 \[-d\] \[-autoenable\] \[-noenable\] \[-c command\] \
+set usage "Usage: $argv0 \[-dV\] \[-autoenable\] \[-noenable\] \[-c command\] \
 \[-Evar=x\] \[-e enable-password\] \[-f cloginrc-file\] \[-p user-password\] \
 \[-s script-file\] \[-t timeout\] \[-u username\] \
 \[-v vty-password\] \[-w enable-username\] \[-x command-file\] \
@@ -107,6 +107,10 @@ for {set i 0} {$i < $argc} {incr i} {
                 set passwd [ lindex $argv $i ]
             }
             set do_passwd 0
+        # Version string
+        } -V* {
+            send_user "@PACKAGE@ @VERSION@\n"
+            exit 0
         # Enable Username
         } -w* -
         -W* {
