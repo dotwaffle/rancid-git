@@ -150,7 +150,7 @@ sub ShowVersion {
     while (<INPUT>) {
         warn "ShowVersion: $_" if ($debug);        # lets see every line for debug
         tr/\015//d;
-        if (/^$prompt/) { warn "FOUND PROMPT: $prompt\n"; $found_version=1; last;}
+        if (/^$prompt/) { warn "FOUND PROMPT: $prompt\n" if ($debug); $found_version=1; last;}
         next if(/^(\s*|\s*$cmd\s*)$/);
         return(1) if /^% Unrecognized command/;
         return(0) if ($found_version);                # Only do this routine once
@@ -190,7 +190,7 @@ sub WriteTerm {
     while (<INPUT>) {
         warn "WriteTerm: $_" if ($debug);        # lets see every line for debug
         tr/\015//d;
-        if (/$prompt\s?exit$/) { warn "left WriteTerm on: $_"; $clean_run=1;last; }
+        if (/$prompt\s?exit$/) { warn "left WriteTerm on: $_" if ($debug); $clean_run=1;last; }
         next if (/^(\s*|\s*$cmd\s*)$/);
         return(1) if /^% Unrecognized command/;
         # the pager can not be disabled per-session on the dell
