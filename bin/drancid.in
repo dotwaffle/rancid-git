@@ -1,7 +1,8 @@
-#! /usr/bin/perl
+#! @PERLV_PATH@
 ##
 ## $Id: rancid.in,v 1.193 2005/08/14 22:29:29 heas Exp $
 ##
+## @PACKAGE@ @VERSION@
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##

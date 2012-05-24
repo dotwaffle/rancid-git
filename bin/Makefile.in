@@ -48,6 +48,7 @@ DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(srcdir)/blogin.in $(srcdir)/brancid.in \
 	$(srcdir)/cat5rancid.in $(srcdir)/clogin.in \
 	$(srcdir)/control_rancid.in $(srcdir)/cssrancid.in \
+	$(srcdir)/dlogin.in $(srcdir)/drancid.in \
 	$(srcdir)/elogin.in $(srcdir)/erancid.in \
 	$(srcdir)/f10rancid.in $(srcdir)/f5rancid.in \
 	$(srcdir)/flogin.in $(srcdir)/fnlogin.in $(srcdir)/fnrancid.in \
@@ -79,7 +80,7 @@ CONFIG_CLEAN_FILES = control_rancid par rancid-fe agmrancid alogin \
 	htrancid jlogin jrancid jerancid mrancid mrvlogin mrvrancid \
 	mtrancid mtlogin nlogin nrancid nslogin nsrancid nxrancid \
 	prancid rivlogin rivrancid rrancid srancid tlogin tntlogin \
-	tntrancid trancid xrancid xrrancid zrancid
+	tntrancid trancid xrancid xrrancid zrancid dlogin drancid
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
@@ -253,7 +254,7 @@ bin_SCRIPTS = agmrancid alogin arancid arrancid avologin avorancid \
 	nrancid nslogin nsrancid nxrancid par prancid rancid-fe rancid \
 	rivlogin rivrancid rrancid srancid tlogin tntlogin tntrancid \
 	trancid xrancid xrrancid zrancid lg.cgi lgform.cgi rancid-cvs \
-	rancid-run
+	rancid-run dlogin drancid
 EXTRA_DIST = lg.cgi.in lgform.cgi.in rancid-cvs.in rancid-run.in
 #dist_bin_SCRIPTS= $(bin_SCRIPTS:%=%.in)
 CLEANFILES = lg.cgi lgform.cgi rancid-cvs rancid-run
@@ -353,6 +354,10 @@ clogin: $(top_builddir)/config.status $(srcdir)/clogin.in
 rancid: $(top_builddir)/config.status $(srcdir)/rancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 cssrancid: $(top_builddir)/config.status $(srcdir)/cssrancid.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+dlogin: $(top_builddir)/config.status $(srcdir)/dlogin.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+drancid: $(top_builddir)/config.status $(srcdir)/drancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 elogin: $(top_builddir)/config.status $(srcdir)/elogin.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@

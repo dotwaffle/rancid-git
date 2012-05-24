@@ -1,5 +1,6 @@
-#! /usr/local/bin/expect --
+#! @EXPECT_PATH@ --
 ##
+## @PACKAGE@ @VERSION@
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
