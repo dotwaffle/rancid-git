@@ -270,7 +270,7 @@ if ($file) {
         warn "opened $host.raw\n" if ($debug);
     } else {
         open(INPUT,"dlogin -t $timeo -c \"$cisco_cmds\" $host </dev/null |") || die "dlogin failed for $host: $!\n";
-        warn "opened network stream from $host if ($debug)";
+        warn "opened network stream from $host" if ($debug);
     }
 }
 
