@@ -24,9 +24,8 @@
 # dlogin - Dell login
 #
 
-#exp_internal 1
 # Usage line
-set usage "Usage: $argv0 \[-autoenable\] \[-noenable\] \[-c command\] \
+set usage "Usage: $argv0 \[-d\] \[-autoenable\] \[-noenable\] \[-c command\] \
 \[-Evar=x\] \[-e enable-password\] \[-f cloginrc-file\] \[-p user-password\] \
 \[-s script-file\] \[-t timeout\] \[-u username\] \
 \[-v vty-password\] \[-w enable-username\] \[-x command-file\] \
@@ -82,8 +81,11 @@ for {set i 0} {$i < $argc} {incr i} {
     set arg [lindex $argv $i]
 
     switch  -glob -- $arg {
+        # Expect debug mode
+        -d* {
+            exp_internal 1
         # Username
-        -u* -
+        } -u* -
         -U* {
             if {! [  regexp .\[uU\](.+) $arg ignore user]} {
                 incr i
