@@ -25,10 +25,14 @@
 # Dell mods by: Jeremy Singletary
 # drancid - Dell power connect plugin for rancid
 #
-# usage: drancid [-d] [-l] [-f filename | $host]
+# usage: drancid [-dV] [-l] [-f filename | $host]
 #
 use Getopt::Std;
-getopts('dfl');
+getopts('dflV');
+if ($opt_V) {
+    print "@PACKAGE@ @VERSION@\n";
+    exit(0);
+}
 $log = $opt_l;
 $debug = $opt_d;
 $file = $opt_f;
