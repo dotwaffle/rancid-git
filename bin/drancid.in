@@ -264,7 +264,7 @@ if ($file) {
 } else {
     print STDERR "executing dlogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($debug);
     print STDOUT "executing dlogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($log);
-    if (defined($ENV{NOPIPE})) {
+    if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
         system "dlogin -t $timeo -c \"$cisco_cmds\" $host </dev/null > $host.raw 2>&1" || die "dlogin failed for $host: $!\n";
         open(INPUT, "< $host.raw") || die "dlogin failed for $host: $!\n";
         warn "opened $host.raw\n" if ($debug);
@@ -329,7 +329,7 @@ ProcessHistory("","","","");
 close(INPUT);
 close(OUTPUT);
 
-if (defined($ENV{NOPIPE})) {
+if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
     unlink("$host.raw") if (! $debug);
 }
 
