@@ -41,6 +41,7 @@ $found_diag = 0;
 $timeo = 90;                                # dlogin timeout in seconds
 
 my(@commandtable, %commands, @commands);# command lists
+my($filter_commstr);                     # SNMP community string filtering
 my(%filter_pwds);                        # password filtering mode
 
 # This routine is used to print out the router configuration
@@ -213,7 +214,7 @@ sub WriteTerm {
             next;
         }
         if (/^(snmp-server community) (\S+)/) {
-            if (defined($ENV{'NOCOMMSTR'})) {
+            if ($filter_commstr) {
                 ProcessHistory("SNMPSERVERCOMM","keysort","$_","!$1 <removed>$'") && next;
             } else {
                 ProcessHistory("SNMPSERVERCOMM","keysort","$_","$_") && next;
@@ -274,6 +275,13 @@ if ($file) {
     }
 }
 
+# determine community string filtering mode
+if (defined($ENV{"NOCOMMSTR"}) &&
+    ($ENV{"NOCOMMSTR"} =~ /yes/i || $ENV{"NOCOMMSTR"} =~ /^$/)) {
+    $filter_commstr = 1;
+} else {
+    $filter_commstr = 0;
+}
 # determine password filtering mode
 if ($ENV{"FILTER_PWDS"} =~ /no/i) {
     $filter_pwds = 0;
