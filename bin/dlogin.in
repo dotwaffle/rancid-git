@@ -583,6 +583,7 @@ proc do_enable { enauser enapasswd } {
 proc processCommandOutput {prompt reprompt} {
     global in_proc
     expect {
+        -re "^\u001b\\\[K"              { exp_continue }
         -re "\b+"                       { exp_continue }
         -re "^\[^\n\r *]*$reprompt"     { send_user -- "$expect_out(buffer)" }
         -re "^\[^\n\r *]*$prompt"       { send_user -- "$expect_out(buffer)" }
