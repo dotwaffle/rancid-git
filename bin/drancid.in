@@ -211,8 +211,9 @@ sub ShowVLAN {
         s/^More: <space>.+<return> \033\[\K//;
         s/^More: <space>.+<return>\s*//;
         s/^\s*--More-- or \(q\)uit\s*//;
-        ProcessHistory("","","","$_");
+        ProcessHistory("","","","!$_");
     }
+    ProcessHistory("","","","!\n");
     ProcessHistory("","","","!\n");
     return(0);
 }
