@@ -6042,6 +6042,8 @@ ac_config_files="$ac_config_files bin/cat5rancid bin/clogin bin/rancid"
 
 ac_config_files="$ac_config_files bin/cssrancid"
 
+ac_config_files="$ac_config_files bin/dlogin bin/drancid"
+
 ac_config_files="$ac_config_files bin/elogin bin/erancid"
 
 ac_config_files="$ac_config_files bin/f5rancid"
@@ -6833,6 +6835,8 @@ do
     "bin/clogin") CONFIG_FILES="$CONFIG_FILES bin/clogin" ;;
     "bin/rancid") CONFIG_FILES="$CONFIG_FILES bin/rancid" ;;
     "bin/cssrancid") CONFIG_FILES="$CONFIG_FILES bin/cssrancid" ;;
+    "bin/dlogin") CONFIG_FILES="$CONFIG_FILES bin/dlogin" ;;
+    "bin/drancid") CONFIG_FILES="$CONFIG_FILES bin/drancid" ;;
     "bin/elogin") CONFIG_FILES="$CONFIG_FILES bin/elogin" ;;
     "bin/erancid") CONFIG_FILES="$CONFIG_FILES bin/erancid" ;;
     "bin/f5rancid") CONFIG_FILES="$CONFIG_FILES bin/f5rancid" ;;
@@ -7565,6 +7569,8 @@ $as_echo X"$file" |
     "bin/clogin":F) chmod a+x $ac_file ;;
     "bin/rancid":F) chmod a+x $ac_file ;;
     "bin/cssrancid":F) chmod a+x $ac_file ;;
+    "bin/dlogin":F) chmod a+x $ac_file ;;
+    "bin/drancid":F) chmod a+x $ac_file ;;
     "bin/elogin":F) chmod a+x $ac_file ;;
     "bin/erancid":F) chmod a+x $ac_file ;;
     "bin/f5rancid":F) chmod a+x $ac_file ;;
