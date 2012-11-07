@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 ## A Makefile.in is supplied, in case you do not have automake.
 
-## $Id: Makefile.am 1955 2008-03-06 07:49:59Z heas $
+## $Id: Makefile.am 2301 2011-05-26 20:55:24Z heas $
 ##
 ## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -48,14 +48,14 @@
 #AUTOMAKE_OPTIONS=foreign no-dependencies
 AUTOMAKE_OPTIONS=foreign
 
-pkgdata_SCRIPTS= rtrfilter downreport
+pkgdata_SCRIPTS= rancid-cvspurge rtrfilter downreport
 dist_pkgdata_SCRIPTS=getipacctg
 dist_pkgdata_DATA=README.misc cisco-load.exp cisco-reload.exp \
 	index.html lgnotes.html
 
-EXTRA_DIST = rancid.spec rtrfilter.in downreport.in
+EXTRA_DIST = rancid-cvspurge.in rancid.spec rtrfilter.in downreport.in
 
-CLEANFILES= downreport
+CLEANFILES= rancid-cvspurge downreport
 
 all:
 
@@ -77,3 +77,9 @@ downreport: Makefile $(srcdir)/downreport.in
 	$(auto_edit) $(srcdir)/downreport.in >downreport.tmp; \
 	chmod +x downreport.tmp; \
 	mv downreport.tmp downreport
+
+rancid-cvspurge: Makefile $(srcdir)/rancid-cvspurge.in
+	rm -f rancid-cvspurge rancid-cvspurge.tmp; \
+	$(auto_edit) $(srcdir)/rancid-cvspurge.in >rancid-cvspurge.tmp; \
+	chmod +x rancid-cvspurge.tmp; \
+	mv rancid-cvspurge.tmp rancid-cvspurge

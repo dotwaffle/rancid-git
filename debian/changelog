@@ -2,7 +2,7 @@ rancid (2.3.6-8) unstable; urgency=low
 
   * add 'show vlan' command to catos
 
- -- Stefan Kublik <stku@kublik.net> Tue, 08 Nov 2011 15:14:12 +0100
+ -- Stefan Kublik <stku@kublik.net>  Tue, 08 Nov 2011 15:14:12 +0100
 
 rancid (2.3.6-7) unstable; urgency=low
 

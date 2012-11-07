@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: f5rancid.in 2246 2010-09-08 01:36:07Z heas $
+## $Id: f5rancid.in 2279 2011-01-31 22:41:00Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
@@ -305,6 +305,34 @@ sub ShowPlatform {
     return(0);
 }
 
+# This routine parses "tmsh show sys hardware"
+sub ShowHardware {
+    print STDERR "    In ShowHardware: $_" if ($debug);
+
+    while (<INPUT>) {
+        tr/\015//d;
+        last if (/^$prompt/);
+        next if (/^(\s*|\s*$cmd\s*)$/);
+        return(1) if /^\s*\^\s*$/;
+        return(1) if /(Invalid input detected|Type help or )/;
+        return(-1) if (/command authorization failed/i);
+
+        /fan speed/i && next;
+        /chassis temperature/i && next;
+        /degC/ && next;
+        s/\d+rpm//ig;
+        s/^\|//;
+        s/^\ \ ([0-9]+)(\ +).*up.*[0-9]/  $1$2up REMOVED/i;
+        s/^\ \ ([0-9]+)(\ +).*Air\ Inlet/  $1$2REMOVED Air Inlet/i;
+        s/^\ \ ([0-9]+)(\ +)[0-9]+\ +[0-9]+/  $1$2REMOVED     REMOVED/;
+        /Type: / && ProcessHistory("COMMENTS","keysort","A0",
+                                   "#Chassis type: $'");
+
+        ProcessHistory("COMMENTS","keysort","B1","#$_") && next;
+    }
+    return(0);
+}
+
 # This routine parses "bigpipe profile list"
 sub ShowProfile {
     print STDERR "    In ShowProfile: $_" if ($debug);
@@ -413,8 +441,86 @@ sub ShowVersion {
     return(0);
 }
 
+# This routine parses "cat /config/ZebOS.conf"
+sub ShowZebOSconf {
+    my($line) = (0);
+    print STDERR "    In ShowZebOSconf: $_" if ($debug);
+
+    while (<INPUT>) {
+        tr/\015//d;
+        last if (/^$prompt/);
+        next if (/^(\s*|\s*$cmd\s*)$/);
+        return(1) if /^\s*\^\s*$/;
+        return(1) if /(Invalid input detected|Type help or )/;
+        return(-1) if (/command authorization failed/i);
+
+        if (!$line++) {
+            ProcessHistory("ZEBOSCONF","","","#\n#/config/ZebOS.conf:\n");
+        }
+        ProcessHistory("ZEBOSCONF","","","# $_") && next;
+    }
+    return(0);
+}
+
+# This routine parses "lsof -n -i :179"
+sub ShowZebOSsockets {
+    my($line) = (0);
+    print STDERR "    In ShowZebOSsockets: $_" if ($debug);
+
+    while (<INPUT>) {
+        tr/\015//d;
+        last if (/^$prompt/);
+        next if (/^(\s*|\s*$cmd\s*)$/);
+        return(1) if /^\s*\^\s*$/;
+        return(1) if /(Invalid input detected|Type help or )/;
+        return(-1) if (/command authorization failed/i);
+
+        if (!$line++) {
+            ProcessHistory("ZEBOSSOCKETS","","","#\n#lsof -n -i :179:\n");
+        }
+        ProcessHistory("ZEBOSSOCKETS","","","# $_") && next;
+    }
+    return(0);
+}
+
+# This routine processes a "tmsh list"
+sub WriteTermTMSH {
+    my($lines) = 0;
+    print STDERR "    In WriteTerm: $_" if ($debug);
+
+    while (<INPUT>) {
+        tr/\015//d;
+        next if (/^\s*$/);
+        # end of config - hopefully.  f5 does not have a reliable end-of-config
+        # tag.
+        if (/^$prompt/) {
+            $found_end++;
+            last;
+        }
+        return(-1) if (/command authorization failed/i);
+
+        $lines++;
+
+        if (/(bind-pw|encrypted-password|user-password-encrypted|passphrase) / && $filter_pwds >= 1) {
+            ProcessHistory("ENABLE","","","# $1 <removed>\n");
+            next;
+        }
+
+        # catch anything that wasnt matched above.
+        ProcessHistory("","","","$_");
+    }
+
+    if ($lines < 3) {
+        printf(STDERR "ERROR: $host configuration appears truncated.\n");
+        $found_end = 0;
+        return(-1);
+    }
+
+    return(0);
+}
+
 # This routine processes a "bigpipe list"
-sub WriteTerm {
+sub WriteTermBIGPIPE {
     my($lines) = 0;
     print STDERR "    In WriteTerm: $_" if ($debug);
 
@@ -515,7 +621,8 @@ sub WriteTerm {
 sub DoNothing {print STDOUT;}
 
 # Main
-@commandtable = (
+# bigpipe commands, BIGIP v9 and v10
+@bigpipe_commandtable = (
 	{'bigpipe version'		=> 'ShowVersion'},
 	{'bigpipe platform'		=> 'ShowPlatform'},
 	{'cat /config/bigip.license'	=> 'ShowLicense'},
@@ -524,14 +631,50 @@ sub DoNothing {print STDOUT;}
 	{'bigpipe base list'		=> 'ShowBaseRun'},
 	{'bigpipe db show'		=> 'ShowDb'},
 	{'bigpipe route static show'	=> 'ShowRouteStatic'},
-	{'ls --full-time --color=never /config/ssl/ssl.crt' => 'ShowSslCrt'},
-	{'ls --full-time --color=never /config/ssl/ssl.key' => 'ShowSslKey'},
-	{'bigpipe list'			=> 'WriteTerm'}
+	#{'ls --full-time --color=never /config/ssl/ssl.crt' => 'ShowSslCrt'},
+	#{'ls --full-time --color=never /config/ssl/ssl.key' => 'ShowSslKey'},
+	{'bigpipe list'			=> 'WriteTermBIGPIPE'}
+);
+
+# tmsh commands, BIGIP v11
+@tmsh_commandtable = (
+        {'tmsh show /sys version'                           => 'ShowVersion'},
+        {'tmsh show /sys hardware'                          => 'ShowHardware'},
+        {'tmsh show /sys license'                           => 'ShowLicense'},
+        {'cat /config/ZebOS.conf'                           => 'ShowZebOSconf'},
+        {'lsof -i :179'                                     => 'ShowZebOSsockets'},
+        {'tmsh show /net route static'                      => 'ShowRouteStatic'},
+	#{'ls --full-time --color=never /config/ssl/ssl.crt' => 'ShowSslCrt'},
+	#{'ls --full-time --color=never /config/ssl/ssl.key' => 'ShowSslKey'},
+        {'tmsh -q list'                                        => 'WriteTermTMSH'},
 );
 # Use an array to preserve the order of the commands and a hash for mapping
 # commands to the subroutine and track commands that have been completed.
-@commands = map(keys(%$_), @commandtable);
-%commands = map(%$_, @commandtable);
+#
+# bigpipe version should always return 0 on a BIGIP v9 and v10 system, even 
+# if not licensed properly. On a v11 system it will return an error saying
+# "bigpipe is no longer supported; please use tmsh" and exit with code 1.
+# Hopefully system will return 127 if in future bigpipe executable is 
+# removed completly ?
+
+@commands = map(keys(%$_), @bigpipe_commandtable);
+%commands = map(%$_, @bigpipe_commandtable);
+
+print STDERR "executing clogin -t $timeo -c \"bigpipe version 2>&1\" $host\n" if ($debug);
+print STDOUT "executing clogin -t $timeo -c \"bigpipe version 2>&1\" $host\n" if ($log);
+system "clogin -t $timeo -c \"bigpipe version 2>&1\" $host </dev/null > $host.raw 2>&1" || die "clogin failed for $host: $!\n";
+open(INPUT, "< $host.raw") || die "clogin failed for $host: $!\n";
+while (<INPUT>) {
+    if (/tmsh/) {
+        print STDERR "The F5 says to use tmsh, using tmsh command table for config collection.\n" if ($debug);
+        print STDOUT "The F5 says to use tmsh, using tmsh command table for config collection.\n" if ($log);
+        @commands = map(keys(%$_), @tmsh_commandtable);
+        %commands = map(%$_, @tmsh_commandtable);
+        break;
+    }
+}
+unlink("$host.raw");
+close(INPUT);
 
 $cisco_cmds=join(";",@commands);
 $cmds_regexp = join("|", map quotemeta($_), @commands);
@@ -555,9 +698,9 @@ if ($file) {
     print STDOUT "opening file $host\n" if ($log);
     open(INPUT,"<$host") || die "open failed for $host: $!\n";
 } else {
-    print STDERR "executing clogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($debug);
-    print STDOUT "executing clogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($log);
-    if (defined($ENV{NOPIPE})) {
+    print STDERR "executing clogin -t $timeo -c \"$cisco_cmds\" $host\n" if ($debug);
+    print STDOUT "executing clogin -t $timeo -c \"$cisco_cmds\" $host\n" if ($log);
+    if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
 	system "clogin -t $timeo -c \"$cisco_cmds\" $host </dev/null > $host.raw 2>&1" || die "clogin failed for $host: $!\n";
 	open(INPUT, "< $host.raw") || die "clogin failed for $host: $!\n";
     } else {
@@ -629,7 +772,7 @@ ProcessHistory("","","","");
 close(INPUT);
 close(OUTPUT);
 
-if (defined($ENV{NOPIPE})) {
+if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
     unlink("$host.raw") if (! $debug);
 }
 

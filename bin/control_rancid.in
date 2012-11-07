@@ -471,9 +471,13 @@ if [ -f $DIR/routers.up.missed ] ; then
 fi
 while [ $round -le $pass ]
 do
-    for router in `cat $devlistfile | cut -d: -f1`
+    for router in `cat $devlistfile`
     do
-	mfg=$2
+	OFS=$IFS
+	IFS=':'
+	set $router
+	IFS=$OFS
+	router=$1; mfg=$2
 
 	if [ ! -s $router.new ]
 	then

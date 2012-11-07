@@ -9,6 +9,8 @@ VERSION=`sed -n 's/.*version.*"\(.*\)".*/\1/p' $srcdir/include/version.h.in|tr -
 PACKAGE=`sed -n 's/.*package.*"\(.*\)".*/\1/p' $srcdir/include/version.h.in|tr -d ' '`
 AC_SUBST(VERSION)
 AC_SUBST(PACKAGE)
+COPYYEARS="1997-2011"
+AC_SUBST(COPYYEARS)
 
 AM_INIT_AUTOMAKE($PACKAGE, $VERSION, rancid@shrubbery.net)
 
@@ -453,6 +455,7 @@ AC_CONFIG_FILES(bin/avologin bin/avorancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/blogin bin/brancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/cat5rancid bin/clogin bin/rancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/cssrancid, [chmod a+x $ac_file])
+AC_CONFIG_FILES(bin/dlogin bin/drancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/elogin bin/erancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/f5rancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/f10rancid, [chmod a+x $ac_file])
@@ -462,6 +465,7 @@ AC_CONFIG_FILES(bin/hlogin bin/hrancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/htlogin bin/htrancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/jlogin bin/jrancid bin/jerancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/mrancid bin/mrvlogin bin/mrvrancid, [chmod a+x $ac_file])
+AC_CONFIG_FILES(bin/mtrancid bin/mtlogin, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/nlogin bin/nrancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/nslogin bin/nsrancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/nxrancid, [chmod a+x $ac_file])

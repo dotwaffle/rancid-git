@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: rancid-fe.in 2178 2010-04-08 20:03:01Z heas $
+## $Id: rancid-fe.in 2296 2011-04-27 18:18:56Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
@@ -61,6 +61,7 @@ $vendor =~ tr/[A-Z]/[a-z]/;
     'cisco-nx'		=> 'nxrancid',
     'cisco-xr'		=> 'xrrancid',
     'css'		=> 'cssrancid',
+    'dell'		=> 'drancid',
     'enterasys'		=> 'rivrancid',
     'erx'		=> 'jerancid',
     'extreme'		=> 'xrancid',
@@ -72,6 +73,7 @@ $vendor =~ tr/[A-Z]/[a-z]/;
     'hitachi'		=> 'htrancid',
     'hp'		=> 'hrancid',
     'juniper'		=> 'jrancid',
+    'mikrotik'		=> 'mtrancid',
     'mrtd'		=> 'mrancid',
     'mrv'		=> 'mrvrancid',
     'netopia'		=> 'trancid',
