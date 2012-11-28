@@ -304,6 +304,7 @@ sub ShowFlash {
         # persist changes constantly if you're running ntp, so
         # skip its updates.
         /\spersist$/ && next;
+        /bytes free$/ && next;
 	ProcessHistory("FLASH","","","!Flash: $_");
     }
     ProcessHistory("","","","!\n");
