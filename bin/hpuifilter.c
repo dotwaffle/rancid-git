@@ -367,7 +367,7 @@ main(int argc, char **argv, char **ev)
 		break;
 	    } else if (bytes > 0) {
 		hlen -= bytes;
-		memcpy(hbuf, hbuf + bytes, hlen + 1);
+		memmove(hbuf, hbuf + bytes, hlen + 1);
 		if (hlen < 1)
 		     pfds[2].events &= ~POLLOUT;
 	    }
@@ -423,7 +423,7 @@ main(int argc, char **argv, char **ev)
 		break;
 	    } else if (bytes > 0) {
 		tlen -= bytes;
-		memcpy(tbuf, tbuf + bytes, tlen + 1);
+		memmove(tbuf, tbuf + bytes, tlen + 1);
 		if (tlen < 1)
 		    pfds[1].events &= ~POLLOUT;
 	    }
@@ -593,7 +593,7 @@ filter(char *buf, int len)
 	    if (len - pmatch[0].rm_eo <= 0) {
 		buf[pmatch[0].rm_so] = '\0';
 	    } else {
-		memcpy(buf + pmatch[0].rm_so, buf + pmatch[0].rm_eo,
+		memmove(buf + pmatch[0].rm_so, buf + pmatch[0].rm_eo,
 		       len - pmatch[0].rm_eo + 1);
 	    }
 	    len -= pmatch[0].rm_eo - pmatch[0].rm_so;
@@ -616,7 +616,7 @@ filter(char *buf, int len)
 	    if (len - pmatch[0].rm_eo == 0) {
 		buf[pmatch[0].rm_so] = '\0';
 	    } else {
-		memcpy(buf + pmatch[0].rm_so, buf + pmatch[0].rm_eo,
+		memmove(buf + pmatch[0].rm_so, buf + pmatch[0].rm_eo,
 		       len - pmatch[0].rm_eo + 1);
 	    }
 	    len -= pmatch[0].rm_eo - pmatch[0].rm_so;
