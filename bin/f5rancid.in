@@ -317,13 +317,12 @@ sub ShowHardware {
         return(1) if /(Invalid input detected|Type help or )/;
         return(-1) if (/command authorization failed/i);
 
-        /fan speed/i && next;
-        /chassis temperature/i && next;
-        /degC/ && next;
         s/\d+rpm//ig;
         s/^\|//;
         s/^\ \ ([0-9]+)(\ +).*up.*[0-9]/  $1$2up REMOVED/i;
         s/^\ \ ([0-9]+)(\ +).*Air\ Inlet/  $1$2REMOVED Air Inlet/i;
+        s/^\ \ ([0-9]+)(\ +).*HSBe/  $1$2REMOVED HSBe/i;
+        s/^\ \ ([0-9]+)(\ +).*TMP421 on die/  $1$2REMOVED TMP421 on die/i;
         s/^\ \ ([0-9]+)(\ +)[0-9]+\ +[0-9]+/  $1$2REMOVED     REMOVED/;
         /Type: / && ProcessHistory("COMMENTS","keysort","A0",
                                    "#Chassis type: $'");
