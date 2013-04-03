@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: jerancid.in 2246 2010-09-08 01:36:07Z heas $
+## $Id: jerancid.in 2336 2011-11-17 21:13:20Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
@@ -444,14 +444,16 @@ sub WriteTerm {
 
 	# ftp host encrypted password oscillates
 	if (/^(host \S+ \S+ ftp) /) {
+	    my($prefix) = $1;
 	    if ($filter_pwds >= 1 || /^host \S+ \S+ ftp \d /) {
-		ProcessHistory("","","","!$1 <removed>\n"); next;
+		ProcessHistory("","","","!$prefix <removed>\n"); next;
 	    }
 	}
 	# mpls ldp encrypted password oscillates
 	if (/^(mpls ldp neighbor \S+ password)/) {
+	    my($prefix) = $1;
 	    if ($filter_pwds >= 1 || /^mpls ldp neighbor \S+ password \d /) {
-		ProcessHistory("","","","!$1 <removed>\n"); next;
+		ProcessHistory("","","","!$prefix <removed>\n"); next;
 	    }
 	}
 
@@ -629,7 +631,7 @@ if ($file) {
 } else {
     print STDERR "executing clogin -t $timeo -c\"$jnxe_cmds\" $host\n" if ($debug);
     print STDOUT "executing clogin -t $timeo -c\"$jnxe_cmds\" $host\n" if ($log);
-    if (defined($ENV{NOPIPE})) {
+    if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
 	system "clogin -t $timeo -c \"$jnxe_cmds\" $host </dev/null > $host.raw 2>&1" || die "clogin failed for $host: $!\n";
 	open(INPUT, "< $host.raw") || die "clogin failed for $host: $!\n";
     } else {
@@ -701,7 +703,7 @@ ProcessHistory("","","","");
 close(INPUT);
 close(OUTPUT);
 
-if (defined($ENV{NOPIPE})) {
+if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
     unlink("$host.raw") if (! $debug);
 }
 

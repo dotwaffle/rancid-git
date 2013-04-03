@@ -1,9 +1,9 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: clogin.in 2255 2010-10-06 20:31:24Z heas $
+## $Id: clogin.in 2376 2012-01-31 22:42:14Z heas $
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) 1997-2009 by Terrapin Communications, Inc.
+## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -84,23 +84,23 @@ set timeoutdflt 45
 set send_human {.4 .4 .7 .3 5}
 
 # Find the user in the ENV, or use the unix userid.
-if {[ info exists env(CISCO_USER) ]} {
+if {[info exists env(CISCO_USER)]} {
     set default_user $env(CISCO_USER)
-} elseif {[ info exists env(USER) ]} {
+} elseif {[info exists env(USER)]} {
     set default_user $env(USER)
-} elseif {[ info exists env(LOGNAME) ]} {
+} elseif {[info exists env(LOGNAME)]} {
     set default_user $env(LOGNAME)
 } else {
     # This uses "id" which I think is portable.  At least it has existed
     # (without options) on all machines/OSes I've been on recently -
     # unlike whoami or id -nu.
-    if [ catch {exec id} reason ] {
+    if [catch {exec id} reason] {
 	send_error "\nError: could not exec id: $reason\n"
 	exit 1
     }
     regexp {\(([^)]*)} "$reason" junk default_user
 }
-if {[ info exists env(CLOGINRC) ]} {
+if {[info exists env(CLOGINRC)]} {
     set password_file $env(CLOGINRC)
 }
 
@@ -116,26 +116,26 @@ for {set i 0} {$i < $argc} {incr i} {
 	} -u* {
 	    if {! [regexp .\[uU\](.+) $arg ignore user]} {
 		incr i
-		set username [ lindex $argv $i ]
+		set username [lindex $argv $i]
 	    }
 	# VTY Password
 	} -p* {
 	    if {! [regexp .\[pP\](.+) $arg ignore userpasswd]} {
 		incr i
-		set userpasswd [ lindex $argv $i ]
+		set userpasswd [lindex $argv $i]
 	    }
 	    set do_passwd 0
 	# ssh passphrase
 	} -r* {
-	    if {! [  regexp .\[rR\](.+) $arg ignore passphrase]} {
+	    if {! [regexp .\[rR\](.+) $arg ignore passphrase]} {
 		incr i
-		set vapassphrase [ lindex $argv $i ]
+		set vapassphrase [lindex $argv $i]
 	    }
 	# VTY Password
 	} -v* {
 	    if {! [regexp .\[vV\](.+) $arg ignore passwd]} {
 		incr i
-		set passwd [ lindex $argv $i ]
+		set passwd [lindex $argv $i]
 	    }
 	    set do_passwd 0
 	# Version string
@@ -146,7 +146,7 @@ for {set i 0} {$i < $argc} {incr i} {
 	} -w* {
 	    if {! [regexp .\[wW\](.+) $arg ignore enauser]} {
 		incr i
-		set enausername [ lindex $argv $i ]
+		set enausername [lindex $argv $i]
 	    }
 	# Environment variable to pass to -s scripts
 	} -E* {
@@ -160,23 +160,23 @@ for {set i 0} {$i < $argc} {incr i} {
 	} -e* {
 	    if {! [regexp .\[e\](.+) $arg ignore enapasswd]} {
 		incr i
-		set enapasswd [ lindex $argv $i ]
+		set enapasswd [lindex $argv $i]
 	    }
 	    set do_enapasswd 0
 	# Command to run.
 	} -c* {
 	    if {! [regexp .\[cC\](.+) $arg ignore command]} {
 		incr i
-		set command [ lindex $argv $i ]
+		set command [lindex $argv $i]
 	    }
 	    set do_command 1
 	# Expect script to run.
 	} -s* {
 	    if {! [regexp .\[sS\](.+) $arg ignore sfile]} {
 		incr i
-		set sfile [ lindex $argv $i ]
+		set sfile [lindex $argv $i]
 	    }
-	    if { ! [ file readable $sfile ] } {
+	    if { ! [file readable $sfile] } {
 		send_user "\nError: Can't read $sfile\n"
 		exit 1
 	    }
@@ -188,27 +188,27 @@ for {set i 0} {$i < $argc} {incr i} {
 	} -y* {
 	    if {! [regexp .\[eE\](.+) $arg ignore cypher]} {
 		incr i
-		set cypher [ lindex $argv $i ]
+		set cypher [lindex $argv $i]
 	    }
 	# alternate cloginrc file
 	} -f* {
 	    if {! [regexp .\[fF\](.+) $arg ignore password_file]} {
 		incr i
-		set password_file [ lindex $argv $i ]
+		set password_file [lindex $argv $i]
 	    }
 	# Timeout
 	} -t* {
 	    if {! [regexp .\[tT\](.+) $arg ignore timeout]} {
 		incr i
-	        set timeoutdflt [ lindex $argv $i ]
+	        set timeoutdflt [lindex $argv $i]
 	    }
 	# Command file
 	} -x* {
 	    if {! [regexp .\[xX\](.+) $arg ignore cmd_file]} {
 		incr i
-		set cmd_file [ lindex $argv $i ]
+		set cmd_file [lindex $argv $i]
 	    }
-	    if [ catch {set cmd_fd [open $cmd_file r]} reason ] {
+	    if [catch {set cmd_fd [open $cmd_file r]} reason] {
 		send_user "\nError: $reason\n"
 		exit 1
 	    }
@@ -258,7 +258,7 @@ proc label { host } {
     }
     # take host from ENV(TERM)
     if [info exists env(TERM)] {
-	if [ regexp \^(xterm|vs) $env(TERM) ignore ] {
+	if [regexp \^(xterm|vs) $env(TERM) ignore] {
 	    send_user "\033]1;[lindex [split $host "."] 0]\a"
 	    send_user "\033]2;$host\a"
 	}
@@ -274,7 +274,7 @@ proc add {var args} { global int_$var ; lappend int_$var $args}
 proc include {args} {
     global env
     regsub -all "(^{|}$)" $args {} args
-    if { [ regexp "^/" $args ignore ] == 0 } {
+    if { [regexp "^/" $args ignore] == 0 } {
 	set args $env(HOME)/$args
     }
     source_password_file $args
@@ -284,7 +284,7 @@ proc find {var router} {
     upvar int_$var list
     if { [info exists list] } {
 	foreach line $list {
-	    if { [string match [lindex $line 0] $router ] } {
+	    if { [string match [lindex $line 0] $router] } {
 		return [lrange $line 1 end]
 	    }
 	}
@@ -308,7 +308,7 @@ proc source_password_file { password_file } {
 	send_user "\nError: $password_file must not be world readable/writable\n"
 	exit 1
     }
-    if [ catch {source $password_file} reason ] {
+    if [catch {source $password_file} reason] {
 	send_user "\nError: $reason\n"
 	exit 1
     }
@@ -329,9 +329,9 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype identfile 
 	if [string match "telnet*" $prog] {
 	    regexp {telnet(:([^[:space:]]+))*} $prog methcmd suffix port
 	    if {"$port" == ""} {
-		set retval [ catch {spawn telnet $router} reason ]
+		set retval [catch {spawn telnet $router} reason]
 	    } else {
-		set retval [ catch {spawn telnet $router $port} reason ]
+		set retval [catch {spawn telnet $router $port} reason]
 	    }
 	    if { $retval } {
 		send_user "\nError: telnet failed: $reason\n"
@@ -340,16 +340,16 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype identfile 
 	} elseif [string match "ssh*" $prog] {
 	    # ssh to the router & try to login with or without an identfile.
 	    regexp {ssh(:([^[:space:]]+))*} $prog methcmd suffix port
-	    set cmd [join [lindex $sshcmd 0] " "]
+	    set cmd $sshcmd
 	    if {"$port" != ""} {
 		set cmd "$cmd -p $port"
 	    }
 	    if {"$identfile" != ""} {
 		set cmd "$cmd -i $identfile"
 	    }
-	    set retval [ catch {eval spawn [split "$cmd -c $cyphertype -x -l $user $router" { }]} reason ]
+	    set retval [catch {eval spawn [split "$cmd -c $cyphertype -x -l $user $router" { }]} reason]
 	    if { $retval } {
-		send_user "\nError: $sshcmd failed: $reason\n"
+		send_user "\nError: $cmd failed: $reason\n"
 		return 1
 	    }
 	} elseif ![string compare $prog "rsh"] {
@@ -369,7 +369,7 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype identfile 
 	    set rshfail 0
 	    for {set i 0} {$i < $num_commands && !$rshfail} { incr i} {
 		log_user 0
-		set retval [ catch {spawn rsh $user@$router [lindex $commands $i] } reason ]
+		set retval [catch {spawn rsh $user@$router [lindex $commands $i] } reason]
 		if { $retval } {
 		    send_user "\nError: rsh failed: $reason\n"
 		    log_user 1; return 1
@@ -459,6 +459,11 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype identfile 
     # then it will just send the passwd.
     # if telnet fails with connection refused, try ssh
     expect {
+	-re "^<-+ More -+>\[^\n\r]*" {
+	    # ASA will use the pager for long banners
+	    send " ";
+	    exp_continue
+	}
 	-re "(Connection refused|Secure connection \[^\n\r]+ refused)" {
 	    catch {close}; catch {wait};
 	    if !$progs {
@@ -489,18 +494,22 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype identfile 
 	    catch {close}; catch {wait};
 	    return 1
 	}
-	-re "(Host key not found |The authenticity of host .* be established).*\(yes\/no\)\?" {
+	-re "(Host key not found |The authenticity of host .* be established).* \\(yes/no\\)\\?" {
 	    send "yes\r"
 	    send_user "\nHost $router added to the list of known hosts.\n"
 	    exp_continue
 	}
-	-re "HOST IDENTIFICATION HAS CHANGED.* \(yes\/no\)\?" {
+	-re "HOST IDENTIFICATION HAS CHANGED.* \\(yes/no\\)\\?" {
 	    send "no\r"
 	    send_user "\nError: The host key for $router has changed.  Update the SSH known_hosts file accordingly.\n"
 	    catch {close}; catch {wait};
 	    return 1
 	}
-	-re "Offending key for .* \(yes\/no\)\?" {
+	-re "HOST IDENTIFICATION HAS CHANGED\[^\n\r]+" {
+	    send_user "\nError: The host key for $router has changed.  Update the SSH known_hosts file accordingly.\n"
+	    return 1
+	}
+	-re "Offending key for .* \\(yes/no\\)\\?" {
 	    send "no\r"
 	    send_user "\nError: host key mismatch for $router.  Update the SSH known_hosts file accordingly.\n"
 	    catch {close}; catch {wait};
@@ -614,22 +623,10 @@ proc run_commands { prompt command } {
     # command is "set length 0"; otherwise its "terminal length 0".
     # skip if its an extreme (since the pager can not be disabled on a
     # per-vty basis).
-    if { [ string compare "extreme" "$platform" ] } {
-	if [ regexp -- ".*> .*enable" "$prompt" ] {
-	    send "set length 0\r"
-	    # This is ugly, but reduces code duplication, allowing the
-	    # subsequent expects to handle everything as normal.
-	    set command "set logging session disable;$command"
-	} else {
-	    send "terminal length 0\r"
-	}
+    if { [string compare "extreme" "$platform"] } {
 	# match cisco config mode prompts too, such as router(config-if)#,
 	# but catalyst does not change in this fashion.
 	regsub -all {^(.{1,11}).*([#>])$} $prompt {\1([^#>\r\n]+)?[#>](\\([^)\\r\\n]+\\))?} reprompt
-	expect {
-	    -re $reprompt	{}
-	    -re "\[\n\r]+"	{ exp_continue }
-	}
     } else {
 	set reprompt $prompt
     }
@@ -640,8 +637,8 @@ proc run_commands { prompt command } {
     set commands [split $command \;]
     set num_commands [llength $commands]
     # the pager can not be turned off on the PIX, so we have to look
-    # for the "More" prompt.  the extreme is equally obnoxious, with a
-    # global switch in the config.
+    # for the "More" prompt.  the extreme is equally obnoxious in pre-12.3 XOS,
+    # with a global switch in the config.
     for {set i 0} {$i < $num_commands} { incr i} {
 	send -- "[subst -nocommands [lindex $commands $i]]\r"
 	expect {
@@ -655,7 +652,7 @@ proc run_commands { prompt command } {
 						  send " "
 						  exp_continue
 						}
-	    -re "\[\n\r]+"			{ send_user -- "$expect_out(buffer)"
+	    -re "\[^\r\n]*\[\n\r]+"		{ send_user -- "$expect_out(buffer)"
 						  exp_continue
 						}
 	    -re "\[^\r\n]*Press <SPACE> to cont\[^\r\n]*"	{
@@ -677,7 +674,7 @@ proc run_commands { prompt command } {
     }
     log_user 1
 
-    if { [ string compare "extreme" "$platform" ] } {
+    if { [string compare "extreme" "$platform"] } {
 	send -h "exit\r"
     } else {
 	send -h "quit\r"
@@ -852,7 +849,7 @@ foreach router [lrange $argv $i end] {
     if { "$cmethod" == "" } { set cmethod {{telnet} {ssh}} }
 
     # Figure out the SSH executable name
-    set sshcmd [find sshcmd $router]
+    set sshcmd [join [lindex [find sshcmd $router] 0] ""]
     if { "$sshcmd" == "" } { set sshcmd {ssh} }
 
     # Login to the router
@@ -903,27 +900,33 @@ foreach router [lrange $argv $i end] {
 				  regsub -all "\[\]\[\(\)]" $junk {\\&} prompt;
 				}
     }
-
+    if { $do_command || $do_script } {
+	if { [ string compare "extreme" "$platform" ] } {
+	    # If the prompt is (enable), then we are on a switch and the
+	    # command is "set length 0"; otherwise its "terminal length 0".
+	    if [regexp -- ".*> .*enable" "$prompt"] {
+		send "set length 0\r"
+		expect -re $prompt  	{}
+		send "set width 132\r"
+		expect -re $prompt	{}
+		send "set logging session disable\r"
+	    } else {
+		send "terminal length 0\r"
+		expect -re $prompt  	{}
+		send "terminal width 132\r"
+	    }
+	    expect -re $prompt		{}
+	} else {
+	    send "disable clipaging\r"
+	    expect -re $prompt		{}
+	}
+    }
     if { $do_command } {
 	if {[run_commands $prompt $command]} {
 	    incr exitval
 	    continue
 	}
     } elseif { $do_script } {
-	# If the prompt is (enable), then we are on a switch and the
-	# command is "set length 0"; otherwise its "terminal length 0".
-	if [ regexp -- ".*> .*enable" "$prompt" ] {
-	    send "set length 0\r"
-	    expect -re $prompt  {}
-	    send "set width 80\r"
-	    expect -re $prompt	{}
-	    send "set logging session disable\r"
-	} else {
-	    send "terminal length 0\r"
-	    expect -re $prompt  {}
-	    send "terminal width 80\r"
-	}
-	expect -re $prompt	{}
 	source $sfile
 	catch {close};
     } else {

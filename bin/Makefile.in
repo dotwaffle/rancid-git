@@ -55,16 +55,16 @@ DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(srcdir)/htlogin.in $(srcdir)/htrancid.in \
 	$(srcdir)/jerancid.in $(srcdir)/jlogin.in $(srcdir)/jrancid.in \
 	$(srcdir)/mrancid.in $(srcdir)/mrvlogin.in \
-	$(srcdir)/mrvrancid.in $(srcdir)/nlogin.in \
-	$(srcdir)/nrancid.in $(srcdir)/nslogin.in \
-	$(srcdir)/nsrancid.in $(srcdir)/nxrancid.in $(srcdir)/par.in \
-	$(srcdir)/prancid.in $(srcdir)/rancid-fe.in \
-	$(srcdir)/rancid.in $(srcdir)/rivlogin.in \
-	$(srcdir)/rivrancid.in $(srcdir)/rrancid.in \
-	$(srcdir)/srancid.in $(srcdir)/tlogin.in $(srcdir)/tntlogin.in \
-	$(srcdir)/tntrancid.in $(srcdir)/trancid.in \
-	$(srcdir)/xrancid.in $(srcdir)/xrrancid.in \
-	$(srcdir)/zrancid.in
+	$(srcdir)/mrvrancid.in $(srcdir)/mtlogin.in \
+	$(srcdir)/mtrancid.in $(srcdir)/nlogin.in $(srcdir)/nrancid.in \
+	$(srcdir)/nslogin.in $(srcdir)/nsrancid.in \
+	$(srcdir)/nxrancid.in $(srcdir)/par.in $(srcdir)/prancid.in \
+	$(srcdir)/rancid-fe.in $(srcdir)/rancid.in \
+	$(srcdir)/rivlogin.in $(srcdir)/rivrancid.in \
+	$(srcdir)/rrancid.in $(srcdir)/srancid.in $(srcdir)/tlogin.in \
+	$(srcdir)/tntlogin.in $(srcdir)/tntrancid.in \
+	$(srcdir)/trancid.in $(srcdir)/xrancid.in \
+	$(srcdir)/xrrancid.in $(srcdir)/zrancid.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/acinclude.m4 \
 	$(top_srcdir)/configure.in
@@ -77,9 +77,9 @@ CONFIG_CLEAN_FILES = control_rancid par rancid-fe agmrancid alogin \
 	clogin rancid cssrancid elogin erancid f5rancid f10rancid \
 	flogin francid fnlogin fnrancid hlogin hrancid htlogin \
 	htrancid jlogin jrancid jerancid mrancid mrvlogin mrvrancid \
-	nlogin nrancid nslogin nsrancid nxrancid prancid rivlogin \
-	rivrancid rrancid srancid tlogin tntlogin tntrancid trancid \
-	xrancid xrrancid zrancid
+	mtrancid mtlogin nlogin nrancid nslogin nsrancid nxrancid \
+	prancid rivlogin rivrancid rrancid srancid tlogin tntlogin \
+	tntrancid trancid xrancid xrrancid zrancid
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
@@ -138,6 +138,7 @@ CCDEPMODE = @CCDEPMODE@
 #CFLAGS += -g
 CFLAGS = -g -O0
 COMM = @COMM@
+COPYYEARS = @COPYYEARS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CVS = @CVS@
@@ -248,10 +249,10 @@ bin_SCRIPTS = agmrancid alogin arancid arrancid avologin avorancid \
 	blogin brancid cat5rancid clogin control_rancid cssrancid \
 	elogin erancid f5rancid f10rancid flogin fnlogin fnrancid \
 	francid hlogin hrancid htlogin htrancid jerancid jlogin \
-	jrancid mrancid mrvlogin mrvrancid nlogin nrancid nslogin \
-	nsrancid nxrancid par prancid rancid-fe rancid rivlogin \
-	rivrancid rrancid srancid tlogin tntlogin tntrancid trancid \
-	xrancid xrrancid zrancid lg.cgi lgform.cgi rancid-cvs \
+	jrancid mrancid mrvlogin mrvrancid mtlogin mtrancid nlogin \
+	nrancid nslogin nsrancid nxrancid par prancid rancid-fe rancid \
+	rivlogin rivrancid rrancid srancid tlogin tntlogin tntrancid \
+	trancid xrancid xrrancid zrancid lg.cgi lgform.cgi rancid-cvs \
 	rancid-run
 EXTRA_DIST = lg.cgi.in lgform.cgi.in rancid-cvs.in rancid-run.in
 #dist_bin_SCRIPTS= $(bin_SCRIPTS:%=%.in)
@@ -285,7 +286,8 @@ auto_edit = sed \
 	-e 's,@MAILPLUS\@,$(MAILPLUS),g' \
 	-e 's,@PACKAGE\@,$(PACKAGE),g' \
 	-e 's,@SVN_FSTYPE\@,$(SVN_FSTYPE),g' \
-	-e 's,@VERSION\@,$(VERSION),g'
+	-e 's,@VERSION\@,$(VERSION),g' \
+	-e 's,@COPYYEARS\@,$(COPYYEARS),g'
 
 all: all-am
 
@@ -386,6 +388,10 @@ mrancid: $(top_builddir)/config.status $(srcdir)/mrancid.in
 mrvlogin: $(top_builddir)/config.status $(srcdir)/mrvlogin.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 mrvrancid: $(top_builddir)/config.status $(srcdir)/mrvrancid.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+mtrancid: $(top_builddir)/config.status $(srcdir)/mtrancid.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+mtlogin: $(top_builddir)/config.status $(srcdir)/mtlogin.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 nlogin: $(top_builddir)/config.status $(srcdir)/nlogin.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@

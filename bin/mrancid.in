@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: mrancid.in 2246 2010-09-08 01:36:07Z heas $
+## $Id: mrancid.in 2279 2011-01-31 22:41:00Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
@@ -365,7 +365,7 @@ if ($file) {
 } else {
     print STDERR "executing clogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($debug);
     print STDOUT "executing clogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($log);
-    if (defined($ENV{NOPIPE})) {
+    if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
 	system "clogin -t $timeo -c \"$cisco_cmds\" $host </dev/null > $host.raw 2>&1" || die "clogin failed for $host: $!\n";
 	open(INPUT, "< $host.raw") || die "clogin failed for $host: $!\n";
     } else {
@@ -432,7 +432,7 @@ ProcessHistory("","","","");
 close(INPUT);
 close(OUTPUT);
 
-if (defined($ENV{NOPIPE})) {
+if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
     unlink("$host.raw") if (! $debug);
 }
 

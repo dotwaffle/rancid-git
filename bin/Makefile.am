@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 ## A Makefile.in is supplied, in case you do not have automake.
 
-## $Id: Makefile.am 2258 2010-10-11 20:49:05Z heas $
+## $Id: Makefile.am 2334 2011-11-17 21:09:37Z heas $
 ##
 ## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -53,9 +53,9 @@ bin_SCRIPTS = agmrancid alogin arancid arrancid avologin avorancid blogin \
 	brancid cat5rancid clogin control_rancid cssrancid elogin erancid \
 	f5rancid f10rancid flogin fnlogin fnrancid francid hlogin hrancid \
 	htlogin htrancid jerancid jlogin jrancid mrancid mrvlogin mrvrancid \
-	nlogin nrancid nslogin nsrancid nxrancid par prancid rancid-fe rancid \
-	rivlogin rivrancid rrancid srancid tlogin tntlogin tntrancid trancid \
-	xrancid xrrancid zrancid
+	mtlogin mtrancid nlogin nrancid nslogin nsrancid nxrancid par prancid \
+	rancid-fe rancid rivlogin rivrancid rrancid srancid tlogin tntlogin \
+	tntrancid trancid xrancid xrrancid zrancid
 
 bin_SCRIPTS += lg.cgi lgform.cgi rancid-cvs rancid-run
 EXTRA_DIST= lg.cgi.in lgform.cgi.in rancid-cvs.in rancid-run.in
@@ -100,7 +100,8 @@ auto_edit = sed \
 	-e 's,@MAILPLUS\@,$(MAILPLUS),g' \
 	-e 's,@PACKAGE\@,$(PACKAGE),g' \
 	-e 's,@SVN_FSTYPE\@,$(SVN_FSTYPE),g' \
-	-e 's,@VERSION\@,$(VERSION),g'
+	-e 's,@VERSION\@,$(VERSION),g' \
+	-e 's,@COPYYEARS\@,$(COPYYEARS),g'
 
 lg.cgi: Makefile $(srcdir)/lg.cgi.in
 	rm -f lg.cgi lg.cgi.tmp; \

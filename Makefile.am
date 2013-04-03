@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 ## A Makefile.in is supplied, in case you do not have automake.
 
-## $Id: Makefile.am 1931 2008-02-14 22:01:17Z heas $
+## $Id: Makefile.am 2286 2011-02-16 18:27:13Z heas $
 ##
 ## Copyright (C) 1997-2008 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -43,3 +43,6 @@ DIRS2_CREATE+=$(DESTDIR)$(localstatedir)
 endif
 install-data-hook:
 	$(mkinstalldirs) $(DIRS2_CREATE);
+
+distclean-local:
+	-rm -rf $(top_srcdir)/autom4te.cache
