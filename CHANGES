@@ -1,3 +1,114 @@
+2.3.8
+	rancid: filter sup-bootflash if sup-bootdisk worked
+
+	*login: fix match of (yes/no) prompts from ssh
+
+	rancid: carry-over additional inventory filtering from XR
+
+2.3.7
+	xrrancid: change some "admin show" sorting to reflect previous code
+
+	xrrancid: filter useless junk from show inventory
+
+	mrvrancid: update ShowChassis() for temp filtering in new s/w
+
+	nrancid: installed memory on Juniper SSG series - Steven Bertsch
+
+	rancid: missing CR after s/n
+
+	xrrancid: admin show variables boot clean-up - Per Carlson
+
+	xrrancid: add admin show install summary, license - Per Carlson
+
+	xrrancid: fix access-list formatting & sorting
+
+	rancid: collect show capture & shun for ASA - Josh Ward
+
+	xrancid: misc patches for XOS - Zenon Mousmoulas
+
+	rancid-cvs: svn repository handling improvement - Zenon Mousmoulas
+
+	rancid: filter WPA passwd - Pavel Korovin
+
+	rancid: add 'show running-config view full' for role cli - Pavel Korovin
+
+	rancid: filter ppp hostnames (aka usernames) - Pavel Korovin
+
+	*login: update host key change match for newer ssh
+
+	clogin: disable pager for XOS-12.3 - Zenon Mousmoulas
+
+	rancid.conf & control_rancid: support arbitrary subversion URLs as
+	(pre-provisioned) repositories and do not overwrite an existing local
+	 repository - Zenon Mousmoulas
+
+	rancid.conf: add LC_COLLATE - Daniel Schmidt
+
+	nlogin: add identfile support - Garry Shtern
+
+	hrancid: match 'logout' in new procurve versions for end of run
+
+	hrancid: include comment line for procurve parser - Per-Olof Olsson
+
+	hrancid: collect show config status - mostly from Per-Olof Olsson
+
+	nxrancid: add show environment fex all fan cmd - Deny IP Any Any
+
+	*login: dont split $sshcmd
+
+	nxrancid: Nexus 4000s don't support 'show environment power' - Lee
+
+	xrrancid: add admin show running - Troy Boudreau
+
+	arancid: /info/sys -> /info/sys/dump - Tim Frost
+
+	rancid: correct isakmp key filter - Pan Affa
+
+	clogin; set terminal width to 132 for both -s and -c
+
+	clogin: respond to ASA's pager in long login banners - Lee
+
+	clogin: set terminal width to 132
+
+	rancid: match flash memory on likes of Cisco 2811 and 2621XM - Pan Affa
+
+	import share/rancid-cvspurge - Matthew Grossman
+
+	rancid: add 'dir /all sup-bootdisk:' for 6500 sup32 - Lee
+
+	rancid: adjust regex for tacacs key match - Pavel Korovin
+
+	*login: join sshcmd clogin directive to handle spaces properly
+
+	mt{login,rancid}: import Microtik module from Chris Boot
+
+	rancid: ppp password missed on dialer interfaces - noted by Hirofumi
+	Katou
+
+	arancid: filter "esecret" lines which change with each config display -
+	Ton
+
+	hlogin: logout from enabled mode instead of exit for -S - Thorsten Hahn
+
+	hrancid: collect show config files and show tech transceivers - Thorsten
+	Hahn
+
+	rancid: filter config timestamp on MDS/NX-OS
+
+	avorancid: collect power management file - from Darius Jan Seroka
+
+	fnrancid: correct comment character - noted by Gavin McCullagh
+
+	fnrancid: update system time and conf_file_ver filters - Gavin McCullagh
+
+	nxrancid: do not require 'show system redundancy status', apparently
+	unsupported on some nexus models.
+
+	clogin: set terminal width for -c and -s
+
+	hlogin: stacks prompt for switch number or CR at login, send CR -
+	Per-Olof Olsson
+
 2.3.6
 	rancid.spec: updated for 2.3.6 - from Florian Koch
 

@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: xrrancid.in 2264 2010-11-04 23:35:17Z heas $
+## $Id: xrrancid.in 2369 2012-01-30 21:06:03Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2010 by Terrapin Communications, Inc.
@@ -168,7 +168,7 @@ sub sortbyipaddr {
     &ipaddrval($a) <=> &ipaddrval($b);
 }
 
-# This routine parses "show version"
+# This routine parses "admin show version"
 sub ShowVersion {
     print STDERR "    In ShowVersion: $_" if ($debug);
     my($slaveslot);
@@ -427,7 +427,7 @@ sub AdminShowDiag {
 	/^$/ && next;
 
 	s/^NODE //;
-	# wtf are those?
+	# wtf are these?
 	next if (/(New Deviation|UDI_VID|Board State)/);
 	# skip insertion time
 	next if (/insertion time/i);
@@ -440,7 +440,34 @@ sub AdminShowDiag {
     return(0);
 }
 
-# This routine parses "show redundancy"
+# This routine parses "admin show running".
+# This will create arrays for hw info.
+sub AdminShowRunning {
+    print STDERR "    In ShowRunning: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	if (/^$prompt/) { $found_diag = 1; last};
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(1) if (/Line has invalid autocommand /);
+	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
+	return(-1) if (/command authorization failed/i);
+	/^$/ && next;
+
+	/^building configuration/i && next;
+	if (/^(\s*secret) / && $filter_pwds >= 2) {
+	    ProcessHistory("SLOT","","","!$1 <removed>\n");
+	    next;
+	}
+	/^end$/ && last;
+
+	ProcessHistory("SLOT","","","!$_");
+    }
+    ProcessHistory("SLOT","","","!\n");
+    return(0);
+}
+
+# This routine parses "admin show redundancy"
 sub ShowRedundancy {
     print STDERR "    In ShowRedundancy: $_" if ($debug);
 
@@ -485,7 +512,7 @@ sub ShowInstallActive {
     return(0);
 }
 
-# This routine parses "show env all"
+# This routine parses "admin show env all"
 sub ShowEnv {
     # Skip if this is not a 7500, 7200, or 7000.
     print STDERR "    In ShowEnv: $_" if ($debug);
@@ -524,82 +551,6 @@ sub ShowEnv {
 	    ProcessHistory("COMMENTS","keysort","E2","!Power: $1\n") && next;
 	/^\s*(RPS is .*)/i &&
 	    ProcessHistory("COMMENTS","keysort","E2","!Power: $1\n") && next;
-    }
-    ProcessHistory("COMMENTS","","","!\n");
-    return(0);
-}
-
-# This routine parses "show boot"
-sub ShowBoot {
-    # Pick up boot variables if 7000/7200/7500/12000/2900/3500;
-    # otherwise pick up bootflash.
-    print STDERR "    In ShowBoot: $_" if ($debug);
-
-    while (<INPUT>) {
-	tr/\015//d;
-	last if (/^$prompt/);
-	next if (/^(\s*|\s*$cmd\s*)$/);
-	return(1) if (/^\s*\^\s*$/);
-	return(1) if (/Line has invalid autocommand /);
-	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
-	return(1) if (/Ambiguous command/i);
-	return(1) if (/(Open device \S+ failed|Error opening \S+:)/);
-	return(-1) if (/command authorization failed/i);
-
-	next if /CONFGEN variable/;
-	if (!defined($H0)) {
-	    $H0 = 1; ProcessHistory("COMMENTS","keysort","H0","!\n");
-	}
-	if ($type !~ /^(12[04]|7)/) {
-	    if ($type !~ /^(29|35)00/) {
-		ProcessHistory("COMMENTS","keysort","H2","!BootFlash: $_");
-	    } else {
-		ProcessHistory("COMMENTS","keysort","H1","!Variable: $_");
-	    }
-	} elsif (/(variable|register)/) {
-	    ProcessHistory("COMMENTS","keysort","H1","!Variable: $_");
-	}
-    }
-    ProcessHistory("COMMENTS","","","!\n");
-    return(0);
-}
-
-# This routine parses "show gsr chassis-info" for the gsr
-# This will create arrays for hw info.
-sub ShowGSR {
-    # Skip if this is not a 1200n.
-    print STDERR "    In ShowGSR: $_" if ($debug);
-
-    while (<INPUT>) {
-	tr/\015//d;
-	last if (/^$prompt/);
-	next if (/^(\s*|\s*$cmd\s*)$/);
-	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
-	return(-1) if (/command authorization failed/i);
-	# return(1) if ($type !~ /^12[40]/);
-	# the pager can not be disabled per-session on the PIX
-	if (/^(<-+ More -+>)/) {
-	    my($len) = length($1);
-	    s/^$1\s{$len}//;
-	}
-	/^$/ && next;
-
-	/^\s+Chassis: type (\S+) Fab Ver: (\S+)/ &&
-	    ProcessHistory("COMMENTS","keysort","D1",
-				"!GSR Chassis type: $1 Fab Ver: $2\n") &&
-	    next;
-	/^\s+Chassis S\/N: (.*)$/ &&
-	    ProcessHistory("COMMENTS","keysort","D2",
-				"!GSR Chassis S/N: $1\n") &&
-	    next;
-	/^\s+PCA: (\S+)\s*rev: (\S+)\s*dev: \S+\s*HW ver: (\S+)$/ &&
-	    ProcessHistory("COMMENTS","keysort","D3",
-				"!GSR Backplane PCA: $1, rev $2, ver $3\n") &&
-	    next;
-	/^\s+Backplane S\/N: (\S+)$/ &&
-	    ProcessHistory("COMMENTS","keysort","D4",
-				"!GSR Backplane S/N: $1\n") &&
-	    next;
     }
     ProcessHistory("COMMENTS","","","!\n");
     return(0);
@@ -656,6 +607,32 @@ sub DirSlotN {
 	ProcessHistory("FLASH","","","!Flash: $dev: $_");
     }
     ProcessHistory("","","","!\n");
+    return(0);
+}
+
+# This routine parses "admin show variables boot"
+sub ShowBootVar {
+    print STDERR "    In ShowBootVar: $_" if ($debug);
+
+    while (<INPUT>) {
+	# delete non-ascii chars, except new line
+	tr/ -~\n//cd;
+	last if (/^$prompt/);
+	next if (/\s*$cmd\s*$/);
+	return(1) if (/^\s*\^\s*$/);
+	return(1) if (/Line has invalid autocommand /);
+	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
+	return(1) if (/Ambiguous command/i);
+	return(1) if (/(Open device \S+ failed|Error opening \S+:)/);
+	return(-1) if (/command authorization failed/i);
+
+	# skip blank lines
+	next if (/^\s*$/);
+
+	ProcessHistory("COMMENTS", "keysort", "C30", "! $_");
+    }
+    ProcessHistory("COMMENTS", "keysort", "C39", "!\n");
+
     return(0);
 }
 
@@ -742,12 +719,40 @@ sub ShowDebug {
     return(0);
 }
 
+# This routine parses "admin show install summary"
+sub ShowInstallSummary {
+    print STDERR "    In ShowInstallSummary: $_" if ($debug);
+
+    while (<INPUT>) {
+	# delete non-ascii chars, except new line
+	tr/ -~\n//cd;
+	last if (/^$prompt/);
+	next if (/\s*$cmd\s*$/);
+	return(1) if (/^\s*\^\s*$/);
+	return(1) if (/Line has invalid autocommand /);
+	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
+	return(1) if (/Ambiguous command/i);
+	return(1) if (/(Open device \S+ failed|Error opening \S+:)/);
+	return(-1) if (/command authorization failed/i);
+
+	# skip blank lines
+	next if (/^\s*$/);
+
+	ProcessHistory("COMMENTS", "keysort", "C15", "! $_");
+    }
+    ProcessHistory("COMMENTS", "keysort", "C10", "!\n");
+    ProcessHistory("COMMENTS", "keysort", "C19", "!\n");
+
+    return(0);
+}
+
 # This routine parses "show inventory".
 sub ShowInventory {
     print STDERR "    In ShowInventory: $_" if ($debug);
 
     while (<INPUT>) {
-	tr/\015//d;
+	# delete non-ascii chars, except new line
+	tr/ -~\n//cd;
 	return if (/^\s*\^$/);
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
@@ -755,16 +760,26 @@ sub ShowInventory {
 	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
 	return(-1) if (/command authorization failed/i);
 
+	# remove spaces after quotes
+	s/\"\s+/\"/g;
 	if (/^(NAME: "[^"]*",) (DESCR: "[^"]+")/) {
 	    ProcessHistory("INVENTORY","","", sprintf("!%-30s %s\n", $1, $2));
 	    next;
 	}
 	# split PID/VID/SN line
 	if (/^PID: (\S*)\s*, VID: (\S*)\s*, SN: (\S*)\s*$/) {
+	    my($pid,$vid,$sn) = ($1, $2, $3);
 	    my($entries) = "";
-	    $entries .= "!PID: $1\n" if ($1);
-	    $entries .= "!VID: $2\n" if ($2);
-	    $entries .= "!SN: $3\n" if ($3);
+	    # filter <empty>, "0x" and "N/A" lines
+	    if ($pid !~ /^(|0x|N\/A)$/) {
+		$entries .= "!PID: $pid\n";
+	    }
+	    if ($vid !~ /^(|0x|N\/A)$/) {
+		$entries .= "!VID: $vid\n";
+	    }
+	    if ($sn !~ /^(|0x|N\/A)$/) {
+		$entries .= "!SN: $sn\n";
+	    }
 	    ProcessHistory("INVENTORY","","", "$entries");
 	    next;
 	}
@@ -772,6 +787,52 @@ sub ShowInventory {
     }
     ProcessHistory("INVENTORY","","","!\n");
 
+    return(0);
+}
+
+# This routine parses "admin show license"
+sub ShowLicense {
+    print STDERR "    In ShowLicense: $_" if ($debug);
+
+    while (<INPUT>) {
+	# delete non-ascii chars, except new line
+	tr/ -~\n//cd;
+	last if (/^$prompt/);
+	next if (/\s*$cmd\s*$/);
+	return(1) if (/^\s*\^\s*$/);
+	return(1) if (/Line has invalid autocommand /);
+	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
+	return(1) if (/Ambiguous command/i);
+	return(1) if (/(Open device \S+ failed|Error opening \S+:)/);
+	return(-1) if (/command authorization failed/i);
+
+	# skip blank lines
+	next if (/^\s*$/);
+
+	ProcessHistory("COMMENTS", "keysort", "C20", "! $_");
+    }
+    ProcessHistory("COMMENTS", "keysort", "C29", "!\n");
+
+    return(0);
+}
+
+# This routine parses "show rpl maximum"
+sub ShowRPL {
+    print STDERR "    In ShowRPL: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /^\s*\^\s*$/;
+	return(1) if (/Line has invalid autocommand /);
+	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
+	return(1) if (/Ambiguous command/i);
+	return(-1) if (/command authorization failed/i);
+
+	ProcessHistory("COMMENTS","keysort","RPLMAX","! $_");
+    }
+    ProcessHistory("COMMENTS","keysort","RPLMAX","!\n");
     return(0);
 }
 
@@ -984,7 +1045,7 @@ sub WriteTerm {
 		    ProcessHistory("EXPATH","keysort","$key","$expath");
 		    $key = $1;
 		    $expath = $_;
-		} else  {
+		} else {
 		    $expath .= $_;
 		}
 	    }
@@ -1001,7 +1062,7 @@ sub WriteTerm {
 		    ProcessHistory("ROUTEMAP","keysort","$key","$routemap");
 		    $key = $1;
 		    $routemap = $_;
-		} else  {
+		} else {
 		    $routemap .= $_;
 		}
 	    }
@@ -1021,15 +1082,18 @@ sub WriteTerm {
 	    ProcessHistory("EACL $1 $2","$aclsort","0.0.0.0","$_") && next;
 	# sort ipv{4,6} access-lists
 	if (/^ipv(4|6) access-list (\S+)\s*$/) {
-	    my($nlri, $key) = ($1,$2);
-	    ProcessHistory("ACL $nlri $key","keysort","$key","$_");
+	    my($nlri, $key) = ($1, $2);
+	    my($seq, $cmd);
+	    ProcessHistory("ACL $nlri $key","","","$_");
 	    while (<INPUT>) {
 		tr/\015//d;
 		last if (/^$prompt/ || /^\S/);
-		if (/^\s+(\d+) (permit|deny) /) {
-		    ProcessHistory("ACL $nlri $key","keysort","$2"," $2 $'");
-		} else  {
-		    ProcessHistory("ACL $nlri $key","keysort","$key","$_");
+		($seq, $cmd, $misc, $ip) = ($_ =~ /^\s+(\d+) (\w+) (.*\s)(\w+)/);
+		if ($cmd =~ /(permit|deny)/) {
+		    ProcessHistory("ACL $nlri $key $cmd","$aclsort","$ip",
+				   " $cmd $misc$ip\n");
+		} else {
+		    ProcessHistory("ACL $nlri $key","",""," $cmd $misc$ip\n");
 		}
 	    }
 	}
@@ -1161,11 +1225,15 @@ sub DoNothing {print STDOUT;}
 	{'terminal exec prompt no-timestamp' => 'FilterAll' },  # XR 3.8 style
 
 	{'admin show version'		=> 'ShowVersion'},
+
+	# XR IMAGE commands
+	{'admin show install summary'	=> 'ShowInstallSummary'},
+	{'admin show license'		=> 'ShowLicense'},
+	{'admin show variables boot'	=> 'ShowBootVar'},
+
 	{'show redundancy secondary'	=> 'ShowRedundancy'},
 	{'show install active'		=> 'ShowInstallActive'},
 	{'admin show env all'		=> 'ShowEnv'},
-	{'show diag chassis-info'	=> 'ShowGSR'},
-	{'admin show variables boot'	=> 'ShowBoot'},
 	{'dir /all nvram:'		=> 'DirSlotN'},
 	{'dir /all bootflash:'		=> 'DirSlotN'},
 	{'dir /all compactflash:'	=> 'DirSlotN'},
@@ -1198,10 +1266,12 @@ sub DoNothing {print STDOUT;}
 	{'dir /all sec-slot2:'		=> 'DirSlotN'},
 	{'dir /all sec-disk2:'		=> 'DirSlotN'},
 	{'show controllers'		=> 'ShowContAll'},
+	{'admin show running'		=> 'AdminShowRunning'},
 	{'admin show diag'		=> 'AdminShowDiag'},
 	{'admin show inventory raw'	=> 'ShowInventory'},
 	{'show vlan'			=> 'ShowVLAN'},
 	{'show debug'			=> 'ShowDebug'},
+	{'show rpl maximum'		=> 'ShowRPL'},
 	{'show running-config'		=> 'WriteTerm'},
 );
 # Use an array to preserve the order of the commands and a hash for mapping
@@ -1233,7 +1303,7 @@ if ($file) {
 } else {
     print STDERR "executing clogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($debug);
     print STDOUT "executing clogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($log);
-    if (defined($ENV{NOPIPE})) {
+    if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
 	system "clogin -t $timeo -c \"$cisco_cmds\" $host </dev/null > $host.raw 2>&1" || die "clogin failed for $host: $!\n";
 	open(INPUT, "< $host.raw") || die "clogin failed for $host: $!\n";
     } else {
@@ -1306,7 +1376,7 @@ ProcessHistory("","","","");
 close(INPUT);
 close(OUTPUT);
 
-if (defined($ENV{NOPIPE})) {
+if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
     unlink("$host.raw") if (! $debug);
 }
 

@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: rancid.in 2272 2011-01-10 20:01:58Z heas $
+## $Id: rancid.in 2377 2012-01-31 22:55:13Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2009 by Terrapin Communications, Inc.
@@ -68,6 +68,8 @@ my($aclsort) = ("ipsort");		# ACL sorting mode
 my($config_register);			# configuration register value
 my($filter_commstr);			# SNMP community string filtering
 my($filter_pwds);			# password filtering mode
+my($supbootdisk) = 0;			# skip sup-bootflash if sup-bootdisk
+					# worked
 
 # This routine is used to print out the router configuration
 sub ProcessHistory {
@@ -231,7 +233,7 @@ sub ShowVersion {
 	    ProcessHistory("COMMENTS","keysort","B1", "!Memory: $2\n");
 	}
 	/^serial number:\s+(.*)$/i &&
-	    ProcessHistory("COMMENTS","keysort","C1", "!Serial Number: $1") &&
+	    ProcessHistory("COMMENTS","keysort","C1", "!Serial Number: $1\n") &&
 	    next;
 	# More PIX stuff
 	/^Encryption hardware device\s+:\s+(.*)/ &&
@@ -399,7 +401,8 @@ sub ShowVersion {
 	/^(\d+[kK]) bytes of (non-volatile|NVRAM)/ &&
 	    ProcessHistory("COMMENTS","keysort","B3",
 		"!Memory: nvram $1\n") && next;
-	/^(\d+[kK]) bytes of flash memory/ &&
+	/^(\d+[kK]) bytes of (flash memory|processor board System flash|ATA Comp
+actFlash)/ &&
 	    ProcessHistory("COMMENTS","keysort","B5","!Memory: flash $1\n") &&
 	    next;
 	/^(\d+[kK]) bytes of .*flash partition/ &&
@@ -744,6 +747,12 @@ sub DirSlotN {
 	return(-1) if (/\%Error opening \S+:\S+ \(Device or resource busy\)/i);
 	return(-1) if (/command authorization failed/i);
 	return(1) if (/(Open device \S+ failed|Error opening \S+:)/);
+	# skip dir sup-bootflash if dir sup-bootdisk was successful, duplicates
+	if ($cmd =~ / sup-bootdisk/) {
+	    $supbootdisk++;
+	} elsif ($supbootdisk && $cmd =~ / sup-bootflash/) {
+	    return(0);
+	}
 	# filter frequently changing files from IOX bootflash
 	if ($dev =~ /bootflash/) {
 	    next if (/temp_cont\s*$/);
@@ -757,7 +766,7 @@ sub DirSlotN {
 	    if ($tmp >= (1024 * 1024 * 1024)) {
 		$tmp = int($tmp / (1024 * 1024 * 1024));
 		s/$1 bytes free/$tmp GB free/;
-	    } else { 
+	    } else {
 		$tmp = int($tmp / (1024 * 1024));
 		s/$1 bytes free/$tmp MB free/;
 	    }
@@ -1343,10 +1352,18 @@ sub ShowInventory {
 	}
 	# split PID/VID/SN line
 	if (/^PID: (\S*)\s*,\s*VID: (\S*)\s*,\s*SN: (\S*)\s*$/) {
+	    my($pid,$vid,$sn) = ($1, $2, $3);
 	    my($entries) = "";
-	    $entries .= "!PID: $1\n" if ($1);
-	    $entries .= "!VID: $2\n" if ($2);
-	    $entries .= "!SN: $3\n" if ($3);
+	    # filter <empty>, "0x" and "N/A" lines
+	    if ($pid !~ /^(|0x|N\/A)$/) {
+		$entries .= "!PID: $pid\n";
+	    }
+	    if ($vid !~ /^(|0x|N\/A)$/) {
+		$entries .= "!VID: $vid\n";
+	    }
+	    if ($sn !~ /^(|0x|N\/A)$/) {
+		$entries .= "!SN: $sn\n";
+	    }
 	    ProcessHistory("INVENTORY","","", "$entries");
 	    next;
 	}
@@ -1480,6 +1497,38 @@ sub ShowC7200 {
     return(0);
 }
 
+# This routine parses "show capture".  Intended for ASA/PIXes.
+sub ShowCapture {
+    print STDERR "    In ShowCapture: $_" if ($debug);
+    my $capture_found = 0;
+    while (<INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	return(1) if (/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /^\s*\^\s*$/;
+	return(1) if (/Line has invalid autocommand /);
+	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
+	return(-1) if (/command authorization failed/i);
+	# the pager can not be disabled per-session on the PIX
+	if (/^(<-+ More -+>)/) {
+	    my($len) = length($1);
+	    s/^$1\s{$len}//;
+	}
+
+	if (/capture (.*) type/) {
+	    my $cap_name = $1;
+	    s/\d+ bytes/<COUNTER> bytes/;
+	    ProcessHistory("CAPTURE","","","!Capture: $cap_name\n");
+	    ProcessHistory("CAPTURE","","","!Capture: $_");
+	} else {
+	    ProcessHistory("CAPTURE","","","!Capture: $_");
+	}
+        $capture_found = 1
+    }
+    ProcessHistory("CAPTURE","","","!\n") if ($capture_found == 1);
+    return(0);
+}
+
 # This routine parses "show vtp status"
 sub ShowVTP {
     print STDERR "    In ShowVTP: $_" if ($debug);
@@ -1536,6 +1585,31 @@ sub ShowVLAN {
     return(0);
 }
 
+# This routine processes a "show shun".  Intended for ASA/PIXes.
+sub ShowShun {
+    print STDERR "    In ShowShun: $_" if ($debug);
+    my $shun_found = 0;
+    while (<INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	return(1) if (/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /^\s*\^\s*$/;
+	return(1) if (/Line has invalid autocommand /);
+	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
+	return(-1) if (/command authorization failed/i);
+	# the pager can not be disabled per-session on the PIX
+	if (/^(<-+ More -+>)/) {
+	    my($len) = length($1);
+	    s/^$1\s{$len}//;
+	}
+
+	ProcessHistory("SHUN","","","!Shun: $_");
+	$shun_found = 1;
+    }
+    ProcessHistory("SHUN","","","!\n") if ($shun_found == 1);
+    return(0);
+}
+
 # This routine processes a "write term"
 sub WriteTerm {
     print STDERR "    In WriteTerm: $_" if ($debug);
@@ -1582,6 +1656,8 @@ sub WriteTerm {
 	    }
 	    tr/\015//d;
 	}
+	# config timestamp on MDS/NX-OS
+	/Time: / && next;
 	# skip ASA 5520 configuration author line
 	/^: written by /i && next;
 	# some versions have other crap mixed in with the bits in the
@@ -1669,7 +1745,10 @@ sub WriteTerm {
 	    ProcessHistory("","","","! neighbor $1 password <removed>\n");
 	    next;
 	}
-	if (/^(ppp .* password) 7 .*/ && $filter_pwds >= 1) {
+	if (/^(\s*ppp .* hostname) .*/ && $filter_pwds >= 1) {
+	    ProcessHistory("","","","!$1 <removed>\n"); next;
+	}
+	if (/^(\s*ppp .* password) \d .*/ && $filter_pwds >= 1) {
 	    ProcessHistory("","","","!$1 <removed>\n"); next;
 	}
 	if (/^(ip ftp password) / && $filter_pwds >= 1) {
@@ -1695,7 +1774,7 @@ sub WriteTerm {
 	    && $filter_pwds >= 1) {
 	    ProcessHistory("","","","!$1 <removed>\n"); next;
 	}
-	if (/^((crypto )?isakmp key) \S+ / && $filter_pwds >= 1) {
+	if (/^((crypto )?isakmp key) (\d )?\S+ / && $filter_pwds >= 1) {
 	    ProcessHistory("","","","!$1 <removed> $'"); next;
 	}
 	# filter HSRP passwords
@@ -1722,8 +1801,13 @@ sub WriteTerm {
 	if (/^( pre-shared-key | key |failover key ).*/ && $filter_pwds >= 1) {
 	    ProcessHistory("","","","!$1 <removed> $'"); next;
 	}
+	# ASA/PIX keys in more system:running-config
 	if (/(\s+ldap-login-password )\S+(.*)/ && $filter_pwds >= 1) {
 	    ProcessHistory("","","","!$1 <removed> $'"); next;
+	}
+	# filter WPA password such as on cisco 877W ISR
+	if (/^\s+(wpa-psk ascii|hex \d) / && $filter_pwds >= 1) {
+	    ProcessHistory("","","","!$1 <removed>\n"); next;
 	}
 	#
 	if (/^( cable shared-secret )/ && $filter_pwds >= 1) {
@@ -1828,7 +1912,7 @@ sub WriteTerm {
 	    }
 	}
 	# prune tacacs/radius server keys
-	if (/^((tacacs|radius)-server\s(\w*[-\s(\s\S+])*\s?key) (\d )?\w+/
+	if (/^((tacacs|radius)-server\s(\w*[-\s(\s\S+])*\s?key) (\d )?\S+/
 	    && $filter_pwds >= 1) {
 	    ProcessHistory("","","","!$1 <removed>$'"); next;
 	}
@@ -1917,6 +2001,7 @@ sub DoNothing {print STDOUT;}
 	{'dir /all harddisk:'		=> 'DirSlotN'},
 	{'dir /all harddiska:'		=> 'DirSlotN'},
 	{'dir /all harddiskb:'		=> 'DirSlotN'},
+	{'dir /all sup-bootdisk:'	=> 'DirSlotN'},		# 6500 sup32
 	{'dir /all sup-bootflash:'	=> 'DirSlotN'},		# cat 6500-ios
 	{'dir /all sup-microcode:'	=> 'DirSlotN'},		# cat 6500-ios
 	{'dir /all slavenvram:'		=> 'DirSlotN'},
@@ -1940,6 +2025,7 @@ sub DoNothing {print STDOUT;}
 	{'show controllers cbus'	=> 'ShowContCbus'},
 	{'show diagbus'			=> 'ShowDiagbus'},
 	{'show diag'			=> 'ShowDiag'},
+	{'show capture'			=> 'ShowCapture'},	# ASA/PIX
 	{'show module'			=> 'ShowModule'},	# cat 6500-ios
 	{'show spe version'		=> 'ShowSpeVersion'},
 	{'show c7200'			=> 'ShowC7200'},
@@ -1948,7 +2034,10 @@ sub DoNothing {print STDOUT;}
 	{'show vlan'			=> 'ShowVLAN'},
 	{'show vlan-switch'		=> 'ShowVLAN'},
 	{'show debug'			=> 'ShowDebug'},
+	{'show shun'			=> 'ShowShun'},		# ASA/PIX
 	{'more system:running-config'	=> 'WriteTerm'},	# ASA/PIX
+	{'show running-config view full'=> 'WriteTerm'},	# workaround for
+								# role-based CLI
 	{'show running-config'		=> 'WriteTerm'},
 	{'write term'			=> 'WriteTerm'},
 );
@@ -1981,7 +2070,7 @@ if ($file) {
 } else {
     print STDERR "executing clogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($debug);
     print STDOUT "executing clogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($log);
-    if (defined($ENV{NOPIPE})) {
+    if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
 	system "clogin -t $timeo -c \"$cisco_cmds\" $host </dev/null > $host.raw 2>&1" || die "clogin failed for $host: $!\n";
 	open(INPUT, "< $host.raw") || die "clogin failed for $host: $!\n";
     } else {
@@ -2054,7 +2143,7 @@ ProcessHistory("","","","");
 close(INPUT);
 close(OUTPUT);
 
-if (defined($ENV{NOPIPE})) {
+if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
     unlink("$host.raw") if (! $debug);
 }
 

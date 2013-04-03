@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: fnrancid.in 2258 2010-10-11 20:49:05Z heas $
+## $Id: fnrancid.in 2283 2011-02-04 23:15:07Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
@@ -175,12 +175,12 @@ sub GetSystem {
 	next if /^\s*$/;
 	last if (/$prompt/);
 
-	next if (/^System Time:/);
+	next if (/^system time:/i);
 	next if (/^\s*Virus-DB: .*/);
 	next if (/^\s*Extended DB: .*/);
 	next if (/^\s*IPS-DB: .*/);
 	next if (/^FortiClient application signature package:/);
-	ProcessHistory("","","","!$_");
+	ProcessHistory("","","","#$_");
     }
     ProcessHistory("SYSTEM","","","\n");
     return(0);
@@ -207,11 +207,11 @@ sub GetConf {
 	# System time is fortigate extraction time
 	next if (/^\s*!System time:/);
 	# remove occurrances of conf_file_ver
-	next if (/^conf_file_ver=/);
+	next if (/^#?conf_file_ver=/);
 	# filter variabilities between configurations.  password encryption
 	# upon each display of the configuration.
 	if (/^\s*(set [^\s]*)\s(Enc\s[^\s]+)(.*)/i && $filter_pwds > 0 ) {
-	    ProcessHistory("ENC","","","!$1 ENC <removed> $3\n");
+	    ProcessHistory("ENC","","","#$1 ENC <removed> $3\n");
 	    next;
 	}
 	ProcessHistory("","","","$_");
@@ -257,7 +257,7 @@ if ($file) {
 } else {
     print STDERR "executing fnlogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($debug);
     print STDOUT "executing fnlogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($log);
-    if (defined($ENV{NOPIPE})) {
+    if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
 	system "fnlogin -t $timeo -c \"$cisco_cmds\" $host </dev/null > $host.raw 2>&1" || die "fnlogin failed for $host: $!\n";
 	open(INPUT, "< $host.raw") || die "fnlogin failed for $host: $!\n";
     } else {
@@ -285,7 +285,7 @@ if ($ENV{"FILTER_PWDS"} =~ /no/i) {
     $filter_pwds = 1;
 }
 
-ProcessHistory("","","","!RANCID-CONTENT-TYPE: fortigate\n\n");
+ProcessHistory("","","","#RANCID-CONTENT-TYPE: fortigate\n\n");
 TOP: while(<INPUT>) {
     tr/\015//d;
     if (/^Error:/) {
@@ -334,7 +334,7 @@ ProcessHistory("","","","");
 close(INPUT);
 close(OUTPUT);
 
-if (defined($ENV{NOPIPE})) {
+if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
     unlink("$host.raw") if (! $debug);
 }
 
