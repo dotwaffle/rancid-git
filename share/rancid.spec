@@ -1,5 +1,5 @@
 Name:           rancid
-Version:        2.3.7
+Version:        2.3.8
 Release:        1%{?dist}
 Summary:        Really Awesome New Cisco confIg Differ
 
@@ -8,7 +8,7 @@ License:        non-free
 URL:            http://www.shrubbery.net/rancid/
 Source:         %{name}-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-root
-Requires:       cvs 
+Requires:       cvs
 BuildRequires:  expect >= 5.40
 
 %package lg
