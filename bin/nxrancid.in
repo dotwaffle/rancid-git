@@ -744,7 +744,7 @@ sub ShowHSRP {
             next;
         }
     }
-    ProcessHistory("INT","keysort",$hsrp->{'group'},"!HSRP: " . PrintStandby($hsrp) . " \n") if (defined $hsrp);
+    ProcessHistory("INT","keysort",$hsrp->{'group'},"!HSRP: " . PrintHSRP ($hsrp) . " \n") if (defined $hsrp);
     return(0);
 }
 
