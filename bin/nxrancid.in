@@ -631,6 +631,8 @@ sub ShowInterface {
 sub PrintInterface {
     my $interface = shift;
 
+    $interface->{'adminState'} = 'up' unless $interface->{'adminState'};
+
     my $toReturn = "$interface->{'name'} ($interface->{'adminState'}/$interface->{'operState'})";
     $toReturn .= ", Type: \"$interface->{'type'}\"" if (exists $interface->{'type'});
     $toReturn .= ", MTU: $interface->{'mtu'}" if (exists $interface->{'mtu'});
