@@ -39,7 +39,7 @@
 ## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 #  RANCID - Really Awesome New Cisco confIg Differ
 #
 # usage: rancid [-dV] [-l] [-f filename | hostname]
@@ -334,7 +334,7 @@ sub ShowEnvTemp {
 # Cut out CurTemp - drop the 2nd to last field.
 #--------------------------------------------------------------------
 #Module   Sensor        MajorThresh   MinorThres   CurTemp     Status
-#                       (Celsius)     (Celsius)    (Celsius)         
+#                       (Celsius)     (Celsius)    (Celsius)
 #5        Outlet1 (s1)    125             125         33         Ok
 #5        QEng1Sn1(s10)   115             105         39         Ok
 	s/^(.+\s)(\S+\s+)(\S+\s*)$/$1$3/;
@@ -366,11 +366,11 @@ sub ShowEnvPower {
 #Supply    Model                    Output     Capacity    Status
 #                                 (Watts )     (Watts )
 #-------  -------------------  -----------  -----------  --------------
-#1        ------------                 0 W          0 W     Absent    
-#3                                   749 W       5480 W     Ok        
-#                                  Actual        Power      
+#1        ------------                 0 W          0 W     Absent
+#3                                   749 W       5480 W     Ok
+#                                  Actual        Power
 #Module    Model                     Draw    Allocated    Status
-#                                 (Watts )     (Watts )     
+#                                 (Watts )     (Watts )
 #-------  -------------------  -----------  -----------  --------------
 #2        NURBURGRING                N/A          573 W    Powered-Up
 #fan1                                N/A          720 W    Powered-Up
@@ -548,6 +548,188 @@ sub ShowVTP {
     }
     ProcessHistory("COMMENTS","","","!\n");
     return(0);
+}
+
+# This routine parses "show interface"
+sub ShowInterface {
+    print STDERR "    In ShowInterface: $_" if ($debug);
+
+    my $interface;
+
+    while (<INPUT>) {
+    tr/\015//d;
+    last if (/^$prompt/);
+    next if (/^(\s*|\s*$cmd\s*)$/);
+    return(1) if /^\s*\^\s*$/;
+    return(1) if /Line has invalid autocommand /;
+    return(1) if /(Invalid input detected|Type help or )/;
+    #return(1) if ($type !~ /^(2900XL|3500XL|6000)$/);
+    return(-1) if (/command authorization failed/i);
+    next if (/^Configuration last modified by/);
+    # the pager can not be disabled per-session on the PIX
+    if (/^(<-+ More -+>)/) {
+        my($len) = length($1);
+        s/^$1\s{$len}//;
+    }
+    if (/^([\w\/\.\-]+) is ([\w\s]+)(?:\s\(.*\))?/) {
+        ProcessHistory("INT","keysort",$interface->{'name'},"!Interface: " . PrintInterface($interface) . "\n") if (defined $interface);
+        $interface = {
+        name => $1,
+        operState => $2,
+        };
+        # Trim trailing spaces
+        $interface->{'operState'} =~ s/\s+$//;
+        next;
+    }
+        if (/^admin state is ([\w\s]+),/) {
+        $interface->{'adminState'} = $1;
+            chomp($interface->{'adminState'});
+            next;
+        }
+    if (/^\s+Description: (.+)/) {
+        $interface->{'description'} = $1;
+        chomp($interface->{'description'});
+        next;
+    }
+    if (/^\s+Hardware is ([\w\s]+), address is ([0-9a-f\.]+)/) {
+        $interface->{'type'} = $1;
+        $interface->{'mac'} = $2;
+        next;
+    }
+    if (/^\s+MTU (\d+) bytes/) {
+        $interface->{'mtu'} = $1;
+        next;
+    }
+    }
+    ProcessHistory("INT","keysort",$interface->{'name'},"!Interface: " . PrintInterface($interface) . "\n") if (defined $interface);
+    return(0);
+}
+
+sub PrintInterface {
+    my $interface = shift;
+
+    my $toReturn = "$interface->{'name'} ($interface->{'adminState'}/$interface->{'operState'})";
+    $toReturn .= ", Type: \"$interface->{'type'}\"" if (exists $interface->{'type'});
+    $toReturn .= ", MTU: $interface->{'mtu'}" if (exists $interface->{'mtu'});
+    $toReturn .= ", MAC: $interface->{'mac'}" if (exists $interface->{'mac'});
+    $toReturn .= ", Description: \"$interface->{'description'}\"" if (exists $interface->{'description'});
+
+    return $toReturn;
+}
+
+# This routine parses "show ip interface"
+sub ShowIPInterface {
+    print STDERR "    In ShowIPInterface: $_" if ($debug);
+
+    my $interface;
+
+    while (<INPUT>) {
+    tr/\015//d;
+    last if (/^$prompt/);
+    next if (/^(\s*|\s*$cmd\s*)$/);
+    return(1) if /^\s*\^\s*$/;
+    return(1) if /Line has invalid autocommand /;
+    return(1) if /(Invalid input detected|Type help or )/;
+    #return(1) if ($type !~ /^(2900XL|3500XL|6000)$/);
+    return(-1) if (/command authorization failed/i);
+    next if (/^Configuration last modified by/);
+    # the pager can not be disabled per-session on the PIX
+    if (/^(<-+ More -+>)/) {
+        my($len) = length($1);
+        s/^$1\s{$len}//;
+    }
+    if (/^([\w\/\.\-]+), Interface status:/) {
+        $interface = $1;
+        next;
+    }
+    if (/^\s+IP address: (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/) {
+        ProcessHistory("IP","ipsort",$1,"!IPv4 Address: $1 on $interface\n") if (defined $interface);
+        next;
+    }
+    }
+    return(0);
+}
+
+# This routine parses "show ipv6 interface"
+sub ShowIPv6Interface {
+    print STDERR "    In ShowIPv6Interface: $_" if ($debug);
+
+    my $interface;
+
+    while (<INPUT>) {
+    tr/\015//d;
+    last if (/^$prompt/);
+    next if (/^(\s*|\s*$cmd\s*)$/);
+    return(1) if /^\s*\^\s*$/;
+    return(1) if /Line has invalid autocommand /;
+    return(1) if /(Invalid input detected|Type help or )/;
+    #return(1) if ($type !~ /^(2900XL|3500XL|6000)$/);
+    return(-1) if (/command authorization failed/i);
+    next if (/^Configuration last modified by/);
+    # the pager can not be disabled per-session on the PIX
+    if (/^(<-+ More -+>)/) {
+        my($len) = length($1);
+        s/^$1\s{$len}//;
+    }
+    if (/^([\w\/\.\-]+), Interface status:/) {
+        $interface = $1;
+        next;
+    }
+    if (/^\s+IPv6 address:\s+([0-9a-f:]+)/) {
+            ProcessHistory("IPv6","ipsort",$1,"!IPv6 Address: $1 on $interface\n") if (defined $interface);
+    }
+    }
+    return(0);
+}
+
+# This routine parses "show hsrp"
+sub ShowHSRP {
+    print STDERR "    In ShowHSRP: $_" if ($debug);
+
+    my $hsrp;
+
+    while (<INPUT>) {
+        tr/\015//d;
+        last if (/^$prompt/);
+        next if (/^(\s*|\s*$cmd\s*)$/);
+        return(1) if /^\s*\^\s*$/;
+        return(1) if /Line has invalid autocommand /;
+        return(1) if /(Invalid input detected|Type help or )/;
+        #return(1) if ($type !~ /^(2900XL|3500XL|6000)$/);
+        return(-1) if (/command authorization failed/i);
+        next if (/^Configuration last modified by/);
+        # the pager can not be disabled per-session on the PIX
+        if (/^(<-+ More -+>)/) {
+            my($len) = length($1);
+            s/^$1\s{$len}//;
+        }
+        if (/^([\w\/\.]+) - Group (\d+)/) {
+            ProcessHistory("INT","keysort",$standby->{'group'},"!HSRP: " . PrintHSRP ($hsrp) . " \n") if (defined $hsrp);
+            $hsrp = {
+                interface => $1,
+                group => $2,
+            };
+        }
+        if (/^  Local state is (\w+)/) {
+            $hsrp->{'state'} = $1;
+            next;
+        }
+        if (/^  Virtual IP address is (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) configured/) {
+            $hsrp->{'ip'} = $1;
+            next;
+        }
+    }
+    ProcessHistory("INT","keysort",$hsrp->{'group'},"!HSRP: " . PrintStandby($hsrp) . " \n") if (defined $hsrp);
+    return(0);
+}
+
+sub PrintHSRP {
+	my $hsrp = shift;
+
+	my $toReturn = "$hsrp->{'interface'}, Group: $hsrp->{'group'}";
+	$toReturn .= ", IP: $hsrp->{'ip'}" if (exists $hsrp->{'ip'});
+	$toReturn .= ", State: $hsrp->{'state'}" if (exists $hsrp->{'state'});
+	return $toReturn;
 }
 
 # This routine parses "show vlan"
@@ -1027,11 +1209,12 @@ sub DoNothing {print STDOUT;}
 	{'show license usage'		=> 'ShowLicense'},
 	{'show license host-id'		=> 'ShowLicense'},
 	{'show system redundancy status' => 'ShowRedundancy'},
-	{'show environment clock'	=> 'ShowEnv'},
-	{'show environment fan'		=> 'ShowEnv'},
-	{'show environment fex all fan'	=> 'ShowEnv'},
-	{'show environment temperature'	=> 'ShowEnvTemp'},
-	{'show environment power'	=> 'ShowEnvPower'},
+# Disabling these since they are volatile and generate a lot of noise
+#	{'show environment clock'	=> 'ShowEnv'},
+#	{'show environment fan'		=> 'ShowEnv'},
+#	{'show environment fex all fan'	=> 'ShowEnv'},
+#	{'show environment temperature'	=> 'ShowEnvTemp'},
+#	{'show environment power'	=> 'ShowEnvPower'},
 	{'show boot'			=> 'ShowBoot'},
 	{'dir bootflash:'		=> 'DirSlotN'},
 	{'dir debug:'			=> 'DirSlotN'},
@@ -1045,6 +1228,10 @@ sub DoNothing {print STDOUT;}
 	{'show inventory'		=> 'ShowInventory'},
 	{'show vtp status'		=> 'ShowVTP'},		# drop?
 	{'show vlan'			=> 'ShowVLAN'},
+    {'show hsrp'            => 'ShowHSRP'},
+	{'show interface'		=> 'ShowInterface'},
+	{'show ip interface'		=> 'ShowIPInterface'},
+	{'show ipv6 interface'		=> 'ShowIPv6Interface'},
 	{'show debug'			=> 'ShowDebug'},
 	{'show cores vdc-all'		=> 'ShowCores'},
 	{'show processes log vdc-all'	=> 'ShowProcLog'},
