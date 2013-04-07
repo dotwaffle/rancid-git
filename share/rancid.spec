@@ -1,5 +1,5 @@
 Name:           rancid
-Version:        2.3.6
+Version:        2.3.8
 Release:        1%{?dist}
 Summary:        Really Awesome New Cisco confIg Differ
 
@@ -8,7 +8,7 @@ License:        non-free
 URL:            http://www.shrubbery.net/rancid/
 Source:         %{name}-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-root
-Requires:       cvs 
+Requires:       cvs
 BuildRequires:  expect >= 5.40
 
 %package lg
@@ -72,7 +72,7 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root,0755)
 %doc BUGS CHANGES COPYING FAQ README UPGRADING Todo
 %doc share/cisco-load.exp share/cisco-reload.exp
-%doc share/downreport share/getipacctg share/rtrfilter
+%doc share/rancid-cvspurge share/downreport share/getipacctg share/rtrfilter
 %config(noreplace) /etc/rancid.conf
 %{_bindir}/*
 %{_mandir}/man1/[a-k]*

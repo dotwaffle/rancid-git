@@ -669,6 +669,7 @@ am__isrc
 INSTALL_DATA
 INSTALL_SCRIPT
 INSTALL_PROGRAM
+COPYYEARS
 PACKAGE
 VERSION
 target_alias
@@ -2204,6 +2205,8 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 VERSION=`sed -n 's/.*version.*"\(.*\)".*/\1/p' $srcdir/include/version.h.in|tr -d ' '`
 PACKAGE=`sed -n 's/.*package.*"\(.*\)".*/\1/p' $srcdir/include/version.h.in|tr -d ' '`
 
+
+COPYYEARS="1997-2011"
 
 
 am__api_version='1.11'
@@ -6057,6 +6060,8 @@ ac_config_files="$ac_config_files bin/jlogin bin/jrancid bin/jerancid"
 
 ac_config_files="$ac_config_files bin/mrancid bin/mrvlogin bin/mrvrancid"
 
+ac_config_files="$ac_config_files bin/mtrancid bin/mtlogin"
+
 ac_config_files="$ac_config_files bin/nlogin bin/nrancid"
 
 ac_config_files="$ac_config_files bin/nslogin bin/nsrancid"
@@ -6846,6 +6851,8 @@ do
     "bin/mrancid") CONFIG_FILES="$CONFIG_FILES bin/mrancid" ;;
     "bin/mrvlogin") CONFIG_FILES="$CONFIG_FILES bin/mrvlogin" ;;
     "bin/mrvrancid") CONFIG_FILES="$CONFIG_FILES bin/mrvrancid" ;;
+    "bin/mtrancid") CONFIG_FILES="$CONFIG_FILES bin/mtrancid" ;;
+    "bin/mtlogin") CONFIG_FILES="$CONFIG_FILES bin/mtlogin" ;;
     "bin/nlogin") CONFIG_FILES="$CONFIG_FILES bin/nlogin" ;;
     "bin/nrancid") CONFIG_FILES="$CONFIG_FILES bin/nrancid" ;;
     "bin/nslogin") CONFIG_FILES="$CONFIG_FILES bin/nslogin" ;;
@@ -7576,6 +7583,8 @@ $as_echo X"$file" |
     "bin/mrancid":F) chmod a+x $ac_file ;;
     "bin/mrvlogin":F) chmod a+x $ac_file ;;
     "bin/mrvrancid":F) chmod a+x $ac_file ;;
+    "bin/mtrancid":F) chmod a+x $ac_file ;;
+    "bin/mtlogin":F) chmod a+x $ac_file ;;
     "bin/nlogin":F) chmod a+x $ac_file ;;
     "bin/nrancid":F) chmod a+x $ac_file ;;
     "bin/nslogin":F) chmod a+x $ac_file ;;
