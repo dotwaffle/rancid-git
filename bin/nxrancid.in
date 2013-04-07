@@ -705,6 +705,56 @@ sub ShowIPv6Interface {
     return(0);
 }
 
+# This routine parses "show hsrp"
+sub ShowHSRP {
+    print STDERR "    In ShowHSRP: $_" if ($debug);
+
+    my $hsrp;
+
+    while (<INPUT>) {
+        tr/\015//d;
+        last if (/^$prompt/);
+        next if (/^(\s*|\s*$cmd\s*)$/);
+        return(1) if /^\s*\^\s*$/;
+        return(1) if /Line has invalid autocommand /;
+        return(1) if /(Invalid input detected|Type help or )/;
+        #return(1) if ($type !~ /^(2900XL|3500XL|6000)$/);
+        return(-1) if (/command authorization failed/i);
+        next if (/^Configuration last modified by/);
+        # the pager can not be disabled per-session on the PIX
+        if (/^(<-+ More -+>)/) {
+            my($len) = length($1);
+            s/^$1\s{$len}//;
+        }
+        if (/^([\w\/\.]+) - Group (\d+)/) {
+            ProcessHistory("INT","keysort",$standby->{'group'},"!HSRP: " . PrintHSRP ($hsrp) . " \n") if (defined $hsrp);
+            $hsrp = {
+                interface => $1,
+                group => $2,
+            };
+        }
+        if (/^  Local state is (\w+)/) {
+            $hsrp->{'state'} = $1;
+            next;
+        }
+        if (/^  Virtual IP address is (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) configured/) {
+            $hsrp->{'ip'} = $1;
+            next;
+        }
+    }
+    ProcessHistory("INT","keysort",$hsrp->{'group'},"!HSRP: " . PrintStandby($hsrp) . " \n") if (defined $hsrp);
+    return(0);
+}
+
+sub PrintHSRP {
+	my $hsrp = shift;
+
+	my $toReturn = "$hsrp->{'interface'}, Group: $hsrp->{'group'}";
+	$toReturn .= ", IP: $hsrp->{'ip'}" if (exists $hsrp->{'ip'});
+	$toReturn .= ", State: $hsrp->{'state'}" if (exists $hsrp->{'state'});
+	return $toReturn;
+}
+
 # This routine parses "show vlan"
 sub ShowVLAN {
     print STDERR "    In ShowVLAN: $_" if ($debug);
@@ -1180,10 +1230,10 @@ sub DoNothing {print STDOUT;}
 	{'show license usage'		=> 'ShowLicense'},
 	{'show license host-id'		=> 'ShowLicense'},
 	{'show system redundancy status' => 'ShowRedundancy'},
-	{'show environment clock'	=> 'ShowEnv'},
-	{'show environment fan'		=> 'ShowEnv'},
-	{'show environment fex all fan'	=> 'ShowEnv'},
 # Disabling these since they are volatile and generate a lot of noise
+#	{'show environment clock'	=> 'ShowEnv'},
+#	{'show environment fan'		=> 'ShowEnv'},
+#	{'show environment fex all fan'	=> 'ShowEnv'},
 #	{'show environment temperature'	=> 'ShowEnvTemp'},
 #	{'show environment power'	=> 'ShowEnvPower'},
 	{'show boot'			=> 'ShowBoot'},
@@ -1200,6 +1250,7 @@ sub DoNothing {print STDOUT;}
     {'show snmp engineID'   => 'ShowEngineID'},
 	{'show vtp status'		=> 'ShowVTP'},
 	{'show vlan'			=> 'ShowVLAN'},
+    {'show hsrp'            => 'ShowHSRP'},
 	{'show interface'		=> 'ShowInterface'},
 	{'show ip interface'		=> 'ShowIPInterface'},
 	{'show ipv6 interface'		=> 'ShowIPv6Interface'},
