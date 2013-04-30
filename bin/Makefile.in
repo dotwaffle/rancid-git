@@ -52,6 +52,7 @@ DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(srcdir)/elogin.in $(srcdir)/erancid.in \
 	$(srcdir)/f10rancid.in $(srcdir)/f5rancid.in \
 	$(srcdir)/flogin.in $(srcdir)/fnlogin.in $(srcdir)/fnrancid.in \
+	$(srcdir)/grancid.in \
 	$(srcdir)/francid.in $(srcdir)/hlogin.in $(srcdir)/hrancid.in \
 	$(srcdir)/htlogin.in $(srcdir)/htrancid.in \
 	$(srcdir)/jerancid.in $(srcdir)/jlogin.in $(srcdir)/jrancid.in \

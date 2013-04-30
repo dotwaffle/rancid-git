@@ -76,6 +76,7 @@ $vendor =~ tr/[A-Z]/[a-z]/;
     'mikrotik'		=> 'mtrancid',
     'mrtd'		=> 'mrancid',
     'mrv'		=> 'mrvrancid',
+    'netgear'		=> 'grancid',
     'netopia'		=> 'trancid',
     'netscaler'		=> 'nsrancid',
     'netscreen'		=> 'nrancid',
