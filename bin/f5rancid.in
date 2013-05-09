@@ -317,9 +317,6 @@ sub ShowHardware {
         return(1) if /(Invalid input detected|Type help or )/;
         return(-1) if (/command authorization failed/i);
 
-        #/fan speed/i && next;
-        #/chassis temperature/i && next;
-        #/degC/ && next;
         s/\d+rpm//ig;
         s/^\|//;
         s/^\ \ ([0-9]+)(\ +).*up.*[0-9]/  $1$2up REMOVED/i;
