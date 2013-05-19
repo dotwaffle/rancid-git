@@ -25,6 +25,8 @@ bin/cat5rancid
 bin/clogin
 bin/control_rancid
 bin/cssrancid
+bin/dlogin
+bin/drancid
 bin/elogin
 bin/erancid
 bin/f10rancid
@@ -46,6 +48,8 @@ bin/lgform.cgi
 bin/mrancid
 bin/mrvlogin
 bin/mrvrancid
+bin/mtlogin
+bin/mtrancid
 bin/nlogin
 bin/nrancid
 bin/nslogin
@@ -82,6 +86,7 @@ man/lg_intro.1
 man/rancid.conf.5
 share/Makefile
 share/downreport
+share/rancid-cvspurge
 share/rtrfilter
 bin/fnlogin
 include/version.h
