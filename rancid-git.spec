@@ -109,6 +109,10 @@ exit 0
 
 
 %changelog
+* Wed Jun 05 2013 Paul Morgan <jumanjiman@gmail.com> 2.3.8-0
+- use tito to build rpm
+- fix rpm spec file
+
 * Wed Dec 19 2012 Jonathan Thurman <jthurman@newrelic.com> 2.3.8-2
 - Patch to ignore .dat files of flash
 
