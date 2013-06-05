@@ -1,17 +1,17 @@
+# fedora packaging guidelines
+# http://fedoraproject.org/wiki/Packaging:SourceURL#Github
+%global commit 788157aba55301cabcaa94bb39d96f88ed22d173
+%global shortcommit %(c=%{commit}; echo ${c:0:7})
+
 Name:    rancid-git
 Version: 2.3.8
-Release: 2%{?dist}
+Release: 0%{?dist}
 Summary: Really Awesome New Cisco confIg Differ (w/ git support)
 
 Group:   Applications/Internet
 License: BSD with advertising
 URL:     https://github.com/dotwaffle/rancid-git
-Source0: %{name}-%{version}.tar.gz
-Source1: rancid.cron
-Source2: rancid.logrotate
-Patch0:  rancid-2.3.2-Makefile.patch
-Patch1:  rancid-2.3.2-conf.patch
-Patch2:  rancid-git_no-dat-flash.patch
+Source:  https://github.com/ISEexchange/rancid-git/archive/%{commit}/%{name}-%{version}-%{shortcommit}.tar.gz
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -24,10 +24,13 @@ BuildRequires: subversion
 BuildRequires: git
 BuildRequires: perl
 BuildRequires: iputils
+BuildRequires: automake
+BuildRequires: libtool
+BuildRequires: sysconftool
 
 Conflicts: rancid
 
-Requires(pre): shadow-utils
+Requires: shadow-utils
 Requires: findutils
 Requires: expect >= 5.40
 Requires: perl
@@ -41,12 +44,10 @@ including software and hardware (cards, serial numbers, etc) and uses CVS
 
 
 %prep
-%setup -q -n %{name}-%{version}
-%patch0 -p1
-%patch1 -p1
-%patch2 -p1
+%setup -q -n %{name}-%{commit}
 
 %build
+aclocal; autoheader; automake; autoconf
 %configure --sysconfdir=%{_sysconfdir}/rancid --bindir=%{_libexecdir}/rancid --enable-conf-install
 make %{?_smp_mflags}
 
@@ -57,10 +58,9 @@ make install DESTDIR=%{buildroot} INSTALL="install -p"
 install -d -m 0755 %{buildroot}/%{_localstatedir}/rancid
 install -d -m 0755 %{buildroot}/%{_localstatedir}/log/rancid
 install -d -m 0755 %{buildroot}/%{_localstatedir}/log/rancid/old
-install -d -m 0755 %{buildroot}/%{_sysconfdir}/cron.d
 install -d -m 0755 %{buildroot}/%{_bindir}/
 
-#symlink some bins from %%{_libexecdir}/%rancid to %%{_bindir}
+#symlink some bins from _libexecdir/rancid to _bindir
 for base in \
  rancid rancid-cvs rancid-fe rancid-run
  do
@@ -68,12 +68,6 @@ for base in \
   %{buildroot}/%{_bindir}/${base}
 done
 
-install -D -p -m 0755 %{SOURCE1} %{buildroot}/%{_sysconfdir}/cron.d/rancid
-
-#Patch cron file to point to correct installation directory
-sed -i 's|RANCIDBINDIR|%{_libexecdir}/rancid|g' %{buildroot}/%{_sysconfdir}/cron.d/rancid
-
-install -D -p -m 0644 %{SOURCE2} %{buildroot}/%{_sysconfdir}/logrotate.d/rancid
 
 %clean
 rm -rf %{buildroot}
@@ -91,29 +85,27 @@ exit 0
 %doc CHANGES cloginrc.sample COPYING FAQ README README.lg Todo
 
 #%%{_sysconfdir}-files
-%attr(750,rancid,rancid) %dir %{_sysconfdir}/rancid
-%attr(640,rancid,rancid) %config(noreplace) %{_sysconfdir}/rancid/*
-%attr(644,root,root) %config(noreplace) %{_sysconfdir}/cron.d/rancid
-%attr(644,root,root) %config(noreplace) %{_sysconfdir}/logrotate.d/rancid
+%attr(0750,root,rancid) %dir %{_sysconfdir}/rancid
+%attr(0640,root,rancid) %config(noreplace) %{_sysconfdir}/rancid/*
 
-#%%{_libexecdir}/%rancid-files
+#_libexecdir/rancid-files
 %dir %{_libexecdir}/rancid/
 %{_libexecdir}/rancid/*
 
-#%%{_bindir}-files
+#_bindir-files
 %{_bindir}/*
 
-#%%{_mandir}-files
+#_mandir-files
 %{_mandir}/*/*
 
-#%%{_datadir}/%rancid-files
+#_datadir/rancid-files
 %dir %{_datadir}/rancid/
 %{_datadir}/rancid/*
 
-#%%{_localstatedir}-directories
-%attr(750,rancid,rancid) %dir %{_localstatedir}/log/rancid
-%attr(750,rancid,rancid) %dir %{_localstatedir}/log/rancid/old
-%attr(750,rancid,rancid) %dir %{_localstatedir}/rancid/
+#_localstatedir-directories
+%attr(0750,root,rancid) %dir %{_localstatedir}/log/rancid
+%attr(0750,root,rancid) %dir %{_localstatedir}/log/rancid/old
+%attr(0750,root,rancid) %dir %{_localstatedir}/rancid/
 
 
 %changelog
