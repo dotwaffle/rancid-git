@@ -188,7 +188,7 @@ sub ShowVersion {
 	/copyright/i && next;
 	/^up/ && next;
 	# skip voltage
-	/\s+\d+V\s*\:\s*\d+\.?\d*/ && next;
+	/\s+\d\.?\d*+V\s*\:\s*\d+\.?\d*/ && next;
 	/Internal\ Temperature/i && next;
 	/u-boot/i &&
 	    ProcessHistory("COMMENTS","keysort","C1", "!ROM: $_") && next;
