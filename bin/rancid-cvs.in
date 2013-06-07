@@ -91,7 +91,7 @@ case $RCSSYS in
     cvs | svn )
 	# we're good
 	;;
-    git )
+    git | git-remote )
 	# force $CVSROOT
 	CVSROOT=$BASEDIR/.git
 	;;
@@ -110,7 +110,7 @@ if [ ! -d $CVSROOT ]; then
 	svn )
 	    svnadmin create $CVSROOT @SVN_FSTYPE@
 	    ;;
-	git )
+	git | git-remote )
 	    # git does not use $CVSROOT, instead configs are stored in $BASEDIR
 	    (
 		flock -x 200
@@ -161,7 +161,7 @@ do
 		cd $BASEDIR
 		svn checkout file:///$CVSROOT/$GROUP $GROUP
 		;;
-	    git )
+	    git | git-remote )
 		cd $BASEDIR
 		echo "$GROUP/routers.all" >> .gitignore
 		echo "$GROUP/routers.down" >> .gitignore
@@ -188,7 +188,7 @@ do
 		$RCSSYS add configs
 		$RCSSYS commit -m 'new' configs
 		;;
-	    git )
+	    git | git-remote )
 		# nothing to be done here
 		;;
 	esac
@@ -211,7 +211,7 @@ do
 		$RCSSYS add router.db
 		$RCSSYS commit -m 'new' router.db
 		;;
-	    git )
+	    git | git-remote )
 		(
 		    flock -x 200
 		    git add router.db
