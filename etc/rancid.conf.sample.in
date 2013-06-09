@@ -36,9 +36,10 @@ CVSROOT=$BASEDIR/CVS; export CVSROOT
 # Location of log files produced by rancid-run(1).
 LOGDIR=$BASEDIR/logs; export LOGDIR
 #
-# Select which RCS system to use, "cvs" (default), "svn" or "git".  Do
-# not change this after CVSROOT has been created with rancid-cvs.
-# Changing between these requires manual conversions.
+# Select which RCS system to use, "cvs" (default), "svn", "git" or 
+# "git-remote".  Do not change this after CVSROOT has been created with
+# rancid-cvs, with the exception of git <-> git-remote.  Changing between these
+# requires manual conversions.
 RCSSYS=@RCSSYS@; export RCSSYS
 #
 # if ACLSORT is NO, access-lists will NOT be sorted.
