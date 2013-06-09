@@ -821,8 +821,10 @@ case $RCSSYS in
                 git diff --patch-with-stat HEAD^ HEAD -- . >$TMP.diff
             fi
 	    if [ $RCSSYS = "git-remote" ] ; then
-		# only push to origin if commit was successful
-		git push
+		# only push to remotes if commit was successful
+		for repo in $(git remote) ; do
+		    git push ${repo}
+		done
 	    fi
 	    fi
 	) 200>$BASEDIR/.lockfile
