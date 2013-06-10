@@ -1,7 +1,7 @@
 Rancid is a "Really Awesome New Cisco confIg Differ" developed to
 maintain CVS controlled copies of router configs.
 
-*** The Following Information is Very Important ****
+**** The Following Information is Very Important ****
 Rancid 2.3 introduces a new directory layout.  It has been changed to more
 closely follow the standard path hierarchy, which is defined by the FHS
 standard and autoconf, and/or make these locations more easily configurable
