@@ -1,7 +1,7 @@
 Rancid is a "Really Awesome New Cisco confIg Differ" developed to
 maintain CVS controlled copies of router configs.
 
-*** The Following Information is Very Important ****
+**** The Following Information is Very Important ****
 Rancid 2.3 introduces a new directory layout.  It has been changed to more
 closely follow the standard path hierarchy, which is defined by the FHS
 standard and autoconf, and/or make these locations more easily configurable
@@ -18,6 +18,8 @@ configure (autoconf) and make.  .in is stripped from the files below by
 configure as substitutions are completed:
 
 README		This file.
+README.git	Information about using Git support for Rancid, along with some
+		use scenarios
 README.lg	Information about the Looking Glass.
 BUGS		Bug list.
 CHANGES		List of changes to Rancid.
@@ -37,10 +39,10 @@ bin/
 			Force10, Juniper E-series, Procket, Redback, Zebra/MRT.
 	control_rancid.in
 			Builds router list, calls rancid on each router and
-			handles cvs routines.
+			handles version control routines.
 	hpuifilter.c	HP procurve login filter - see hlogin(1).
 	par.in		Parallel processing of commands - any commands.
-	rancid-cvs.in	Creates all of the CVS and config directories.
+	rancid-cvs.in	Creates all of the version control and config directories.
 	rancid-run.in	Script designed to be run from cron.
 	rancid-fe.in	Chooses between rancid/[abefhjrx]rancid/cat5rancid.
 	rancid.in	Runs commands on cisco routers and processes the output.
@@ -111,9 +113,12 @@ perl5		perl version 5 or greater available from www.cpan.org
 expect		http://expect.nist.gov/  We highly suggest that you stick to
 		expect 5.24.1 (or so).  This seems to work best.  Note that
 		you need to have the accompanying tcl &/ tk.
-svn		Code revision system, an alternative to cvs.  Available from
+svn		Code revision system, an alternative to cvs or git.  Available from
 		http://subversion.tigris.org/tarballs/.  Use the configure
 		option --with-svn to configure for Subversion.
+git		Distributed version control system, an alternative to cvs or svn
+		Available from http://git-scm.com/downloads.  Use the configure
+		option --with-git to configure for Git.
 tcl		Required by expect.
 
 Bill Fenner (now maintained by others) has a cgi script for interacting
@@ -194,10 +199,10 @@ Quick Installation Guide (an example):
 
 7) Run rancid-cvs.
    This creates all of the necessary directories and config files for
-   each of the groups in LIST_OF_GROUPS and imports them into CVS (or
-   Subversion).  This will also be run each time a new group is added.  Do
-   not create the directories or CVS repository manually, allow rancid-cvs
-   do it.  Also see 'man -M <basedir>/man rancid-cvs'.
+   each of the groups in LIST_OF_GROUPS and imports them into version control
+   (CVS, Subversion or Git).  This will also be run each time a new group is 
+   added.  Do not create the directories or version control repository manually,
+   allow rancid-cvs to do it.  Also see 'man -M <basedir>/man rancid-cvs'.
 
 8) For each "group", modify the router.db file in the group directory.
    The file is of the form "router:mfg:state" where "router" is

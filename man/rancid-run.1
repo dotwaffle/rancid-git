@@ -1,6 +1,6 @@
 .\"
 .hys 50
-.TH "rancid-run" "1" "5 October 2006"
+.TH "rancid-run" "1" "10 June 2013"
 .SH NAME
 rancid-run \- run rancid for each of the groups
 .SH SYNOPSIS
@@ -119,7 +119,7 @@ Directory to hold temporary and lock files.
 .SH ERRORS
 If rancid fails to run or collect a device's configuration, the particular
 group's log file (mentioned above) should be consulted.  Any errors produced
-by the revision control system (CVS or Subversion) or any of the rancid
+by the revision control system (CVS, Subversion or Git) or any of the rancid
 scripts should be included there, whether they be a botched cvs tree, login
 authentication failure, rancid configuration error, etc.
 If the log file produces no clues, the next debugging step should be run the
