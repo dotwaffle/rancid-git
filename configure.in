@@ -159,6 +159,25 @@ AC_ARG_WITH(svn,
 ], [AC_MSG_RESULT(no)
     RCSSYS="cvs"
 ])
+
+# Configure for git distributed version control system instead of CVS.
+AC_MSG_CHECKING([whether git])
+AC_ARG_WITH(git,
+	AS_HELP_STRING([--with-git],
+			[use git instead of cvs]),
+[ case "$withval" in
+  yes)
+	AC_MSG_RESULT(yes)
+	RCSSYS="git"
+	;;
+  no)
+	AC_MSG_RESULT(no)
+	RCSSYS="cvs"
+  esac
+], [AC_MSG_RESULT(no)
+    RCSSYS="cvs"
+])
+
 AC_SUBST(RCSSYS)
 AC_SUBST(SVN_FSTYPE)
 rd_cv_RCSSYS=$RCSSYS
@@ -321,9 +340,12 @@ ENV_PATH="$ENV_PATH:`dirname $DIRNAME`:`dirname $DIFF`"
 if test $RCSSYS = "cvs" ; then
     AC_PATH_PROG(CVS,cvs,no)
     ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_CVS`"
-else
+elif test $RCSSYS = "svn" ; then
     AC_PATH_PROG(SVN,svn,no)
     ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_SVN`"
+elif test $RCSSYS = "git" ; then
+    AC_PATH_PROG(GIT,git,no)
+    ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_GIT`"
 fi
 AC_PATH_PROG(COMM,comm,no)
 ENV_PATH="$ENV_PATH:`dirname $ac_cv_path_COMM`"

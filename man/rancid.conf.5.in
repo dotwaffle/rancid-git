@@ -1,8 +1,6 @@
 .\"
-.\" $Id: rancid.conf.5.in 2096 2009-06-17 21:49:46Z heas $
-.\"
 .hys 50
-.TH "rancid.conf" "5" "18 December 2007"
+.TH "rancid.conf" "5" "10 June 2013"
 .SH NAME
 rancid.conf \- rancid environment configuration file
 .SH DESCRIPTION
@@ -163,9 +161,9 @@ this is not set.
 If set,
 .IR rancid (1)
 will use temporary files to save the output from the router and then read
-these to build the file which will be saved in CVS (or Subversion).
-Otherwise, an IPC pipe will be used.  We have found that the buffering
-mechanisms used in perl and expect are heinous.
+these to build the file which will be saved in the revision control system 
+(CVS, Subversion or Git).  Otherwise, an IPC pipe will be used.  We have found 
+that the bufferingmechanisms used in perl and expect are heinous.
 Using temporary files may result in a noticeable improvement in speed.
 By default, this is not set.
 .\"
@@ -213,9 +211,11 @@ Sets which revision control system is in use.
 Valid values are
 .B cvs
 for CVS
-or
 .B svn
-for Subversion.
+for Subversion
+or
+.B git
+for Git.
 .sp
 Default: cvs
 .\"

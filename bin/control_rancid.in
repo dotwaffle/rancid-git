@@ -213,7 +213,7 @@ case $RCSSYS in
        fi
        rm -f $TMP
        ;;
-    git )
+    git | git-remote )
        # do nothing here (for now)
        ;;
 esac
@@ -786,22 +786,26 @@ trap 'rm -fr $TMP $TMP.diff $DIR/routers.single;' 1 2 15
 cd $DIR
 case $RCSSYS in
     cvs )
-    if [ $HTMLMAILS == YES ]; then
-        cvs -f @DIFF_CMD@ -ko | sed -e '/^RCS file: /d' -e '/^--- /d' \
-            -e '/^+++ /d' -e 's/^\([-+ ]\)/\1 /' | ansi2html >$TMP.diff
-    else
-        cvs -f @DIFF_CMD@ -ko | sed -e '/^RCS file: /d' -e '/^--- /d' \
-            -e '/^+++ /d' -e 's/^\([-+ ]\)/\1 /' >$TMP.diff
-    fi
-	cvs commit -m "$message"
+        if [ $HTMLMAILS == YES ]; then
+	    cvs -f @DIFF_CMD@ -ko > /dev/null
+	    if [ $? -qe 0 ] ; then
+  	        # only process HTML mail fi there really is a difference
+  	        cvs -f @DIFF_CMD@ -ko | sed -e '/^RCS file: /d' -e '/^--- /d' \
+                    -e '/^+++ /d' -e 's/^\([-+ ]\)/\1 /' | ansi2html >$TMP.diff
+    	    fi
+        else
+            cvs -f @DIFF_CMD@ -ko | sed -e '/^RCS file: /d' -e '/^--- /d' \
+                -e '/^+++ /d' -e 's/^\([-+ ]\)/\1 /' >$TMP.diff
+        fi
+    	    cvs commit -m "$message"
 	;;
     svn )
-    if [ $HTMLMAILS == YES ]; then
-        svn diff | sed -e '/^+++ /d' -e 's/^\([-+ ]\)/\1 /' | ansi2html >$TMP.diff
-    else
-        svn diff | sed -e '/^+++ /d' -e 's/^\([-+ ]\)/\1 /' >$TMP.diff
-    fi
-	svn commit -m "$message"
+        if [ $HTMLMAILS == YES ]; then
+            svn diff | sed -e '/^+++ /d' -e 's/^\([-+ ]\)/\1 /' | ansi2html >$TMP.diff
+        else
+            svn diff | sed -e '/^+++ /d' -e 's/^\([-+ ]\)/\1 /' >$TMP.diff
+	fi
+	    svn commit -m "$message"
 	;;
     git | git-remote )
 	# with git we do things differently - first commit, then grab the diff
@@ -816,7 +820,11 @@ case $RCSSYS in
 	    if [ $? -eq 0 ]; then
 		# only generate a diff if the commit was successful
             if [ $HTMLMAILS == YES ]; then 
-                git diff --color --patch-with-stat HEAD^ HEAD -- .  | ansi2html >$TMP.diff
+		git diff --patch-with-stat --quiet HEAD^ HEAD -- .
+		if [ $? -eq 0 ] ; then
+		    # only process HTML mail if there really is a difference
+                    git diff --color --patch-with-stat HEAD^ HEAD -- .  | ansi2html >$TMP.diff
+		fi
             else
                 git diff --patch-with-stat HEAD^ HEAD -- . >$TMP.diff
             fi
