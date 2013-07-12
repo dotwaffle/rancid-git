@@ -184,6 +184,9 @@ sub ShowConfig {
 	    if ($filter_commstr) {
 		$_ =~ s/community label .*$/community label <removed>/;
 	    }
+	if (/^# Last modified/) {
+	    $_ = "";
+	}
 	}
 	return(1) if /(invalid command name)/;
 	ProcessHistory("","","","$_");
