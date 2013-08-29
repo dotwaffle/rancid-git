@@ -440,6 +440,7 @@ sub DirSlotN {
 	return(1) if /(Open device \S+ failed|Error opening \S+:)/;
 
 	if (/^\s*(\d+) bytes /) {
+	    next if $dev eq 'logflash';
 	    my($tmp) = int($1 / (1024 * 1024));
 	    s/$1 bytes /$tmp MB /;
 	}
