@@ -348,6 +348,7 @@ sub WriteTerm {
 	$lineauto = 1 if /^ modem auto/;
 	/^ speed / && $lineauto	&& next; # kill speed on serial lines
 	/^ clockrate /		&& next; # kill clockrate on serial interfaces
+	/^! Time: /		&& next; # EOS displays the time that a "show run" command was issued
 	if (/^(enable )?(password|passwd)( level \d+)? / && $filter_pwds >= 1) {
 	    ProcessHistory("ENABLE","","","!$1$2$3 <removed>\n");
 	    next;
