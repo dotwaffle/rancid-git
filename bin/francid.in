@@ -203,6 +203,23 @@ sub ShowVersion {
     return(0);
 }
 
+# This routine parses "show media"
+sub ShowMedia {
+    my($slot);
+
+    print STDERR "    In ShowMedia: $_" if ($debug);
+
+    while (<INPUT>) {
+        tr/\015//d;
+        next if /^\s*$/;
+        last if (/^$prompt/);
+
+        ProcessHistory("MEDIA","","","!$_");
+    }
+    ProcessHistory("MEDIA","","","!\n");
+    return(0);
+}
+
 # This routine parses "show chassis"
 sub ShowChassis {
     my($skip) = 0;
@@ -416,6 +433,7 @@ sub DoNothing {print STDOUT;}
 # Main
 @commandtable = (
 	{'show version'		=> 'ShowVersion'},
+	{'show media'		=> 'ShowMedia'},
 	{'show chassis'		=> 'ShowChassis'},
 	{'show module'		=> 'ShowModule'},
 	{'show flash'		=> 'ShowFlash'},
