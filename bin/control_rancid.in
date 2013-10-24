@@ -193,8 +193,7 @@ case $RCSSYS in
            (
                flock -x 200
                git add .gitignore
-               git commit -m "Adding .gitignore"
-           ) 200>$BASEDIR/.lockfile
+               git commit -m "Adding .gitignore" ) 200>$BASEDIR/.lockfile
        fi
        ;;
 esac
