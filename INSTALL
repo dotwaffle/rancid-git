@@ -1,0 +1,11 @@
+On Ubuntu/Debian:
+
+apt-get install debhelper dpatch expect build-essential autoconf \
+    automake
+
+cd rancid-git
+automake --add-missing
+autoreconf -fm
+dpkg-buildpackage -uc -rfakeroot
+cd ..
+dpkg -i rancid*.deb
