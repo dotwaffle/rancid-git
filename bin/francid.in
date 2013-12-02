@@ -180,7 +180,7 @@ sub ShowVersion {
 	next if (/^(The system |Crash time)/);
 	next if (/^(System|(Active|Standby) Management|LP Slot \d+|Switch Fabric Module \d+) (uptime|Up Time) is/);
 	# remove uptime on newer switches
-	s/(STACKID \d+)\s+system uptime is.*$/$1/;
+	s/(STACKID \d+)\s+system uptime.*$/$1/;
 
 	s/^\s*(HW|SW)/$1/;
 	s/^\s*(Compiled on)/SW: $1/;
