@@ -64,27 +64,27 @@ install: build-stamp
 	dh_clean -k
 	dh_installdirs
 
-	$(MAKE) install prefix=$(CURDIR)/debian/rancid/ \
+	$(MAKE) install prefix=$(CURDIR)/debian/rancid-git/ \
 		pkgdata_DATA='' dist_pkgdata_DATA=''
 
 #	some scripts to bin directory
-	mv debian/rancid/var/lib/rancid/downreport \
-	   debian/rancid/usr/lib/rancid/bin/
-	mv debian/rancid/var/lib/rancid/getipacctg \
-	   debian/rancid/usr/lib/rancid/bin/
-	mv debian/rancid/var/lib/rancid/rtrfilter \
-	   debian/rancid/usr/lib/rancid/bin/	
+	mv debian/rancid-git/var/lib/rancid/downreport \
+	   debian/rancid-git/usr/lib/rancid/bin/
+	mv debian/rancid-git/var/lib/rancid/getipacctg \
+	   debian/rancid-git/usr/lib/rancid/bin/
+	mv debian/rancid-git/var/lib/rancid/rtrfilter \
+	   debian/rancid-git/usr/lib/rancid/bin/	
 
 #	rancid-cgi:
-	mv debian/rancid/usr/lib/rancid/bin/lg.cgi \
+	mv debian/rancid-git/usr/lib/rancid/bin/lg.cgi \
 	   debian/rancid-cgi/usr/lib/cgi-bin/lg/
-	mv debian/rancid/usr/lib/rancid/bin/lgform.cgi \
+	mv debian/rancid-git/usr/lib/rancid/bin/lgform.cgi \
 	   debian/rancid-cgi/usr/lib/cgi-bin/lg/
-	mv debian/rancid/etc/rancid/lg.conf \
+	mv debian/rancid-git/etc/rancid/lg.conf \
 	   debian/rancid-cgi/etc/rancid/
-	mv debian/rancid/usr/share/man/man1/lg_intro.1 \
+	mv debian/rancid-git/usr/share/man/man1/lg_intro.1 \
 	   debian/rancid-cgi/usr/share/man/man1/
-	mv debian/rancid/usr/share/man/man5/lg.conf.5 \
+	mv debian/rancid-git/usr/share/man/man5/lg.conf.5 \
 	   debian/rancid-cgi/usr/share/man/man5/
 	install -m644 share/index.html debian/rancid-cgi/usr/lib/cgi-bin/lg/
 
