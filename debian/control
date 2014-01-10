@@ -10,7 +10,7 @@ Homepage: http://www.shrubbery.net/rancid/
 
 Package: rancid
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, expect, perl, cvs | subversion | git-core,
+Depends: ${shlibs:Depends}, ${misc:Depends}, expect, perl, cvs | subversion | git,
  passwd, openssh-client | ssh, iputils-ping | ping, 
  debconf (>= 0.2.26) | debconf-2.0, adduser
 Suggests: diffstat
