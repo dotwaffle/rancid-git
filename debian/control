@@ -1,4 +1,4 @@
-Source: rancid
+Source: rancid-git
 Section: net
 Priority: optional
 Maintainer: Roland Rosenfeld <roland@debian.org>
@@ -8,7 +8,7 @@ Build-Depends: debhelper (>= 5.0.0), autoconf, expect, perl, openssh-client, git
 Standards-Version: 3.8.1
 Homepage: http://www.shrubbery.net/rancid/
 
-Package: rancid
+Package: rancid-git
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, expect, perl, git | subversion | cvs,
  passwd, openssh-client | ssh, iputils-ping | ping, 

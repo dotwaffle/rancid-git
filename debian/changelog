@@ -1,4 +1,4 @@
-rancid (2.3.8) unstable; urgency=low
+rancid-git (2.3.8) unstable; urgency=low
 
   * updated to version 2.3.8
   * contains the patches for git support and various improvements and fixes from the
