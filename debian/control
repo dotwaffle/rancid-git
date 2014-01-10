@@ -2,7 +2,7 @@ Source: rancid
 Section: net
 Priority: optional
 Maintainer: Roland Rosenfeld <roland@debian.org>
-Build-Depends: debhelper (>= 5.0.0), autoconf, expect, perl, openssh-client, cvs, 
+Build-Depends: debhelper (>= 5.0.0), autoconf, expect, perl, openssh-client, git | subversion | cvs,
  iputils-ping | ping, po-debconf, dpatch, exim4 | mail-transport-agent,
  telnet, automake, build-essential
 Standards-Version: 3.8.1
@@ -10,7 +10,7 @@ Homepage: http://www.shrubbery.net/rancid/
 
 Package: rancid
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, expect, perl, cvs | subversion | git,
+Depends: ${shlibs:Depends}, ${misc:Depends}, expect, perl, git | subversion | cvs,
  passwd, openssh-client | ssh, iputils-ping | ping, 
  debconf (>= 0.2.26) | debconf-2.0, adduser
 Suggests: diffstat
