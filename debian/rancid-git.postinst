@@ -34,7 +34,7 @@ case "$1" in
     	db_get "rancid/go_on" && true
 	[ "$RET" = "false" ] && exit 0
 	if ! `getent passwd rancid >/dev/null`; then
-		adduser --system --group --home /var/lib/rancid --quiet rancid
+		adduser --system --group --home /var/lib/rancid --gecos "RANCID,,," --quiet rancid
 	fi
 	if [ -d /var/log/rancid ]; then
 		chown rancid:rancid /var/log/rancid
