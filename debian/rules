@@ -38,7 +38,8 @@ build-stamp: patch-stamp
 		--datadir=\$${prefix}var/lib \
 		--sysconfdir=\$${prefix}etc/rancid \
 		--exec-prefix=\$${prefix}usr/lib/rancid \
-		--localstatedir=\$${prefix}var/lib/rancid
+		--localstatedir=\$${prefix}var/lib/rancid \
+		--with-git
 
 	$(MAKE)
 	#$(MAKE) -C util
