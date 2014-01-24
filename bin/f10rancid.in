@@ -336,6 +336,8 @@ sub DirSlotN {
 	return(1) if /(Open device \S+ failed|Error opening \S+:)/;
 
 	/Directory of/ && next;
+	# . & ..
+	/ \.{1,2}\s+$/ && next;
 
 	# clean up totals line
 	if (/.* (\d+) bytes total/) {
