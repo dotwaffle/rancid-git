@@ -25,29 +25,9 @@ Description: Really Awesome New Cisco config Differ
  software and hardware (cards, serial numbers, etc), using CVS or
  Subversion.
 
-Package: rancid-core
-Architecture: all
-Depends: rancid, ${misc:Depends}
-Description: transitional dummy package (rancid-core -> rancid)
- This package is provided to smoothly merge the old rancid-core and
- rancid-util packages into a new rancid package.
- .
- After migration from rancid-core to rancid this package can be
- removed safely.
-
-Package: rancid-util
-Architecture: all
-Depends: rancid, ${misc:Depends}
-Description: transitional dummy package (rancid-util -> rancid)
- This package is provided to smoothly merge the old rancid-core and
- rancid-util packages into a new rancid package.
- .
- After migration from rancid-util to rancid this package can be
- removed safely.
- 
 Package: rancid-cgi
 Architecture: all
-Depends: ${misc:Depends}, rancid, liblockfile-simple-perl
+Depends: ${misc:Depends}, rancid-git, liblockfile-simple-perl
 Suggests: apache2 | httpd-cgi
 Description: CGI for rancid
  This is a popular ISP toolkit, based on expect and shell scripts,
