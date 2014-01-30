@@ -303,7 +303,7 @@ proc login { router user userpswd passwd enapasswd prompt cmethod cyphertype } {
 	} elseif [string match "ssh*" $prog] {
 	    regexp {ssh(:([^[:space:]]+))*} $prog methcmd suffix port
 	    set cmd $sshcmd
-	    if {"$port" == ""} {
+	    if {"$port" != ""} {
 		set cmd "$cmd -p $port"
 	    }
 	    set retval [ catch {eval spawn [split "$cmd -c $cyphertype -x -l $user $router" { }]} reason ]
