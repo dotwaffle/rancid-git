@@ -173,6 +173,7 @@ sub GetSystem {
 
     while (<INPUT>) {
 	tr/\015//d;
+	1 while s/[^[:cntrl:]]\cH//g;
 	next if /^\s*$/;
 	last if(/$prompt/);
 	# throw away the pager prompts
@@ -213,6 +214,7 @@ sub GetConf {
     print STDERR "    In GetConf: $_" if ($debug);
     while (<INPUT>) {
 	tr/\015//d;
+	1 while s/[^[:cntrl:]]\cH//g;
 	next if /^\s*$/;
 	next if /^Total Config.+$/i;
 	last if(/$prompt/);
