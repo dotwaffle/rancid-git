@@ -580,10 +580,16 @@ sub DirSlotN {
 	return(-1) if (/\%Error opening \S+:\S+ \(Device or resource busy\)/i);
 	return(-1) if (/command authorization failed/i);
 	return(1) if (/(Open device \S+ failed|Error opening \S+:)/);
-	# filter frequently changing files from IOX bootflash
-	if ($dev =~ /bootflash/) {
-	    next if (/temp_cont\s*$/);
-	    next if (/uptime_cont\s*$/);
+	# filter frequently changing files from IOX bootflash / harddiska
+	if ($dev =~ /(bootflash|harddiska)/) {
+		if (/(temp_cont|uptime_cont|volt_cont)\s*$/) {
+			if (/(\s*\d+\s+\S+\s+)(\d+)(\s+)(\w+ \w+\s+\d+ \d+:\d+:\d+ \d+)/) {
+				my($a, $sz, $c, $dt, $rem) = ($1, $2, $3, $4, $');
+				my($szl, $dtl) = (length($sz), length($dt));
+				my($fmt) = "%s%-". $szl ."s%s%-". $dtl ."s%s";
+				$_ = sprintf($fmt, $a, "", $c, "", $rem);
+			}
+		}
 	}
 	# Filter dhcp database
 	if (/dhcp_[^. ]*\.txt/) {
