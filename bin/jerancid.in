@@ -247,6 +247,12 @@ sub ShowEnv {
 	     <INPUT>; <INPUT>; <INPUT>;
 	     next;
 	}
+
+	# we dont want the temperature numbers, they just create nonsense updates
+	if (/^[\d\/]+\s+[-\w\/\s]+\s+\d+.*/){
+		s/(^[\d\/]+\s+[-\w\/\s]+\s+)(\d+)(.*)/$1 -removed- $3/;
+	}
+
 	/^\d+\s+\d+\s+\S+/ && next;
 
 	# strip nvs usage
