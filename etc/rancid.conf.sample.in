@@ -73,9 +73,9 @@ RCSSYS=@RCSSYS@; export RCSSYS
 #PAR_COUNT=5; export PAR_COUNT
 #
 # list of rancid groups
-#LIST_OF_GROUPS="sl joebobisp"
+#LIST_OF_GROUPS="sl joebobisp"; export LIST_OF_GROUPS
 # more groups...
-#LIST_OF_GROUPS="$LIST_OF_GROUPS noc billybobisp"
+#LIST_OF_GROUPS="$LIST_OF_GROUPS noc billybobisp"; export LIST_OF_GROUPS
 #
 # For each group, define a list of people to receive the diffs.
 # in sendmail's /etc/aliases.
