@@ -40,9 +40,9 @@
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
 #
-# PAR - parallel processing of command
+# RANCID_PAR - parallel processing of command
 #
-# par -q -n # -l logfile -c command -x -d
+# rancid_par -q -n # -l logfile -c command -x -d
 #   -q = quiet mode (don't log anything to the logfiles)
 #   -n # = number of processes to run at once (default = 3)
 #   -l logfile = logfile to store par logging into (.0-.n)
@@ -56,7 +56,7 @@
 #                This precludes passing different args to each process.
 #   -e = exec args split by spaces rather than use sh -c
 #
-# par takes a list of items to run a command on.  If the list entry begins
+# rancid_par takes a list of items to run a command on.  If the list entry begins
 # with a ":" the remainder of the line is the command to run ("{}" will be
 # replaced with each subsequent item in the list.  If the list entry begins
 # with a "#", the entry is ignored.  If a command is defined (either with

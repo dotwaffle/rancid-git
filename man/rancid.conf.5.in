@@ -182,7 +182,7 @@ Default: 24
 .TP
 .B PAR_COUNT
 Defines the number of rancid processes that
-.IR par (1)
+.IR rancid_par (1)
 will start simultaneously as
 .IR control_rancid (1)
 attempts to perform collections.  Raising this value will decrease the amount

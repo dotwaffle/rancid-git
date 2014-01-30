@@ -1,10 +1,10 @@
 .\"
 .hys 50
-.TH "par" "1" "18 December 2007"
+.TH "rancid_par" "1" "18 December 2007"
 .SH NAME
-par \- parallel command processing
+rancid_par \- parallel command processing
 .SH SYNOPSIS
-.B par
+.B rancid_par
 [\fB\-dfiqx\fP]
 [\c
 .BI \-c\ 
@@ -18,7 +18,7 @@ logfile]
 file
 [file...]
 .SH DESCRIPTION
-.B par
+.B rancid_par
 takes a list of files to run a command on.  The first line of each file begins
 with a colon (:) or a pound-sign (#).  If a colon, the remainder of the
 line is a command to run for each of the subsequent lines.  If a pound-sign,
@@ -43,10 +43,10 @@ For example, a inputfile whose contents is:
 	c
 .sp
 run with
-.B par
+.B rancid_par
 like so:
 .sp
-	%par -q inputfile
+	%rancid_par -q inputfile
 .sp
 will produce the following output (order will vary):
 .sp
@@ -81,7 +81,7 @@ processes.
 .TP
 .B \-l
 Prefix of logfile name, as in prefix.N where N is the
-.B par
+.B rancid_par
 process number ([0..]).
 .sp
 Default: par.log.<time>.[0..]
@@ -104,7 +104,7 @@ options and the option appearing last will take precedence.
 .\"
 .TP
 .B \-x
-View par logs in real-time via an 
+View rancid_par logs in real-time via an 
 .BR xterm (1).
 .El
 .SH FILES
@@ -113,7 +113,7 @@ View par logs in real-time via an
 .\" set tabstop to longest possible filename, plus a wee bit
 .ta \w'par.log.1006028679.00  'u
 \fIpar.log.T.N\fR Log file; where T is the current time in seconds since the
-epoch and N is the par process number ([0..]).
+epoch and N is the rancid_par process number ([0..]).
 .\"
 .\" .SH "SEE ALSO"
 .\" .BR expect (1)

@@ -126,7 +126,7 @@ if [ $? -ne 0 ] ; then
     MAILHEADERS="Precedence: bulk\n"; export MAILHEADERS
 fi
 
-# Number of things par should run in parallel.
+# Number of things rancid_par should run in parallel.
 PAR_COUNT=${PAR_COUNT:-5}
 # Number of times failed collections should be retried.  Minimum 1.
 MAX_ROUNDS=${MAX_ROUNDS:-4}
@@ -458,7 +458,7 @@ cd $DIR/configs
 # tailored to the specific installation.
 echo ""
 echo "Trying to get all of the configs."
-@bindir@/par -q -n $PAR_COUNT -c "rancid-fe {}" $devlistfile
+@bindir@/rancid_par -q -n $PAR_COUNT -c "rancid-fe {}" $devlistfile
 
 # This section will generate a list of missed routers
 # and try to grab them again.  It will run through
@@ -488,7 +488,7 @@ do
     if [ -f $DIR/routers.up.missed ] ; then
 	echo "====================================="
 	echo "Getting missed routers: round $round."
-	@bindir@/par -q -n $PAR_COUNT -c "rancid-fe \{}" $DIR/routers.up.missed
+	@bindir@/rancid_par -q -n $PAR_COUNT -c "rancid-fe \{}" $DIR/routers.up.missed
 	rm -f $DIR/routers.up.missed
 	round=`expr $round + 1`
     else
