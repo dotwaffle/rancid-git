@@ -304,6 +304,12 @@ sub DirSlotN {
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	next if (/^Please wait/i);
 	next if (/^system\.log/);
+        next if (/^standby-disk0/);
+
+        # Ignore because of daily updated timestamp:
+        # "!Flash: disk0:e120-scsto1-confg.scr 35410 35410 11/18/2013 23:24:42"
+       	s/^(disk.*-conf.*\.scr).*/\1 -removed-/;
+
 	# fail if the RP is amid the auto-sync process
 	return(-1) if (/active\/standby/i && /not sync/);
 
