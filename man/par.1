@@ -29,7 +29,7 @@ option was specified, in which case it operates as if the argument to
 had followed a colon on the first line.
 .PP
 In each of the cases where the lines of the file following the first are
-not commands (i.e.: colon or -c), instances of open-close braces ({}) in the
+not commands (i.e.: colon or \-c), instances of open-close braces ({}) in the
 command will be replaced by these values.
 .PP
 For example, a inputfile whose contents is:
@@ -46,7 +46,7 @@ run with
 .B rancid_par
 like so:
 .sp
-	%rancid_par -q inputfile
+	%rancid_par \-q inputfile
 .sp
 will produce the following output (order will vary):
 .sp
@@ -70,7 +70,7 @@ Print debugging information on standard error (stderr).
 .\"
 .TP
 .B \-f
-No file or STDIN, just run a quantity of the command specified with -c.
+No file or STDIN, just run a quantity of the command specified with \-c.
 .\"
 .TP
 .B \-i

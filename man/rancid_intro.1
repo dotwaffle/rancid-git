@@ -67,6 +67,7 @@ rancid's share directory (
 Below is a sample of a uni-diff produced from the group "shrubbery"
 for the device named dfw.shrubbery.net, which happens to be a Cisco GSR.
 .PP
+.ft CW
 .nf
 From: rancid 
 To: rancid-shrubbery@shrubbery.net
@@ -76,8 +77,8 @@ Precedence: bulk
 Index: configs/dfw.shrubbery.net
 ===================================================================
 retrieving revision 1.144
-diff -u -4 -r1.144 dfw.shrubbery.net
-@@ -57,14 +57,8 @@
+diff \-u \-4 \-r1.144 dfw.shrubbery.net
+@@ \-57,14 +57,8 @@
   !Slot 2/MBUS: hvers 1.1
   !Slot 2/MBUS: software 01.36 (RAM) (ROM version is 01.33)
   !Slot 2/MBUS: 128 Mbytes DRAM, 16384 Kbytes SDRAM
@@ -92,6 +93,7 @@ diff -u -4 -r1.144 dfw.shrubbery.net
   !Slot 7/PCA: part 73-2170-03 rev B0 ver 3, serial CAB024901SI
   !Slot 7/PCA: hvers 1.4
   !Slot 7/MBUS: part 73-2146-06 rev A0 dev 0, serial CAB02060044
+.ft R
 .fi
 .PP
 In this example, we see that a Gigabit Ethernet linecard was removed

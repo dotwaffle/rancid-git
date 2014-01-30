@@ -152,13 +152,13 @@ port differently.  In particular, BSD derived telnets do not do
 option negotiation when a port is given.  Some devices, Extreme
 switches for example, have undesirable telnet default options such
 as linemode.  In the BSD case, to enable option negotiation when
-specifying a port the method should be "{telnet:-23}" or you should
+specifying a port the method should be "{telnet:\-23}" or you should
 add "mode character" to .telnetrc.  See
 .BR telnet (1)
 for more information on telnet command-line syntax, telnet options,
 and .telnetrc.
 .sp
-Example: add method * {ssh} {telnet:-3000} {rsh}
+Example: add method * {ssh} {telnet:\-3000} {rsh}
 .sp
 Which would cause
 .IR clogin
@@ -176,7 +176,7 @@ Default: {telnet} {ssh}
 will not try to gain enable privileges when noenable is matched for a
 device.  This is equivalent to
 .IR "clogin" 's
--noenable command-line option.
+\-noenable command-line option.
 .sp
 Note that this directive is meaningless for
 .BR jlogin (1),
