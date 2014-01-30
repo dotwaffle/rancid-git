@@ -70,7 +70,8 @@ auto_edit = sed \
 	-e 's,@localstatedir\@,$(localstatedir),g' \
 	-e 's,@sysconfdir\@,$(sysconfdir),g' \
 	-e 's,@pkgdatadir\@,$(pkgdatadir),g' \
-    -e 's,@MAILPLUS\@,$(MAILPLUS),g'
+	-e 's,@ADMINMAILPLUS\@,$(ADMINMAILPLUS),g' \
+	-e 's,@MAILPLUS\@,$(MAILPLUS),g'
 
 downreport: Makefile $(srcdir)/downreport.in
 	rm -f downreport downreport.tmp; \
