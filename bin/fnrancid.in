@@ -180,6 +180,7 @@ sub GetSystem {
 	next if (/^\s*Extended DB: .*/);
 	next if (/^\s*IPS-DB: .*/);
 	next if (/^FortiClient application signature package:/);
+
 	ProcessHistory("","","","#$_");
     }
     ProcessHistory("SYSTEM","","","\n");
@@ -208,8 +209,22 @@ sub GetConf {
 	next if (/^\s*!System time:/);
 	# remove occurrances of conf_file_ver
 	next if (/^#?conf_file_ver=/);
-	# filter variabilities between configurations.  password encryption
-	# upon each display of the configuration.
+
+	# filter cycling RSA private keys
+	if (/^\s*set private-key "-----BEGIN RSA PRIVATE KEY-----/) {
+	    ProcessHistory("","","","#$_");
+	    ProcessHistory("","","","# <removed>");
+	    while (<INPUT>) {
+		tr/\015//d;
+		last if (/$prompt/);
+
+		if (/^\s*-----END RSA PRIVATE KEY-----"/) {
+	    	    ProcessHistory("","","","#$_");
+		    last;
+		}
+	    }
+	}
+	# filter cycling password encryption
 	if (/^\s*(set [^\s]*)\s(Enc\s[^\s]+)(.*)/i && $filter_pwds > 0 ) {
 	    ProcessHistory("ENC","","","#$1 ENC <removed> $3\n");
 	    next;
