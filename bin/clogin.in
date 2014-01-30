@@ -82,6 +82,8 @@ set do_saveconfig 0
 set timeoutdflt 45
 #
 set send_human {.4 .4 .7 .3 5}
+# new option to provide "login" command capabilities
+set loginonly 0
 
 # Find the user in the ENV, or use the unix userid.
 if {[info exists env(CISCO_USER)]} {
@@ -582,6 +584,39 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype identfile 
     return 0
 }
 
+# New subroutine to provide "login" command capabilities, using the enable user and enable password
+# Login
+proc do_login { enauser enapasswd } {
+    global prompt in_proc
+    global u_prompt e_prompt
+    set in_proc 1
+
+    send "login\r"
+    expect {
+       -re "$u_prompt" { send "$enauser\r"; exp_continue}
+       -re "$e_prompt" { send "$enapasswd\r"; exp_continue}
+       "#"             { set prompt "#" }
+       "(login)"       { set prompt "> (login) " }
+       -re "(denied|Sorry|Incorrect)"  {
+                         # % Access denied - from local auth and poss. others
+                         send_user "\nError: Check your Login passwd\n";
+                         return 1
+                       }
+       "% Error in authentication" {
+                         send_user "\nError: Check your Login passwd\n"
+                         return 1
+                       }
+       "% Bad passwords" {
+                         send_user "\nError: Check your Login passwd\n"
+                         return 1
+                       }
+    }
+    # We set the prompt variable (above) so script files don't need
+    # to know what it is.
+    set in_proc 0
+    return 0
+}
+
 # Enable
 proc do_enable { enauser enapasswd } {
     global do_saveconfig in_proc
@@ -752,6 +787,13 @@ foreach router [lrange $argv $i end] {
     # Default prompt.
     set prompt "(>|#| \\(enable\\))"
 
+    # If a "login" option is used, no "enable" will be required
+    # look for login option in .cloginrc
+    if { [find login $router] != "" } {
+       set enable 0
+       set loginonly 1
+    }
+
     # look for noenable option in .cloginrc
     if { [find noenable $router] == "1" } {
 	set enable 0
@@ -874,6 +916,17 @@ foreach router [lrange $argv $i end] {
 	    }
 	}
     }
+
+    # login required?
+    if { $loginonly } {
+       if {[do_login $enauser $enapasswd]} {
+           if { $do_command || $do_script } {
+               close; wait
+               continue
+           }
+       }
+    }
+
     if { $enable } {
 	if {[do_enable $enauser $enapasswd]} {
 	    if { $do_command || $do_script } {
@@ -883,6 +936,7 @@ foreach router [lrange $argv $i end] {
 	    }
 	}
     }
+
     # we are logged in, now figure out the full prompt
     send "\r"
     expect {
