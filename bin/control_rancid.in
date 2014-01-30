@@ -965,6 +965,9 @@ if [ -s $TMP.diff ] ; then
           echo "Content-transfer-encoding: 8bit"
           echo "$MAILHEADERS" | awk '{L = "";LN = $0;while (LN ~ /\\n/) { I = index(LN,"\\n");L = L substr(LN,0,I-1) "\n";LN = substr(LN,I+2,length(LN)-I-1);}print L LN;}'
           echo ""
+	  if which diffstat >/dev/null ; then
+		  diffstat $TMP.diff
+	  fi
           cat $TMP.diff
         ) | sendmail -oi -t
     else
