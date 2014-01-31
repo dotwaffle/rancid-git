@@ -64,6 +64,8 @@ bin/rancid-run
 bin/rivlogin
 bin/rivrancid
 bin/rrancid
+bin/shelllogin
+bin/shellrancid
 bin/srancid
 bin/tlogin
 bin/tntlogin
