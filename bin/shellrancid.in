@@ -45,7 +45,7 @@
 #
 #  RANCID - Really Awesome New Cisco confIg Differ
 #
-# usage: shelllrancid [-dV] [-l] [-f filename | hostname]
+# usage: shellrancid [-dV] [-l] [-f filename | hostname]
 #
 # Backup files by specifying them in your cloginrc
 #
