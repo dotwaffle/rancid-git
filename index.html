@@ -67,9 +67,10 @@
     <p>For Debian users that are feeling adventurous, try running:</p>
     <p>git clone git://github.com/dotwaffle/rancid-git<br />
     cd rancid-git<br />
-    dpkg-buildpackage -uc -rfakeroot<br />
+    dpkg-buildpackage -uc -us -rfakeroot<br />
     cd ..<br />
     dpkg -i rancid*.deb</p>
+    <p>There is an rpm specfile, but I haven't had too much experience with RedHat packaging, so YMMV!</p>
     <p>Otherwise, try:</p>
     <p>adduser --home=/home/rancid rancid<br />
     autoreconf (or aclocal && autoconf)<br/>
