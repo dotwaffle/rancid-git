@@ -47,6 +47,16 @@
 #
 # usage: shelllrancid [-dV] [-l] [-f filename | hostname]
 #
+# Backup files by specifying them in your cloginrc
+#
+# add method linux.machine.domain ssh rlogin
+# add user linux.machine.domain root
+# add password linux.machine.domain thepassword thepassword
+# add autoenable linux.machine.domain 1
+# add backupfile linux.machine.domain /etc/issue
+# add backupfile linux.machine.domain /etc/network/interfaces
+# add backupfile linux.machine.domain /etc/iptables/rules.v4
+#
 use Getopt::Std;
 getopts('dflV');
 if ($opt_V) {
