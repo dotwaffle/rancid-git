@@ -1,3 +1,10 @@
+rancid-git (2.3.8-1) unstable; urgency=low
+
+  * backported lots of fixes that were in the debian git repo
+  * added telnet as a dependency
+  * introduced a couple of patches from upstream
+
+ -- Matthew Walster <matthew@walster.org>  Fri, 31 Jan 2014 14:08:00 +0000
 rancid-git (2.3.8) unstable; urgency=low
 
   * updated to version 2.3.8
