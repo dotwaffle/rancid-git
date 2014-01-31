@@ -83,6 +83,7 @@ $vendor =~ tr/[A-Z]/[a-z]/;
     'procket'		=> 'prancid',
     'redback'		=> 'rrancid',
     'riverstone'	=> 'rivrancid',
+    'shell'		=> 'shellrancid',
     'smc'		=> 'srancid',
     'tnt'		=> 'tntrancid',
     'zebra'		=> 'zrancid'
