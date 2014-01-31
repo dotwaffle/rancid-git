@@ -11,7 +11,7 @@ Homepage: http://www.shrubbery.net/rancid/
 Package: rancid-git
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, expect, perl, git | subversion | cvs,
- passwd, openssh-client | ssh, iputils-ping | ping, 
+ passwd, openssh-client | ssh, iputils-ping | ping, telnet,
  debconf (>= 0.2.26) | debconf-2.0, adduser
 Suggests: diffstat
 Provides: rancid-core, rancid-util
