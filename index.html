@@ -78,6 +78,15 @@
     sudo checkinstall (or make && make install)<br />
     sudo chown -R rancid:rancid /home/rancid</p>
 
+    <h2>Usage</h2>
+    <p>I'm writing documentation at the moment, which should hopefully be better than that supplied upstream. However, to get started, let's give you a couple of pointers!</p>
+    <p>$EDITOR /etc/rancid/rancid.conf (edit, make sure to set LIST_OF_GROUPS)</p>
+    <p>cd /var/lib/rancid</p>
+    <p>sudo -u rancid bin/rancid-cvs</p>
+    <p>Create a .cloginrc and $group/router.db</p>
+    <p>sudo -u rancid rancid-run</p>
+    <p>Read the logs in /var/lib/rancid/logs/ to find out what you did wrong ;)</p>
+
     <h2>Authors</h2>
     <p>
         <ul>
