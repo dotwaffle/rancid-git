@@ -15,12 +15,6 @@
 
 @SET_MAKE@
 
-# 
-#  The expect login scripts were based on Erik Sherk's gwtn, by permission.
-# 
-#  The original looking glass software was written by Ed Kern, provided by
-#  permission and modified beyond recognition.
-
 
 VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@

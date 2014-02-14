@@ -15,12 +15,6 @@
 
 @SET_MAKE@
 
-# 
-#  The expect login scripts were based on Erik Sherk's gwtn, by permission.
-# 
-#  The original looking glass software was written by Ed Kern, provided by
-#  permission and modified beyond recognition.
-
 VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
 pkgincludedir = $(includedir)/@PACKAGE@
@@ -193,7 +187,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = foreign no-dependencies
-pkglib_SCRIPTS = rancid.pm arbor.pm ios.pm junos.pm
+pkglib_SCRIPTS = rancid.pm arbor.pm eos.pm ios.pm junos.pm
 pkglib_in = $(pkglib_SCRIPTS:%=%.in)
 RANLIB = :
 EXTRA_DIST = $(pkglib_in)
@@ -448,6 +442,7 @@ $(pkglib_in:%.in=%): Makefile $(top_builddir)/config.status
 # XXX there must be a better way to produce these dependencies, perhaps in
 #     configure.
 arbor.pm: arbor.pm.in
+eos.pm: eos.pm.in
 ios.pm: ios.pm.in
 junos.pm: junos.pm.in
 rancid.pm: rancid.pm.in

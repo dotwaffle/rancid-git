@@ -1,0 +1,304 @@
+package eos;
+##
+## $Id: ios.pm.in 2582 2012-07-26 16:23:46Z heas $
+##
+## @PACKAGE@ @VERSION@
+## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
+## All rights reserved.
+##
+## This code is derived from software contributed to and maintained by
+## Terrapin Communications, Inc. by Henry Kilmer, John Heasley, Andrew Partan,
+## Pete Whiting, Austin Schutz, and Andrew Fort.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted provided that the following conditions
+## are met:
+## 1. Redistributions of source code must retain the above copyright
+##    notice, this list of conditions and the following disclaimer.
+## 2. Redistributions in binary form must reproduce the above copyright
+##    notice, this list of conditions and the following disclaimer in the
+##    documentation and/or other materials provided with the distribution.
+## 3. All advertising materials mentioning features or use of this software
+##    must display the following acknowledgement:
+##        This product includes software developed by Terrapin Communications,
+##        Inc. and its contributors for RANCID.
+## 4. Neither the name of Terrapin Communications, Inc. nor the names of its
+##    contributors may be used to endorse or promote products derived from
+##    this software without specific prior written permission.
+## 5. It is requested that non-binding fixes and modifications be contributed
+##    back to Terrapin Communications, Inc.
+##
+## THIS SOFTWARE IS PROVIDED BY Terrapin Communications, INC. AND CONTRIBUTORS
+## ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+## TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+## PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COMPANY OR CONTRIBUTORS
+## BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+## CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+## SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+## INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+## POSSIBILITY OF SUCH DAMAGE.
+#
+#  RANCID - Really Awesome New Cisco confIg Differ
+#
+#  eos.pm - Compass EOS rancid procedures
+
+use 5.005;
+use strict 'vars';
+use warnings;
+no warnings 'uninitialized';
+require(Exporter);
+our @ISA = qw(Exporter);
+
+#XXX use @VERSION@ when we have a version w/o letters in it
+#XXX use rancid @VERSION@;
+use rancid;
+
+our $proc;
+our $ios;
+our $found_version;
+our $found_env;
+our $found_diag;
+our $config_register;			# configuration register value
+
+@ISA = qw(Exporter rancid main);
+#XXX @Exporter::EXPORT = qw($VERSION @commandtable %commands @commands);
+
+# load-time initialization
+sub import {
+    0;
+}
+
+# post-open(collection file) initialization
+sub init {
+    # XXX is this the right place for this?
+    # XXX can the content line move to the lib?
+    ProcessHistory("","","","!RANCID-CONTENT-TYPE: compass\n!\n");
+
+    0;
+}
+
+# main loop of input of device output
+sub inloop {
+    my($INPUT, $OUTPUT) = @_;
+    my($cmd, $rval);
+
+TOP: while(<$INPUT>) {
+	tr/\015//d;
+	if ((/\>\s?logout$/) || $found_end) {
+	    $clean_run=1;
+	    last;
+	}
+	if (/^Error:/) {
+	    print STDOUT ("$host complogin error: $_");
+	    print STDERR ("$host complogin error: $_") if ($debug);
+	    $clean_run=0;
+	    last;
+	}
+	while (/[#>]\s*($cmds_regexp)\s*$/) {
+	    $cmd = $1;
+	    if (!defined($prompt)) {
+		$prompt = ($_ =~ /^([^#>]+[#>])/)[0];
+		$prompt =~ s/([][}{)(\\])/\\$1/g;
+		print STDERR ("PROMPT MATCH: $prompt\n") if ($debug);
+	    }
+	    print STDERR ("HIT COMMAND:$_") if ($debug);
+	    if (! defined($commands{$cmd})) {
+		print STDERR "$host: found unexpected command - \"$cmd\"\n";
+		$clean_run = 0;
+		last TOP;
+	    }
+	    $rval = &{$commands{$cmd}}($INPUT, $OUTPUT, $cmd);
+	    delete($commands{$cmd});
+	    if ($rval == -1) {
+		$clean_run = 0;
+		last TOP;
+	    }
+	}
+    }
+}
+
+sub ShowAlerts {
+    my($INPUT, $OUTPUT, $cmd) = @_;
+    print STDERR "    In ShowAlerts: $_" if ($debug);
+
+    while (<$INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	next if (/^Can\'t find object or class named \"\-all\"\s*$/);
+	next if (/lock-address .*$/);
+	next if (/^\# *uptime +\d+\s*$/);
+	return(1) if (/invalid command name/);
+
+	next if (/system date:/i);
+	next if /% +no entries found/i;
+
+	ProcessHistory("Alerts","","",$_);
+    }
+    ProcessHistory("Alerts","","","!\n");
+    return(0);
+}
+
+# This routine parses "show configuration"
+sub ShowConfig {
+    my($INPUT, $OUTPUT, $cmd) = @_;
+    my($linecnt) = 0;
+    print STDERR "    In ShowConfig: $_" if ($debug);
+
+    while (<$INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	next if (/^Reading configuration information/);
+	next if (/^Can\'t find object or class named \"\-all\"\s*$/);
+	next if (/lock-address .*$/);
+	next if (/^\# *uptime +\d+\s*$/);
+	return(1) if (/invalid command name/);
+	return(-1) if (/error: application error/i);
+
+	if (/community label /) {
+	    if ($filter_commstr) {
+		$_ =~ s/community label .*$/community label <removed>/;
+	    }
+	}
+	if (/^\s+(password) (\$1\$.*)?/ && $filter_pwds == 2) {
+	    ProcessHistory("","","","!$1 <removed>$3\n"); next;
+	}
+
+	ProcessHistory("","","","$_");
+	$linecnt++;
+	if (/^!\s*end-of-config/) {
+	    $found_end = 1;
+	    return(0);
+	}
+    }
+
+    # Prior to EOS 1.1, the Compass lacked a definitive "end of config" marker.
+    if ($linecnt > 5) {
+	$found_end = 1;
+	return(1);
+    }
+    return(0);
+}
+
+# This routine parses "show system module"
+sub ShowModule {
+    my($INPUT, $OUTPUT, $cmd) = @_;
+    print STDERR "    In ShowModule: $_" if ($debug);
+
+    while (<$INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	return(1) if (/^-+\^/);			# missing command XXX
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	next if (/^Can\'t find object or class named \"\-all\"\s*$/);
+	next if (/lock-address .*$/);
+	next if (/^\# *uptime +\d+\s*$/);
+	return(1) if (/invalid command name/);
+
+	next if (/system date:/i);
+	next if /note: there are active alerts/i;
+
+	# the table header changes length/formatting with the operational time
+	# stamp.
+	if (/^slot/i) {
+	    ProcessHistory("Module","","","! SLOT                ADMIN\n");
+	    next;
+	}
+	if (/^index/i) {
+	    ProcessHistory("Module","","",
+			   "! INDEX   TYPE        STATE   OPER STATE\n");
+	    next;
+	}
+	if (/^-----/i) {
+	    ProcessHistory("Module","","",
+			   "! --------------------------------------\n");
+	    next;
+	}
+	# XXX this line moves around and is not necessary
+	next if (/TIME IN/i);
+
+	/^\d+\// && s/(\d+\/\S+\s+\S+\s+\S+\s+\S+).*/$1/;
+
+	ProcessHistory("Module","","","! $_");
+    }
+    ProcessHistory("Module","","","!\n");
+    return(0);
+}
+
+# This routine parses "show system hardware"
+sub ShowInventory {
+    my($INPUT, $OUTPUT, $cmd) = @_;
+    print STDERR "    In ShowInventory: $_" if ($debug);
+
+    while (<$INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	return(1) if (/^-+\^/);			# missing command XXX
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	next if (/^Can\'t find object or class named \"\-all\"\s*$/);
+	next if (/lock-address .*$/);
+	next if (/^\# *uptime +\d+\s*$/);
+	return(1) if (/invalid command name/);
+
+	return(-1) if /(error: |reading .* failed!)/i;
+
+	# remove trailing whitespace
+	s/\s+$/\n/;
+
+	ProcessHistory("Inventory","","","! $_");
+    }
+    ProcessHistory("Inventory","","","!\n");
+    return(0);
+}
+
+# This routine parses "show system software *"
+sub ShowSoftware {
+    my($INPUT, $OUTPUT, $cmd) = @_;
+    print STDERR "    In ShowSoftware: $_" if ($debug);
+
+    while (<$INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	return(1) if (/^-+\^/);			# missing command XXX
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	next if (/^Can\'t find object or class named \"\-all\"\s*$/);
+	next if (/lock-address .*$/);
+	next if (/^\# *uptime +\d+\s*$/);
+	return(1) if (/invalid command name/);
+
+	s/\s+$/\n/;
+	ProcessHistory("Software","","","! $_");
+    }
+    ProcessHistory("Software","","","!\n");
+    return(0);
+}
+
+# This routine parses "show system version", "show system build-parameters"
+sub ShowVersion {
+    my($INPUT, $OUTPUT, $cmd) = @_;
+    print STDERR "    In ShowVersion: $_" if ($debug);
+
+    while (<$INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	return(1) if (/^-+\^/);			# missing command XXX
+	return(1) if (/^syntax error: /);	# missing command XXX
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	next if (/^Can\'t find object or class named \"\-all\"\s*$/);
+	next if (/lock-address .*$/);
+	next if (/^\# *uptime +\d+\s*$/);
+	# XXX why is show version missing?
+	return(1) if (/invalid command name/);
+
+	next if (/\*\*\*/);
+
+	ProcessHistory("Version","","","! $_");
+    }
+    ProcessHistory("Version","","","!\n");
+    return(0);
+}
+
+1;

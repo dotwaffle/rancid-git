@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: grancid.in 2632 2012-10-22 20:08:26Z heas $
+## $Id: grancid.in 2668 2013-03-06 17:27:41Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -45,7 +45,7 @@
 #  grancid - generalized rancid module; command schedule is derived from the
 #	     rancid.{base,types}.conf configurations.
 #
-# usage: grancid [-dltCV] [-f filename | hostname]
+# usage: grancid [-dhltCV] -t device_type [-f filename | hostname]
 #
 use 5.005;
 use strict 'vars';
@@ -53,12 +53,18 @@ use warnings;
 no warnings 'uninitialized';
 use Exporter;
 use Getopt::Std;
-getopts('dflt:CV');
+our($opt_d, $opt_f, $opt_h, $opt_l, $opt_t, $opt_C, $opt_V);
+getopts('dfhlt:CV');
 BEGIN {
     push(@INC, "@pkglibdir@");
 }
 use rancid;
 our @ISA = qw(Exporter rancid);
+
+if ($opt_h) {
+    print STDERR "grancid [-dhltCV] -t device_type [-f filename | hostname]\n";
+    exit 64;
+}
 
 # basic initialization
 rancidinit();

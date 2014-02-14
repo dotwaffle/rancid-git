@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: nrancid.in 2605 2012-07-26 23:21:27Z heas $
+## $Id: nrancid.in 2671 2013-03-13 06:18:50Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -176,7 +176,7 @@ sub GetSystem {
 	next if /^\s*$/;
 	last if(/$prompt/);
 	# throw away the pager prompts
-	s/^--- more ---[\s\b]*//g;
+	s/^--- more ---[ \b]*//g;
 
 	/^Serial Number: (\S+), Control Number: [0-9a-f]+$/ &&
 		ProcessHistory("SYSTEM","","", "#SN: $1\n") && next;
@@ -217,7 +217,7 @@ sub GetConf {
 	next if /^Total Config.+$/i;
 	last if(/$prompt/);
 	# throw away the pager prompts
-	s/^--- more ---[\s\b]*//g;
+	s/^--- more ---[ \b]*//g;
 
  	if (/^set admin name "(\S+)"$/ && $filter_pwds >= 1) {
 	    ProcessHistory("ADMIN","","","#set admin name <removed>\n");

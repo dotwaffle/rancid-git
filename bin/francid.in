@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: francid.in 2612 2012-08-03 15:12:23Z heas $
+## $Id: francid.in 2660 2013-01-08 19:05:26Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -179,7 +179,7 @@ sub ShowVersion {
 
 	next if (/^(The system |Crash time)/);
 	next if (/^(System|(Active|Standby) Management|LP Slot \d+|Switch Fabric
- Module \d+) uptime is/);
+ Module \d+) (uptime|Up Time) is/);
 	# remove uptime on newer switches
 	s/(STACKID \d+)\s+system uptime is.*$/$1/;
 

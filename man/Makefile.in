@@ -14,12 +14,6 @@
 # PARTICULAR PURPOSE.
 
 @SET_MAKE@
-
-# 
-#  The expect login scripts were based on Erik Sherk's gwtn, by permission.
-# 
-#  The original looking glass software was written by Ed Kern, provided by
-#  permission and modified beyond recognition.
 VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
 pkgincludedir = $(includedir)/@PACKAGE@
@@ -210,7 +204,8 @@ man_nogen_MANS = agmrancid.1 alogin.1 anlogin.1 anrancid.1 arancid.1 \
 		rancid.types.base.5 rancid_intro.1 rivlogin.1 rivrancid.1 \
 		router.db.5 rrancid.1 srancid.1 tlogin.1 tntlogin.1 \
 		xilogin.1 xirancid.1 tntrancid.1 trancid.1 xrancid.1 \
-		xrrancid.1 zrancid.1
+		xrrancid.1 zrancid.1 \
+		complogin.1 comprancid.1
 
 man_MANS = $(man_nogen_MANS) $(man_gen_MANS)
 EXTRA_DIST = $(man_nogen_MANS) $(man_gen_MANS:%=%.in)

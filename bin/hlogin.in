@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: hlogin.in 2607 2012-07-27 18:32:28Z heas $
+## $Id: hlogin.in 2666 2013-03-01 18:03:42Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -328,7 +328,11 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype identfile 
 	regexp {(telnet|ssh)(:([^[:space:]]+))*} $prog command suffix junk port
 	if [string match "telnet*" $prog] {
 	    if {"$port" == ""} {
-		set retval [ catch {spawn hpuifilter -- telnet $router} reason ]
+		if { $do_command || $do_script } {
+		    set retval [ catch {spawn hpuifilter -- telnet $router} reason ]
+		} else {
+		    set retval [ catch {spawn telnet $router} reason ]
+		}
 	    } else {
 		set retval [ catch {spawn hpuifilter -- telnet $router $port} reason ]
 	    }
@@ -346,7 +350,11 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype identfile 
 	    if {"$identfile" != ""} {
 		set cmd "$cmd -i $identfile"
 	    }
-	    set retval [ catch {eval spawn hpuifilter -- [split "$cmd -c $cyphertype -x -l $user $router" { }]} reason ]
+	    if { $do_command || $do_script } {
+		set retval [ catch {eval spawn hpuifilter -- [split "$cmd -c $cyphertype -x -l $user $router" { }]} reason ]
+	    } else {
+		set retval [ catch {eval spawn [split "$cmd -c $cyphertype -x -l $user $router" { }]} reason ]
+	    }
 	    if { $retval } {
 		send_user "\nError: $cmd failed: $reason\n"
 		return 1
@@ -396,7 +404,7 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype identfile 
 	    send " "
 	    exp_continue
 	}
-	"Enter switch number to connect to or <CR>:" { 
+	"Enter switch number to connect to or <CR>:" {
 	    send "\r"
 	    exp_continue
 	}
@@ -696,7 +704,7 @@ foreach router [lrange $argv $i end] {
     # Figure out prompts
     set u_prompt [find userprompt $router]
     if { "$u_prompt" == "" } {
-	set u_prompt "(\[Uu]sername|[Ll]ogin|user name):"
+	set u_prompt "(\[Uu]sername|\[Ll]ogin|user name|Login Name):"
     } else {
 	set u_prompt [join [lindex $u_prompt 0] ""]
     }

@@ -1,4 +1,43 @@
-3.0a
+3.0a2
+	ios: skip the "^" line that preceeds invalid input consistently
+
+	merge compass branch
+
+	comprancid: fail on command premature exit/failure in show config
+
+	comprancid: fail on read failure in show inventory
+
+	comprancid: add recognitin of EOS 1.1 end of config marker
+
+	nlogin: add code to filter more prompts in run_commands.  no complaints
+	from users; hope this is right as I have no way to test it.
+
+	hpuifilter: New HP2920-switches use <ESC>[6n (ansi u7) - Per-Olof Olsson
+
+	ios.pm: some c3750 stack-specific clean-up - Terry Kennedy
+
+	ios.pm: add show switch detail, show sdm prefer, show system mtu -
+	Terry Kennedy
+
+	anrancid: fail collection on TCL traceback
+
+	grancid: add -h
+
+	cloginrc(5): remove - from method port example and note that ssh can
+	also take a port argument.
+
+	hlogin: do not use hpuifilter for interactive - Per Olof Olsson
+
+	nxrancid: fail collection if show debug times out - Daniel Schmidt
+
+	rancid, ios.pm: correct strings comparison operator - Vitaly Nikolaev
+
+	hlogin: match Login Name for radius client w/ old code - David Byers
+
+	f5rancid: filter auth-password-encrypted lines, which oscillate
+
+	clogin: match "username" prompt, lowercase u
+
 	fix install of rancid.types.conf
 
 	ios.pm: fix INPUT reference

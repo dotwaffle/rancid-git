@@ -15,12 +15,6 @@
 
 @SET_MAKE@
 
-# 
-#  The expect login scripts were based on Erik Sherk's gwtn, by permission.
-# 
-#  The original looking glass software was written by Ed Kern, provided by
-#  permission and modified beyond recognition.
-
 
 VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
@@ -45,10 +39,10 @@ DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(srcdir)/agmrancid.in $(srcdir)/alogin.in \
 	$(srcdir)/anlogin.in $(srcdir)/anrancid.in \
 	$(srcdir)/arancid.in $(srcdir)/arrancid.in \
-	$(srcdir)/atrancid.in $(srcdir)/avologin.in \
-	$(srcdir)/avorancid.in $(srcdir)/blogin.in \
-	$(srcdir)/brancid.in $(srcdir)/cat5rancid.in \
-	$(srcdir)/clogin.in $(srcdir)/control_rancid.in \
+	$(srcdir)/avologin.in $(srcdir)/avorancid.in \
+	$(srcdir)/blogin.in $(srcdir)/brancid.in \
+	$(srcdir)/cat5rancid.in $(srcdir)/clogin.in \
+	$(srcdir)/complogin.in $(srcdir)/control_rancid.in \
 	$(srcdir)/cssrancid.in $(srcdir)/elogin.in \
 	$(srcdir)/erancid.in $(srcdir)/f10rancid.in \
 	$(srcdir)/f5rancid.in $(srcdir)/flogin.in $(srcdir)/fnlogin.in \
@@ -75,8 +69,8 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = $(top_builddir)/include/config.h
 CONFIG_CLEAN_FILES = control_rancid par agmrancid alogin arancid \
-	anlogin anrancid arrancid atrancid avologin avorancid blogin \
-	brancid cat5rancid clogin rancid cssrancid elogin erancid \
+	anlogin anrancid arrancid avologin avorancid blogin brancid \
+	cat5rancid clogin rancid complogin cssrancid elogin erancid \
 	f5rancid f10rancid flogin francid fnlogin fnrancid hlogin \
 	hrancid htlogin htrancid jlogin jrancid jerancid mrancid \
 	mrvlogin mrvrancid mtrancid mtlogin nlogin nrancid nslogin \
@@ -250,13 +244,14 @@ top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = foreign
 bin_SCRIPTS = agmrancid alogin anlogin anrancid arancid arrancid \
 	atrancid avologin avorancid blogin brancid cat5rancid clogin \
-	control_rancid cssrancid elogin erancid f5rancid f10rancid \
-	flogin fnlogin fnrancid francid grancid hlogin hrancid htlogin \
-	htrancid jerancid jlogin jrancid mrancid mrvlogin mrvrancid \
-	mtlogin mtrancid nlogin nrancid nslogin nsrancid nxrancid par \
-	prancid rancid rivlogin rivrancid rrancid srancid tlogin \
-	tntlogin tntrancid trancid xilogin xirancid xrancid xrrancid \
-	zrancid lg.cgi lgform.cgi rancid-cvs rancid-fe rancid-run
+	complogin control_rancid cssrancid elogin erancid f5rancid \
+	f10rancid flogin fnlogin fnrancid francid grancid hlogin \
+	hrancid htlogin htrancid jerancid jlogin jrancid mrancid \
+	mrvlogin mrvrancid mtlogin mtrancid nlogin nrancid nslogin \
+	nsrancid nxrancid par prancid rancid rivlogin rivrancid \
+	rrancid srancid tlogin tntlogin tntrancid trancid xilogin \
+	xirancid xrancid xrrancid zrancid lg.cgi lgform.cgi rancid-cvs \
+	rancid-fe rancid-run
 # XXX hack for the grancid to get pkglibdir, see corresponding XXX below
 bin_in = grancid.in
 EXTRA_DIST = lg.cgi.in lgform.cgi.in rancid-cvs.in rancid-fe.in rancid-run.in \
@@ -347,8 +342,6 @@ anrancid: $(top_builddir)/config.status $(srcdir)/anrancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 arrancid: $(top_builddir)/config.status $(srcdir)/arrancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-atrancid: $(top_builddir)/config.status $(srcdir)/atrancid.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 avologin: $(top_builddir)/config.status $(srcdir)/avologin.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 avorancid: $(top_builddir)/config.status $(srcdir)/avorancid.in
@@ -362,6 +355,8 @@ cat5rancid: $(top_builddir)/config.status $(srcdir)/cat5rancid.in
 clogin: $(top_builddir)/config.status $(srcdir)/clogin.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 rancid: $(top_builddir)/config.status $(srcdir)/rancid.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+complogin: $(top_builddir)/config.status $(srcdir)/complogin.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 cssrancid: $(top_builddir)/config.status $(srcdir)/cssrancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@

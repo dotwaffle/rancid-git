@@ -1,6 +1,6 @@
 package ios;
 ##
-## $Id: ios.pm.in 2645 2012-10-29 20:32:22Z heas $
+## $Id: ios.pm.in 2685 2013-04-16 19:03:36Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -175,8 +175,9 @@ sub ShowVersion {
 	tr/\015//d;
 	if (/^$prompt/) { $found_version = 1; last};
 	next if (/^(\s*|\s*$cmd\s*)$/);
+	next if (/^\s+\^$/);
 	return(1) if (/Line has invalid autocommand /);
-	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
+	return(1) if (/(invalid (input|command) detected|type help or )/i);
 	return(0) if ($found_version);		# Only do this routine once
 	return(-1) if (/command authorization failed/i);
 	# the pager can not be disabled per-session on the PIX
@@ -241,6 +242,16 @@ sub ShowVersion {
 	/^Flash(\s+\S+)+ \@ 0x\S+,\s+(\S+)/ &&
 	    ProcessHistory("COMMENTS","keysort","B2", "!Memory: Flash $2\n") &&
 	    next;
+	# 3750 switch stacks
+	next if (/^Model revision number/ && $type == "3750");
+	next if (/^Motherboard/ && $type == "3750");
+	next if (/^Power supply/ && $type == "3750");
+	/^Model number                    : (.*)$/ && $type == "3750" &&
+	ProcessHistory("COMMENTS","keysort","C2", "!Model number:  $1\n") &&
+ 	    next;
+	/^System serial number            : (.*)$/ && $type == "3750" &&
+	ProcessHistory("COMMENTS","keysort","C2", "!Serial number: $1\n") &&
+ 	    next;
 	# CatOS 3500xl stuff
 	/^system serial number\s*:\s+(.*)$/i &&
 	    ProcessHistory("COMMENTS","keysort","C1", "!Serial Number: $1\n") &&
@@ -310,6 +321,9 @@ sub ShowVersion {
 		$type = "AGS+";
 	    } elsif ($proc =~ /1900/) {
 		$type = "1900";
+		$device = "switch";
+	    } elsif ($proc =~ /C3750/) {
+		$type = "3750";
 		$device = "switch";
 	    } elsif ($proc =~ /^(AS)?25[12][12]/) {
 		$type = "2500";
@@ -434,6 +448,65 @@ sub ShowVersion {
     return(0);
 }
 
+# This routine parses "showDetail"
+sub ShowDetail {
+    my($INPUT, $OUTPUT, $cmd) = @_;
+    print STDERR "    In ShowDetail: $_" if ($debug);
+
+    while (<$INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	next if (/^\s+\^$/);
+	return(1) if (/Line has invalid autocommand /);
+	return(1) if (/(invalid (input|command) detected|type help or )/i);
+
+	ProcessHistory("COMMENTS","keysort","IO","!STACK: $_");
+    }
+    ProcessHistory("COMMENTS","keysort","IO","!\n");
+    return(0);
+}
+
+# This routine parses "showMTU"
+sub ShowMTU {
+    my($INPUT, $OUTPUT, $cmd) = @_;
+    print STDERR "    In ShowMTU: $_" if ($debug);
+
+    while (<$INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	next if (/^\s+\^$/);
+	return(1) if (/Line has invalid autocommand /);
+	return(1) if (/(invalid (input|command) detected|type help or )/i);
+
+	ProcessHistory("COMMENTS","keysort","IO","!MTU: $_");
+    }
+    ProcessHistory("COMMENTS","keysort","IO","!\n");
+    return(0);
+}
+
+# This routine parses "showSDM"
+sub ShowSDM {
+    my($INPUT, $OUTPUT, $cmd) = @_;
+    print STDERR "    In ShowSDM: $_" if ($debug);
+
+    while (<$INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	next if (/^\s+\^$/);
+	return(1) if (/Line has invalid autocommand /);
+	return(1) if (/(invalid (input|command) detected|type help or )/i);
+
+	if (/current template is/) {
+	    ProcessHistory("COMMENTS","keysort","IO","!SDM: $_");
+	}
+    }
+    ProcessHistory("COMMENTS","keysort","IO","!\n");
+    return(0);
+}
+
 # This routine parses "show redundancy"
 sub ShowRedundancy {
     my($INPUT, $OUTPUT, $cmd) = @_;
@@ -444,8 +517,9 @@ sub ShowRedundancy {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
+	next if (/^\s+\^$/);
 	return(1) if (/Line has invalid autocommand /);
-	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
+	return(1) if (/(invalid (input|command) detected|type help or )/i);
 	# the pager can not be disabled per-session on the PIX
 	if (/^(<-+ More -+>)/) {
 	    my($len) = length($1);
@@ -479,8 +553,9 @@ sub ShowIDprom {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
+	next if (/^\s+\^$/);
 	return(1) if (/Line has invalid autocommand /);
-	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
+	return(1) if (/(invalid (input|command) detected|type help or )/i);
 	# the pager can not be disabled per-session on the PIX
 	if (/^(<-+ More -+>)/) {
 	    my($len) = length($1);
@@ -512,9 +587,9 @@ sub ShowInstallActive {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
-	return(1) if (/^\s*\^\s*$/);
+	next if (/^\s+\^$/);
 	return(1) if (/Line has invalid autocommand /);
-	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
+	return(1) if (/(invalid (input|command) detected|type help or )/i);
 	return(-1) if (/command authorization failed/i);
 	# the pager can not be disabled per-session on the PIX
 	if (/^(<-+ More -+>)/) {
@@ -538,8 +613,9 @@ sub ShowEnv {
 	if (/^$prompt/) { $found_env = 1; last};
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	#return(1) if ($type !~ /^7/);
+	next if (/^\s+\^$/);
 	return(1) if (/Line has invalid autocommand /);
-	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
+	return(1) if (/(invalid (input|command) detected|type help or )/i);
 	return(0) if ($found_env);		# Only do this routine once
 	return(-1) if (/command authorization failed/i);
 	# the pager can not be disabled per-session on the PIX
@@ -589,7 +665,8 @@ sub ShowRSP {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
-	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
+	next if (/^\s+\^$/);
+	return(1) if (/(invalid (input|command) detected|type help or )/i);
 	return(-1) if (/command authorization failed/i);
 	# return(1) if ($type !~ /^12[40]/);
 	# the pager can not be disabled per-session on the PIX
@@ -623,7 +700,8 @@ sub ShowGSR {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
-	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
+	next if (/^\s+\^$/);
+	return(1) if (/(invalid (input|command) detected|type help or )/i);
 	return(-1) if (/command authorization failed/i);
 	# return(1) if ($type !~ /^12[40]/);
 	# the pager can not be disabled per-session on the PIX
@@ -665,9 +743,9 @@ sub ShowBoot {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
-	return(1) if (/^\s*\^\s*$/);
+	next if (/^\s+\^$/);
 	return(1) if (/Line has invalid autocommand /);
-	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
+	return(1) if (/(invalid (input|command) detected|type help or )/i);
 	return(1) if (/Ambiguous command/i);
 	return(1) if (/(Open device \S+ failed|Error opening \S+:)/);
 	return(-1) if (/command authorization failed/i);
@@ -708,9 +786,9 @@ sub ShowFlash {
 	# redundant data from dir /all slot0:
 	return(1) if ($type =~ /^(12[40]|7)/);
 	return(1) if ($ios eq "XE");
-	return(1) if (/^\s*\^\s*$/);
+	next if (/^\s+\^$/);
 	return(1) if (/Line has invalid autocommand /);
-	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
+	return(1) if (/(invalid (input|command) detected|type help or )/i);
 	return(-1) if (/command authorization failed/i);
 	# the pager can not be disabled per-session on the PIX
 	if (/^(<-+ More -+>)/) {
@@ -759,9 +837,9 @@ sub DirSlotN {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
-	return(1) if /^\s*\^\s*$/;
+	next if (/^\s+\^$/);
 	return(1) if (/Line has invalid autocommand /);
-	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
+	return(1) if (/(invalid (input|command) detected|type help or )/i);
 	return(1) if (/(No such device|Error Sending Request)/i);
 	return(1) if (/\%Error: No such file or directory/);
 	return(1) if (/No space information available/);
@@ -855,7 +933,8 @@ sub ShowContAll {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
-	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
+	next if (/^\s+\^$/);
+	return(1) if (/(invalid (input|command) detected|type help or )/i);
 	# return(1) if ($type =~ /^(12[40]|7[05])/);
 	return(-1) if (/command authorization failed/i);
 	# the pager can not be disabled per-session on the PIX
@@ -923,7 +1002,8 @@ sub ShowContCbus {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
-	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
+	next if (/^\s+\^$/);
+	return(1) if (/(invalid (input|command) detected|type help or )/i);
 	#return(1) if ($type !~ /^7[05]0/);
 	return(-1) if (/command authorization failed/i);
 	# the pager can not be disabled per-session on the PIX
@@ -975,8 +1055,9 @@ sub ShowDebug {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
+	next if (/^\s+\^$/);
 	return(1) if (/Line has invalid autocommand /);
-	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
+	return(1) if (/(invalid (input|command) detected|type help or )/i);
 	return(-1) if (/command authorization failed/i);
 	# the pager can not be disabled per-session on the PIX
 	if (/^(<-+ More -+>)/) {
@@ -1010,8 +1091,9 @@ sub ShowDiagbus {
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	#return(1) if ($type !~ /^7[05]/);
+	next if (/^\s+\^$/);
 	return(1) if (/Line has invalid autocommand /);
-	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
+	return(1) if (/(invalid (input|command) detected|type help or )/i);
 	return(-1) if (/command authorization failed/i);
 	# the pager can not be disabled per-session on the PIX
 	if (/^(<-+ More -+>)/) {
@@ -1105,7 +1187,8 @@ REDUX:	tr/\015//d;
 	if (/^$prompt/) { $found_diag = 1; last};
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if (/Line has invalid autocommand /);
-	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
+	next if (/^\s+\^\s*$/);
+	return(1) if (/(invalid (input|command) detected|type help or )/i);
 	return(0) if ($found_diag);		# Only do this routine once
 	return(-1) if (/command authorization failed/i);
 	/^$/ && next;
@@ -1406,7 +1489,8 @@ sub ShowInventory {
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if (/Line has invalid autocommand /);
-	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
+	next if (/^\s+\^\s*$/);
+	return(1) if (/(invalid (input|command) detected|type help or )/i);
 	return(-1) if (/command authorization failed/i);
 	# the pager can not be disabled per-session on the PIX
 	if (/^(<-+ More -+>)/) {
@@ -1509,7 +1593,8 @@ sub ShowSpeVersion {
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if /^\s*\^\s*$/;
 	return(1) if (/Line has invalid autocommand /);
-	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
+	next if (/^\s+\^\s*$/);
+	return(1) if (/(invalid (input|command) detected|type help or )/i);
 	return(-1) if (/command authorization failed/i);
 
 	ProcessHistory("MODEM","","","!Modem: $_") && next;
@@ -1529,7 +1614,8 @@ sub ShowC7200 {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
-	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
+	next if (/^\s+\^\s*$/);
+	return(1) if (/(invalid (input|command) detected|type help or )/i);
 	#return(1) if ($type !~ /^72/);
 	return(-1) if (/command authorization failed/i);
 	/^$/ && next;
@@ -1581,7 +1667,8 @@ sub ShowCapture {
 	return(1) if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if /^\s*\^\s*$/;
 	return(1) if (/Line has invalid autocommand /);
-	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
+	next if (/^\s+\^\s*$/);
+	return(1) if (/(invalid (input|command) detected|type help or )/i);
 	return(-1) if (/command authorization failed/i);
 	# the pager can not be disabled per-session on the PIX
 	if (/^(<-+ More -+>)/) {
@@ -1614,7 +1701,8 @@ sub ShowVTP {
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if /^\s*\^\s*$/;
 	return(1) if (/Line has invalid autocommand /);
-	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
+	next if (/^\s+\^\s*$/);
+	return(1) if (/(invalid (input|command) detected|type help or )/i);
 	#return(1) if ($type !~ /^(2900XL|3500XL|6000)$/);
 	return(-1) if (/command authorization failed/i);
 	next if (/^Configuration last modified by/);
@@ -1646,7 +1734,8 @@ sub ShowVLAN {
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if /^\s*\^\s*$/;
 	return(1) if (/Line has invalid autocommand /);
-	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
+	next if (/^\s+\^\s*$/);
+	return(1) if (/(invalid (input|command) detected|type help or )/i);
 	return(1) if (/Ambiguous command/i);
 	return(-1) if (/command authorization failed/i);
 	# the pager can not be disabled per-session on the PIX
@@ -1672,7 +1761,8 @@ sub ShowShun {
 	return(1) if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if /^\s*\^\s*$/;
 	return(1) if (/Line has invalid autocommand /);
-	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
+	next if (/^\s+\^\s*$/);
+	return(1) if (/(invalid (input|command) detected|type help or )/i);
 	return(-1) if (/command authorization failed/i);
 	# the pager can not be disabled per-session on the PIX
 	if (/^(<-+ More -+>)/) {
@@ -1699,7 +1789,8 @@ sub WriteTerm {
 	return(1) if (!$linecnt && /^\s+\^\s*$/);
 	next if (/^\s*$cmd\s*$/);
 	return(1) if (/Line has invalid autocommand /);
-	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
+	next if (/^\s+\^\s*$/);
+	return(1) if (/(invalid (input|command) detected|type help or )/i);
 	return(1) if (/\%Error: No such file or directory/);
 	return(1) if (/(Open device \S+ failed|Error opening \S+:)/);
 	return(0) if ($found_end);		# Only do this routine once
@@ -2059,7 +2150,7 @@ sub WriteTerm {
     # The ContentEngine lacks a definitive "end of config" marker.  If we
     # know that it is a CE, SAN, or NXOS and we have seen at least 5 lines
     # of write term output, we can be reasonably sure that we got the config.
-    if (($type == "CE" || $type == "SAN" || $type == "NXOS" ) && $linecnt > 5) {
+    if (($type eq "CE" || $type eq "SAN" || $type eq "NXOS" ) && $linecnt > 5) {
 	$found_end = 1;
 	return(0);
     }

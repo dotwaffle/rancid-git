@@ -1,8 +1,8 @@
 .\"
-.\" $Id: cloginrc.5 2617 2012-08-16 17:20:59Z heas $
+.\" $Id: cloginrc.5 2674 2013-03-14 17:40:29Z heas $
 .\"
 .hys 50
-.TH "cloginrc" "5" "15 August 2012"
+.TH "cloginrc" "5" "14 March 2013"
 .SH NAME
  \.cloginrc \- clogin configuration file
 .SH DESCRIPTION
@@ -150,21 +150,21 @@ Default: your default identity file.  see ssh(1).
 .TP
 .B add method <router name glob> {ssh} [{...}]
 Defines, in order, the connection methods to use for a device from the
-set {ssh, telnet, rsh}.  Method telnet may have a suffix, indicating an
-alternate TCP port, of the form ":port".
+set {ssh, telnet, rsh}.  Method ssh and telnet may have a suffix, indicating
+an alternate TCP port, of the form ":port".
 .sp
 Note: Different versions of telnet treat the specification of a
 port differently.  In particular, BSD derived telnets do not do
 option negotiation when a port is given.  Some devices, Extreme
 switches for example, have undesirable telnet default options such
 as linemode.  In the BSD case, to enable option negotiation when
-specifying a port the method should be "{telnet:-23}" or you should
-add "mode character" to .telnetrc.  See
+specifying a port the method should be "{telnet:-23}" or, better, add
+"mode character" to .telnetrc.  See
 .BR telnet (1)
 for more information on telnet command-line syntax, telnet options,
 and .telnetrc.
 .sp
-Example: add method * {ssh} {telnet:-3000} {rsh}
+Example: add method * {ssh} {telnet:3000} {rsh}
 .sp
 Which would cause
 .IR clogin

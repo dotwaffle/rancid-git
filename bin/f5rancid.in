@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: f5rancid.in 2605 2012-07-26 23:21:27Z heas $
+## $Id: f5rancid.in 2657 2012-12-05 21:00:58Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -183,6 +183,10 @@ sub ShowBaseRun {
 
 	if (!$line++) {
 	    ProcessHistory("SHOWBASE","","","#\n#base:\n");
+	}
+	if (/(auth-password-encrypted )\S+/) {
+	    ProcessHistory("SHOWBASE","","","# $1 <removed>");
+	    next;
 	}
 	ProcessHistory("SHOWBASE","","","# $_") && next;
     }

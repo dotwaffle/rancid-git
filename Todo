@@ -1,3 +1,11 @@
+- would like router cmd-line timestamps based on login.  suggest .cloginrc
+  knob for pre-cmd ("post-login"), pre-interactive-cmd ("post-interactive-
+  login"), and the like.  it would need to be per-mfg, ie: either know the
+  mfg of the device or assume it from the *login cmd used.  eg:
+
+        add pre-cmd *   term monitor
+        add pre-cmd-ios *       term monitor
+
 - it would be useful to log commands that are permission denied rather than
   just failing.  it was mentioned on cisco-isp list.
 - login script should catch output to stdout/user, so that if the rancid script

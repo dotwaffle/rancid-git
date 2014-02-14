@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: rancid.in 2619 2012-09-06 16:40:28Z heas $
+## $Id: rancid.in 2663 2013-02-16 17:29:35Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -2035,7 +2035,7 @@ sub WriteTerm {
     # The ContentEngine lacks a definitive "end of config" marker.  If we
     # know that it is a CE, SAN, or NXOS and we have seen at least 5 lines
     # of write term output, we can be reasonably sure that we got the config.
-    if (($type == "CE" || $type == "SAN" || $type == "NXOS" ) && $linecnt > 5) {
+    if (($type eq "CE" || $type eq "SAN" || $type eq "NXOS" ) && $linecnt > 5) {
 	$found_end = 1;
 	return(0);
     }

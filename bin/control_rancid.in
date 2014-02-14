@@ -1,6 +1,6 @@
 #! /bin/sh
 ##
-## $Id: control_rancid.in 2581 2012-07-25 21:37:19Z heas $
+## $Id: control_rancid.in 2672 2013-03-13 06:22:12Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -374,7 +374,7 @@ cd $DIR/configs
 # tailored to the specific installation.
 echo ""
 echo "Trying to get all of the configs."
-par -q -n $PAR_COUNT -c "rancid-fe '{}'" $devlistfile
+par -q -n $PAR_COUNT -c 'rancid-fe "{}"' $devlistfile
 
 # This section will generate a list of missed routers
 # and try to grab them again.  It will run through
@@ -404,7 +404,7 @@ do
     if [ -f $DIR/routers.up.missed ] ; then
 	echo "====================================="
 	echo "Getting missed routers: round $round."
-	par -q -n $PAR_COUNT -c "rancid-fe '{}'" $DIR/routers.up.missed
+	par -q -n $PAR_COUNT -c 'rancid-fe "{}"' $DIR/routers.up.missed
 	rm -f $DIR/routers.up.missed
 	round=`expr $round + 1`
     else

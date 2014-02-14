@@ -6038,13 +6038,13 @@ ac_config_files="$ac_config_files bin/anlogin bin/anrancid"
 
 ac_config_files="$ac_config_files bin/arrancid"
 
-ac_config_files="$ac_config_files bin/atrancid"
-
 ac_config_files="$ac_config_files bin/avologin bin/avorancid"
 
 ac_config_files="$ac_config_files bin/blogin bin/brancid"
 
 ac_config_files="$ac_config_files bin/cat5rancid bin/clogin bin/rancid"
+
+ac_config_files="$ac_config_files bin/complogin"
 
 ac_config_files="$ac_config_files bin/cssrancid"
 
@@ -6835,7 +6835,6 @@ do
     "bin/anlogin") CONFIG_FILES="$CONFIG_FILES bin/anlogin" ;;
     "bin/anrancid") CONFIG_FILES="$CONFIG_FILES bin/anrancid" ;;
     "bin/arrancid") CONFIG_FILES="$CONFIG_FILES bin/arrancid" ;;
-    "bin/atrancid") CONFIG_FILES="$CONFIG_FILES bin/atrancid" ;;
     "bin/avologin") CONFIG_FILES="$CONFIG_FILES bin/avologin" ;;
     "bin/avorancid") CONFIG_FILES="$CONFIG_FILES bin/avorancid" ;;
     "bin/blogin") CONFIG_FILES="$CONFIG_FILES bin/blogin" ;;
@@ -6843,6 +6842,7 @@ do
     "bin/cat5rancid") CONFIG_FILES="$CONFIG_FILES bin/cat5rancid" ;;
     "bin/clogin") CONFIG_FILES="$CONFIG_FILES bin/clogin" ;;
     "bin/rancid") CONFIG_FILES="$CONFIG_FILES bin/rancid" ;;
+    "bin/complogin") CONFIG_FILES="$CONFIG_FILES bin/complogin" ;;
     "bin/cssrancid") CONFIG_FILES="$CONFIG_FILES bin/cssrancid" ;;
     "bin/elogin") CONFIG_FILES="$CONFIG_FILES bin/elogin" ;;
     "bin/erancid") CONFIG_FILES="$CONFIG_FILES bin/erancid" ;;
@@ -7571,7 +7571,6 @@ $as_echo X"$file" |
     "bin/anlogin":F) chmod a+x $ac_file ;;
     "bin/anrancid":F) chmod a+x $ac_file ;;
     "bin/arrancid":F) chmod a+x $ac_file ;;
-    "bin/atrancid":F) chmod a+x $ac_file ;;
     "bin/avologin":F) chmod a+x $ac_file ;;
     "bin/avorancid":F) chmod a+x $ac_file ;;
     "bin/blogin":F) chmod a+x $ac_file ;;
@@ -7579,6 +7578,7 @@ $as_echo X"$file" |
     "bin/cat5rancid":F) chmod a+x $ac_file ;;
     "bin/clogin":F) chmod a+x $ac_file ;;
     "bin/rancid":F) chmod a+x $ac_file ;;
+    "bin/complogin":F) chmod a+x $ac_file ;;
     "bin/cssrancid":F) chmod a+x $ac_file ;;
     "bin/elogin":F) chmod a+x $ac_file ;;
     "bin/erancid":F) chmod a+x $ac_file ;;

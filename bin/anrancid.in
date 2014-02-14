@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: anrancid.in 2605 2012-07-26 23:21:27Z heas $
+## $Id: anrancid.in 2669 2013-03-11 22:40:44Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -175,6 +175,7 @@ sub ShowConfig {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(-1) if (/traceback \(most recent call last\):/i);
 	return(1) if (/invalid command/i);
 
 	if (/(services sp device edit .+ snmp community set )\S+/) {
@@ -227,6 +228,7 @@ sub ShowHardware {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(-1) if (/traceback \(most recent call last\):/i);
 	return(1) if (/invalid command/i);
 
 	next if (/^boot time: /i);
@@ -246,6 +248,7 @@ sub ShowVersion {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(-1) if (/traceback \(most recent call last\):/i);
 	return(1) if (/invalid command/i);
 
 	ProcessHistory("Version","","","# $_");
@@ -262,6 +265,8 @@ sub RunCommand {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(-1) if (/traceback \(most recent call last\):/i);
+
 	# prompt may have changed
 	if (/[#>]/) {
 	    $prompt = ($_ =~ /^([^>]+>)/)[0];

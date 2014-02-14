@@ -100,6 +100,9 @@ cisco;command;ios::ShowInventory;show inventory raw
 cisco;command;ios::ShowVTP;show vtp status
 cisco;command;ios::ShowVLAN;show vlan
 cisco;command;ios::ShowVLAN;show vlan-switch
+cisco;command;ios::ShowDetail;show switch detail
+cisco;command;ios::ShowSDM;show sdm prefer
+cisco;command;ios::ShowMTU;show system mtu
 cisco;command;ios::ShowDebug;show debug
 cisco;command;ios::ShowShun;show shun
 cisco;command;ios::WriteTerm;more system:running-config
@@ -110,6 +113,19 @@ cisco;command;ios::WriteTerm;write term
 cisco-nx;script;nxrancid
 #
 cisco-xr;script;xrrancid
+#
+compass;script;grancid
+compass;login;complogin
+compass;module;eos
+compass;inloop;eos::inloop
+compass;command;eos::ShowVersion;show version
+compass;command;eos::ShowAlerts;show system alerts
+compass;command;eos::ShowVersion;show system build-parameters
+compass;command;eos::ShowSoftware;show system software images
+compass;command;eos::ShowSoftware;show system software packages
+compass;command;eos::ShowModule;show system module 
+compass;command;eos::ShowInventory;show system hardware
+compass;command;eos::ShowConfig;show configuration detail 
 #
 css;script;cssrancid
 #

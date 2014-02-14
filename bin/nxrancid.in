@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: nxrancid.in 2630 2012-10-18 15:16:48Z heas $
+## $Id: nxrancid.in 2664 2013-02-28 21:58:27Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -589,6 +589,7 @@ sub ShowDebug {
 	return(1) if /(Invalid input detected|Type help or )/;
 	return(-1) if (/\% Invalid command at /);
 	return(-1) if (/command authorization failed/i);
+	return(-1) if (/could not retrieve info/i);
 	# XXX return(-1) if (/\% Permission denied/);
 	# NX 5000 bug? "show debug" generates
 	# "Permission denied" when using command authorization. -Per-Olof Olsson

@@ -1,5 +1,5 @@
 /*
- * $Id: hpuifilter.c 2396 2012-02-08 18:28:28Z heas $
+ * $Id: hpuifilter.c 2675 2013-03-28 16:35:18Z heas $
  *
  * Copyright (c) 1997-2008 by Terrapin Communications, Inc.
  * All rights reserved.
@@ -534,7 +534,7 @@ int
 filter(char *buf, int len)
 {
     static regmatch_t	pmatch[1];
-#define	N_REG		15		/* number of regexes in reg[][] */
+#define	N_REG		16		/* number of regexes in reg[][] */
 #define	N_CRs		2		/* number of CR replacements */
     static regex_t	preg[N_REG];
     static char		reg[N_REG][50] = {	/* vt100/220 escape codes */
@@ -553,6 +553,7 @@ filter(char *buf, int len)
 				"\x1B\\[\\?25l",		/* vi */
 				"\x1B\\[K",			/* ce */
 				"\x1B\\[7m",			/* mr - ansi */
+				"\x1B\\[6n",			/* u7 - ansi */
 				"\x07",				/* bell */
 
 				/* replace these with CR */

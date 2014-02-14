@@ -8,6 +8,11 @@ rancid \- Cisco configuration filter
 [\fB\-dlCV\fP]
 [\fB\-t device_type\fP]
 (\fB\-f\fP filename | hostname)
+.sp
+.B grancid
+[\fB\-dhlCV\fP]
+\fB\-t device_type\fP
+(\fB\-f\fP filename | hostname)
 .SH DESCRIPTION
 .B rancid
 is a
@@ -21,7 +26,21 @@ product is a file with the name of it's last argument plus the suffix .new.
 For example,
 .IR hostname.new .
 .PP
-There are complementary scripts for other platforms and/or manufacturers
+.B grancid
+is also a
+.BR perl (1)
+script that operates much like
+.B rancid,
+but is generic and will eventually obsolete the
+.B rancid
+script.
+It uses the device_type specified with the -t option to look-up a device
+description that defines what it does to collect and process device
+information.
+.PP
+There are scripts complementary to
+.B rancid
+for other platforms and/or manufacturers
 that are supported by
 .BR rancid (1).
 Briefly, these are:
@@ -133,12 +152,18 @@ The command-line options are as follows:
 .TP
 .B \-C
 Prints the login command that would be used to collect data from the device.
+.\"
 .TP
 .B \-V
 Prints package name and version strings.
+.\"
 .TP
 .B \-d
 Display debugging information.
+.\"
+.TP
+.B \-h
+Display a usage line and exit.
 .\"
 .TP
 .B \-l
