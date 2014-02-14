@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 ## A Makefile.in is supplied, in case you do not have automake.
 
-## $Id: Makefile.am 2640 2012-10-24 17:37:22Z heas $
+## $Id: Makefile.am 2647 2012-10-29 20:51:45Z heas $
 ##
 ## Copyright (c) 1997-2012 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -54,9 +54,9 @@ bin_SCRIPTS = agmrancid alogin anlogin anrancid arancid arrancid atrancid \
 	cssrancid elogin erancid f5rancid f10rancid flogin fnlogin fnrancid \
 	francid grancid hlogin hrancid htlogin htrancid jerancid jlogin \
 	jrancid mrancid mrvlogin mrvrancid mtlogin mtrancid nlogin nrancid \
-	nslogin nsrancid nxrancid par prancid rancid-fe rancid rivlogin \
-	rivrancid rrancid srancid tlogin tntlogin tntrancid trancid xilogin \
-	xirancid xrancid xrrancid zrancid
+	nslogin nsrancid nxrancid par prancid rancid rivlogin rivrancid \
+	rrancid srancid tlogin tntlogin tntrancid trancid xilogin xirancid \
+	xrancid xrrancid zrancid
 # XXX hack for the grancid to get pkglibdir, see corresponding XXX below
 bin_in = grancid.in
 

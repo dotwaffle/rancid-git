@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 ## A Makefile.in is supplied, in case you do not have automake.
 
-## $Id: Makefile.am 2583 2012-07-26 16:33:09Z heas $
+## $Id: Makefile.am 2648 2012-10-29 20:55:54Z heas $
 ##
 ## Copyright (c) 1997-2012 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -48,7 +48,7 @@
 #AUTOMAKE_OPTIONS=foreign no-dependencies
 AUTOMAKE_OPTIONS=foreign
 
-sysconf_DATA= rancid.types.base rancid.types.conf
+sysconf_DATA= rancid.types.base
 pkgdata_nogen = 
 pkgdata_gen = lg.conf.sample rancid.conf.sample
 pkgdata_DATA = $(pkgdata_nogen) $(pkgdata_gen)
@@ -72,11 +72,7 @@ install-data-local: all
 	else \
 	    $(INSTALL_DATA) rancid.conf.sample $(DESTDIR)$(sysconfdir)/rancid.conf; \
 	fi; \
-	if test -f $(DESTDIR)$(sysconfdir)/rancid.types.conf ; then \
-	    echo ""; \
-	    echo "WARNING: *** $(DESTDIR)$(sysconfdir)/rancid.types.conf exists."; \
-	    echo ""; \
-	else \
+	if test ! -f $(DESTDIR)$(sysconfdir)/rancid.types.conf ; then \
 	    $(INSTALL_DATA) rancid.types.conf $(DESTDIR)$(sysconfdir)/rancid.types.conf; \
 	fi; \
 	if test -f $(DESTDIR)$(sysconfdir)/lg.conf ; then \

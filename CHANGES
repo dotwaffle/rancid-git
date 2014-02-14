@@ -1,4 +1,11 @@
 3.0a
+	fix install of rancid.types.conf
+
+	ios.pm: fix INPUT reference
+
+	implement grancid and rancid.types.{conf,base} collection configuration
+	stuff.
+
 	rancid, ios.pm: kill rx/txspeed on cellular modem cards
 
 	cloginrc: add enablecmd directive, for clogin - Jason Greenberg

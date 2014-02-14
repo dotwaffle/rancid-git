@@ -1,6 +1,6 @@
 package ios;
 ##
-## $Id: ios.pm.in 2632 2012-10-22 20:08:26Z heas $
+## $Id: ios.pm.in 2645 2012-10-29 20:32:22Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -1766,7 +1766,7 @@ sub WriteTerm {
 	if (/^line \d+\/\d+\/\d+/) {
 	    my($key) = $1;
 	    ProcessHistory("LINE","keysort","$key","$_");
-	    while (<INPUT>) {
+	    while (<$INPUT>) {
 		tr/\015//d;
 		last if (/^$prompt/ || ! /^ /);
 		next if (/(rx|tx)speed \d+/);
