@@ -1,8 +1,8 @@
 .\"
-.\" $Id: rancid.types.conf.5.in 2635 2012-10-24 05:19:57Z heas $
+.\" $Id: rancid.types.conf.5.in 2787 2014-01-23 19:32:08Z heas $
 .\"
 .hys 50
-.TH "rancid.types.conf" "5" "24 October 2012"
+.TH "rancid.types.conf" "5" "22 January 2014"
 .SH NAME
 rancid.types.conf \- rancid device type configuration file
 .SH DESCRIPTION
@@ -85,6 +85,8 @@ be an FQPN, but then must be found in the path.
 Loads a rancid perl module to supply functions used in the
 .B command
 directives for the <device_type>.
+Multiple module lines may exist for a device type, they are loaded in the
+order they appear.
 .TP
 .B script
 Defines the rancid script used for the <device_type>, which does not need to
@@ -92,9 +94,6 @@ be an FQPN, but then must be found in the path.
 .\"
 .PP
 Each device_type must at least have a 
-.SH ERRORS
-Omitted fields or syntax errors are likely to cause perl compilation errors,
-or collection to fail or be incomplete.
 .SH FILES
 .Bl -tag -width @sysconfdir@/rancid.types.conf -compact
 .TP

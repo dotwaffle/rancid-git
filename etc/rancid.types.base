@@ -200,7 +200,17 @@ force10;script;f10rancid
 #
 fortigate;script;fnrancid
 #
-foundry;script;francid
+# Foundry and HP procurve OEMs of Foundry
+foundry;script;grancid
+foundry;login;flogin
+foundry;module;foundry
+foundry;inloop;foundry::inloop
+foundry;command;foundry::ShowVersion;show version
+foundry;command;foundry::ShowChassis;show chassis
+foundry;command;foundry::ShowModule;show module
+foundry;command;foundry::ShowFlash;show flash
+foundry;command;foundry::WriteTerm;write term
+foundry;command;foundry::WriteTerm;show running-config
 #
 hitachi;script;htrancid
 #
@@ -234,7 +244,15 @@ mikrotik;script;mtrancid
 #
 mrtd;script;mrancid
 #
-mrv;script;mrvrancid
+# MRV optical switches
+mrv;script;grancid
+mrv;login;mrvlogin
+mrv;module;mrv
+mrv;inloop;mrv::inloop
+mrv;command;mrv::ShowVersion;show version
+mrv;command;mrv::ShowChassis;show chassis
+mrv;command;mrv::ShowSlots;show slots
+mrv;command;mrv::WriteTerm;show running-config
 #
 netopia;script;trancid
 #

@@ -1,4 +1,17 @@
 3.0a4
+	junos.pm: filter primary/secondary on SRX - Frank Eargle
+
+	par: replace par with C version
+
+	rancid.types.conf: allow multiple module lines for device type
+
+	mrvrancid, francid: converted to perl modules
+
+	hrancid: filter uptime from show version - reported by Rikard Ekman
+
+	cloginrc: add prompt directive to workaround prompt special characters
+	in login banners.  Not supported by all scripts; just clogin, ATM.
+
 	ios.pm: filter sflog file for cisco 10k
 
 	alogin: match display private keys prompt - noted by majoosh chacko

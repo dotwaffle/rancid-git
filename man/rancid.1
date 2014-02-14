@@ -1,6 +1,6 @@
 .\"
 .hys 50
-.TH "rancid" "1" "26 July 2012"
+.TH "rancid" "1" "16 January 2014"
 .SH NAME
 rancid \- Cisco configuration filter
 .SH SYNOPSIS
@@ -15,9 +15,9 @@ rancid \- Cisco configuration filter
 (\fB\-f\fP filename | hostname)
 .SH DESCRIPTION
 .B rancid
-is a
+is a collection of 
 .BR perl (1)
-script which uses the login scripts (see
+scripts which uses the login scripts (see
 .BR clogin (1))
 to login to a device, execute commands to display the configuration, etc,
 then filters the output for formatting, security, and so on.
@@ -79,11 +79,9 @@ F5 BigIPs
 .B fnrancid
 Fortinet Firewalls
 .TP
-.B francid
-Foundry and HP procurve OEMs of Foundry
-.TP
 .B grancid
-Generic rancid.
+Generic rancid; supporting Cisco IOS, Cisco IOS-XR, Dell switches, Compass
+EOS, and Juniper JUNOS.
 See
 .BR rancid (3)
 for details.
@@ -102,9 +100,6 @@ Juniper Networks
 .TP
 .B mrancid
 MRTd
-.TP
-.B mrvrancid
-MRV optical switches
 .TP
 .B mtrancid
 Mikrotik routesrs

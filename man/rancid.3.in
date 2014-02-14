@@ -1,17 +1,80 @@
 .\"
-.\" $Id: rancid.3.in 2634 2012-10-24 04:53:56Z heas $
+.\" $Id: rancid.3.in 2788 2014-01-23 19:32:56Z heas $
 .\"
 .hys 50
-.TH "rancid" "3" "18 July 2012"
+.TH "rancid" "3" "22 January 2014"
 .SH NAME
 rancid \- rancid perl module
 .SH INTRODUCTION
+The
 .B rancid
-XXXXXXXX
+library provides functions for handling rancid.types configuration files,
+loading modules, and the basic global variables, variables from parsing
+rancid.types files, and output handling functions that are common to all
+rancid device modules, all of which are "exported" (in perl terms) for use
+by those that import the module.
+Specifically, the library is used by
+.BR grancid (1),
+but it could be used by any perl program for site-specific handling or
+additional automata.
+.PP Input handling functions:
+.TP
+.B RunCommand(*input, *output, command)
+Parse a single command that returns no required info; the output is dropped.
+This could be used as the processing function in a command definition in
+a rancid.types file.
+.\"
 .PP
-document use of rancid.3 by grancid & it's process.
-document functions found here, processhistory, etc.
+Output handling functions:
+.sp
+.TP
+.B ProcessHistory(tag, command, command argument, string)
+Save the configuration on exit, if the device prompts at logout time.
+This only has affect when used with -s.
+XXX
+.\"
+.TP
+.B keysort(XXX)
+A sort routine that will sort on the keys of a hash as if it were a normal
+array.
+For example:
+.sp
+.nf
+ProcessHistory("TAG","keysort","B0","!\\n");
+ProcessHistory("TAG","keysort","D0","!\\n");
+.fi
+.sp
+B0 and D0 are the sort keys.
+.\"
+.TP
+.B valsort(XXX)
+A sort routine that will sort on the values of a hash as if it were a normal
+array.
+.sp
+.nf
+ProcessHistory("TAG","valsort","","!B0\\n");
+ProcessHistory("TAG","valsort","","!D0\\n");
+.fi
+.\"
+.TP
+.B numsort(XXX)
+A numerical sort routine (ascending).
+.\"
+.TP
+.B ipsort(IPv4 dotted-quad)
+A sort routine that will sort on the ip address when the ip address is
+anywhere in the strings.
+.sp
+.nf
+ProcessHistory("TAG","ipsort","192.168.0.0","!B0\\n");
+ProcessHistory("TAG","ipsort","192.168.1.0","!D0\\n");
+.fi
+.\"
+.TP
+.B sortbyipaddr(XXX)
+A sort routine that will sort based upon IPv4 addresses.
 .PP
+Please see the library code for export variables.
 .PP
 .\"
 .SH "SEE ALSO"

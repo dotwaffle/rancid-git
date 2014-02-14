@@ -1,6 +1,6 @@
-#! @PERLV_PATH@
+package foundry;
 ##
-## $Id: francid.in 2660 2013-01-08 19:05:26Z heas $
+## $Id: foundry.pm.in 2776 2014-01-16 22:58:04Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -40,139 +40,85 @@
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
 #
-# Amazingly hacked version of Hank's rancid - this one tries to
-# deal with foundrys and foundrys OEM'd by HP as Procurves.
-#
 #  RANCID - Really Awesome New Cisco confIg Differ
 #
-# usage: francid [-dltCV] [-f filename | hostname]
-#
-use Getopt::Std;
-getopts('dflt:CV');
-if ($opt_V) {
-    print "@PACKAGE@ @VERSION@\n";
-    exit(0);
+#  foundry.pm - Foundry rancid procedures
+
+use 5.005;
+use strict 'vars';
+use warnings;
+no warnings 'uninitialized';
+require(Exporter);
+our @ISA = qw(Exporter);
+
+#XXX use @VERSION@ when we have a version w/o letters in it
+#XXX use rancid @VERSION@;
+use rancid;
+
+@ISA = qw(Exporter rancid main);
+#XXX @Exporter::EXPORT = qw($VERSION @commandtable %commands @commands);
+
+# load-time initialization
+sub import {
+    0;
 }
-$log = $opt_l;
-$debug = $opt_d;
-$file = $opt_f;
-$host = $ARGV[0];
-$clean_run = 0;
-$found_end = 0;
-$timeo = 90;				# flogin timeout in seconds
 
-my(@commandtable, %commands, @commands);# command lists
-my($aclsort) = ("ipsort");		# ACL sorting mode
-my($filter_commstr);			# SNMP community string filtering
-my($filter_pwds);			# password filtering mode
+# post-open(collection file) initialization
+sub init {
+    # add content lines and separators
+    ProcessHistory("","","","!RANCID-CONTENT-TYPE: $devtype\n!\n");
 
-# This routine is used to print out the router configuration
-sub ProcessHistory {
-    my($new_hist_tag,$new_command,$command_string,@string) = (@_);
-    if ((($new_hist_tag ne $hist_tag) || ($new_command ne $command))
-	&& scalar(%history)) {
-	print eval "$command \%history";
-	undef %history;
-    }
-    if (($new_hist_tag) && ($new_command) && ($command_string)) {
-	if ($history{$command_string}) {
-	    $history{$command_string} = "$history{$command_string}@string";
-	} else {
-	    $history{$command_string} = "@string";
+    0;
+}
+
+# main loop of input of device output
+sub inloop {
+    my($INPUT, $OUTPUT) = @_;
+    my($cmd, $rval);
+
+TOP: while(<$INPUT>) {
+	tr/\015//d;
+	if (/\#exit$/) {
+	    $clean_run = 1;
+	    last;
 	}
-    } elsif (($new_hist_tag) && ($new_command)) {
-	$history{++$#history} = "@string";
-    } else {
-	print "@string";
+	if (/^Error:/) {
+	    print STDOUT ("$host flogin error: $_");
+	    print STDERR ("$host flogin error: $_") if ($debug);
+	    $clean_run = 0;
+	    last;
+	}
+	while (/[>#]\s*($cmds_regexp)\s*$/) {
+	    $cmd = $1;
+	    if (!defined($prompt)) {
+		$prompt = ($_ =~ /^([^#]+#)/)[0];
+		$prompt =~ s/([][}{)(\\])/\\$1/g;
+		print STDERR ("PROMPT MATCH: $prompt\n") if ($debug);
+	    }
+	    print STDERR ("HIT COMMAND:$_") if ($debug);
+	    if (! defined($commands{$cmd})) {
+		print STDERR "$host: found unexpected command - \"$cmd\"\n";
+		$clean_run = 0;
+		last TOP;
+	    }
+	    $rval = &{$commands{$cmd}}($INPUT, $OUTPUT, $cmd);
+	    delete($commands{$cmd});
+	    if ($rval == -1) {
+		$clean_run = 0;
+		last TOP;
+	    }
+	}
     }
-    $hist_tag = $new_hist_tag;
-    $command = $new_command;
-    1;
-}
-
-sub numerically { $a <=> $b; }
-
-# This is a sort routine that will sort numerically on the
-# keys of a hash as if it were a normal array.
-sub keynsort {
-    local(%lines) = @_;
-    local($i) = 0;
-    local(@sorted_lines);
-    foreach $key (sort numerically keys(%lines)) {
-	$sorted_lines[$i] = $lines{$key};
-	$i++;
-    }
-    @sorted_lines;
-}
-
-# This is a sort routine that will sort on the
-# keys of a hash as if it were a normal array.
-sub keysort {
-    local(%lines) = @_;
-    local($i) = 0;
-    local(@sorted_lines);
-    foreach $key (sort keys(%lines)) {
-	$sorted_lines[$i] = $lines{$key};
-	$i++;
-    }
-    @sorted_lines;
-}
-
-# This is a sort routine that will sort on the
-# values of a hash as if it were a normal array.
-sub valsort{
-    local(%lines) = @_;
-    local($i) = 0;
-    local(@sorted_lines);
-    foreach $key (sort values %lines) {
-	$sorted_lines[$i] = $key;
-	$i++;
-    }
-    @sorted_lines;
-}
-
-# This is a numerical sort routine (ascending).
-sub numsort {
-    local(%lines) = @_;
-    local($i) = 0;
-    local(@sorted_lines);
-    foreach $num (sort {$a <=> $b} keys %lines) {
-	$sorted_lines[$i] = $lines{$num};
-	$i++;
-    }
-    @sorted_lines;
-}
-
-# This is a sort routine that will sort on the
-# ip address when the ip address is anywhere in
-# the strings.
-sub ipsort {
-    local(%lines) = @_;
-    local($i) = 0;
-    local(@sorted_lines);
-    foreach $addr (sort sortbyipaddr keys %lines) {
-	$sorted_lines[$i] = $lines{$addr};
-	$i++;
-    }
-    @sorted_lines;
-}
-
-# These two routines will sort based upon IP addresses
-sub ipaddrval {
-    my(@a) = ($_[0] =~ m#^(\d+)\.(\d+)\.(\d+)\.(\d+)$#);
-    $a[3] + 256 * ($a[2] + 256 * ($a[1] +256 * $a[0]));
-}
-sub sortbyipaddr {
-    &ipaddrval($a) <=> &ipaddrval($b);
 }
 
 # This routine parses "show version"
 sub ShowVersion {
+    my($INPUT, $OUTPUT) = @_;
     my($slot);
 
     print STDERR "    In ShowVersion: $_" if ($debug);
 
-    while (<INPUT>) {
+    while (<$INPUT>) {
 	tr/\015//d;
 	next if /^\s*$/;
 	last if (/^$prompt/);
@@ -206,11 +152,12 @@ sub ShowVersion {
 
 # This routine parses "show chassis"
 sub ShowChassis {
+    my($INPUT, $OUTPUT) = @_;
     my($skip) = 0;
 
     print STDERR "    In ShowChassis: $_" if ($debug);
 
-    while (<INPUT>) {
+    while (<$INPUT>) {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/ from /);
@@ -247,9 +194,10 @@ sub ShowChassis {
 
 # This routine parses "show flash"
 sub ShowFlash {
+    my($INPUT, $OUTPUT) = @_;
     print STDERR "    In ShowFlash: $_" if ($debug);
 
-    while (<INPUT>) {
+    while (<$INPUT>) {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^\s*$/);
@@ -263,9 +211,10 @@ sub ShowFlash {
 
 # This routine parses "show module"
 sub ShowModule {
+    my($INPUT, $OUTPUT) = @_;
     print STDERR "    In ShowModule: $_" if ($debug);
 
-    while (<INPUT>) {
+    while (<$INPUT>) {
 	tr/\015//d;
 	last if (/^$prompt/);
 	return(1) if (/Invalid input (->|detected)/);
@@ -281,9 +230,10 @@ sub ShowModule {
 
 # This routine processes a "write term"
 sub WriteTerm {
+    my($INPUT, $OUTPUT) = @_;
     print STDERR "    In WriteTerm: $_" if ($debug);
 
-    while (<INPUT>) {
+    while (<$INPUT>) {
 	tr/\015//d;
 	return(1) if (/Invalid input (->|detected)/);
 	return(1) if (/^\s+\^$/);		# edgeiron invalid command
@@ -354,7 +304,7 @@ sub WriteTerm {
 	}
 	# order ntp peers/servers
 	if (/^ntp (server|peer) (\d+)\.(\d+)\.(\d+)\.(\d+)/) {
-	    $sortkey = sprintf("$1 %03d%03d%03d%03d",$2,$3,$4,$5);
+	    my($sortkey) = sprintf("$1 %03d%03d%03d%03d",$2,$3,$4,$5);
 	    ProcessHistory("NTP","keysort",$sortkey,"$_");
 	    next;
 	}
@@ -411,135 +361,4 @@ sub WriteTerm {
     return(0);
 }
 
-# Main
-@commandtable = (
-	{'show version'		=> 'ShowVersion'},
-	{'show chassis'		=> 'ShowChassis'},
-	{'show module'		=> 'ShowModule'},
-	{'show flash'		=> 'ShowFlash'},
-	{'write term'		=> 'WriteTerm'},
-	{'show running-config'	=> 'WriteTerm'},
-);
-# Use an array to preserve the order of the commands and a hash for mapping
-# commands to the subroutine and track commands that have been completed.
-@commands = map(keys(%$_), @commandtable);
-%commands = map(%$_, @commandtable);
-$commandcnt = scalar(keys %commands);
-
-$commandstr=join(";",@commands);
-$cmds_regexp = join("|", map quotemeta($_), @commands);
-
-if (length($host) == 0) {
-    if ($file) {
-	print(STDERR "Too few arguments: file name required\n");
-	exit(1);
-    } else {
-	print(STDERR "Too few arguments: host name required\n");
-	exit(1);
-    }
-}
-if ($opt_C) {
-    print "flogin -t $timeo -c\'$commandstr\' $host\n";
-    exit(0);
-}
-open(OUTPUT,">$host.new") || die "Can't open $host.new for writing: $!\n";
-select(OUTPUT);
-# make OUTPUT unbuffered if debugging
-if ($debug) { $| = 1; }
-
-if ($file) {
-    print STDERR "opening file $host\n" if ($debug);
-    print STDOUT "opening file $host\n" if ($log);
-    open(INPUT,"<$host") || die "open failed for $host: $!\n";
-} else {
-    print STDERR "executing flogin -t $timeo -c\"$commandstr\" $host\n" if ($debug);
-    print STDOUT "executing flogin -t $timeo -c\"$commandstr\" $host\n" if ($log);
-    if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
-	system "flogin -t $timeo -c \"$commandstr\" $host </dev/null > $host.raw 2>&1" || die "flogin failed for $host: $!\n";
-	open(INPUT, "< $host.raw") || die "flogin failed for $host: $!\n";
-    } else {
-	open(INPUT,"flogin -t $timeo -c \"$commandstr\" $host </dev/null |") || die "flogin failed for $host: $!\n";
-    }
-}
-
-# determine ACL sorting mode
-if ($ENV{"ACLSORT"} =~ /no/i) {
-    $aclsort = "";
-}
-# determine community string filtering mode
-if (defined($ENV{"NOCOMMSTR"}) &&
-    ($ENV{"NOCOMMSTR"} =~ /yes/i || $ENV{"NOCOMMSTR"} =~ /^$/)) {
-    $filter_commstr = 1;
-} else {
-    $filter_commstr = 0;
-}
-# determine password filtering mode
-if ($ENV{"FILTER_PWDS"} =~ /no/i) {
-    $filter_pwds = 0;
-} elsif ($ENV{"FILTER_PWDS"} =~ /all/i) {
-    $filter_pwds = 2;
-} else {
-    $filter_pwds = 1;
-}
-
-ProcessHistory("","","","!RANCID-CONTENT-TYPE: foundry\n!\n");
-TOP: while(<INPUT>) {
-    tr/\015//d;
-    if (/\#exit$/) {
-	$clean_run=1;
-	last;
-    }
-    if (/^Error:/) {
-	print STDOUT ("$host flogin error: $_");
-	print STDERR ("$host flogin error: $_") if ($debug);
-	$clean_run=0;
-	last;
-    }
-    while (/#\s*($cmds_regexp)\s*$/) {
-	$cmd = $1;
-	if (!defined($prompt)) {
-	    $prompt = ($_ =~ /^([^#]+#)/)[0];
-	    $prompt =~ s/([][}{)(\\])/\\$1/g;
-	    print STDERR ("PROMPT MATCH: $prompt\n") if ($debug);
-	}
-	print STDERR ("HIT COMMAND:$_") if ($debug);
-	if (! defined($commands{$cmd})) {
-	    print STDERR "$host: found unexpected command - \"$cmd\"\n";
-	    $clean_run = 0;
-	    last TOP;
-	}
-	$rval = &{$commands{$cmd}}(*INPUT, *OUTPUT, $cmd);
-	delete($commands{$cmd});
-	if ($rval == -1) {
-	    $clean_run = 0;
-	    last TOP;
-	}
-    }
-}
-print STDOUT "Done $logincmd: $_\n" if ($log);
-# Flush History
-ProcessHistory("","","","");
-# Cleanup
-close(INPUT);
-close(OUTPUT);
-
-if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
-    unlink("$host.raw") if (! $debug);
-}
-
-# check for completeness
-if (scalar(%commands) || !$clean_run || !$found_end) {
-    if (scalar(keys %commands) eq $commandcnt) {
-	printf(STDERR "$host: missed cmd(s): all commands\n");
-    } elsif (scalar(%commands)) {
-	printf(STDOUT "$host: missed cmd(s): %s\n", join(',', keys(%commands)));
-	printf(STDERR "$host: missed cmd(s): %s\n", join(',', keys(%commands))) if ($debug);
-    }
-    if (!$clean_run || !$found_end) {
-print STDERR "$host: End of run not found $clean_run || $found_end\n";
-	print STDOUT "$host: End of run not found\n";
-	print STDERR "$host: End of run not found\n" if ($debug);
-	system("/usr/bin/tail -1 $host.new");
-    }
-    unlink "$host.new" if (! $debug);
-}
+1;

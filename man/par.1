@@ -1,11 +1,11 @@
-.\"
+.\" $Id: par.1 2791 2014-01-27 18:27:32Z heas $
 .hys 50
-.TH "par" "1" "18 December 2007"
+.TH "par" "1" "15 January 2014"
 .SH NAME
 par \- parallel command processing
 .SH SYNOPSIS
 .B par
-[\fB\-dfiqx\fP]
+[\fB\-defiqx\fP]
 [\c
 .BI \-c\ 
 command]
@@ -15,24 +15,26 @@ logfile]
 [\c
 .BI \-n\c
  #]
-file
-[file...]
+[\c
+.BI \-p\c
+ #]
+[file [file...]]
 .SH DESCRIPTION
 .B par
 takes a list of files to run a command on.  The first line of each file begins
 with a colon (:) or a pound-sign (#).  If a colon, the remainder of the
 line is a command to run for each of the subsequent lines.  If a pound-sign,
-then each subsequent line is a (self-contained) command, unless the 
+then each subsequent line is a (self-contained) command, unless the
 .B \-c
 option was specified, in which case it operates as if the argument to
 .B \-c
 had followed a colon on the first line.
 .PP
 In each of the cases where the lines of the file following the first are
-not commands (i.e.: colon or -c), instances of open-close braces ({}) in the
+not commands (ie: colon or -c), instances of open-close braces ({}) in the
 command will be replaced by these values.
 .PP
-For example, a inputfile whose contents is:
+For example, an inputfile whose contents is:
 .sp
 	: echo {}
 .br
@@ -66,11 +68,21 @@ options, where the first line of the input file(s) begins with a pound-sign
 .\"
 .TP
 .B \-d
-Print debugging information on standard error (stderr).
+Print debugging information on standard error (stderr).  Repeat the option
+up to three times for more verbosity.
+.\"
+.TP
+.B \-e
+Split args by spaces, rather than using sh -c.
+Note:
+.B \-e
+is incompatible with the
+.B \-i
+option.
 .\"
 .TP
 .B \-f
-No file or STDIN, just run a quantity of the command specified with -c.
+No input file or STDIN, just run a quantity of the command specified with -c.
 .\"
 .TP
 .B \-i
@@ -93,8 +105,14 @@ Number of simultaneous processes.
 Default: 3
 .\"
 .TP
+.B \-p N
+Pause N seconds between running commands.
+.\"
+.TP
 .B \-q
-Quiet mode.  Do not log anything.
+Quiet mode.  Omit the typical processing logs and do not create the log files
+from -l, instead the children inherit stdout and stderr from
+.B par.
 .B \-q
 is mutually exclusive with the
 .B \-x
@@ -115,5 +133,6 @@ View par logs in real-time via an
 \fIpar.log.T.N\fR Log file; where T is the current time in seconds since the
 epoch and N is the par process number ([0..]).
 .\"
-.\" .SH "SEE ALSO"
-.\" .BR expect (1)
+.SH "HISTORY"
+.B par
+was ported from the perl version.

@@ -41,7 +41,7 @@ bin/
 			Builds router list, calls rancid on each router and
 			handles cvs routines.
 	hpuifilter.c	HP procurve login filter - see hlogin(1).
-	par.in		Parallel processing of commands - any commands.
+	par.c		Parallel processing of commands - any commands.
 	rancid-cvs.in	Creates all of the CVS and config directories.
 	rancid-run.in	Script designed to be run from cron.
 	rancid-fe.in	Chooses between rancid/[abefhjrx]rancid/cat5rancid.

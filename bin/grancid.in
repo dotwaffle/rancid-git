@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: grancid.in 2741 2013-11-01 00:02:02Z heas $
+## $Id: grancid.in 2787 2014-01-23 19:32:08Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -80,7 +80,24 @@ if (! defined($lscript)) {
 # open the temporary file for the digested output
 open(OUTPUT,">$host.new") || die "Can't open $host.new for writing: $!\n";
 select(OUTPUT);
-eval($module ."::init();") && die "${module}::init failed: $@\n";
+if (length($#modules)) {
+    my($module);
+
+    foreach $module (@modules) {
+	eval {
+            (my $file = $module) =~ s/::/\//g;
+            # call module->init(); we expect 0 as success, as god intended it
+            # XXX how the fuck is this done w/o the eval and w/o a temp var?
+            eval($module ."::init();") ? 0 : 1;
+	} or do {
+            # Module load failed
+            my($error) = $@;
+            print STDERR "loadtype: initializing $module failed: ".
+                         "$error\n";
+            return(-1);
+	};
+    }
+}
 
 # open the input, a pre-collected file or start a login for a login stream or
 # temporary file

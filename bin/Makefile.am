@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 ## A Makefile.in is supplied, in case you do not have automake.
 
-## $Id: Makefile.am 2733 2013-10-30 23:02:46Z heas $
+## $Id: Makefile.am 2789 2014-01-23 23:42:35Z heas $
 ##
 ## Copyright (c) 1997-2013 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -11,13 +11,13 @@
 #AUTOMAKE_OPTIONS=foreign no-dependencies
 AUTOMAKE_OPTIONS=foreign
 
-bin_PROGRAMS = hpuifilter
+bin_PROGRAMS = hpuifilter par
 bin_SCRIPTS = agmrancid alogin anlogin anrancid arancid arrancid atrancid \
 	avologin avorancid blogin brancid cat5rancid clogin complogin \
 	control_rancid cssrancid dllogin elogin erancid f5rancid f10rancid \
-	flogin fnlogin fnrancid francid grancid hlogin hrancid htlogin \
-	htrancid jerancid jlogin mrancid mrvlogin mrvrancid mtlogin mtrancid \
-	nlogin nrancid nslogin nsrancid nxrancid par prancid rivlogin \
+	flogin fnlogin fnrancid grancid hlogin hrancid htlogin \
+	htrancid jerancid jlogin mrancid mrvlogin mtlogin mtrancid \
+	nlogin nrancid nslogin nsrancid nxrancid prancid rivlogin \
 	rivrancid rrancid srancid tlogin tntlogin tntrancid trancid xilogin \
 	xirancid xrancid zrancid
 # XXX hack for the grancid to get pkglibdir, see corresponding XXX below
@@ -32,6 +32,7 @@ CLEANFILES= lg.cgi lgform.cgi rancid-cvs rancid-fe rancid-run
 #CLEANFILES= $(bin_SCRIPTS)
 
 hpuifilter_SOURCES = hpuifilter.c
+par_SOURCES = par.c
 
 #CPPFLAGS += @PG_CPPFLAGS@
 #INCLUDES += -I$(top_srcdir)/include @PG_CPPFLAGS@

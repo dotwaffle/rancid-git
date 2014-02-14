@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: hrancid.in 2686 2013-04-17 18:20:22Z heas $
+## $Id: hrancid.in 2764 2014-01-02 23:14:35Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -195,6 +195,7 @@ sub ShowVersion {
 	return(-1) if (/command authorization failed/i);
 	return(-1) if /^(Invalid|Ambiguous) input:/i;
 
+	next if /^uptime/i;
 	s/^image//i;
 	s/^\s*//g;
 

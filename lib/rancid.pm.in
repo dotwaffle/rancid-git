@@ -1,6 +1,6 @@
 package rancid;
 ##
-## $Id: rancid.pm.in 2632 2012-10-22 20:08:26Z heas $
+## $Id: rancid.pm.in 2787 2014-01-23 19:32:08Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -72,11 +72,11 @@ our $timeo;				# login script timeout in seconds
 our $prompt;				# device prompt regex
 
 
-use vars qw{$script $lscript $module};	# script, login script, module name
+use vars qw{$script $lscript @modules};	# script, login script, module name(s)
 use vars qw{$inloop}		;	# inloop func
 use vars qw{$command $hist_tag};	# ProcessHistory state
 use vars qw{%history @history};		# ProcessHistory state
-our @EXPORT = qw($VERSION $devtype $script $lscript $module $inloop
+our @EXPORT = qw($VERSION $devtype $script $lscript @modules $inloop
 		@commandtable
 		%commands @commands $commandcnt
 		$commandstr $cmds_regexp
@@ -193,8 +193,7 @@ sub loadtype {
 	    } elsif ($directive eq "login") {
 		$lscript = $value;
 	    } elsif ($directive eq "module") {
-		# XXX perhaps make this an array, to include mulitple modules?
-		$module = $value;
+		push(@modules, $value);
 	    } elsif ($directive eq "inloop") {
 		$inloop = $value;
 	    } elsif ($directive eq "command") {
@@ -214,7 +213,10 @@ sub loadtype {
     }
 
     # load device-type specific modules
-    if (length($module)) {
+    if (length($#modules)) {
+	my($module);
+
+	foreach $module (@modules) {
 	eval {
 	    (my $file = $module) =~ s/::/\//g;
 	    require $file . '.pm';
@@ -228,6 +230,7 @@ sub loadtype {
 			 "$error\n";
 	    return(-1);
 	};
+	}
     }
 
     # Use an array to preserve the order of the commands and a hash for mapping
@@ -240,7 +243,7 @@ sub loadtype {
     $cmds_regexp = join("|", map quotemeta($_), @commands);
 
     if ($main::opt_C) {
-	print "clogin -t $timeo -c\'$commandstr\' $host\n";
+	print "$lscript -t $timeo -c \'$commandstr\' $host\n";
 	exit(0);
     }
 

@@ -118,7 +118,7 @@ sub inloop {
 
 TOP: while(<$INPUT>) {
 	tr/\015//d;
-	if (/[>#]\s?exit$/) {
+CMD:	if (/[>#]\s?exit$/) {
 	    $clean_run = 1;
 	    last;
 	}
@@ -146,6 +146,11 @@ TOP: while(<$INPUT>) {
 	    if ($rval == -1) {
 		$clean_run = 0;
 		last TOP;
+	    }
+	    if (defined($prompt)) {
+		if (/$prompt/) {
+		    goto CMD;
+		}
 	    }
 	}
     }
@@ -183,36 +188,8 @@ sub ShowVersion {
 	/^ROM: (IOS \S+ )?(System )?Bootstrap.*(Version.*)$/ &&
 	    ProcessHistory("COMMENTS","keysort","G1",
 		"!ROM Bootstrap: $3\n") && next;
-	if (/^Hardware:\s+(.*), (.* RAM), CPU (.*)$/) {
-	    ProcessHistory("COMMENTS","keysort","A1",
-		"!Chassis type: $1 - a PIX\n");
-	    ProcessHistory("COMMENTS","keysort","A2",
-		"!CPU: $3\n");
-	    ProcessHistory("COMMENTS","keysort","B1", "!Memory: $2\n");
-	}
 	/^Serial Number:\s+(.*)$/ &&
 	    ProcessHistory("COMMENTS","keysort","C1", "!$_") && next;
-	# More PIX stuff
-	/^Encryption hardware device\s+:\s+(.*)/ &&
-	    ProcessHistory("COMMENTS","keysort","A3", "!Encryption: $1\n") &&
-	    next;
-	/^running activation key\s*:\s+(.*)/i &&
-	    ProcessHistory("COMMENTS","keysort","D2", "!Key: $1\n") &&
-	    next;
-	# Flash on the PIX or FWSM (FireWall Switch Module)
-	/^Flash(\s+\S+)+ \@ 0x\S+,\s+(\S+)/ &&
-	    ProcessHistory("COMMENTS","keysort","B2", "!Memory: Flash $2\n") &&
-	    next;
-	# CatOS 3500xl stuff
-	/^System serial number(:\s+.*)$/ &&
-	    ProcessHistory("COMMENTS","keysort","C1", "!Serial Number$1\n") &&
-	    next;
-	/^Model / &&
-	    ProcessHistory("COMMENTS","keysort","C2", "!$_") && next;
-	/^Motherboard / &&
-	    ProcessHistory("COMMENTS","keysort","C3", "!$_") && next;
-	/^Power supply / &&
-	    ProcessHistory("COMMENTS","keysort","C4", "!$_") && next;
 
 	/^Activation Key:\s+(.*)$/ &&
 	    ProcessHistory("COMMENTS","keysort","C2", "!$_") && next;
@@ -1211,22 +1188,5 @@ sub WriteTerm {
 
     return(0);
 }
-
-# XXX is this necessary?
-## This routine processes a "write term"
-#sub FilterAll {
-#    my($INPUT, $OUTPUT, $cmd) = @_;
-#    print STDERR "    In FilterAll: $_" if ($debug);
-#
-#    while (<$INPUT>) {
-#	tr/\015//d;
-#	last if (/^$prompt/);
-#	return(1) if (/Line has invalid autocommand /);
-#	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
-#	return(1) if (/\%Error: No such file or directory/);
-#	return(-1) if (/command authorization failed/i);
-#	return(-1) if (/% ?configuration buffer full/i);
-#    }
-#}
 
 1;

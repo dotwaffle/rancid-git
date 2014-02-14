@@ -1,8 +1,8 @@
 .\"
-.\" $Id: cloginrc.5 2674 2013-03-14 17:40:29Z heas $
+.\" $Id: cloginrc.5 2762 2013-12-26 20:48:28Z heas $
 .\"
 .hys 50
-.TH "cloginrc" "5" "14 March 2013"
+.TH "cloginrc" "5" "23 December 2013"
 .SH NAME
  \.cloginrc \- clogin configuration file
 .SH DESCRIPTION
@@ -223,6 +223,14 @@ Specifies a vty password, that which is prompted for upon the connection
 to the router.  The last argument is the enable password and need not be
 specified if the device also has a matching noenable or autoenable
 directive or the corresponding command-line options are used.
+.\"
+.TP
+.B add prompt <router name glob> {<regex>}
+Match login prompt, or initial login prompt in the case of some of the login
+scripts.  This is provided only as a work-around for login banners that
+contain forbidden characters that conflict with CLI prompt markers.
+.sp
+Note that not all login scripts support this.
 .\"
 .TP
 .B add sshcmd <router name glob> {<ssh>}

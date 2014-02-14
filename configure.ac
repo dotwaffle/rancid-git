@@ -15,7 +15,7 @@ AC_INIT(m4_esyscmd(configure.vers package_name),
 	[rancid@shrubbery.net])
 AC_CONFIG_SRCDIR(CHANGES)
 AM_INIT_AUTOMAKE
-COPYYEARS="1997-2012"
+COPYYEARS="1997-2014"
 AC_SUBST(COPYYEARS)
 
 
@@ -452,7 +452,7 @@ extern int		errno;
 ])
 AC_CONFIG_HEADERS(include/config.h)
 
-AC_CONFIG_FILES(bin/control_rancid bin/par, [chmod a+x $ac_file])
+AC_CONFIG_FILES(bin/control_rancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/agmrancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/alogin bin/arancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/anlogin bin/anrancid, [chmod a+x $ac_file])
@@ -467,12 +467,12 @@ AC_CONFIG_FILES(bin/dllogin, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/elogin bin/erancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/f5rancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/f10rancid, [chmod a+x $ac_file])
-AC_CONFIG_FILES(bin/flogin bin/francid, [chmod a+x $ac_file])
+AC_CONFIG_FILES(bin/flogin, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/fnlogin bin/fnrancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/hlogin bin/hrancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/htlogin bin/htrancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/jlogin bin/jerancid, [chmod a+x $ac_file])
-AC_CONFIG_FILES(bin/mrancid bin/mrvlogin bin/mrvrancid, [chmod a+x $ac_file])
+AC_CONFIG_FILES(bin/mrancid bin/mrvlogin, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/mtrancid bin/mtlogin, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/nlogin bin/nrancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/nslogin bin/nsrancid, [chmod a+x $ac_file])

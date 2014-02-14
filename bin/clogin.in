@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: clogin.in 2745 2013-11-01 00:14:25Z heas $
+## $Id: clogin.in 2762 2013-12-26 20:48:28Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -581,6 +581,7 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype identfile 
 				  send_user "\nError: Invalid login: $router\n";
 				  catch {close}; catch {wait}; return 1
 				}
+	-re "\[^\r\n]*\[\r\n]+"	{ exp_continue; }
      }
     }
 
@@ -763,7 +764,10 @@ foreach router [lrange $argv $i end] {
     }
 
     # Default prompt.
-    set prompt "(>|#| \\(enable\\))"
+    set prompt [join [find prompt $router] ""]
+    if { [llength $prompt] == 0 } {
+	set prompt "(>|#| \\(enable\\))"
+    }
 
     # look for noenable option in .cloginrc
     if { [find noenable $router] == "1" } {
@@ -902,9 +906,10 @@ foreach router [lrange $argv $i end] {
     }
     # we are logged in, now figure out the full prompt
     send "\r"
+    regsub -all {^(\^*)(.*)} $prompt {\2} reprompt
     expect {
 	-re "\[\r\n]+"		{ exp_continue; }
-	-re "^(.+\[:.])1 ($prompt)" { # stoopid extreme cmd-line numbers and
+	-re "^(.+\[:.])1 ($reprompt)" { # stoopid extreme cmd-line numbers and
 				  # prompt based on state of config changes,
 				  # which may have an * at the beginning.
 				  set junk $expect_out(1,string)
@@ -913,7 +918,7 @@ foreach router [lrange $argv $i end] {
 				  set prompt ".? ?$junk\[0-9]+ $expect_out(2,string)";
 				  set platform "extreme"
 				}
-	-re "^.+$prompt"	{ set junk $expect_out(0,string);
+	-re "^.+$reprompt"	{ set junk $expect_out(0,string);
 				  regsub -all "\[\]\[\(\)]" $junk {\\&} prompt;
 				}
     }
