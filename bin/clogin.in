@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: clogin.in 2719 2013-07-30 12:44:34Z heas $
+## $Id: clogin.in 2745 2013-11-01 00:14:25Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -80,7 +80,7 @@ set do_enapasswd 1
 set do_saveconfig 0
 # Sometimes routers take awhile to answer (the default is 10 sec)
 set timeoutdflt 45
-#
+# Some CLIs having problems if we write too fast (Extreme, PIX, Cat)
 set send_human {.4 .4 .7 .3 5}
 
 # Find the user in the ENV, or use the unix userid.
@@ -542,6 +542,9 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype identfile 
 				  exp_continue
 				}
 	-re "Last login:"	{
+				  exp_continue
+				}
+	-re "Press the <tab> key \[^\r\n]+\[\r\n]+"	{
 				  exp_continue
 				}
 	-re "@\[^\r\n]+ $p_prompt"	{

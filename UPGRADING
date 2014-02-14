@@ -1,3 +1,13 @@
+Rancid 3.0
+The router.db field separator has been changed to ';' from ':' to avoid
+conflict with IPv6 addresses and etc.
+
+3.0 also introduces perl libraries for device O/S specific handling and
+replaces the individual rancid scripts with grancid which imports the
+libraries.  Also, rancid.pm supplies the functions common among the former
+rancid scripts.
+
+
 Rancid 2.3 introduces a new directory layout.  It has been changed to more
 closely follow the standard path hierarchy, which is defined by the FHS
 standard and autoconf, and/or make these locations more easily configurable

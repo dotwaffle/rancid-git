@@ -1,18 +1,23 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.13)
-AC_INIT(CHANGES)
 
 dnl	VERSION needs to be updated such that 'make dist' uses the correct
 dnl	filename for the directory name and tarball.
-VERSION=`sed -n 's/.*version.*"\(.*\)".*/\1/p' $srcdir/include/version.h.in|tr -d ' '`
-PACKAGE=`sed -n 's/.*package.*"\(.*\)".*/\1/p' $srcdir/include/version.h.in|tr -d ' '`
+dnl VERSION=`sed -n 's/.*version.*"\(.*\)".*/\1/p' $srcdir/include/version.h.in|tr -d ' '`
+dnl PACKAGE=`sed -n 's/.*package.*"\(.*\)".*/\1/p' $srcdir/include/version.h.in|tr -d ' '`
+VERSION=`$srcdir/configure.vers package_name`
+PACKAGE=`$srcdir/configure.vers package_version`
 AC_SUBST(VERSION)
 AC_SUBST(PACKAGE)
+AC_INIT(m4_esyscmd(configure.vers package_name),
+	m4_esyscmd(configure.vers package_version),
+	[rancid@shrubbery.net])
+AC_CONFIG_SRCDIR(CHANGES)
+AM_INIT_AUTOMAKE
 COPYYEARS="1997-2012"
 AC_SUBST(COPYYEARS)
 
-AM_INIT_AUTOMAKE($PACKAGE, $VERSION, rancid@shrubbery.net)
 
 dnl default install location
 AC_PREFIX_DEFAULT(/usr/local/rancid)
@@ -35,7 +40,6 @@ AC_PROG_MAKE_SET()
 
 # compiler specifics
 AC_PROG_CC
-AM_C_PROTOTYPES
 AC_PROG_CPP
 AC_C_CONST
 AC_C_INLINE
@@ -459,6 +463,7 @@ AC_CONFIG_FILES(bin/blogin bin/brancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/cat5rancid bin/clogin, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/complogin, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/cssrancid, [chmod a+x $ac_file])
+AC_CONFIG_FILES(bin/dllogin, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/elogin bin/erancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/f5rancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/f10rancid, [chmod a+x $ac_file])

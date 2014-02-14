@@ -1,4 +1,15 @@
-3.0a3
+3.0a4
+	ios.pm: filter sflog file for cisco 10k
+
+	alogin: match display private keys prompt - noted by majoosh chacko
+
+	rancid.types.conf: add jlocal example base on Serge Malev's comment
+
+	clogin: Extreme XOS >= 12.5 has a new prompt-like banner before the
+	initial prompt, ignore it to avoid confusing location of the prompt
+
+	rancid.types.base: add command show chassis hardware models
+
 	nxrancid: filter Fan Zone Speed
 
 	ios.pm: reverse logic of whether to 'show vlan', skip VTP clients

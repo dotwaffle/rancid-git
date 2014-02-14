@@ -22,10 +22,6 @@
 ##    this software without specific prior written permission.
 ## 5. It is requested that non-binding fixes and modifications be contributed
 ##    back to Terrapin Communications, Inc.
-## 6. Parties packaging or redistributing RANCID MAY NOT distribute altered
-##    versions of the etc/rancid.types.base file nor alter how this file is
-##    processed nor when in relation to etc/rancid.types.conf.  The purpose     
-##    of this condition is to help suppress our support costs.
 ##
 ## THIS SOFTWARE IS PROVIDED BY Terrapin Communications, INC. AND CONTRIBUTORS
 ## ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -38,6 +34,13 @@
 ## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
+##
+## It is the request of the authors, but not a condition of license, that
+## parties packaging or redistributing RANCID NOT distribute altered versions
+## of the etc/rancid.types.base file nor alter how this file is processed nor
+## when in relation to etc/rancid.types.conf.  The goal of this is to help
+## suppress our support costs.  If it becomes a problem, this could become a
+## condition of license.
 # 
 #  The expect login scripts were based on Erik Sherk's gwtn, by permission.
 # 

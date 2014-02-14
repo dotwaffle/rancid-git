@@ -1,0 +1,25 @@
+#!/bin/sh
+#
+# Produce package name or version from $srcdir/include/version.h.in
+#
+me=$0
+info=$1
+srcdir=`dirname $0`
+value=
+nl='
+'
+case "${info}" in
+   package_name )
+     value=`sed -n 's/.*package.*"\(.*\)".*/\1/p' $srcdir/include/version.h.in|tr -d ' '`
+     ;;
+   package_version )
+     value=`sed -n 's/.*version.*"\(.*\)".*/\1/p' $srcdir/include/version.h.in|tr -d ' '`
+     ;;
+   * )
+     echo "usage $me (package_name|package_version)" >&2
+     exit 1
+     ;;
+esac
+
+# remove trailing newline
+echo "${value}" | tr -d "$nl"

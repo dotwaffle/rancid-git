@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 ## A Makefile.in is supplied, in case you do not have automake.
 
-## $Id: Makefile.am 2661 2013-01-22 17:28:55Z heas $
+## $Id: Makefile.am 2742 2013-11-01 00:02:43Z heas $
 ##
 ## Copyright (C) 1997-2013 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -14,7 +14,7 @@ AUTOMAKE_OPTIONS=foreign no-dependencies
 @SET_MAKE@
 
 pkgdata_DATA = COPYING CHANGES FAQ README README.lg UPGRADING cloginrc.sample
-EXTRA_DIST = BUGS Todo configure install-sh \
+EXTRA_DIST = BUGS Todo configure configure.vers install-sh \
 	mkinstalldirs Makefile.in Todo $(pkgdata_DATA)
 #DIST_COMMON = 
 

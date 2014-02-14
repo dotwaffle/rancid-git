@@ -1,6 +1,6 @@
 package ios;
 ##
-## $Id: ios.pm.in 2723 2013-08-15 22:21:41Z heas $
+## $Id: ios.pm.in 2753 2013-11-07 19:47:48Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -817,7 +817,7 @@ sub ShowFlash {
 	# to:
 	#                                     vlan.dat
 	#                                            vlan.dat
-	if (/(dhcp_[^. ]*\.txt|vlan\.dat)\s*$/) {
+	if (/(dhcp_[^. ]*\.txt|vlan\.dat|sflog)\s*$/) {
 	    if (/(\s*\d+)(\s+)(\d+)(\s+)(\w+ \d+\s+\d+ \d+:\d+:\d+ .\d+:\d+)/) {
 		my($fn, $a, $sz, $c, $dt, $rem) = ($1, $2, $3, $4, $5, $');
 		my($fnl, $szl, $dtl) = (length($fn), length($sz), length($dt));
@@ -884,7 +884,7 @@ sub DirSlotN {
 	# to:
 	#       -rw-                                   vlan.dat
 	#       -rw-                                           vlan.dat
-	if (/(dhcp_[^. ]*\.txt|vlan\.dat)\s*$/) {
+	if (/(dhcp_[^. ]*\.txt|vlan\.dat|sflog)\s*$/) {
 	    if (/(\s*\d+)(\s+\S+\s+)(\d+)(\s+)(\w+ \d+\s+\d+ \d+:\d+:\d+ .\d+:\d+)/) {
 		my($fn, $a, $sz, $c, $dt, $rem) = ($1, $2, $3, $4, $5, $');
 		my($fnl, $szl, $dtl) = (length($fn), length($sz), length($dt));
@@ -919,9 +919,6 @@ sub DirSlotN {
 	    }
 	}
 	if ($ios eq "XE" && /^((\s+)?\d+\s+\S+)\s+\d+.*(tracelogs$)/) {
-	    $_ = "$1" . sprintf("%43s", "") . "$3\n";
-	}
-	if ($ios eq "IOS" && /^((\s+)?\d+\s+\S+)\s+\d+.*(sflog$)/) {
 	    $_ = "$1" . sprintf("%43s", "") . "$3\n";
 	}
 	# the pager can not be disabled per-session on the PIX

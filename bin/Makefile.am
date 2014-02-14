@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 ## A Makefile.in is supplied, in case you do not have automake.
 
-## $Id: Makefile.am 2708 2013-07-17 15:10:40Z heas $
+## $Id: Makefile.am 2733 2013-10-30 23:02:46Z heas $
 ##
 ## Copyright (c) 1997-2013 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -14,9 +14,9 @@ AUTOMAKE_OPTIONS=foreign
 bin_PROGRAMS = hpuifilter
 bin_SCRIPTS = agmrancid alogin anlogin anrancid arancid arrancid atrancid \
 	avologin avorancid blogin brancid cat5rancid clogin complogin \
-	control_rancid cssrancid elogin erancid f5rancid f10rancid flogin \
-	fnlogin fnrancid francid grancid hlogin hrancid htlogin htrancid \
-	jerancid jlogin mrancid mrvlogin mrvrancid mtlogin mtrancid \
+	control_rancid cssrancid dllogin elogin erancid f5rancid f10rancid \
+	flogin fnlogin fnrancid francid grancid hlogin hrancid htlogin \
+	htrancid jerancid jlogin mrancid mrvlogin mrvrancid mtlogin mtrancid \
 	nlogin nrancid nslogin nsrancid nxrancid par prancid rivlogin \
 	rivrancid rrancid srancid tlogin tntlogin tntrancid trancid xilogin \
 	xirancid xrancid zrancid
