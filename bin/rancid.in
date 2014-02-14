@@ -1,9 +1,9 @@
 #! @PERLV_PATH@
 ##
-## $Id: rancid.in 2377 2012-01-31 22:55:13Z heas $
+## $Id: rancid.in 2619 2012-09-06 16:40:28Z heas $
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) 1997-2009 by Terrapin Communications, Inc.
+## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -42,10 +42,10 @@
 #
 #  RANCID - Really Awesome New Cisco confIg Differ
 #
-# usage: rancid [-dV] [-l] [-f filename | hostname]
+# usage: rancid [-dltCV] [-f filename | hostname]
 #
 use Getopt::Std;
-getopts('dflV');
+getopts('dflt:CV');
 if ($opt_V) {
     print "@PACKAGE@ @VERSION@\n";
     exit(0);
@@ -401,8 +401,7 @@ sub ShowVersion {
 	/^(\d+[kK]) bytes of (non-volatile|NVRAM)/ &&
 	    ProcessHistory("COMMENTS","keysort","B3",
 		"!Memory: nvram $1\n") && next;
-	/^(\d+[kK]) bytes of (flash memory|processor board System flash|ATA Comp
-actFlash)/ &&
+	/^(\d+[kK]) bytes of (flash memory|processor board System flash|ATA CompactFlash)/ &&
 	    ProcessHistory("COMMENTS","keysort","B5","!Memory: flash $1\n") &&
 	    next;
 	/^(\d+[kK]) bytes of .*flash partition/ &&
@@ -571,8 +570,10 @@ sub ShowEnv {
 	    ProcessHistory("COMMENTS","keysort","E2","!Power: $1\n") && next;
 	/^\s*(redundant .*)/i &&
 	    ProcessHistory("COMMENTS","keysort","E2","!Power: $1\n") && next;
-	/^\s*(RPS is .*)/i &&
+	/^\s*((RPS|power-supply) (\d|is) .*)/i &&
 	    ProcessHistory("COMMENTS","keysort","E2","!Power: $1\n") && next;
+	/^\s*((FAN|fan-tray) (\d|is) .*)/i &&
+	    ProcessHistory("COMMENTS","keysort","E3","!FAN: $1\n") && next;
     }
     ProcessHistory("COMMENTS","","","!\n");
     return(0);
@@ -693,14 +694,14 @@ sub ShowBoot {
 
 # This routine parses "show flash"
 sub ShowFlash {
-    # skip if this is 7000, 7200, 7500, or 12000; else we end up with
-    # redundant data from dir /all slot0:
     print STDERR "    In ShowFlash: $_" if ($debug);
 
     while (<INPUT>) {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
+	# skip if this is 7000, 7200, 7500, 12000, or IOS-XE; else we have
+	# redundant data from dir /all slot0:
 	return(1) if ($type =~ /^(12[40]|7)/);
 	return(1) if ($ios eq "XE");
 	return(1) if (/^\s*\^\s*$/);
@@ -713,10 +714,30 @@ sub ShowFlash {
 	    s/^$1\s{$len}//;
 	}
 
-	# Filter dhcp database
-	next if (/dhcp_[^. ]*\.txt/);
+	# filter frequently changing files (dhcp & vlan database)
+	# from flash
+	# change from:
+	# 9          660 Jan 15 2011 20:43:54 vlan.dat
+	# 9          660 Jan 15 2011 20:43:54 +00:00 vlan.dat
+	# to:
+	#                                     vlan.dat
+	#                                            vlan.dat
+	if (/(dhcp_[^. ]*\.txt|vlan\.dat)\s*$/) {
+	    if (/(\s*\d+)(\s+)(\d+)(\s+)(\w+ \d+\s+\d+ \d+:\d+:\d+ .\d+:\d+)/) {
+		my($fn, $a, $sz, $c, $dt, $rem) = ($1, $2, $3, $4, $5, $');
+		my($fnl, $szl, $dtl) = (length($fn), length($sz), length($dt));
+		my($fmt) = "%-". $fnl ."s%s%-". $szl ."s%s%-". $dtl ."s%s";
+		$_ = sprintf($fmt, "", $a, "", $c, "", $rem);
+	    } elsif (/(\s*\d+)(\s+)(\d+)(\s+)(\w+ \d+\s+\d+ \d+:\d+:\d+)/) {
+		my($fn, $a, $sz, $c, $dt, $rem) = ($1, $2, $3, $4, $5, $');
+		my($fnl, $szl, $dtl) = (length($fn), length($sz), length($dt));
+		my($fmt) = "%-". $fnl ."s%s%-". $szl ."s%s%-". $dtl ."s%s";
+		$_ = sprintf($fmt, "", $a, "", $c, "", $rem);
+	    }
+	}
 
-	/\s+(multiple-fs|nv_hdr|vlan\.dat)$/ && next;
+	# Drop these files entirely.
+	/\s+(multiple-fs|LISP-MapCache-IPv\S+|nv_hdr)$/ && next;
 	ProcessHistory("FLASH","","","!Flash: $_");
     }
     ProcessHistory("","","","!\n");
@@ -757,18 +778,47 @@ sub DirSlotN {
 	if ($dev =~ /bootflash/) {
 	    next if (/temp_cont\s*$/);
 	    next if (/uptime_cont\s*$/);
+	    next if (/volt_cont\s*$/);
 	}
-	# Filter dhcp database
-	next if (/dhcp_[^. ]*\.txt/);
+	# filter frequently changing files (dhcp & vlan database)
+	# change from:
+	#    9  -rw-         660  Jan 15 2011 20:43:54 vlan.dat
+	#    9  -rw-         660  Jan 15 2011 20:43:54 +00:00  vlan.dat
+	# to:
+	#       -rw-                                   vlan.dat
+	#       -rw-                                           vlan.dat
+	if (/(dhcp_[^. ]*\.txt|vlan\.dat)\s*$/) {
+	    if (/(\s*\d+)(\s+\S+\s+)(\d+)(\s+)(\w+ \d+\s+\d+ \d+:\d+:\d+ .\d+:\d+)/) {
+		my($fn, $a, $sz, $c, $dt, $rem) = ($1, $2, $3, $4, $5, $');
+		my($fnl, $szl, $dtl) = (length($fn), length($sz), length($dt));
+		my($fmt) = "%-". $fnl ."s%s%-". $szl ."s%s%-". $dtl ."s%s";
+		$_ = sprintf($fmt, "", $a, "", $c, "", $rem);
+	    } elsif (/(\s*\d+)(\s+\S+\s+)(\d+)(\s+)(\w+ \d+\s+\d+ \d+:\d+:\d+)/) {
+		my($fn, $a, $sz, $c, $dt, $rem) = ($1, $2, $3, $4, $5, $');
+		my($fnl, $szl, $dtl) = (length($fn), length($sz), length($dt));
+		my($fmt) = "%-". $fnl ."s%s%-". $szl ."s%s%-". $dtl ."s%s";
+		$_ = sprintf($fmt, "", $a, "", $c, "", $rem);
+	    }
+	}
+
+	# Drop LISP cache.
+	/\s+LISP-MapCache-IPv\S+$/ && next;
+
+	# Filter internal file used by ISSU (In-Service Software Upgrade)
+	# on dual RP ASR systems
+	next if (/\.issu_loc_lock\s*$/);
 
 	if ($ios eq "XE" && /.*\((\d+) bytes free\)/) {
 	    my($tmp) = $1;
 	    if ($tmp >= (1024 * 1024 * 1024)) {
 		$tmp = int($tmp / (1024 * 1024 * 1024));
 		s/$1 bytes free/$tmp GB free/;
-	    } else {
+	    } elsif ($tmp >= (1024 * 1024)) {
 		$tmp = int($tmp / (1024 * 1024));
 		s/$1 bytes free/$tmp MB free/;
+	    } else {
+		$tmp = int($tmp / 1024);
+		s/$1 bytes free/$tmp KB free/;
 	    }
 	}
 	if ($ios eq "XE" && /^((\s+)?\d+\s+\S+)\s+\d+.*(tracelogs$)/) {
@@ -923,6 +973,8 @@ sub ShowDebug {
 	    s/^$1\s{$len}//;
 	}
 
+	/^Load for / && next;
+	/^Time source is / && next;
 	/^No matching debug flags set$/ && next;
 	/^No debug flags set$/ && next;
 	ProcessHistory("COMMENTS","keysort","J1","!DEBUG: $_");
@@ -1346,6 +1398,8 @@ sub ShowInventory {
 	    s/^$1\s{$len}//;
 	}
 
+	next if (/^Load for /);
+	next if (/^Time source is /);
 	if (/^(NAME: "[^"]*",) (DESCR: "[^"]+")/) {
 	    ProcessHistory("INVENTORY","","", sprintf("!%-30s %s\n", $1, $2));
 	    next;
@@ -1684,6 +1738,17 @@ sub WriteTerm {
 	$lineauto = 1 if /^ modem auto/;
 	/^ speed / && $lineauto	&& next; # kill speed on serial lines
 	/^ clockrate /		&& next; # kill clockrate on serial interfaces
+	# kill rx/txspeed on cellular modem cards
+	if (/^line \d+\/\d+\/\d+/) {
+	    my($key) = $1;
+	    ProcessHistory("LINE","keysort","$key","$_");
+	    while (<INPUT>) {
+		tr/\015//d;
+		last if (/^$prompt/ || ! /^ /);
+		next if (/(rx|tx)speed \d+/);
+		ProcessHistory("LINE","keysort","$key","$_");
+	    }
+	}
 	if (/^(enable )?(password|passwd)( level \d+)? / && $filter_pwds >= 1) {
 	    ProcessHistory("ENABLE","","","!$1$2$3 <removed>\n");
 	    next;
@@ -1798,7 +1863,8 @@ sub WriteTerm {
 	    next;
 	}
 	# ASA/PIX keys in more system:running-config
-	if (/^( pre-shared-key | key |failover key ).*/ && $filter_pwds >= 1) {
+	if (/^(( ikev1)? pre-shared-key | key |failover key ).*/ &&
+	    $filter_pwds >= 1) {
 	    ProcessHistory("","","","!$1 <removed> $'"); next;
 	}
 	# ASA/PIX keys in more system:running-config
@@ -1903,7 +1969,11 @@ sub WriteTerm {
 	    }
 	    next;
 	}
-	if (/^(snmp-server community) (\S+)/) {
+	# For ASA version 8.x and higher, the format changed a little. It is
+	# 'snmp-server host {interface {hostname | ip_address}} [trap | poll]
+	# [community  0 | 8 community-string] [version {1 | 2c | 3 username}]
+	# [udp-port port] '
+	if (/^(snmp-server .*community) ([08] )?(\S+)/) {
 	    if ($filter_commstr) {
 		ProcessHistory("SNMPSERVERCOMM","keysort","$_",
 			       "!$1 <removed>$'") && next;
@@ -1972,9 +2042,6 @@ sub WriteTerm {
 
     return(0);
 }
-
-# dummy function
-sub DoNothing {print STDOUT;}
 
 # Main
 @commandtable = (
@@ -2045,8 +2112,9 @@ sub DoNothing {print STDOUT;}
 # commands to the subroutine and track commands that have been completed.
 @commands = map(keys(%$_), @commandtable);
 %commands = map(%$_, @commandtable);
+$commandcnt = scalar(keys %commands);
 
-$cisco_cmds = join(";",@commands);
+$commandstr = join(";",@commands);
 $cmds_regexp = join("|", map quotemeta($_), @commands);
 
 if (length($host) == 0) {
@@ -2058,6 +2126,10 @@ if (length($host) == 0) {
 	exit(1);
     }
 }
+if ($opt_C) {
+    print "clogin -t $timeo -c\'$commandstr\' $host\n";
+    exit(0);
+}
 open(OUTPUT,">$host.new") || die "Can't open $host.new for writing: $!\n";
 select(OUTPUT);
 # make OUTPUT unbuffered if debugging
@@ -2068,13 +2140,13 @@ if ($file) {
     print STDOUT "opening file $host\n" if ($log);
     open(INPUT,"<$host") || die "open failed for $host: $!\n";
 } else {
-    print STDERR "executing clogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($debug);
-    print STDOUT "executing clogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($log);
+    print STDERR "executing clogin -t $timeo -c\"$commandstr\" $host\n" if ($debug);
+    print STDOUT "executing clogin -t $timeo -c\"$commandstr\" $host\n" if ($log);
     if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
-	system "clogin -t $timeo -c \"$cisco_cmds\" $host </dev/null > $host.raw 2>&1" || die "clogin failed for $host: $!\n";
+	system "clogin -t $timeo -c \"$commandstr\" $host </dev/null > $host.raw 2>&1" || die "clogin failed for $host: $!\n";
 	open(INPUT, "< $host.raw") || die "clogin failed for $host: $!\n";
     } else {
-	open(INPUT,"clogin -t $timeo -c \"$cisco_cmds\" $host </dev/null |") || die "clogin failed for $host: $!\n";
+	open(INPUT,"clogin -t $timeo -c \"$commandstr\" $host </dev/null |") || die "clogin failed for $host: $!\n";
     }
 }
 
@@ -2128,7 +2200,7 @@ TOP: while(<INPUT>) {
 	    $clean_run = 0;
 	    last TOP;
 	}
-	$rval = &{$commands{$cmd}};
+	$rval = &{$commands{$cmd}}(*INPUT, *OUTPUT, $cmd);
 	delete($commands{$cmd});
 	if ($rval == -1) {
 	    $clean_run = 0;
@@ -2149,7 +2221,9 @@ if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
 
 # check for completeness
 if (scalar(%commands) || !$clean_run || !$found_end) {
-    if (scalar(%commands)) {
+    if (scalar(keys %commands) eq $commandcnt) {
+	printf(STDERR "$host: missed cmd(s): all commands\n");
+    } elsif (scalar(%commands)) {
 	printf(STDOUT "$host: missed cmd(s): %s\n", join(',', keys(%commands)));
 	printf(STDERR "$host: missed cmd(s): %s\n", join(',', keys(%commands))) if ($debug);
     }

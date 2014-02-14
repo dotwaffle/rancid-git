@@ -1,0 +1,19 @@
+.\"
+.\" $Id: rancid.3.in 2634 2012-10-24 04:53:56Z heas $
+.\"
+.hys 50
+.TH "rancid" "3" "18 July 2012"
+.SH NAME
+rancid \- rancid perl module
+.SH INTRODUCTION
+.B rancid
+XXXXXXXX
+.PP
+document use of rancid.3 by grancid & it's process.
+document functions found here, processhistory, etc.
+.PP
+.PP
+.\"
+.SH "SEE ALSO"
+.BR grancid (1),
+.BR rancid.types.conf (5)

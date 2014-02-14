@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: hlogin.in 2376 2012-01-31 22:42:14Z heas $
+## $Id: hlogin.in 2607 2012-07-27 18:32:28Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -558,7 +558,7 @@ proc run_commands { prompt command } {
 					  exp_continue }
 	    -re "^-+ MORE -+\[^\n\r]*"	{ catch {send " "}
 					  exp_continue }
-	    # 3 flavours of the more prompt, first -More-, then --More-- (for
+	    # 3 flavours of the more prompt, -- first -More-, then --More-- (for
 	    # cisco/riverhead AGM), then with more dashes.
 	    -re "^-More-\[^\n\r-]*"	{ catch {send " "}
 					  exp_continue }
@@ -696,7 +696,7 @@ foreach router [lrange $argv $i end] {
     # Figure out prompts
     set u_prompt [find userprompt $router]
     if { "$u_prompt" == "" } {
-	set u_prompt "(Username|login|user name):"
+	set u_prompt "(\[Uu]sername|[Ll]ogin|user name):"
     } else {
 	set u_prompt [join [lindex $u_prompt 0] ""]
     }

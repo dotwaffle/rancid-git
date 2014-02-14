@@ -1,6 +1,6 @@
 .\"
 .hys 50
-.TH "rancid-run" "1" "5 October 2006"
+.TH "rancid-run" "1" "11 April 2012"
 .SH NAME
 rancid-run \- run rancid for each of the groups
 .SH SYNOPSIS
@@ -136,3 +136,7 @@ configuration file.
 .BR control_rancid (1),
 .BR rancid.conf (5),
 .BR router.db (5)
+.SH "CAVEATS"
+DO NOT leave temporary files in the <group name>/configs directory, they WILL
+be removed by
+.BR control_rancid (1).

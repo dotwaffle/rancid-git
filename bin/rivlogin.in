@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: rivlogin.in 2334 2011-11-17 21:09:37Z heas $
+## $Id: rivlogin.in 2468 2012-04-26 22:23:52Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -741,8 +741,7 @@ for {set idx 0} {$idx < $argc} {incr idx} {
     set arg [lindex $argv $idx]
 
     switch  -glob -- $arg {
-	-c* -
-	-C* {
+	-c* {
 	    if {! [  regexp .\[cC\](.+) $arg ignore command]} {
 		incr idx
 		set command [ lindex $argv $idx ]
@@ -785,8 +784,7 @@ for {set idx 0} {$idx < $argc} {incr idx} {
 	    send_user "@PACKAGE@ @VERSION@\n"
 	    exit 0
 	# Command file
-	} -x* -
-	-X {
+	} -x* {
 	    if {! [  regexp .\[xX\](.+) $arg ignore cmd_file]} {
 		incr idx
 		set cmd_file [ lindex $argv $idx ]
@@ -799,14 +797,12 @@ for {set idx 0} {$idx < $argc} {incr idx} {
 	    close $cmd_fd
 	    set command [join [split $cmd_text \n] \;]
 	    set do_command 1
-	} -f* -
-	-F* {
+	} -f* {
 	    if {! [ regexp .\[fF\](.+) $arg ignore password_file]} {
 		incr idx
 		set password_file [ lindex $argv $idx ]
 	    }
-	} -o* -
-	-O* {
+	} -o* {
 	    if {! [ regexp .\[fF\](.+) $arg ignore password_file]} {
 		incr idx
 		set output_file [ lindex $argv $idx ]
@@ -815,8 +811,7 @@ for {set idx 0} {$idx < $argc} {incr idx} {
 		}
 	    }
 	# Timeout
-	} -t* -
-	-T* {
+	} -t* {
 	    incr idx
 	    set timeoutdflt [ lindex $argv $idx ]
 	# Do we enable?

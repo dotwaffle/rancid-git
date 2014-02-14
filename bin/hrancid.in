@@ -1,9 +1,9 @@
 #! @PERLV_PATH@
 ##
-## $Id: hrancid.in 2328 2011-10-31 18:05:46Z heas $
+## $Id: hrancid.in 2605 2012-07-26 23:21:27Z heas $
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
+## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -45,10 +45,10 @@
 #
 #  RANCID - Really Awesome New Cisco confIg Differ
 #
-# usage: rancid [-dV] [-l] [-f filename | hostname]
+# usage: hrancid [-dltCV] [-f filename | hostname]
 #
 use Getopt::Std;
-getopts('dflV');
+getopts('dflt:CV');
 if ($opt_V) {
     print "@PACKAGE@ @VERSION@\n";
     exit(0);
@@ -236,6 +236,7 @@ sub ShowSystem {
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(-1) if (/command authorization failed/i);
 	return(0) if /^(Invalid|Ambiguous) input:/i;
+	return(0) if /^% Unknown command/i;
 
 	if (/memory\s+-\s+total\s+:\s+(\S+)/i) {
 	    my($mem) = $1;
@@ -521,9 +522,6 @@ sub WriteTerm {
     return(0);
 }
 
-# dummy function
-sub DoNothing {print STDOUT;}
-
 # Main
 @commandtable = (
 	{'show version'			=> 'ShowVersion'},
@@ -541,8 +539,9 @@ sub DoNothing {print STDOUT;}
 # commands to the subroutine and track commands that have been completed.
 @commands = map(keys(%$_), @commandtable);
 %commands = map(%$_, @commandtable);
+$commandcnt = scalar(keys %commands);
 
-$cisco_cmds=join(";",@commands);
+$commandstr=join(";",@commands);
 $cmds_regexp = join("|", map quotemeta($_), @commands);
 
 if (length($host) == 0) {
@@ -554,6 +553,10 @@ if (length($host) == 0) {
 	exit(1);
     }
 }
+if ($opt_C) {
+    print "hlogin -t $timeo -c\'$commandstr\' $host\n";
+    exit(0);
+}
 open(OUTPUT,">$host.new") || die "Can't open $host.new for writing: $!\n";
 select(OUTPUT);
 # make OUTPUT unbuffered if debugging
@@ -564,13 +567,13 @@ if ($file) {
     print STDOUT "opening file $host\n" if ($log);
     open(INPUT,"<$host") || die "open failed for $host: $!\n";
 } else {
-    print STDERR "executing hlogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($debug);
-    print STDOUT "executing hlogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($log);
+    print STDERR "executing hlogin -t $timeo -c\"$commandstr\" $host\n" if ($debug);
+    print STDOUT "executing hlogin -t $timeo -c\"$commandstr\" $host\n" if ($log);
     if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
-	system "hlogin -t $timeo -c \"$cisco_cmds\" $host </dev/null > $host.raw 2>&1" || die "hlogin failed for $host: $!\n";
+	system "hlogin -t $timeo -c \"$commandstr\" $host </dev/null > $host.raw 2>&1" || die "hlogin failed for $host: $!\n";
 	open(INPUT, "< $host.raw") || die "hlogin failed for $host: $!\n";
     } else {
-	open(INPUT,"hlogin -t $timeo -c \"$cisco_cmds\" $host </dev/null |") || die "hlogin failed for $host: $!\n";
+	open(INPUT,"hlogin -t $timeo -c \"$commandstr\" $host </dev/null |") || die "hlogin failed for $host: $!\n";
     }
 }
 
@@ -629,7 +632,7 @@ TOP: while(<INPUT>) {
 	    $clean_run = 0;
 	    last TOP;
 	}
-	$rval = &{$commands{$cmd}};
+	$rval = &{$commands{$cmd}}(*INPUT, *OUTPUT, $cmd);
 	delete($commands{$cmd});
 	if ($rval == -1) {
 	    $clean_run = 0;
@@ -650,7 +653,9 @@ if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
 
 # check for completeness
 if (scalar(%commands) || !$clean_run) {
-    if (scalar(%commands)) {
+    if (scalar(keys %commands) eq $commandcnt) {
+	printf(STDERR "$host: missed cmd(s): all commands\n");
+    } elsif (scalar(%commands)) {
 	printf(STDOUT "$host: missed cmd(s): %s\n", join(',', keys(%commands)));
 	printf(STDERR "$host: missed cmd(s): %s\n", join(',', keys(%commands))) if ($debug);
     }

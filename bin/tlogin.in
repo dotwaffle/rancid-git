@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: tlogin.in 2376 2012-01-31 22:42:14Z heas $
+## $Id: tlogin.in 2460 2012-04-25 17:16:07Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -76,17 +76,17 @@ set timeoutdflt 45
 set platform ""
 
 # Find the user in the ENV, or use the unix userid.
-if {[ info exists env(CISCO_USER) ] } {
+if {[info exists env(CISCO_USER)] } {
     set default_user $env(CISCO_USER)
-} elseif {[ info exists env(USER) ]} {
+} elseif {[info exists env(USER)]} {
     set default_user $env(USER)
-} elseif {[ info exists env(LOGNAME) ]} {
+} elseif {[info exists env(LOGNAME)]} {
     set default_user $env(LOGNAME)
 } else {
     # This uses "id" which I think is portable.  At least it has existed
     # (without options) on all machines/OSes I've been on recently -
     # unlike whoami or id -nu.
-    if [ catch {exec id} reason ] {
+    if [catch {exec id} reason] {
 	send_error "\nError: could not exec id: $reason\n"
 	exit 1
     }
@@ -102,15 +102,15 @@ for {set i 0} {$i < $argc} {incr i} {
 	    exp_internal 1
 	# Username
 	} -u* {
-	    if {! [  regexp .\[uU\](.+) $arg ignore user]} {
+	    if {! [regexp .\[uU\](.+) $arg ignore user]} {
 		incr i
-		set username [ lindex $argv $i ]
+		set username [lindex $argv $i]
 	    }
 	# VTY Password
 	} -p* {
-	    if {! [  regexp .\[pP\](.+) $arg ignore userpasswd]} {
+	    if {! [regexp .\[pP\](.+) $arg ignore userpasswd]} {
 		incr i
-		set userpasswd [ lindex $argv $i ]
+		set userpasswd [lindex $argv $i]
 	    }
 	    set do_passwd 0
 	# ssh passphrase
@@ -118,20 +118,20 @@ for {set i 0} {$i < $argc} {incr i} {
 	    # ignore -r
 	# VTY Password
 	} -v* {
-	    if {! [  regexp .\[vV\](.+) $arg ignore passwd]} {
+	    if {! [regexp .\[vV\](.+) $arg ignore passwd]} {
 		incr i
-		set passwd [ lindex $argv $i ]
+		set passwd [lindex $argv $i]
 	    }
 	    set do_passwd 0
 	# Enable Username
 	} -w* {
-	    if {! [  regexp .\[wW\](.+) $arg ignore enauser]} {
+	    if {! [regexp .\[wW\](.+) $arg ignore enauser]} {
 		incr i
-		set enausername [ lindex $argv $i ]
+		set enausername [lindex $argv $i]
 	    }
 	# Environment variable to pass to -s scripts
 	} -E* {
-	    if {[ regexp .\[E\](.+)=(.+) $arg ignore varname varvalue]} {
+	    if {[regexp .\[E\](.+)=(.+) $arg ignore varname varvalue]} {
 		set E$varname $varvalue
 	    } else {
 		send_user "\nError: invalid format for -E in $arg\n"
@@ -139,25 +139,25 @@ for {set i 0} {$i < $argc} {incr i} {
 	    }
 	# Enable Password
 	} -e* {
-	    if {! [  regexp .\[e\](.+) $arg ignore enapasswd]} {
+	    if {! [regexp .\[e\](.+) $arg ignore enapasswd]} {
 		incr i
-		set enapasswd [ lindex $argv $i ]
+		set enapasswd [lindex $argv $i]
 	    }
 	    set do_enapasswd 0
 	# Command to run.
 	} -c* {
-	    if {! [  regexp .\[cC\](.+) $arg ignore command]} {
+	    if {! [regexp .\[cC\](.+) $arg ignore command]} {
 		incr i
-		set command [ lindex $argv $i ]
+		set command [lindex $argv $i]
 	    }
 	    set do_command 1
 	# Expect script to run.
 	} -s* {
-	    if {! [  regexp .\[sS\](.+) $arg ignore sfile]} {
+	    if {! [regexp .\[sS\](.+) $arg ignore sfile]} {
 		incr i
-		set sfile [ lindex $argv $i ]
+		set sfile [lindex $argv $i]
 	    }
-	    if { ! [ file readable $sfile ] } {
+	    if { ! [file readable $sfile] } {
 		send_user "\nError: Can't read $sfile\n"
 		exit 1
 	    }
@@ -167,29 +167,29 @@ for {set i 0} {$i < $argc} {incr i} {
 	    set do_saveconfig 1
 	# 'ssh -c' cypher type
 	} -y* {
-	    if {! [  regexp .\[eE\](.+) $arg ignore cypher]} {
+	    if {! [regexp .\[eE\](.+) $arg ignore cypher]} {
 		incr i
-		set cypher [ lindex $argv $i ]
+		set cypher [lindex $argv $i]
 	    }
 	# alternate cloginrc file
 	} -f* {
-	    if {! [ regexp .\[fF\](.+) $arg ignore password_file]} {
+	    if {! [regexp .\[fF\](.+) $arg ignore password_file]} {
 		incr i
-		set password_file [ lindex $argv $i ]
+		set password_file [lindex $argv $i]
 	    }
 	# Timeout
 	} -t* {
-	    if {! [ regexp .\[tT\](.+) $arg ignore timeout]} {
+	    if {! [regexp .\[tT\](.+) $arg ignore timeout]} {
 		incr i
-	        set timeoutdflt [ lindex $argv $i ]
+	        set timeoutdflt [lindex $argv $i]
 	    }
 	# Command file
 	} -x* {
-	    if {! [  regexp .\[xX\](.+) $arg ignore cmd_file]} {
+	    if {! [regexp .\[xX\](.+) $arg ignore cmd_file]} {
 		incr i
-		set cmd_file [ lindex $argv $i ]
+		set cmd_file [lindex $argv $i]
 	    }
-	    if [ catch {set cmd_fd [open $cmd_file r]} reason ] {
+	    if [catch {set cmd_fd [open $cmd_file r]} reason] {
 		send_user "\nError: $reason\n"
 		exit 1
 	    }
@@ -243,7 +243,7 @@ proc label { host } {
     }
     # take host from ENV(TERM)
     if [info exists env(TERM)] {
-	if [regexp \^(xterm|vs) $env(TERM) ignore ] {
+	if [regexp \^(xterm|vs) $env(TERM) ignore] {
 	    send_user "\033]1;[lindex [split $host "."] 0]\a"
 	    send_user "\033]2;$host\a"
 	}
@@ -259,7 +259,7 @@ proc add {var args} { global int_$var ; lappend int_$var $args}
 proc include {args} {
     global env
     regsub -all "(^{|}$)" $args {} args
-    if { [ regexp "^/" $args ignore ] == 0 } {
+    if { [regexp "^/" $args ignore] == 0 } {
 	set args $env(HOME)/$args
     }
     source_password_file $args
@@ -269,7 +269,7 @@ proc find {var router} {
     upvar int_$var list
     if { [info exists list] } {
 	foreach line $list {
-	    if { [string match [lindex $line 0] $router ] } {
+	    if { [string match [lindex $line 0] $router] } {
 		return [lrange $line 1 end]
 	    }
 	}
@@ -293,7 +293,7 @@ proc source_password_file { password_file } {
 	send_user "\nError: $password_file must not be world readable/writable\n"
 	exit 1
     }
-    if [ catch {source $password_file} reason ] {
+    if [catch {source $password_file} reason] {
 	send_user "\nError: $reason\n"
 	exit 1
     }
@@ -313,9 +313,9 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 	if [string match "telnet*" $prog] {
 	    regexp {telnet(:([^[:space:]]+))*} $prog command suffix port
 	    if {"$port" == ""} {
-		set retval [ catch {spawn telnet $router} reason ]
+		set retval [catch {spawn telnet $router} reason]
 	    } else {
-		set retval [ catch {spawn telnet $router $port} reason ]
+		set retval [catch {spawn telnet $router $port} reason]
 	    }
 	    if { $retval } {
 		send_user "\nError: telnet failed: $reason\n"
@@ -327,13 +327,13 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 	    if {"$port" != ""} {
 		set cmd "$cmd -p $port"
 	    }
-	    set retval [ catch {eval spawn [split "$cmd -c $cyphertype -x -l $user $router" { }]} reason ]
+	    set retval [catch {eval spawn [split "$cmd -c $cyphertype -x -l $user $router" { }]} reason]
 	    if { $retval } {
 		send_user "\nError: $cmd failed: $reason\n"
 		exit 1
 	    }
 	} elseif [string match "usercmd" $prog] { # user supplies connect cmd
-		set retval [ catch {eval spawn $usercmd} reason ]
+		set retval [catch {eval spawn $usercmd} reason]
 		if { $retval } {
 		    send_user "\nError: '$usercmd' failed: $reason\n"
 		    exit 1
@@ -349,7 +349,7 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 			}
 		}
 	} elseif ![string compare $prog "rsh"] {
-	    if [ catch {spawn rsh -l $user $router} reason ] {
+	    if [catch {spawn rsh -l $user $router} reason] {
 		send_user "\nError: rsh failed: $reason\n"
 		exit 1
 	    }
@@ -480,7 +480,7 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 		}
 		set challenge $expect_out(0,string)
 		regsub {[ \r\n]$} $challenge {} challenge
-		if [ catch {exec otphelper $router "$challenge"} userpswd ] {
+		if [catch {exec otphelper $router "$challenge"} userpswd] {
 			send_error "\nError: login: 'otphelper $router $challenge' failed.\nRun otphelper standalone to diagnose further.\n"
 			exit 1
 		}
@@ -522,7 +522,7 @@ proc do_enable { enauser enapasswd } {
 		}
 		set challenge $expect_out(0,string)
 		regsub {[ \r\n]$} $challenge {} challenge
-		if [ catch {exec otphelper $router "$challenge"} enapasswd ] {
+		if [catch {exec otphelper $router "$challenge"} enapasswd] {
 			send_error "\nError: enable: 'otphelper $router $challenge' failed.\nRun otphelper standalone to diagnose further.\n"
 			exit 1
 		}
@@ -561,13 +561,13 @@ proc run_commands { prompt command } {
     # command is "set length 0"; otherwise its "term length 0".
     # skip if its an extreme (since the pager can not be disabled on a
     # per-vty basis).
-    if { [ string compare "extreme" "$platform" ] } {
-	if [ regexp -- ".*> .*enable" "$prompt" ] {
+    if { [string compare "extreme" "$platform"] } {
+	if [regexp -- ".*> .*enable" "$prompt"] {
 	    send "set length 0\r"
 	    # This is ugly, but reduces code duplication, allowing the
 	    # subsequent expects to handle everything as normal.
 	    set command "set logging session disable;$command"
-	} elseif { ![ string compare "netopia" "$platform" ] } {
+	} elseif { ![string compare "netopia" "$platform"] } {
 		# kludge - should instead skip re-sensing prompt if platform netopia
 		set prompt "#"
 	} else {
@@ -623,7 +623,7 @@ proc run_commands { prompt command } {
     }
     log_user 1
 
-    if { [ string compare "extreme" "$platform" ] } {
+    if { [string compare "extreme" "$platform"] } {
 	send "exit\r"
     } else {
 	send "quit\r"
@@ -817,10 +817,10 @@ foreach router [lrange $argv $i end] {
     } elseif { $do_script } {
 	# If the prompt is (enable), then we are on a switch and the
 	# command is "set length 0"; otherwise its "term length 0".
-	if [ regexp -- ".*> .*enable" "$prompt" ] {
+	if [regexp -- ".*> .*enable" "$prompt"] {
 	    send "set length 0\r"
 	    send "set logging session disable\r"
-	} elseif { ![ string compare "netopia" "$platform" ] } {
+	} elseif { ![string compare "netopia" "$platform"] } {
 		# do nothing
 	} else {
 	    send "term length 0\r"

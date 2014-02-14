@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: lg.cgi.in 2334 2011-11-17 21:09:37Z heas $
+## $Id: lg.cgi.in 2616 2012-08-15 21:46:51Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -477,7 +477,7 @@ $arg =~ s/["'`]//g;			# these are BS in any arg for any query
 @arg = split(' ', $arg);
 
 # verify router, commands, arguments, etc.
-($router, $mfg) = split(':', $router_param);
+($router, $mfg) = split(':', lc($router_param));
 if (!defined($type) || !defined($router) || $router eq "") {
     &Error("You must at least choose a Query and a router.  Try buying " .
 								"a clue.\n");
@@ -499,7 +499,7 @@ if (! arraymember(\@rtrlist, $router)) {
 }
 
 # conversion of command "type" passed from lgform.cgi to the vendor's syntax.
-if ($mfg =~ /cisco/i) {
+if ($mfg eq "cisco") {
     %mfgCmd = (
 		# Debug Queries
 		log => "show logging",
@@ -522,6 +522,10 @@ if ($mfg =~ /cisco/i) {
 		pim_neighbor => "show ip pim neighbor",
 		pim_rp => "show ip pim rp mapping",
 		# IPv6 Queries
+		v6_bgp => "show bgp ipv6",
+		v6_interface => "show ipv6 interface",
+		#v6_route => "show route ipv6",
+		v6_summary => "show bgp ipv6 summary",
 		#
 		#acl => "show access-list",
 		#aspath => "show ip as-path-access-list",
@@ -534,12 +538,50 @@ if ($mfg =~ /cisco/i) {
 		routemap => "show route-map",
 		rpf => "show ip rpf",
 		summary => "show ip bgp summary",
-		trace => "traceroute",
-		v6_bgp => "show bgp ipv6",
-		v6_interface => "show ipv6 interface",
-		v6_summary => "show bgp ipv6 summary"
+		trace => "traceroute"
     );
-} elsif ($mfg =~ /foundry/i) {
+} elsif ($mfg eq "cisco-xr") {
+    %mfgCmd = (
+		# Debug Queries
+		log => "show logging",
+		# Interface Queries
+		framerelay => "show frame-relay pvc",
+		interface => "show interface",
+		intbrief => "show ipv4 interface",
+		# Routing Queries
+		damp => "show bgp all all dampened-paths",
+		neighbor => "show bgp neighbor",
+		# Multicast Queries
+		mbgp => "show ip mbgp",
+		mbgpsum => "show bgp all multicast summary",
+		#mneighbor => "show ip bgp neighbor",
+		#msdp => "show ip msdp summary",
+		#msdpsa => "show ip msdp sa-cache",
+		#msess => "show ip sdr",
+		#mroute => "show ip mroute",
+		#pim_interface => "show ip pim interface",
+		#pim_neighbor => "show ip pim neighbor",
+		#pim_rp => "show ip pim rp mapping",
+		# IPv6 Queries
+		v6_bgp => "show bgp ipv6 all",
+		v6_interface => "show ipv6 interface",
+		v6_route => "show route ipv6",
+		v6_summary => "show bgp ipv6 unicast summary",
+		#
+		#acl => "show access-list",
+		#aspath => "show ip as-path-access-list",
+		#communitylist => "show ip community-list",
+		ping => "ping",
+		prefix => "show ip bgp",
+		prefixlist => "show ip prefix-list",
+		regex => "show ip bgp regex",
+		route => "show route",
+		routemap => "show route-map",
+		rpf => "show ip rpf",
+		summary => "show ip bgp summary",
+		trace => "traceroute"
+    );
+} elsif ($mfg eq "foundry") {
     %mfgCmd = (
 		# Debug Queries
 		log => "show log",
@@ -578,7 +620,7 @@ if ($mfg =~ /cisco/i) {
 		prefix => "show ip bgp",
 		prefixlist => "show ip prefix-list"
 	);
-} elsif ($mfg =~ /juniper/i) {
+} elsif ($mfg eq "juniper") {
     %mfgCmd = (
 		# Debug Queries
 		log => "show log messages",
@@ -619,6 +661,8 @@ if ($mfg =~ /cisco/i) {
 		route => "show route table inet.0 terse",
 		routemap => "show policy"
 	);
+} else {
+    &Error("Unknown device type: $mfg\n");
 }
 
 # construct Display command from configuration
@@ -718,7 +762,8 @@ if ($type eq "prefix" || $type eq "mbgp" || $type eq "route" ) {
 	undef($arg);
     }
 } elsif ($type eq "ping" || $type eq "trace") {
-    if ($arg[0] !~ /^\d+\.\d+\.\d+\.\d+$/) {
+    # XXX: is this check of the address arg correct and pedantic?
+    if ($arg[0] !~ /^\d+\.\d+\.\d+\.\d+$/ && $arg[0] !~ /[0-9a-fA-F:]+$/) {
 	if ($arg[0] !~ /^[A-Za-z0-9._-]+$/) {
 	    &Error("That argument ($arg[0]) is not valid.\n");
 	}

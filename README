@@ -30,6 +30,8 @@ cloginrc.sample	TCL commands to set passwords, usernames etc. used by clogin
 etc/
 	lg.conf.sample		Sample Looking Glass configuration
 	rancid.conf.sample	Sample RANCID configuration
+	rancid.types.base	RANCID default device type configuration
+	rancid.types.conf	RANCID user-defined device type configuration
 bin/
 	clogin.in	Expect script that logs into routers and either presents
 			an interactive shell, runs a set of commands, or runs
@@ -46,6 +48,7 @@ bin/
 	rancid.in	Runs commands on cisco routers and processes the output.
 
 	agmrancid.in	Version of rancid.in for Cisco Anomaly Guard Module (AGM)
+	anrancid.in	Version of rancid.in for Arbor Networks appliances.
 	arancid.in	Version of rancid.in for Alteon switches.
 	brancid.in	Version of rancid.in for baynet/nortel routers.
 	cat5rancid.in	Version of rancid.in for Cisco Catalyst switches.
@@ -60,6 +63,7 @@ bin/
 	jerancid.in	Version of rancid.in for Juniper E-series routers.
 	jrancid.in	Version of rancid.in for Juniper routers.
 	mrancid.in	Version of rancid.in for MRT daemons.
+	mtrancid.in	Version of rancid.in for Microtik routers.
 	nrancid.in	Version of rancid.in for Netscreen firewalls.
 	nsrancid.in	Version of rancid.in for Netscalars.
 	prancid.in	Version of rancid.in for Procket routers.
@@ -67,6 +71,7 @@ bin/
 	rrancid.in	Version of rancid.in for Redback routers.
 	srancid.in	Version of rancid.in for SMC switches.
 	tntrancid.in	Version of rancid.in for TNT access servers.
+	xirancid.in	Version of rancid.in for Xirrus arrays.
 	xrancid.in	Version of rancid.in for Extreme switches.
 	zrancid.in	Version of rancid.in for Zebra routers.
 
@@ -78,10 +83,12 @@ bin/
 	hlogin.in	Version of clogin.in for HP procurve switches.
 	htlogin.in	Version of clogin.in for Hitatchi routers.
 	jlogin.in	Version of clogin.in for Juniper routers.
+	mtlogin.in	Version of clogin.in for Microtik routers.
 	nlogin.in	Version of clogin.in for Netscreen firewalls.
 	nslogin.in	Version of clogin.in for Netscalars.
 	rivlogin.in	Version of clogin.in for Riverstone routers.
 	tntlogin.in	Version of clogin.in for TNT access servers.
+	xilogin.in	Version of clogin.in for Xirrus arrays.
 man/		man pages
 share/		Readmes, samples, utilities, contribs, etc
 include/	Include files and rancid version.h

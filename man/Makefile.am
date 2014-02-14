@@ -1,9 +1,9 @@
 ## Process this file with automake to produce Makefile.in
 ## A Makefile.in is supplied, in case you do not have automake.
 
-## $Id: Makefile.am 2294 2011-04-26 18:11:32Z heas $
+## $Id: Makefile.am 2640 2012-10-24 17:37:22Z heas $
 ##
-## Copyright (c) 1997-2007 by Terrapin Communications, Inc.
+## Copyright (c) 1997-2012 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -49,17 +49,19 @@ AUTOMAKE_OPTIONS=foreign no-dependencies
 
 @SET_MAKE@
 
-man_gen_MANS = lg.conf.5 rancid.conf.5 lg_intro.1
-man_nogen_MANS = agmrancid.1 alogin.1 arancid.1 arrancid.1 avologin.1 \
-		avorancid.1 blogin.1 brancid.1 cat5rancid.1 clogin.1 \
-		cloginrc.5 control_rancid.1 cssrancid.1 elogin.1 erancid.1 \
-		f5rancid.1 f10rancid.1 flogin.1 fnlogin.1 fnrancid.1 francid.1 \
-		hlogin.1 hrancid.1 htlogin.1 htrancid.1 jerancid.1 jlogin.1 \
-		jrancid.1 mrancid.1 mrvlogin.1 mrvrancid.1 mtlogin.1 \
-		mtrancid.1 nlogin.1 nrancid.1 nslogin.1 nsrancid.1 nxrancid.1 \
-		par.1 prancid.1 rancid-cvs.1 rancid-run.1 rancid.1 \
-		rancid_intro.1 rivlogin.1 rivrancid.1 router.db.5 rrancid.1 \
-		srancid.1 tlogin.1 tntlogin.1 tntrancid.1 trancid.1 xrancid.1 \
+man_gen_MANS = lg.conf.5 rancid.3 rancid.conf.5 rancid.types.conf.5 lg_intro.1
+man_nogen_MANS = agmrancid.1 alogin.1 anlogin.1 anrancid.1 arancid.1 \
+		arrancid.1 avologin.1 avorancid.1 blogin.1 brancid.1 \
+		cat5rancid.1 clogin.1 cloginrc.5 control_rancid.1 cssrancid.1 \
+		elogin.1 erancid.1 f5rancid.1 f10rancid.1 flogin.1 fnlogin.1 \
+		fnrancid.1 francid.1 grancid.1 hlogin.1 hrancid.1 htlogin.1 \
+		htrancid.1 jerancid.1 jlogin.1 jrancid.1 mrancid.1 \
+		mrvlogin.1 mrvrancid.1 mtlogin.1 mtrancid.1 nlogin.1 \
+		nrancid.1 nslogin.1 nsrancid.1 nxrancid.1 par.1 prancid.1 \
+		rancid-cvs.1 rancid-run.1 rancid.1 \
+		rancid.types.base.5 rancid_intro.1 rivlogin.1 rivrancid.1 \
+		router.db.5 rrancid.1 srancid.1 tlogin.1 tntlogin.1 \
+		xilogin.1 xirancid.1 tntrancid.1 trancid.1 xrancid.1 \
 		xrrancid.1 zrancid.1
 
 man_MANS = $(man_nogen_MANS) $(man_gen_MANS)
@@ -97,3 +99,13 @@ rancid.conf.5: Makefile $(srcdir)/rancid.conf.5.in
 	rm -f rancid.conf.5 rancid.conf.5.tmp; \
 	$(auto_edit) $(srcdir)/rancid.conf.5.in >rancid.conf.5.tmp; \
 	mv rancid.conf.5.tmp rancid.conf.5
+
+rancid.types.conf.5: Makefile $(srcdir)/rancid.types.conf.5.in
+	rm -f rancid.types.conf.5 rancid.types.conf.5.tmp; \
+	$(auto_edit) $(srcdir)/rancid.types.conf.5.in >rancid.types.conf.5.tmp; \
+	mv rancid.types.conf.5.tmp rancid.types.conf.5
+
+rancid.3: Makefile $(srcdir)/rancid.3.in
+	rm -f rancid.3 rancid.3.tmp; \
+	$(auto_edit) $(srcdir)/rancid.3.in >rancid.3.tmp; \
+	mv rancid.3.tmp rancid.3

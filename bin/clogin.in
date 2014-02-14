@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: clogin.in 2376 2012-01-31 22:42:14Z heas $
+## $Id: clogin.in 2618 2012-08-16 22:37:46Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -585,15 +585,19 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype identfile 
 # Enable
 proc do_enable { enauser enapasswd } {
     global do_saveconfig in_proc
-    global prompt u_prompt e_prompt
+    global prompt u_prompt e_prompt enacmd
     set in_proc 1
 
-    send "enable\r"
+    send "$enacmd\r"
     expect {
 	-re "$u_prompt"	{ send -- "$enauser\r"; exp_continue}
 	-re "$e_prompt"	{ send -- "$enapasswd\r"; exp_continue}
 	"#"		{ set prompt "#" }
 	"(enable)"	{ set prompt "> \\(enable\\) " }
+	"% Invalid input" {
+			  send_user "\nError: Unrecognized command, check your enable command\n";
+			  return 1
+			}
 	-re "(denied|Sorry|Incorrect)"	{
 			  # % Access denied - from local auth and poss. others
 			  send_user "\nError: Check your Enable passwd\n";
@@ -802,6 +806,10 @@ foreach router [lrange $argv $i end] {
       if { "$enauser" == "" } { set enauser $ruser }
     }
 
+    # Figure out enable command
+    set enacmd [join [find enablecmd $router] ""]
+    if { "$enacmd" == "" } { set enacmd "enable" }
+
     # Figure out prompts
     set u_prompt [find userprompt $router]
     if { "$u_prompt" == "" } {
@@ -901,7 +909,7 @@ foreach router [lrange $argv $i end] {
 				}
     }
     if { $do_command || $do_script } {
-	if { [ string compare "extreme" "$platform" ] } {
+	if { [string compare "extreme" "$platform"] } {
 	    # If the prompt is (enable), then we are on a switch and the
 	    # command is "set length 0"; otherwise its "terminal length 0".
 	    if [regexp -- ".*> .*enable" "$prompt"] {

@@ -2206,7 +2206,7 @@ VERSION=`sed -n 's/.*version.*"\(.*\)".*/\1/p' $srcdir/include/version.h.in|tr -
 PACKAGE=`sed -n 's/.*package.*"\(.*\)".*/\1/p' $srcdir/include/version.h.in|tr -d ' '`
 
 
-COPYYEARS="1997-2011"
+COPYYEARS="1997-2012"
 
 
 am__api_version='1.11'
@@ -6011,6 +6011,8 @@ ac_config_files="$ac_config_files etc/Makefile"
 
 ac_config_files="$ac_config_files include/Makefile"
 
+ac_config_files="$ac_config_files lib/Makefile"
+
 ac_config_files="$ac_config_files man/Makefile"
 
 ac_config_files="$ac_config_files share/Makefile"
@@ -6026,13 +6028,17 @@ ac_config_files="$ac_config_files include/version.h"
 ac_config_headers="$ac_config_headers include/config.h"
 
 
-ac_config_files="$ac_config_files bin/control_rancid bin/par bin/rancid-fe"
+ac_config_files="$ac_config_files bin/control_rancid bin/par"
 
 ac_config_files="$ac_config_files bin/agmrancid"
 
 ac_config_files="$ac_config_files bin/alogin bin/arancid"
 
+ac_config_files="$ac_config_files bin/anlogin bin/anrancid"
+
 ac_config_files="$ac_config_files bin/arrancid"
+
+ac_config_files="$ac_config_files bin/atrancid"
 
 ac_config_files="$ac_config_files bin/avologin bin/avorancid"
 
@@ -6081,6 +6087,8 @@ ac_config_files="$ac_config_files bin/tlogin"
 ac_config_files="$ac_config_files bin/tntlogin bin/tntrancid"
 
 ac_config_files="$ac_config_files bin/trancid"
+
+ac_config_files="$ac_config_files bin/xilogin bin/xirancid"
 
 ac_config_files="$ac_config_files bin/xrancid"
 
@@ -6814,17 +6822,20 @@ do
     "bin/Makefile") CONFIG_FILES="$CONFIG_FILES bin/Makefile" ;;
     "etc/Makefile") CONFIG_FILES="$CONFIG_FILES etc/Makefile" ;;
     "include/Makefile") CONFIG_FILES="$CONFIG_FILES include/Makefile" ;;
+    "lib/Makefile") CONFIG_FILES="$CONFIG_FILES lib/Makefile" ;;
     "man/Makefile") CONFIG_FILES="$CONFIG_FILES man/Makefile" ;;
     "share/Makefile") CONFIG_FILES="$CONFIG_FILES share/Makefile" ;;
     "include/version.h") CONFIG_FILES="$CONFIG_FILES include/version.h" ;;
     "include/config.h") CONFIG_HEADERS="$CONFIG_HEADERS include/config.h" ;;
     "bin/control_rancid") CONFIG_FILES="$CONFIG_FILES bin/control_rancid" ;;
     "bin/par") CONFIG_FILES="$CONFIG_FILES bin/par" ;;
-    "bin/rancid-fe") CONFIG_FILES="$CONFIG_FILES bin/rancid-fe" ;;
     "bin/agmrancid") CONFIG_FILES="$CONFIG_FILES bin/agmrancid" ;;
     "bin/alogin") CONFIG_FILES="$CONFIG_FILES bin/alogin" ;;
     "bin/arancid") CONFIG_FILES="$CONFIG_FILES bin/arancid" ;;
+    "bin/anlogin") CONFIG_FILES="$CONFIG_FILES bin/anlogin" ;;
+    "bin/anrancid") CONFIG_FILES="$CONFIG_FILES bin/anrancid" ;;
     "bin/arrancid") CONFIG_FILES="$CONFIG_FILES bin/arrancid" ;;
+    "bin/atrancid") CONFIG_FILES="$CONFIG_FILES bin/atrancid" ;;
     "bin/avologin") CONFIG_FILES="$CONFIG_FILES bin/avologin" ;;
     "bin/avorancid") CONFIG_FILES="$CONFIG_FILES bin/avorancid" ;;
     "bin/blogin") CONFIG_FILES="$CONFIG_FILES bin/blogin" ;;
@@ -6867,6 +6878,8 @@ do
     "bin/tntlogin") CONFIG_FILES="$CONFIG_FILES bin/tntlogin" ;;
     "bin/tntrancid") CONFIG_FILES="$CONFIG_FILES bin/tntrancid" ;;
     "bin/trancid") CONFIG_FILES="$CONFIG_FILES bin/trancid" ;;
+    "bin/xilogin") CONFIG_FILES="$CONFIG_FILES bin/xilogin" ;;
+    "bin/xirancid") CONFIG_FILES="$CONFIG_FILES bin/xirancid" ;;
     "bin/xrancid") CONFIG_FILES="$CONFIG_FILES bin/xrancid" ;;
     "bin/xrrancid") CONFIG_FILES="$CONFIG_FILES bin/xrrancid" ;;
     "bin/zrancid") CONFIG_FILES="$CONFIG_FILES bin/zrancid" ;;
@@ -7552,11 +7565,13 @@ $as_echo X"$file" |
  ;;
     "bin/control_rancid":F) chmod a+x $ac_file ;;
     "bin/par":F) chmod a+x $ac_file ;;
-    "bin/rancid-fe":F) chmod a+x $ac_file ;;
     "bin/agmrancid":F) chmod a+x $ac_file ;;
     "bin/alogin":F) chmod a+x $ac_file ;;
     "bin/arancid":F) chmod a+x $ac_file ;;
+    "bin/anlogin":F) chmod a+x $ac_file ;;
+    "bin/anrancid":F) chmod a+x $ac_file ;;
     "bin/arrancid":F) chmod a+x $ac_file ;;
+    "bin/atrancid":F) chmod a+x $ac_file ;;
     "bin/avologin":F) chmod a+x $ac_file ;;
     "bin/avorancid":F) chmod a+x $ac_file ;;
     "bin/blogin":F) chmod a+x $ac_file ;;
@@ -7599,6 +7614,8 @@ $as_echo X"$file" |
     "bin/tntlogin":F) chmod a+x $ac_file ;;
     "bin/tntrancid":F) chmod a+x $ac_file ;;
     "bin/trancid":F) chmod a+x $ac_file ;;
+    "bin/xilogin":F) chmod a+x $ac_file ;;
+    "bin/xirancid":F) chmod a+x $ac_file ;;
     "bin/xrancid":F) chmod a+x $ac_file ;;
     "bin/xrrancid":F) chmod a+x $ac_file ;;
     "bin/zrancid":F) chmod a+x $ac_file ;;

@@ -3,7 +3,7 @@
 ## $Id$
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) 1997-2009 by Terrapin Communications, Inc.
+## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -46,10 +46,10 @@
 # Arista mode is better.
 # Initial version by Bill Fenner <fenner@aristanetworks.com>
 #
-# usage: arrancid [-dV] [-l] [-f filename | hostname]
+# usage: arrancid [-dltCV] [-f filename | hostname]
 #
 use Getopt::Std;
-getopts('dflV');
+getopts('dflt:CV');
 if ($opt_V) {
     print "@PACKAGE@ @VERSION@\n";
     exit(0);
@@ -304,6 +304,21 @@ sub ShowFlash {
         # persist changes constantly if you're running ntp, so
         # skip its updates.
         /\spersist$/ && next;
+
+	if (/.*\((\d+) bytes free\)/) {  
+	    my($tmp) = $1;
+	    if ($tmp >= (1024 * 1024 * 1024)) {   
+		$tmp = int($tmp / (1024 * 1024 * 1024));
+		s/$1 bytes free/$tmp GB free/;
+	    } elsif ($tmp >= (1024 * 1024)) {  
+		$tmp = int($tmp / (1024 * 1024));
+		s/$1 bytes free/$tmp MB free/;
+	    } else {
+		$tmp = int($tmp / 1024);
+		s/$1 bytes free/$tmp KB free/;
+	    }
+	}
+
 	ProcessHistory("FLASH","","","!Flash: $_");
     }
     ProcessHistory("","","","!\n");
@@ -615,9 +630,6 @@ sub WriteTerm {
     return(0);
 }
 
-# dummy function
-sub DoNothing {print STDOUT;}
-
 # Main
 @commandtable = (
 	{'show version'			=> 'ShowVersion'},
@@ -633,6 +645,7 @@ sub DoNothing {print STDOUT;}
 # commands to the subroutine and track commands that have been completed.
 @commands = map(keys(%$_), @commandtable);
 %commands = map(%$_, @commandtable);
+$commandcnt = scalar(keys %commands);
 
 $arista_cmds = join(";",@commands);
 $cmds_regexp = join("|", map quotemeta($_), @commands);
@@ -645,6 +658,10 @@ if (length($host) == 0) {
 	print(STDERR "Too few arguments: host name required\n");
 	exit(1);
     }
+}
+if ($opt_C) {
+    print "clogin -t $timeo -c\'$arista_cmds\' $host\n";
+    exit(0);
 }
 open(OUTPUT,">$host.new") || die "Can't open $host.new for writing: $!\n";
 select(OUTPUT);
@@ -712,7 +729,7 @@ TOP: while(<INPUT>) {
 	    $clean_run = 0;
 	    last TOP;
 	}
-	$rval = &{$commands{$cmd}};
+	$rval = &{$commands{$cmd}}(*INPUT, *OUTPUT, $cmd);
 	delete($commands{$cmd});
 	if ($rval == -1) {
 	    $clean_run = 0;
@@ -733,7 +750,9 @@ if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
 
 # check for completeness
 if (scalar(%commands) || !$clean_run || !$found_end) {
-    if (scalar(%commands)) {
+    if (scalar(keys %commands) eq $commandcnt) {
+	printf(STDERR "$host: missed cmd(s): all commands\n");
+    } elsif (scalar(%commands)) {
 	printf(STDOUT "$host: missed cmd(s): %s\n", join(',', keys(%commands)));
 	printf(STDERR "$host: missed cmd(s): %s\n", join(',', keys(%commands))) if ($debug);
     }

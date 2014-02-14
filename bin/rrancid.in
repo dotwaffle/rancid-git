@@ -1,9 +1,9 @@
 #! @PERLV_PATH@
 ##
-## $Id: rrancid.in 2279 2011-01-31 22:41:00Z heas $
+## $Id: rrancid.in 2605 2012-07-26 23:21:27Z heas $
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
+## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -44,10 +44,10 @@
 #
 #  RANCID - Really Awesome New Cisco confIg Differ
 #
-# usage: rancid [-dV] [-l] [-f filename | hostname]
+# usage: rrancid [-dltCV] [-f filename | hostname]
 #
 use Getopt::Std;
-getopts('dflV');
+getopts('dflt:CV');
 if ($opt_V) {
     print "@PACKAGE@ @VERSION@\n";
     exit(0);
@@ -292,9 +292,6 @@ sub WriteTerm {
     return;
 }
 
-# dummy function
-sub DoNothing {print STDOUT;}
-
 # Main subroutine that splits up the work
 # All Subs return the name of the next function to use.
 # If the sub returns a new funtion name, that name will be used
@@ -325,6 +322,7 @@ sub FlailHelplessly {
 # commands to the subroutine and track commands that have been completed.
 @commands = map(keys(%$_), @commandtable);
 %commands = map(%$_, @commandtable);
+$commandcnt = scalar(keys %commands);
 
 $redback_cmds=join(";",@commands);
 $cmds_regexp = join("|", map quotemeta($_), @commands);
@@ -337,6 +335,10 @@ if (length($host) == 0) {
 	print(STDERR "Too few arguments: host name required\n");
 	exit(1);
     }
+}
+if ($opt_C) {
+    print "clogin -t $timeo -c\'$commandstr\' $host\n";
+    exit(0);
 }
 open(OUTPUT,">$host.new") || die "Can't open $host.new for writing: $!\n";
 select(OUTPUT);
@@ -408,7 +410,7 @@ while(<INPUT>) {
 	    $clean_run = 0;
 	    last;
 	}
-	$rval = &{$commands{$cmd}};
+	$rval = &{$commands{$cmd}}(*INPUT, *OUTPUT, $cmd);
 	delete($commands{$cmd});
 	if ($rval == -1) {
 	    $clean_run = 0;
@@ -429,7 +431,9 @@ if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
 
 # check for completeness
 if (scalar(%commands) || !$clean_run || !$found_end) {
-    if (scalar(%commands)) {
+    if (scalar(keys %commands) eq $commandcnt) {
+	printf(STDERR "$host: missed cmd(s): all commands\n");
+    } elsif (scalar(%commands)) {
 	printf(STDOUT "$host: missed cmd(s): %s\n", join(',', keys(%commands)));
 	printf(STDERR "$host: missed cmd(s): %s\n", join(',', keys(%commands))) if ($debug);
     }

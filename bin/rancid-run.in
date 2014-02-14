@@ -1,6 +1,6 @@
 #! /bin/sh
 ##
-## $Id: rancid-run.in 2334 2011-11-17 21:09:37Z heas $
+## $Id: rancid-run.in 2565 2012-07-24 02:02:36Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -63,7 +63,6 @@ pr_usage() {
 # -m <mailto address>
 # -r <device name>
 if [ $# -ge 1 ] ; then
-
     while [ 1 ] ; do
 	case $1 in
 	-V)
@@ -156,7 +155,7 @@ do
 rancid $GROUP hung on `hostname`?  Old lockfile still exists:
 `ls -l $LOCKFILE`
 END
-		) | sendmail -t
+		) | sendmail -t $MAILOPTS
 	    fi
 	    rm -f $TMPDIR/.$GROUP.old
 	else

@@ -1,8 +1,8 @@
 .\"
-.\" $Id: rancid_intro.1 2101 2009-07-14 19:19:51Z heas $
+.\" $Id: rancid_intro.1 2463 2012-04-25 19:23:23Z heas $
 .\"
 .hys 50
-.TH "rancid_intro" "1" "14 july 2009"
+.TH "rancid_intro" "1" "18 April 2012"
 .SH NAME
 rancid_intro \- introduction to the Really Awesome New Cisco confIg Differ
 .SH INTRODUCTION
@@ -23,20 +23,22 @@ Hitachi,
 Juniper Routers and edge (ERX) routers,
 Lucent TNT,
 MRTd daemon,
+Microtik routers,
 Netscalar load balancers,
 Netscreen firewalls,
 Procket,
 Redback,
 SMC switches,
+Xirrus arrays,
 Zebra routing software,
 and the ADC-Kentrox EZ-T3 mux.
 .PP
 .B rancid
-uses an expect script to login to each of a list of devices and run a set of
-commands for that device-type and collects the output.  The output
-is run through some filtering to summarize, reformat, and/or snip
-unwanted or security related data such as chassis temperature and easily
-reverse-able passwords.
+uses an expect script to login using ssh, telnet, or rsh to each of a list
+of devices and run a set of commands for that device-type and collects the
+output.  The output is run through some filtering to summarize, reformat,
+and/or snip unwanted or security related data such as chassis temperature
+and easily reverse-able passwords.
 .PP
 Named after the device's name in the group's configuration file (\c
 .IR router.db ),
@@ -59,6 +61,10 @@ configuration file,
 .PP
 Lastly, all the updated files are checked into the revision control system
 (CVS or Subversion).
+And, administrative messages, such as collections that are failing for
+longer than
+.B OLDTIME,
+are mailed to "rancid-admin-<group>".
 .PP
 Additional utilities, including a looking glass, come with rancid.  See
 rancid's share directory (

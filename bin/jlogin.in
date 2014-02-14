@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: jlogin.in 2376 2012-01-31 22:42:14Z heas $
+## $Id: jlogin.in 2492 2012-05-31 14:41:36Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -99,8 +99,7 @@ for {set i 0} {$i < $argc} {incr i} {
 
     switch  -glob -- $arg {
 	# Command to run.
-	-c* -
-	-C* {
+	-c* {
 	    if {! [  regexp .\[cC\](.+) $arg ignore command]} {
 		incr i
 		set command [ lindex $argv $i ]
@@ -546,6 +545,8 @@ foreach router [lrange $argv $i end] {
 	send "set cli complete-on-space off\r"
 	expect -re $prompt	{}
 	send "set cli screen-length 0\r"
+	expect -re $prompt	{}
+	send "set cli screen-width 0\r"
 	expect -re $prompt	{}
 	source $sfile
 	catch {close};

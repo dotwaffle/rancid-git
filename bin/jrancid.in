@@ -1,9 +1,9 @@
 #! @PERLV_PATH@
 ##
-## $Id: jrancid.in 2279 2011-01-31 22:41:00Z heas $
+## $Id: jrancid.in 2605 2012-07-26 23:21:27Z heas $
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
+## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -45,10 +45,10 @@
 #
 #  RANCID - Really Awesome New Cisco confIg Differ
 #
-# usage: jrancid [-dV] [-l] [-f filename | hostname]
+# usage: jrancid [-dltCV] [-f filename | hostname]
 #
 use Getopt::Std;
-getopts('dflV');
+getopts('dflt:CV');
 if ($opt_V) {
     print "@PACKAGE@ @VERSION@\n";
     exit(0);
@@ -469,6 +469,18 @@ sub ShowSystemLicense {
 	next if (/^system (shutdown message from|going down )/i);
 	next if (/^\{(master|backup)(:\d+)?\}/);
 
+	# licenses used changes constantly.  distill it to a percentage.
+	if (/^(\s+scale-subscriber)(\s+)(\d+)(\s+\d+)(.*$)/) {
+	    my($a, $sp, $used, $avail, $rem) = ($1, $2, $3, $4, $');
+	    my($spl, $usedl) = (length($sp), length($used));
+	    my($pcnt) = int(($used + 0.0) / ($avail + 0.0) * 100);
+	    my($pcntl) = length($pcnt) + 1;
+	    $spl = $spl + $usedl - $pcntl;
+
+	    my($fmt) = "%s%-" . $spl . "s%d%%%s%s";
+	    $_ = sprintf($fmt, $a, "", $pcnt, $avail, $rem);
+	}
+
 	/Unrecognized command/ && return(1);
 	/command is not valid/ && return(1);
 	/^\s+\^/ && return(1);
@@ -540,6 +552,7 @@ sub ShowVersion {
 	next if (/^\s*$/);
 	next if (/^system (shutdown message from|going down )/i);
 	next if (/^\{(master|backup)(:\d+)?\}/);
+	/# error: abnormal / && return(-1);
 
 	/^Juniper Networks is:/ && ProcessHistory("","","","# \n# $_") && next;
 	ProcessHistory("","","","# $_");
@@ -600,7 +613,7 @@ sub ShowConfiguration {
 	    ProcessHistory("","","","$_");
 	    next;
 	}
-	if (/^(.*\ssecret )[^ ;]+/ && $filter_pwds >= 1) {
+	if (/^(.*\s(secret|simple-password) )[^ ;]+/ && $filter_pwds >= 1) {
 	    ProcessHistory("","","","#$1<removed>$'");
 	    next;
 	}
@@ -632,9 +645,6 @@ sub ShowConfiguration {
 ### End of real work
 ###
 
-# dummy function
-sub DoNothing {print STDOUT;}
-
 # Main
 @commandtable = (
 	{'show chassis clocks'		=> 'ShowChassisClocks'},
@@ -662,6 +672,7 @@ sub DoNothing {print STDOUT;}
 # commands to the subroutine and track commands that have been completed.
 @commands = map(keys(%$_), @commandtable);
 %commands = map(%$_, @commandtable);
+$commandcnt = scalar(keys %commands);
 
 $jnx_commands=join(";",@commands);
 $cmds_regexp = join("|", map quotemeta($_), @commands);
@@ -674,6 +685,10 @@ if (length($host) == 0) {
 	print(STDERR "Too few arguments: host name required\n");
 	exit(1);
     }
+}
+if ($opt_C) {
+    print "jlogin -t $timeo -c\'$jnx_commands\' $host\n";
+    exit(0);
 }
 open(OUTPUT,">$host.new") || die "Can't open $host.new for writing: $!\n";
 select(OUTPUT);
@@ -751,7 +766,7 @@ TOP: while (<INPUT>) {
 	    $clean_run = 0;
 	    last TOP;
 	}
-	$rval = &{$commands{$cmd}};
+	$rval = &{$commands{$cmd}}(*INPUT, *OUTPUT, $cmd);
 	delete($commands{$cmd});
 	if ($rval == -1) {
 	    $clean_run = 0;
@@ -777,7 +792,9 @@ if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
 # check for completeness
 $commands = join(", ", keys(%commands));
 if (scalar(%commands) || !$clean_run || !$found_end) {
-    if (scalar(%commands)) {
+    if (scalar(keys %commands) eq $commandcnt) {
+	printf(STDERR "$host: missed cmd(s): all commands\n");
+    } elsif (scalar(%commands)) {
 	printf(STDOUT "$host: missed cmd(s): %s\n", join(',', keys(%commands)));
 	printf(STDERR "$host: missed cmd(s): %s\n", join(',', keys(%commands))) if ($debug);
     }

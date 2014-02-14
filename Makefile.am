@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 ## A Makefile.in is supplied, in case you do not have automake.
 
-## $Id: Makefile.am 2286 2011-02-16 18:27:13Z heas $
+## $Id: Makefile.am 2531 2012-07-18 21:07:48Z heas $
 ##
 ## Copyright (C) 1997-2008 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -33,7 +33,7 @@ EXTRA_DIST = BUGS Todo configure install-sh \
 # will run make distclean in . after the other dirs (preserving Makefile) and
 # mkinstalldirs will create the install destination before descending into
 # the subdirs.
-SUBDIRS = . include etc bin man share
+SUBDIRS = . include etc lib bin man share
 
 # sysconfdir is here because etc/Makefile uses a script to be careful about
 # installing rancid.conf, not over-writing an existing one.

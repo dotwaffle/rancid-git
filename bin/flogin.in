@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: flogin.in 2376 2012-01-31 22:42:14Z heas $
+## $Id: flogin.in 2459 2012-04-24 16:55:56Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -313,7 +313,7 @@ proc source_password_file { password_file } {
 # Log into the router.
 # returns: 0 on success, 1 on failure
 proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
-    global spawn_id in_proc do_command do_script platform
+    global spawn_id in_proc do_command do_script
     global prompt u_prompt p_prompt e_prompt sshcmd
     set in_proc 1
     set uprompt_seen 0

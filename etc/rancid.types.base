@@ -1,0 +1,183 @@
+# RANCiD base device type configuration.
+#
+# DO NOT alter the base types, they WILL be over-written by future RANCiD
+# releases.  Copy them to rancid.types.conf and rename them.  If you override
+# existing types, it will be harder to provide support to you and I will hate
+# you.
+#
+agm;script;agmrancid
+#
+adtran;script;atrancid
+adtran;login;clogin
+# TA5000
+adtran;command;adtran::ShowSystemInventory;show system inventory
+adtran;command;adtran::ShowTableInterfaces;show table interfaces
+adtran;command;adtran::ShowEvc;show evc
+adtran;command;adtran::ShowEvcmap;show evc-map
+adtran;command;adtran::ShowEfmgroup;show efm-group 1
+adtran;command;adtran::ShowInterfacesShdsl;show interfaces shdsl
+adtran;command;adtran::ShowInterfacesAdsl;show interfaces adsl
+# EFM NTU
+adtran;command;adtran::ShowVersion;show version
+adtran;command;adtran::ShowInterfaces;show interfaces
+adtran;command;adtran::WriteTerm;show running-config
+#
+alteon;script;arancid
+#
+arbor;script;grancid
+arbor;login;anlogin
+arbor;module;arbor
+arbor;inloop;arbor::inloop
+arbor;command;arbor::ShowVersion;system version
+arbor;command;arbor::ShowHardware;system hardware
+arbor;command;arbor::ShowConfig;config show
+#
+arista;script;arrancid
+#
+avocent;script;avorancid
+#
+baynet;script;brancid
+#
+cat5;script;cat5rancid
+#
+# Cisco IOS device
+cisco;script;grancid
+cisco;login;clogin
+cisco;module;ios
+cisco;inloop;ios::inloop
+cisco;command;ios::ShowVersion;show version
+cisco;command;ios::ShowRedundancy;show redundancy secondary
+cisco;command;ios::ShowIDprom;show idprom backplane
+cisco;command;ios::ShowInstallActive;show install active
+cisco;command;ios::ShowEnv;show env all
+cisco;command;ios::ShowRSP;show rsp chassis-info
+cisco;command;ios::ShowGSR;show gsr chassis
+cisco;command;ios::ShowGSR;show diag chassis-info
+cisco;command;ios::ShowBoot;show boot
+cisco;command;ios::ShowBoot;show bootvar
+cisco;command;ios::ShowBoot;show variables boot
+cisco;command;ios::ShowFlash;show flash
+cisco;command;ios::DirSlotN;dir /all nvram:
+cisco;command;ios::DirSlotN;dir /all bootflash:
+cisco;command;ios::DirSlotN;dir /all slot0:
+cisco;command;ios::DirSlotN;dir /all disk0:
+cisco;command;ios::DirSlotN;dir /all slot1:
+cisco;command;ios::DirSlotN;dir /all disk1:
+cisco;command;ios::DirSlotN;dir /all slot2:
+cisco;command;ios::DirSlotN;dir /all disk2:
+cisco;command;ios::DirSlotN;dir /all harddisk:
+cisco;command;ios::DirSlotN;dir /all harddiska:
+cisco;command;ios::DirSlotN;dir /all harddiskb:
+cisco;command;ios::DirSlotN;dir /all sup-bootdisk:
+cisco;command;ios::DirSlotN;dir /all sup-bootflash:
+cisco;command;ios::DirSlotN;dir /all sup-microcode:
+cisco;command;ios::DirSlotN;dir /all slavenvram:
+cisco;command;ios::DirSlotN;dir /all slavebootflash:
+cisco;command;ios::DirSlotN;dir /all slaveslot0:
+cisco;command;ios::DirSlotN;dir /all slavedisk0:
+cisco;command;ios::DirSlotN;dir /all slaveslot1:
+cisco;command;ios::DirSlotN;dir /all slavedisk1:
+cisco;command;ios::DirSlotN;dir /all slaveslot2:
+cisco;command;ios::DirSlotN;dir /all slavedisk2:
+cisco;command;ios::DirSlotN;dir /all slavesup-bootflash:
+cisco;command;ios::DirSlotN;dir /all sec-nvram:
+cisco;command;ios::DirSlotN;dir /all sec-bootflash:
+cisco;command;ios::DirSlotN;dir /all sec-slot0:
+cisco;command;ios::DirSlotN;dir /all sec-disk0:
+cisco;command;ios::DirSlotN;dir /all sec-slot1:
+cisco;command;ios::DirSlotN;dir /all sec-disk1:
+cisco;command;ios::DirSlotN;dir /all sec-slot2:
+cisco;command;ios::DirSlotN;dir /all sec-disk2:
+cisco;command;ios::ShowContAll;show controllers
+cisco;command;ios::ShowContCbus;show controllers cbus
+cisco;command;ios::ShowDiagbus;show diagbus
+cisco;command;ios::ShowDiag;show diag
+cisco;command;ios::ShowCapture;show capture
+cisco;command;ios::ShowModule;show module
+cisco;command;ios::ShowSpeVersion;show spe version
+cisco;command;ios::ShowC7200;show c7200
+cisco;command;ios::ShowInventory;show inventory raw
+cisco;command;ios::ShowVTP;show vtp status
+cisco;command;ios::ShowVLAN;show vlan
+cisco;command;ios::ShowVLAN;show vlan-switch
+cisco;command;ios::ShowDebug;show debug
+cisco;command;ios::ShowShun;show shun
+cisco;command;ios::WriteTerm;more system:running-config
+cisco;command;ios::WriteTerm;show running-config view full
+cisco;command;ios::WriteTerm;show running-config
+cisco;command;ios::WriteTerm;write term
+#
+cisco-nx;script;nxrancid
+#
+cisco-xr;script;xrrancid
+#
+css;script;cssrancid
+#
+enterasys;script;rivrancid
+#
+erx;script;jerancid
+#
+extreme;script;xrancid
+#
+ezt3;script;erancid
+#
+f5;script;f5rancid
+#
+force10;script;f10rancid
+#
+fortigate;script;fnrancid
+#
+foundry;script;francid
+#
+hitachi;script;htrancid
+#
+hp;script;hrancid
+#
+juniper;script;grancid
+juniper;login;jlogin
+juniper;module;junos
+juniper;inloop;junos::inloop
+juniper;command;junos::ShowChassisClocks;show chassis clocks
+juniper;command;junos::ShowChassisEnvironment;show chassis environment
+juniper;command;junos::ShowChassisFirmware;show chassis firmware
+juniper;command;junos::ShowChassisFpcDetail;show chassis fpc detail
+juniper;command;junos::ShowChassisHardware;show chassis hardware detail
+juniper;command;junos::ShowChassisRoutingEngine;show chassis routing-engine
+juniper;command;junos::ShowChassisSCB;show chassis scb
+juniper;command;junos::ShowChassisSCB;show chassis sfm detail
+juniper;command;junos::ShowChassisSCB;show chassis ssb
+juniper;command;junos::ShowChassisSCB;show chassis feb detail
+juniper;command;junos::ShowChassisSCB;show chassis feb
+juniper;command;junos::ShowChassisSCB;show chassis cfeb
+juniper;command;junos::ShowChassisAlarms;show chassis alarms
+juniper;command;junos::ShowSystemLicense;show system license
+juniper;command;junos::ShowSystemBootMessages;show system boot-messages
+juniper;command;junos::ShowSystemCoreDumps;show system core-dumps
+juniper;command;junos::ShowVersion;show version detail
+juniper;command;junos::ShowConfiguration;show configuration
+#
+mikrotik;script;mtrancid
+#
+mrtd;script;mrancid
+#
+mrv;script;mrvrancid
+#
+netopia;script;trancid
+#
+netscaler;script;nsrancid
+#
+netscreen;script;nrancid
+#
+procket;script;prancid
+#
+redback;script;rrancid
+#
+riverstone;script;rivrancid
+#
+smc;script;srancid
+#
+tnt;script;tntrancid
+#
+xirrus;script;xirancid
+#
+zebra;script;zrancid

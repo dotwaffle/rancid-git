@@ -1,9 +1,9 @@
 #! @PERLV_PATH@
 ##
-## $Id: avorancid.in 2288 2011-02-17 17:16:50Z heas $
+## $Id: avorancid.in 2605 2012-07-26 23:21:27Z heas $
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
+## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -43,10 +43,10 @@
 #
 #  RANCID - Really Awesome New Cisco confIg Differ
 #
-# usage: rancid [-dV] [-l] [-f filename | $host]
+# usage: avorancid [-dltCV] [-f filename | hostname]
 #
 use Getopt::Std;
-getopts('dflV');
+getopts('dflt:CV');
 if ($opt_V) {
     print "@PACKAGE@ @VERSION@\n";
     exit(0);
@@ -186,9 +186,6 @@ sub CatFile {
     return(0);
 }
 
-# dummy function
-sub DoNothing {print STDOUT;}
-
 # Main
 @commandtable = (
 	{'cat /etc/hostname'		=> 'CatFile'},
@@ -206,10 +203,24 @@ sub DoNothing {print STDOUT;}
 # commands to the subroutine and track commands that have been completed.
 @commands = map(keys(%$_), @commandtable);
 %commands = map(%$_, @commandtable);
+$commandcnt = scalar(keys %commands);
 
-$cisco_cmds = join(";",@commands);
+$commandstr = join(";",@commands);
 $cmds_regexp = join("|", map quotemeta($_), @commands);
 
+if (length($host) == 0) {
+    if ($file) {
+	print(STDERR "Too few arguments: file name required\n");
+	exit(1);
+    } else {
+	print(STDERR "Too few arguments: host name required\n");
+	exit(1);
+    }
+}
+if ($opt_C) {
+    print "avologin -t $timeo -c\'$commandstr\' $host\n";
+    exit(0);
+}
 open(OUTPUT,">$host.new") || die "Can't open $host.new for writing: $!\n";
 select(OUTPUT);
 # make OUTPUT unbuffered if debugging
@@ -220,13 +231,13 @@ if ($file) {
     print STDOUT "opening file $host\n" if ($log);
     open(INPUT,"<$host") || die "open failed for $host: $!\n";
 } else {
-    print STDERR "executing avologin -t $timeo -c\"$cisco_cmds\" $host\n" if ($debug);
-    print STDOUT "executing avologin -t $timeo -c\"$cisco_cmds\" $host\n" if ($log);
+    print STDERR "executing avologin -t $timeo -c\"$commandstr\" $host\n" if ($debug);
+    print STDOUT "executing avologin -t $timeo -c\"$commandstr\" $host\n" if ($log);
     if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
-	system "avologin -t $timeo -c \"$cisco_cmds\" $host </dev/null > $host.raw 2>&1" || die "avologin failed for $host: $!\n";
+	system "avologin -t $timeo -c \"$commandstr\" $host </dev/null > $host.raw 2>&1" || die "avologin failed for $host: $!\n";
 	open(INPUT, "< $host.raw") || die "avologin failed for $host: $!\n";
     } else {
-	open(INPUT,"avologin -t $timeo -c \"$cisco_cmds\" $host </dev/null |") || die "avologin failed for $host: $!\n";
+	open(INPUT,"avologin -t $timeo -c \"$commandstr\" $host </dev/null |") || die "avologin failed for $host: $!\n";
     }
 }
 
@@ -280,7 +291,7 @@ TOP: while(<INPUT>) {
 	    $clean_run = 0;
 	    last TOP;
 	}
-	$rval = &{$commands{$cmd}};
+	$rval = &{$commands{$cmd}}(*INPUT, *OUTPUT, $cmd);
 	delete($commands{$cmd});
 	if ($rval == -1) {
 	    $clean_run = 0;
@@ -301,7 +312,9 @@ if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
 
 # check for completeness
 if (scalar(%commands) || !$clean_run || !$found_end) {
-    if (scalar(%commands)) {
+    if (scalar(keys %commands) eq $commandcnt) {
+	printf(STDERR "$host: missed cmd(s): all commands\n");
+    } elsif (scalar(%commands)) {
 	printf(STDOUT "$host: missed cmd(s): %s\n", join(',', keys(%commands)));
 	printf(STDERR "$host: missed cmd(s): %s\n", join(',', keys(%commands))) if ($debug);
     }

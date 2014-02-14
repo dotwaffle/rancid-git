@@ -1,5 +1,5 @@
 Name:           rancid
-Version:        2.3.7
+Version:        3.0a
 Release:        1%{?dist}
 Summary:        Really Awesome New Cisco confIg Differ
 
@@ -74,6 +74,8 @@ rm -rf $RPM_BUILD_ROOT
 %doc share/cisco-load.exp share/cisco-reload.exp
 %doc share/rancid-cvspurge share/downreport share/getipacctg share/rtrfilter
 %config(noreplace) /etc/rancid.conf
+%config /etc/rancid.types.base
+%config(noreplace) /etc/rancid.types.conf
 %{_bindir}/*
 %{_mandir}/man1/[a-k]*
 %{_mandir}/man1/[m-z]*

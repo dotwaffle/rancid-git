@@ -72,8 +72,8 @@ am__nobase_list = $(am__nobase_strip_setup); \
 am__base_list = \
   sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
   sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
-am__installdirs = "$(DESTDIR)$(pkgdatadir)"
-DATA = $(pkgdata_DATA)
+am__installdirs = "$(DESTDIR)$(pkgdatadir)" "$(DESTDIR)$(sysconfdir)"
+DATA = $(pkgdata_DATA) $(sysconf_DATA)
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 ADMINMAILPLUS = @ADMINMAILPLUS@
@@ -193,9 +193,12 @@ top_srcdir = @top_srcdir@
 
 #AUTOMAKE_OPTIONS=foreign no-dependencies
 AUTOMAKE_OPTIONS = foreign
-pkgdata_DATA = lg.conf.sample rancid.conf.sample
-EXTRA_DIST = $(pkgdata_DATA:%=%.in)
-CLEANFILES = $(pkgdata_DATA)
+sysconf_DATA = rancid.types.base rancid.types.conf
+pkgdata_nogen = 
+pkgdata_gen = lg.conf.sample rancid.conf.sample
+pkgdata_DATA = $(pkgdata_nogen) $(pkgdata_gen)
+EXTRA_DIST = $(pkgdata_gen:%=%.in) $(pkgdata_nogen) $(sysconf_DATA)
+CLEANFILES = $(pkgdata_gen)
 @CONF_INSTALL_TRUE@DO_CONF_INSTALL = yes
 
 #clean:
@@ -211,6 +214,7 @@ auto_edit = sed \
 	-e 's,@bindir\@,$(bindir),g' \
 	-e 's,@prefix\@,$(prefix),g' \
 	-e 's,@localstatedir\@,$(localstatedir),g' \
+	-e 's,@pkglibdir\@,$(pkglibdir),g' \
 	-e 's,@sysconfdir\@,$(sysconfdir),g' \
 	-e 's,@EXPECT_PATH\@,$(EXPECT_PATH),g' \
 	-e 's,@PERLV_PATH\@,$(PERLV_PATH),g' \
@@ -272,6 +276,26 @@ uninstall-pkgdataDATA:
 	test -n "$$files" || exit 0; \
 	echo " ( cd '$(DESTDIR)$(pkgdatadir)' && rm -f" $$files ")"; \
 	cd "$(DESTDIR)$(pkgdatadir)" && rm -f $$files
+install-sysconfDATA: $(sysconf_DATA)
+	@$(NORMAL_INSTALL)
+	test -z "$(sysconfdir)" || $(MKDIR_P) "$(DESTDIR)$(sysconfdir)"
+	@list='$(sysconf_DATA)'; test -n "$(sysconfdir)" || list=; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(sysconfdir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(sysconfdir)" || exit $$?; \
+	done
+
+uninstall-sysconfDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(sysconf_DATA)'; test -n "$(sysconfdir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	test -n "$$files" || exit 0; \
+	echo " ( cd '$(DESTDIR)$(sysconfdir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(sysconfdir)" && rm -f $$files
 tags: TAGS
 TAGS:
 
@@ -313,7 +337,7 @@ check-am: all-am
 check: check-am
 all-am: Makefile $(DATA)
 installdirs:
-	for dir in "$(DESTDIR)$(pkgdatadir)"; do \
+	for dir in "$(DESTDIR)$(pkgdatadir)" "$(DESTDIR)$(sysconfdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -368,7 +392,7 @@ install-dvi: install-dvi-am
 
 install-dvi-am:
 
-install-exec-am:
+install-exec-am: install-sysconfDATA
 
 install-html: install-html-am
 
@@ -406,7 +430,7 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-pkgdataDATA
+uninstall-am: uninstall-pkgdataDATA uninstall-sysconfDATA
 
 .MAKE: install-am install-strip
 
@@ -417,9 +441,10 @@ uninstall-am: uninstall-pkgdataDATA
 	install-exec-am install-html install-html-am install-info \
 	install-info-am install-man install-pdf install-pdf-am \
 	install-pkgdataDATA install-ps install-ps-am install-strip \
-	installcheck installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-generic pdf \
-	pdf-am ps ps-am uninstall uninstall-am uninstall-pkgdataDATA
+	install-sysconfDATA installcheck installcheck-am installdirs \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-generic pdf pdf-am ps ps-am uninstall uninstall-am \
+	uninstall-pkgdataDATA uninstall-sysconfDATA
 
 
 install-data-local: all
@@ -433,6 +458,13 @@ install-data-local: all
 	else \
 	    $(INSTALL_DATA) rancid.conf.sample $(DESTDIR)$(sysconfdir)/rancid.conf; \
 	fi; \
+	if test -f $(DESTDIR)$(sysconfdir)/rancid.types.conf ; then \
+	    echo ""; \
+	    echo "WARNING: *** $(DESTDIR)$(sysconfdir)/rancid.types.conf exists."; \
+	    echo ""; \
+	else \
+	    $(INSTALL_DATA) rancid.types.conf $(DESTDIR)$(sysconfdir)/rancid.types.conf; \
+	fi; \
 	if test -f $(DESTDIR)$(sysconfdir)/lg.conf ; then \
 	    echo ""; \
 	    echo "WARNING: *** $(DESTDIR)$(sysconfdir)/lg.conf exists.  See "; \
@@ -442,7 +474,8 @@ install-data-local: all
 	else \
 	    $(INSTALL_DATA) lg.conf.sample $(DESTDIR)$(sysconfdir)/lg.conf; \
 	fi; \
-	fi
+	fi; \
+	$(INSTALL_DATA) rancid.types.base $(DESTDIR)$(sysconfdir)/rancid.types.base
 
 lg.conf.sample: Makefile $(srcdir)/lg.conf.sample.in
 	rm -f lg.conf.sample lg.conf.sample.tmp; \

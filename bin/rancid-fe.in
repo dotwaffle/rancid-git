@@ -1,9 +1,9 @@
 #! @PERLV_PATH@
 ##
-## $Id: rancid-fe.in 2296 2011-04-27 18:18:56Z heas $
+## $Id: rancid-fe.in 2579 2012-07-25 17:43:25Z heas $
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
+## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -47,51 +47,39 @@
 
 require 5;
 
-($router, $vendor) = split('\:', $ARGV[0]);
-$vendor =~ tr/[A-Z]/[a-z]/;
-
-%vendortable = (
-    'agm'		=> 'agmrancid',
-    'alteon'		=> 'arancid',
-    'arista'		=> 'arrancid',
-    'avocent'		=> 'avorancid',
-    'baynet'		=> 'brancid',
-    'cat5'		=> 'cat5rancid',
-    'cisco'		=> 'rancid',
-    'cisco-nx'		=> 'nxrancid',
-    'cisco-xr'		=> 'xrrancid',
-    'css'		=> 'cssrancid',
-    'enterasys'		=> 'rivrancid',
-    'erx'		=> 'jerancid',
-    'extreme'		=> 'xrancid',
-    'ezt3'		=> 'erancid',
-    'f5'		=> 'f5rancid',
-    'force10'		=> 'f10rancid',
-    'fortigate'		=> 'fnrancid',
-    'foundry'		=> 'francid',
-    'hitachi'		=> 'htrancid',
-    'hp'		=> 'hrancid',
-    'juniper'		=> 'jrancid',
-    'mikrotik'		=> 'mtrancid',
-    'mrtd'		=> 'mrancid',
-    'mrv'		=> 'mrvrancid',
-    'netopia'		=> 'trancid',
-    'netscaler'		=> 'nsrancid',
-    'netscreen'		=> 'nrancid',
-    'procket'		=> 'prancid',
-    'redback'		=> 'rrancid',
-    'riverstone'	=> 'rivrancid',
-    'smc'		=> 'srancid',
-    'tnt'		=> 'tntrancid',
-    'zebra'		=> 'zrancid'
-);
-
-if ($vendortable{$vendor} eq "") {
-    printf(STDERR "unknown router manufacturer for $router: $vendor\n");
+my($script);
+my($router, $devtype) = split('\;', $ARGV[0]);
+$devtype =~ tr/[A-Z]/[a-z]/;
+if (! length($devtype)) {
+    printf(STDERR "unknown router manufacturer for $router: $devtype\n");
     exit(-1);
-} else {
-    exec($vendortable{$vendor} . " $router");
 }
 
-printf(STDERR "exec failed router manufacturer $vendor: $!\n");
+# XXX use rancid::loadtype() to parse these files.
+foreach $file ("@sysconfdir@/rancid.types.base",
+	       "@sysconfdir@/rancid.types.conf") {
+    open(INPUT, "< $file") || die "Could not open $file: $!";
+    while (<INPUT>) {
+	chomp;
+	my($type, $directive, $value) = split('\;');
+	$type =~ tr/[A-Z]/[a-z]/;
+	$directive =~ tr/[A-Z]/[a-z]/;
+	if ($type eq $devtype && $directive eq "script") {
+	    $script = $value;
+	    close(INPUT);
+	    goto FOUND;
+	}
+    }
+    close(INPUT);
+}
+
+FOUND:
+if (! defined($script)) {
+    printf(STDERR "unknown router manufacturer for $router: $devtype\n");
+    exit(-1);
+} else {
+    exec($script . " -t $devtype $router");
+}
+
+printf(STDERR "exec($script) failed router manufacturer $devtype: $!\n");
 exit(-1);

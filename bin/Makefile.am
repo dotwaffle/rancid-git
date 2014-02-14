@@ -1,9 +1,9 @@
 ## Process this file with automake to produce Makefile.in
 ## A Makefile.in is supplied, in case you do not have automake.
 
-## $Id: Makefile.am 2334 2011-11-17 21:09:37Z heas $
+## $Id: Makefile.am 2640 2012-10-24 17:37:22Z heas $
 ##
-## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
+## Copyright (c) 1997-2012 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -49,19 +49,23 @@
 AUTOMAKE_OPTIONS=foreign
 
 bin_PROGRAMS = hpuifilter
-bin_SCRIPTS = agmrancid alogin arancid arrancid avologin avorancid blogin \
-	brancid cat5rancid clogin control_rancid cssrancid elogin erancid \
-	f5rancid f10rancid flogin fnlogin fnrancid francid hlogin hrancid \
-	htlogin htrancid jerancid jlogin jrancid mrancid mrvlogin mrvrancid \
-	mtlogin mtrancid nlogin nrancid nslogin nsrancid nxrancid par prancid \
-	rancid-fe rancid rivlogin rivrancid rrancid srancid tlogin tntlogin \
-	tntrancid trancid xrancid xrrancid zrancid
+bin_SCRIPTS = agmrancid alogin anlogin anrancid arancid arrancid atrancid \
+	avologin avorancid blogin brancid cat5rancid clogin control_rancid \
+	cssrancid elogin erancid f5rancid f10rancid flogin fnlogin fnrancid \
+	francid grancid hlogin hrancid htlogin htrancid jerancid jlogin \
+	jrancid mrancid mrvlogin mrvrancid mtlogin mtrancid nlogin nrancid \
+	nslogin nsrancid nxrancid par prancid rancid-fe rancid rivlogin \
+	rivrancid rrancid srancid tlogin tntlogin tntrancid trancid xilogin \
+	xirancid xrancid xrrancid zrancid
+# XXX hack for the grancid to get pkglibdir, see corresponding XXX below
+bin_in = grancid.in
 
-bin_SCRIPTS += lg.cgi lgform.cgi rancid-cvs rancid-run
-EXTRA_DIST= lg.cgi.in lgform.cgi.in rancid-cvs.in rancid-run.in
+bin_SCRIPTS += lg.cgi lgform.cgi rancid-cvs rancid-fe rancid-run
+EXTRA_DIST= lg.cgi.in lgform.cgi.in rancid-cvs.in rancid-fe.in rancid-run.in \
+	$(bin_in)
 #dist_bin_SCRIPTS= $(bin_SCRIPTS:%=%.in)
 
-CLEANFILES= lg.cgi lgform.cgi rancid-cvs rancid-run
+CLEANFILES= lg.cgi lgform.cgi rancid-cvs rancid-fe rancid-run
 #CLEANFILES= $(bin_SCRIPTS)
 
 hpuifilter_SOURCES = hpuifilter.c
@@ -91,6 +95,7 @@ YFLAGS = -d
 auto_edit = sed \
 	-e 's,@prefix\@,$(prefix),g' \
 	-e 's,@localstatedir\@,$(localstatedir),g' \
+	-e 's,@pkglibdir\@,$(pkglibdir),g' \
 	-e 's,@sysconfdir\@,$(sysconfdir),g' \
 	-e 's,@EXPECT_PATH\@,$(EXPECT_PATH),g' \
 	-e 's,@PERLV\@,$(PERLV),g' \
@@ -102,6 +107,18 @@ auto_edit = sed \
 	-e 's,@SVN_FSTYPE\@,$(SVN_FSTYPE),g' \
 	-e 's,@VERSION\@,$(VERSION),g' \
 	-e 's,@COPYYEARS\@,$(COPYYEARS),g'
+
+# XXX this is the generic version for the rest of bin_scripts that comes from
+#     configure.in now.  perhaps change to use this.
+#$(bin_SCRIPTS): Makefile $(top_builddir)/config.status
+$(bin_in:%.in=%): Makefile $(top_builddir)/config.status
+	rm -f $@ $@.tmp; \
+	$(auto_edit) $(srcdir)/$@.in >$@.tmp; \
+	chmod +x $@.tmp; \
+	mv $@.tmp $@
+# XXX there must be a better way to produce these dependencies, perhaps in
+#     configure.
+grancid: $(srcdir)/grancid.in
 
 lg.cgi: Makefile $(srcdir)/lg.cgi.in
 	rm -f lg.cgi lg.cgi.tmp; \
@@ -120,6 +137,12 @@ rancid-cvs: Makefile $(srcdir)/rancid-cvs.in
 	$(auto_edit) $(srcdir)/rancid-cvs.in >rancid-cvs.tmp; \
 	chmod +x rancid-cvs.tmp; \
 	mv rancid-cvs.tmp rancid-cvs
+
+rancid-fe: Makefile $(srcdir)/rancid-fe.in
+	rm -f rancid-fe rancid-fe.tmp; \
+	$(auto_edit) $(srcdir)/rancid-fe.in >rancid-fe.tmp; \
+	chmod +x rancid-fe.tmp; \
+	mv rancid-fe.tmp rancid-fe
 
 rancid-run: Makefile $(srcdir)/rancid-run.in
 	rm -f rancid-run rancid-run.tmp; \

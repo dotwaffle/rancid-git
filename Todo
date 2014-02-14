@@ -1,4 +1,52 @@
+- it would be useful to log commands that are permission denied rather than
+  just failing.  it was mentioned on cisco-isp list.
+- login script should catch output to stdout/user, so that if the rancid script
+  exits prematurely, such as due to a cmd authorization failure, the user
+  doesnt get a tcl traceback
+  See http://www.tcl.tk/man/tcl8.4/TclCmd/catch.htm
+  - related; could also add an error msg for required command like write term
+    in the authorization failure case:
+	return(-1) if (/command authorization failed/i);
+- '% clogin clogin' w/ ssh default produces a tcl traceback
+- sup2t show version info is missing
+- RSP440 show version info is missing, eg:
+  !Chassis type: ASR9K Series - a ASR9K Series router
 - make *login and login.top.in cmdline options common among all scripts
+- cpu info missing from sup-2t
+   Index: configs/r01.londen01.uk.bb.gin.ntt.net
+   ===================================================================
+   retrieving revision 1.807
+   diff -U 4 -r1.807 r01.londen01.uk.bb.gin.ntt.net
+   @@ -1,24 +1,23 @@
+     !RANCID-CONTENT-TYPE: cisco
+     !
+     !Chassis type: WS-C6509-E - a WS-C6509-E router
+   - !CPU: R7000, SR71000 CPU at 600Mhz, impl 0x504, Rev 1.2, 512KB L2 Cache
+   + !CPU: M8572
+     !
+   - !Memory: main 983008K/65536K
+   - !Memory: nvram 1917K
+   - !Memory: bootflash 65536K
+   + !Memory: main 1769472K/262144K
+   + !Memory: nvram 2543K
+     !
+     !Catalyst Chassis type: WS-C6509-E, Catalyst 6500 9-slot backplane
+     !Catalyst Chassis S/N: SMC1130002A
+     !Catalyst Chassis assembly: 73-9221-06, rev A0, ver 1.4
+     !Processor ID: SMC1130002A
+     !
+     !
+   - !Image: Software: s72033_rp-ADVIPSERVICESK9-M, 12.2(33)SXI7, RELEASE SOFTWARE
+   (fc1)
+   - !Image: Compiled: Mon 18-Jul-11 05:49 by prod_rel_team
+   - !Image: disk0:s72033-advipservicesk9-mz.122-33.SXI7.bin
+   + !Image: Software: s2t54-ADVIPSERVICESK9-M, 12.2(50)SY1, RELEASE SOFTWARE (fc2)
+   + !Image: Compiled: Tue 29-Nov-11 20:49 by prod_rel_team
+   + !Image: bootdisk:s2t54-advipservicesk9-mz.SPA.122-50.SY1.bin
+     !
+   - !ROM Bootstrap: Version 12.2(17r)S4, RELEASE SOFTWARE (fc1)
+   + !ROM Bootstrap: Version 12.2(50r)SYS2, RELEASE SOFTWARE (fc1)
+     !
 - rivlogin is a mess
 - why does hlogin fail when the host key is not yet known?  eg:
   unix% ./hlogin procurve

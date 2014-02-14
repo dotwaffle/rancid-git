@@ -1,9 +1,9 @@
 ## Process this file with automake to produce Makefile.in
 ## A Makefile.in is supplied, in case you do not have automake.
 
-## $Id: Makefile.am 2301 2011-05-26 20:55:24Z heas $
+## $Id: Makefile.am 2426 2012-02-22 21:25:00Z heas $
 ##
-## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
+## Copyright (c) 1997-2012 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -69,7 +69,9 @@ auto_edit = sed \
 	-e 's,@prefix\@,$(prefix),g' \
 	-e 's,@localstatedir\@,$(localstatedir),g' \
 	-e 's,@sysconfdir\@,$(sysconfdir),g' \
-	-e 's,@pkgdatadir\@,$(pkgdatadir),g'
+	-e 's,@pkgdatadir\@,$(pkgdatadir),g' \
+	-e 's,@ADMINMAILPLUS\@,$(ADMINMAILPLUS),g' \
+	-e 's,@MAILPLUS\@,$(MAILPLUS),g'
 
 downreport: Makefile $(srcdir)/downreport.in
 	rm -f downreport downreport.tmp; \

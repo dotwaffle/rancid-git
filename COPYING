@@ -1,4 +1,4 @@
-## Copyright (c) 1997-2010 by Terrapin Communications, Inc.
+## Copyright (c) 1997-2012 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -22,6 +22,10 @@
 ##    this software without specific prior written permission.
 ## 5. It is requested that non-binding fixes and modifications be contributed
 ##    back to Terrapin Communications, Inc.
+## 6. Parties packaging or redistributing RANCID MAY NOT distribute altered
+##    versions of the etc/rancid.types.base file nor alter how this file is
+##    handled.  The purpose of this condition is to help keep our support
+##    costs down.
 ##
 ## THIS SOFTWARE IS PROVIDED BY Terrapin Communications, INC. AND CONTRIBUTORS
 ## ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED

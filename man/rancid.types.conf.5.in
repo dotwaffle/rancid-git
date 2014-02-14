@@ -1,0 +1,114 @@
+.\"
+.\" $Id: rancid.types.conf.5.in 2635 2012-10-24 05:19:57Z heas $
+.\"
+.hys 50
+.TH "rancid.types.conf" "5" "24 October 2012"
+.SH NAME
+rancid.types.conf \- rancid device type configuration file
+.SH DESCRIPTION
+.B rancid.types.conf
+contains formatted configuration lines that define the device types that
+are available for use in the <device_type> field of the
+.BR router.db (5)
+configuration file.
+.PP
+The
+.B rancid.types.base
+configuration file follows the same format but defines the base types
+described in
+.IR router.db(5).
+.PP
+Users are
+.B STRONGLY
+discouraged from altering this file or overriding the base types in
+.B rancid.types.conf.
+Instead, copy the type definition to be altered from
+.B rancid.types.base
+to
+.B rancid.types.conf
+using a different <device_type>.
+.\"
+.SH SYNTAX
+One directive is listed per-line, where the syntax is one of:
+.PP
+.in +1i
+.nf
+<device_type>;command;<filter_function>;<device_command_string>
+<device_type>;inloop;<input_loop_function>
+<device_type>;login;<login_program>
+<device_type>;module;<perl_module_name>
+<device_type>;prescript;<rancid_script> XXX temporary knob?  add this?
+<device_type>;postscript;<rancid_script> XXX temporary knob?  add this?
+<device_type>;script;<rancid_script>
+.fi
+.in -1i
+.PP
+For example:
+.in +1i
+.nf
+cisco;login;clogin
+cisco;module;rancid::ios
+cisco;inloop;ios::inloop
+cisco;command;ShowVersion;show version
+juniper;login;/usr/local/bin/jlogin
+juniper;module;rancid::junos
+juniper;inloop;junos::inloop
+juniper;command;ShowVersion;show version
+.fi
+.in -1i
+.PP
+.\"
+<device_type> is a lower case name used in the
+.IR router.db(5)
+file.
+Its case is forced to lower case when reading the configuration files.
+.\"
+.PP
+Each <device_type> may have the following directives defined.
+The login and script directives are required.
+.TP
+.B command
+Defines commands to run for the <device_type> and the function that will
+process the input.
+.TP
+.B inloop
+Intended for
+.IR grancid(1),
+.B inloop
+defines a function to loop over the input from the device.
+.TP
+.B login
+Defines the login script used for the <device_type>, which does not need to
+be an FQPN, but then must be found in the path.
+.TP
+.B module
+Loads a rancid perl module to supply functions used in the
+.B command
+directives for the <device_type>.
+.TP
+.B script
+Defines the rancid script used for the <device_type>, which does not need to
+be an FQPN, but then must be found in the path.
+.\"
+.PP
+Each device_type must at least have a 
+.SH ERRORS
+Omitted fields or syntax errors are likely to cause perl compilation errors,
+or collection to fail or be incomplete.
+.SH FILES
+.Bl -tag -width @sysconfdir@/rancid.types.conf -compact
+.TP
+.B @sysconfdir@/rancid.types.conf
+Configuration file described here.
+.TP
+.B @sysconfdir@/rancid.types.base
+Configuration file described here.
+.El
+.\"
+.SH "SEE ALSO"
+.BR control_rancid (1),
+.BR rancid (1),
+.BR rancid-run (1),
+.BR router.db (5),
+.BR rancid (3)
+.\"

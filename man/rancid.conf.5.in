@@ -1,5 +1,5 @@
 .\"
-.\" $Id: rancid.conf.5.in 2096 2009-06-17 21:49:46Z heas $
+.\" $Id: rancid.conf.5.in 2428 2012-03-01 20:42:34Z heas $
 .\"
 .hys 50
 .TH "rancid.conf" "5" "18 December 2007"
@@ -142,6 +142,14 @@ Individual headers must be separated by a \\n (new line).
 Default: Precedence: bulk
 .sp
 Example: Precedence: bulk\\nX-clamation: beef cake
+.\"
+.TP
+.B MAILOPTS
+Define additional options used to invoke
+.BR sendmail (8).
+By default, this is not set.
+.sp
+Example: MAILOPTS="-f bounces.go.here@example.com"
 .\"
 .TP
 .B MAX_ROUNDS

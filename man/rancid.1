@@ -1,11 +1,12 @@
 .\"
 .hys 50
-.TH "rancid" "1" "26 April 2011"
+.TH "rancid" "1" "26 July 2012"
 .SH NAME
 rancid \- Cisco configuration filter
 .SH SYNOPSIS
 .B rancid
-[\fB\-dlV\fP]
+[\fB\-dlCV\fP]
+[\fB\-t device_type\fP]
 (\fB\-f\fP filename | hostname)
 .SH DESCRIPTION
 .B rancid
@@ -28,6 +29,9 @@ Briefly, these are:
 .TP 15
 .B agmrancid
 Cisco Anomaly Guard Module (AGM)
+.TP 15
+.B anrancid
+Arbor Networks appliances
 .TP 15
 .B arancid
 Alteon WebOS switches
@@ -58,6 +62,12 @@ Fortinet Firewalls
 .TP
 .B francid
 Foundry and HP procurve OEMs of Foundry
+.TP
+.B grancid
+Generic rancid.
+See
+.BR rancid (3)
+for details.
 .TP
 .B hrancid
 HP Procurve Switches
@@ -107,6 +117,9 @@ Netopia sDSL/T1 routers
 .B tntrancid
 Lucent TNT
 .TP
+.B xirancid
+Xirrus arrays
+.TP
 .B xrancid
 Extreme switches
 .TP
@@ -117,6 +130,9 @@ Cisco IOS-XR boxes
 Zebra routing software
 .PP
 The command-line options are as follows:
+.TP
+.B \-C
+Prints the login command that would be used to collect data from the device.
 .TP
 .B \-V
 Prints package name and version strings.
@@ -129,6 +145,13 @@ Display debugging information.
 Display somewhat less debugging information.
 .\"
 .TP
+.B \-t
+Device type, of the given host or file, that is defined in
+.B rancid.types.base
+or
+.B rancid.types.conf .
+.\"
+.TP
 .B \-f
 .B rancid
 should interpret the next argument as a filename which contains the
@@ -139,7 +162,9 @@ output it would normally collect from the device (
 .SH "SEE ALSO"
 .BR control_rancid (1),
 .BR clogin (1),
-.BR rancid.conf (5)
+.BR rancid.conf (5),
+.BR rancid.types.conf (5),
+.BR rancid (3)
 .\"
 .SH "CAVEATS"
 Cisco IOS offers a DHCP server that maintains a text database which can be

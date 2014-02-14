@@ -48,10 +48,10 @@
 #
 
 # Usage line
-set usage "Usage: $argv0 \[-dV\] \[-c command\] \
-\[-Evar=x\] \[-f cloginrc-file\] \
-\[-s script-file\] \[-t timeout\] \[-u username\] \
-\[-v vty-password\] \[-x command-file\] \
+set usage "Usage: $argv0 \[-dSV\] \[-autoenable\] \[-noenable\] \[-c command\] \
+\[-Evar=x\] \[-e enable-password\] \[-f cloginrc-file\] \[-p user-password\] \
+\[-r passphrase\] \[-s script-file\] \[-t timeout\] \[-u username\] \
+\[-v vty-password\] \[-w enable-username\] \[-x command-file\] \
 \[-y ssh_cypher_type\] router \[router...\]\n"
 
 # env(CLOGIN) may contain:
@@ -71,7 +71,7 @@ set avautoenable 0
 # tracks if we receive them on the command line.
 set do_passwd 1
 # Sometimes routers take awhile to answer (the default is 10 sec)
-set timeout 45
+set timeoutdflt 45
 
 # Find the user in the ENV, or use the unix userid.
 if {[ info exists env(CISCO_USER) ]} {
@@ -103,30 +103,30 @@ for {set i 0} {$i < $argc} {incr i} {
 	-d* {
 	    exp_internal 1
 	# Username
-	} -u* -
-	-U* {
+	} -u* {
 	    if {! [  regexp .\[uU\](.+) $arg ignore user]} {
 		incr i
 		set username [ lindex $argv $i ]
 	    }
 	# VTY Password
-	} -v* {
+	} -p* {
 	    if {! [  regexp .\[vV\](.+) $arg ignore passwd]} {
 		incr i
 		set passwd [ lindex $argv $i ]
 	    }
 	    set do_passwd 0
+	# ssh passphrase
+	} -r* {
+	    # ignore -r
 	# Version string
 	} -V* {
 	    send_user "rancid 2.3.2a9\n"
 	    exit 0
 	# Enable Username
-	} -w* -
-	-W* {
-	# ignore -w
+	} -w* {
+	    # ignore -w
 	# Environment variable to pass to -s scripts
-	} -E*
-	{
+	} -E* {
 	    if {[ regexp .\[E\](.+)=(.+) $arg ignore varname varvalue]} {
 		incr i
 		set E$varname $varvalue
@@ -134,59 +134,54 @@ for {set i 0} {$i < $argc} {incr i} {
 		send_user "\nError: invalid format for -E in $arg\n"
 		exit 1
 	    }
-	# Enable Password
-	} -e*
-	{
-	# ignore -e
+	} -e* {
+	    # ignore -e
 	# Command to run.
-	} -c* -
-	-C* {
-	    if {! [  regexp .\[cC\](.+) $arg ignore command]} {
+	} -c* {
+	    if {! [regexp .\[cC\](.+) $arg ignore command]} {
 		incr i
 		set command [ lindex $argv $i ]
 	    }
 	    set do_command 1
 	# Expect script to run.
-	} -s* -
-	-S* {
-	    if {! [  regexp .\[sS\](.+) $arg ignore sfile]} {
+	} -s* {
+	    if {! [regexp .\[sS\](.+) $arg ignore sfile]} {
 		incr i
 		set sfile [ lindex $argv $i ]
 	    }
-	    if { ! [ file readable $sfile ] } {
+	    if { ! [file readable $sfile] } {
 		send_user "\nError: Can't read $sfile\n"
 		exit 1
 	    }
 	    set do_script 1
+	# save config on exit
+	} -S* {
+	    # ignore -S
 	# 'ssh -c' cypher type
-	} -y* -
-	-Y* {
-	    if {! [  regexp .\[eE\](.+) $arg ignore cypher]} {
+	} -y* {
+	    if {! [regexp .\[eE\](.+) $arg ignore cypher]} {
 		incr i
 		set cypher [ lindex $argv $i ]
 	    }
 	# alternate cloginrc file
-	} -f* -
-	-F* {
-	    if {! [ regexp .\[fF\](.+) $arg ignore password_file]} {
+	} -f* {
+	    if {! [regexp .\[fF\](.+) $arg ignore password_file]} {
 		incr i
 		set password_file [ lindex $argv $i ]
 	    }
 	# Timeout
-	} -t* -
-	-T* {
-	    if {! [ regexp .\[tT\](.+) $arg ignore timeout]} {
+	} -t* {
+	    if {! [regexp .\[tT\](.+) $arg ignore timeout]} {
 		incr i
-	        set timeout [ lindex $argv $i ]
+	        set timeoutdflt [ lindex $argv $i ]
 	    }
 	# Command file
-	} -x* -
-	-X {
-	    if {! [  regexp .\[xX\](.+) $arg ignore cmd_file]} {
+	} -x* {
+	    if {! [regexp .\[xX\](.+) $arg ignore cmd_file]} {
 		incr i
 		set cmd_file [ lindex $argv $i ]
 	    }
-	    if [ catch {set cmd_fd [open $cmd_file r]} reason ] {
+	    if [catch {set cmd_fd [open $cmd_file r]} reason] {
 		send_user "\nError: $reason\n"
 		exit 1
 	    }
@@ -465,6 +460,12 @@ foreach router [lrange $argv $i end] {
     # alteon only "enables" based on the password used at login time
     set autoenable 1
     set enable 0
+
+    # device timeout
+    set timeout [find timeout $router]
+    if { [llength $timeout] == 0 } {
+	set timeout $timeoutdflt
+    }
 
     # Figure out passwords
     if { $do_passwd } {

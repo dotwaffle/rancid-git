@@ -12,6 +12,9 @@ LC_COLLATE="POSIX"; export LC_COLLATE
 # for group.
 umask 027
 #
+# Set the perl module search path.  perl -V shows the default
+PERL5LIB="@pkglibdir@"; export PERL5LIB
+#
 # Under BASEDIR (i.e.: --localstatedir), there will be a "logs" directory for
 # the logs from rancid and a directory for each group of routers defined in
 # LIST_OF_GROUPS (below).  In addition to these, there will be a "CVS"
@@ -93,3 +96,6 @@ RCSSYS=@RCSSYS@; export RCSSYS
 # it to "" or adding X- style headers.  Individual headers must be separated
 # by a \n.
 #MAILHEADERS="Precedence: bulk"; export MAILHEADERS
+#
+# Additional options for sendmail(8).
+#MAILOPTS="-f bounces.go.here@example.com"; export MAILOPTS

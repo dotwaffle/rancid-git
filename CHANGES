@@ -1,3 +1,112 @@
+3.0a
+	rancid, ios.pm: kill rx/txspeed on cellular modem cards
+
+	cloginrc: add enablecmd directive, for clogin - Jason Greenberg
+
+	lg.cgi: add cisco ios xr specific commands
+
+	francid: filter new uptime on netiron switch fabrics - Roman Hochuli
+
+	hlogin: add Login (capital L) as default login prompt - Johan Ryberg
+
+	rancid,ios.pm: update ASA/PIX pre-shared-key format - Michael Hertrick
+
+	*rancid: pass (INPUT,OUTPUT,$cmd) to filter functions
+
+	rancid::base renamed rancid
+
+	Add lib/ and bin/grancid to the build process
+
+	*rancid: add -t option for rancid-fe to pass the device type from
+	router.db.  Mainly for grancid, but pass it to all scripts.
+
+	router.db,rancid.types.*: change field separator to ';' (semi-colon) to
+	allow for IPv6 addresses in router.db and avoid conflict with :s in
+	device commands and perl module names
+
+	*rancid: few variable name changes to match rancid::base
+
+	arrancid: summarize flash remaining space
+
+	jrancid: show version can terminate abnormally when unable to
+	communicate with a daemon
+
+	nxrancid: improve power supply wattage filtering further
+
+	nxrancid: improve power supply wattage filtering - Zenon Mousmoulas
+
+	jlogin: set cli screen-width to prevent cli from mucking with the
+	command line in irritating ways - Jay Borkenhagen
+
+	xrrancid: adjust for ARS9k RSP440 show version format
+
+	anrancid: add arbor networks module
+
+	*rancid: add the -C option
+
+	rivlogin,jlogin,fnlogin: command-line option clean-up
+
+	mtlogin: fix cloginrc timeout handling & clean-up command-line options
+
+	xrancid: capture more info from show switch.
+
+	xrrancid: filter changing files (*_cont) from nvram:.
+
+	rancid: ignore "Load for five secs:" and "Time source is
+	NTP" lines.
+
+	rancid: remove LISP-MapCache files; fix date removal for dhcp &
+	vlan.dat files in flash.
+
+	nxrancid: delete the line with the "^" from the "Invalid command at"
+	errors.
+
+	hlogin: add "username" to prompt match for Cisco ACS 5.3 - Skye Hagen
+
+	rancid: Filter issu_loc_lock and volt_cont files
+
+	nxrancid: try to get show env power output to line up better.
+
+	hrancid: ignore unrecognized command for "show system( |-)information"
+
+	xirancid: xirrus support - Aaron Smith
+
+	jrancid: filter $9$ at the FILTER_PWDS=YES level
+
+	rancid: include fans in ShowEnv - Affa Pan
+
+	fnlogin: correct check for ssh port setting - Robert Blayzor
+
+	rancid: adjust snmp community filter for ASA version >=8.x - Skye Hagen
+
+	Add MAILOPTS variable to rancid.conf - Matej Vela
+
+	share/Makefile: missing MAIL* variables in sed script - Aaron Smith
+
+	jrancid: distill used subscriber licenses to a percentage, else its
+	forever changing.
+
+	nxrancid: nx5000 generates spurious 'Permission denied' error for 'show
+	debug' if command authorization is used - Per-Olof Olsson
+
+	nxrancid: remove cisco ios residuals - Per-Olof Olsson
+
+	hlogin: add "--" in comment to prevent older expect/tcl from
+	interpretting "-," as an option. !@#&!#$
+
+	rancid, xrrancid: add KB to disk/flash bytes free filtering
+
+	xrrancd: also filter temp_static_data
+
+	rancid: filter LISP cache file number, size and date on IOS-XE LISP EFT
+	and filter dhcp db and vlan.dat in the same manner, instead of removing
+
+	clogin.1: note not using [#>] in prompts
+
+	xrrancid: additional file filters for 4.2
+
+	hpuifilter: dont use memcpy for overlapping regions - David Byers
+
 2.3.8
 	rancid: filter sup-bootflash if sup-bootdisk worked
 

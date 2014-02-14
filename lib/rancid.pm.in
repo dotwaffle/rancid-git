@@ -1,0 +1,368 @@
+package rancid;
+##
+## $Id: rancid.pm.in 2632 2012-10-22 20:08:26Z heas $
+##
+## @PACKAGE@ @VERSION@
+## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
+## All rights reserved.
+##
+## This code is derived from software contributed to and maintained by
+## Terrapin Communications, Inc. by Henry Kilmer, John Heasley, Andrew Partan,
+## Pete Whiting, Austin Schutz, and Andrew Fort.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted provided that the following conditions
+## are met:
+## 1. Redistributions of source code must retain the above copyright
+##    notice, this list of conditions and the following disclaimer.
+## 2. Redistributions in binary form must reproduce the above copyright
+##    notice, this list of conditions and the following disclaimer in the
+##    documentation and/or other materials provided with the distribution.
+## 3. All advertising materials mentioning features or use of this software
+##    must display the following acknowledgement:
+##        This product includes software developed by Terrapin Communications,
+##        Inc. and its contributors for RANCID.
+## 4. Neither the name of Terrapin Communications, Inc. nor the names of its
+##    contributors may be used to endorse or promote products derived from
+##    this software without specific prior written permission.
+## 5. It is requested that non-binding fixes and modifications be contributed
+##    back to Terrapin Communications, Inc.
+##
+## THIS SOFTWARE IS PROVIDED BY Terrapin Communications, INC. AND CONTRIBUTORS
+## ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+## TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+## PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COMPANY OR CONTRIBUTORS
+## BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+## CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+## SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+## INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+## POSSIBILITY OF SUCH DAMAGE.
+#
+#  RANCID - Really Awesome New Cisco confIg Differ
+#
+#  rancid.pm - base/basic rancid procedures
+#
+
+use 5.010;
+use strict 'vars';
+use warnings;
+require(Exporter);
+our @ISA = qw(Exporter);
+
+our $VERSION;
+our @commandtable;			# command lists
+our %commands;
+our @commands;
+our $commandcnt;			# number of members in @commandtable
+our $commandstr;			# command string for lscript -c
+our $cmds_regexp;			# command regex for matching input
+our $devtype;				# device type argument
+our $filter_commstr;			# SNMP community string filtering
+our $filter_pwds;			# password filtering mode
+our $aclsort;				# ACL sorting mode
+our $log;				# log cmdline option
+our $debug;				# debug cmdline option
+our $file;				# file cmdline option
+our $host;				# hostname from cmdline
+our $clean_run;				# successful run
+our $found_end;				# found end of the config
+our $timeo;				# login script timeout in seconds
+our $prompt;				# device prompt regex
+
+
+use vars qw{$script $lscript $module};	# script, login script, module name
+use vars qw{$inloop}		;	# inloop func
+use vars qw{$command $hist_tag};	# ProcessHistory state
+use vars qw{%history @history};		# ProcessHistory state
+our @EXPORT = qw($VERSION $devtype $script $lscript $module $inloop
+		@commandtable
+		%commands @commands $commandcnt
+		$commandstr $cmds_regexp
+		$filter_commstr $filter_pwds $aclsort
+		$log $debug $file $host $clean_run $found_end $timeo $prompt
+		rancidinit loadtype
+		ProcessHistory numerically keynsort keysort valsort numsort
+		ipsort ipaddrval sortbyipaddr
+		RunCommand);
+
+BEGIN {
+    $VERSION = '@VERSION@';
+}
+
+# initialize common rancid parameters and handle command-line arguments.
+sub rancidinit {
+    my($i);
+
+    if ($main::opt_V) {
+	print "@PACKAGE@ @VERSION@\n";
+	exit(0);
+    }
+
+    $command = $hist_tag = "";		# ProcessHistory state
+    for (keys %history) {
+        delete $history{$_};
+    }
+    @history = ();
+
+    $log = $main::opt_l;
+    $debug = $main::opt_d;
+    $devtype = $main::opt_t;
+    $file = $main::opt_f;
+    $host = defined($ARGV[0]) ? $ARGV[0] : "";
+    $clean_run = 0;
+    $found_end = 0;
+    $timeo = 90;			# login script timeout in seconds
+
+    $aclsort = "ipsort";		# ACL sorting mode
+
+    # determine ACL sorting mode
+    if (defined($ENV{"ACLSORT"}) && $ENV{"ACLSORT"} =~ /no/i) {
+	$aclsort = "";
+    }
+    # determine community string filtering mode
+    if (defined($ENV{"NOCOMMSTR"}) &&
+	($ENV{"NOCOMMSTR"} =~ /yes/i || $ENV{"NOCOMMSTR"} =~ /^$/)) {
+	$filter_commstr = 1;
+    } else {
+	$filter_commstr = 0;
+    }
+    # determine password filtering mode
+    if (defined($ENV{"FILTER_PWDS"}) && $ENV{"FILTER_PWDS"} =~ /no/i) {
+	$filter_pwds = 0;
+    } elsif (defined($ENV{"FILTER_PWDS"}) && ENV{"FILTER_PWDS"} =~ /all/i) {
+	$filter_pwds = 2;
+    } else {
+	$filter_pwds = 1;
+    }
+
+    if (!$main::opt_C && length($host) == 0) {
+	if ($main::file) {
+	    print(STDERR "Too few arguments: file name required\n");
+	    exit(1);
+	} else {
+	    print(STDERR "Too few arguments: host name required\n");
+	    exit(1);
+	}
+    }
+
+    # make OUTPUT unbuffered if debugging
+    if ($debug) { $| = 1; }
+
+    1;
+}
+
+# load rancid device-type spec/info from etc/rancid.types.* config files, then
+# load modules & handle -C option, if present.
+# usage: loadtype(device_type)
+sub loadtype {
+    my($devtype) = @_;
+    my($file, $line, $matched);
+
+    @commandtable = ();
+    $commandcnt = 0;
+
+    if (!defined($devtype) || length($devtype) == 0) {
+	print STDERR "loadtype(): device_type is empty\n";
+	return 1;
+    }
+    print STDERR "loadtype: device type $devtype\n" if ($debug);
+
+    # which device type configuration file has the definition of $devtype?
+    foreach $file ("@sysconfdir@/rancid.types.base",
+		   "@sysconfdir@/rancid.types.conf") {
+	$line = 0;
+	open(INPUT, "< $file") || die "Could not open $file: $!";
+	while (<INPUT>) {
+	    $line++;
+	    chomp;
+	    next if (/^\s*$/ || /^\s*#/);
+	    my($type, $directive, $value, $value2) = split('\;');
+	    $type =~ tr/[A-Z]/[a-z]/;
+	    $directive =~ tr/[A-Z]/[a-z]/;
+
+	    next if ($type ne $devtype);
+	    if (!$matched) {
+		$matched++;
+		print STDERR "loadtype: found device type ".
+			     "$devtype in $file\n" if ($debug);
+	    }
+	    if ($directive eq "script") {
+		$script = $value;
+	    } elsif ($directive eq "login") {
+		$lscript = $value;
+	    } elsif ($directive eq "module") {
+		# XXX perhaps make this an array, to include mulitple modules?
+		$module = $value;
+	    } elsif ($directive eq "inloop") {
+		$inloop = $value;
+	    } elsif ($directive eq "command") {
+		push(@commandtable, {$value2, $value});
+	    } else {
+		print STDERR "loadtype: unknown directive ".
+			     "$directive at $file:$line\n";
+		close(INPUT);
+		return(-1);
+	    }
+	}
+	close(INPUT);
+
+	# do not parse rancid.types.conf if we found any device type matches
+	# in rancid.types.base.
+	last if ($matched);
+    }
+
+    # load device-type specific modules
+    if (length($module)) {
+	eval {
+	    (my $file = $module) =~ s/::/\//g;
+	    require $file . '.pm';
+	    # call module->import(); we expect 0 as success, as god intended it
+	    # XXX how the fuck is this done w/o the eval and w/o a temp var?
+	    eval($module ."::import();") ? 0 : 1;
+	} or do {
+	    # Module load failed
+	    my($error) = $@;
+	    print STDERR "loadtype: loading $module failed: ".
+			 "$error\n";
+	    return(-1);
+	};
+    }
+
+    # Use an array to preserve the order of the commands and a hash for mapping
+    # commands to the subroutine and track commands that have been completed.
+    @commands = map(keys(%$_), @commandtable);
+    %commands = map(%$_, @commandtable);
+    $commandcnt = scalar(keys %commands);
+
+    $commandstr = join(";",@commands);
+    $cmds_regexp = join("|", map quotemeta($_), @commands);
+
+    if ($main::opt_C) {
+	print "clogin -t $timeo -c\'$commandstr\' $host\n";
+	exit(0);
+    }
+
+    0;
+}
+
+# This routine is used to print out the router configuration
+sub ProcessHistory {
+    my($new_hist_tag,$new_command,$command_string,@string) = (@_);
+    if ((($new_hist_tag ne $hist_tag) || ($new_command ne $command))
+	&& scalar(%history)) {
+	print eval "$command \%history";
+	undef %history;
+    }
+    if (($new_hist_tag) && ($new_command) && ($command_string)) {
+	if ($history{$command_string}) {
+	    $history{$command_string} = "$history{$command_string}@string";
+	} else {
+	    $history{$command_string} = "@string";
+	}
+    } elsif (($new_hist_tag) && ($new_command)) {
+	$history{++$#history} = "@string";
+    } else {
+	print "@string";
+    }
+    $hist_tag = $new_hist_tag;
+    $command = $new_command;
+
+    1;
+}
+
+sub numerically { $a <=> $b; }
+
+# This is a sort routine that will sort numerically on the
+# keys of a hash as if it were a normal array.
+sub keynsort {
+    my(%lines) = @_;
+    my($i) = 0;
+    my($key, @sorted_lines);
+    foreach $key (sort numerically keys(%lines)) {
+	$sorted_lines[$i] = $lines{$key};
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# This is a sort routine that will sort on the
+# keys of a hash as if it were a normal array.
+sub keysort {
+    my(%lines) = @_;
+    my($i) = 0;
+    my($key, @sorted_lines);
+    foreach $key (sort keys(%lines)) {
+	$sorted_lines[$i] = $lines{$key};
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# This is a sort routine that will sort on the
+# values of a hash as if it were a normal array.
+sub valsort {
+    my(%lines) = @_;
+    my($i) = 0;
+    my($key, @sorted_lines);
+    foreach $key (sort values %lines) {
+	$sorted_lines[$i] = $key;
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# This is a numerical sort routine (ascending).
+sub numsort {
+    my(%lines) = @_;
+    my($i) = 0;
+    my($num, @sorted_lines);
+    foreach $num (sort {$a <=> $b} keys %lines) {
+	$sorted_lines[$i] = $lines{$num};
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# This is a sort routine that will sort on the
+# ip address when the ip address is anywhere in
+# the strings.
+sub ipsort {
+    my(%lines) = @_;
+    my($i) = 0;
+    my($addr, @sorted_lines);
+    foreach $addr (sort sortbyipaddr keys %lines) {
+	$sorted_lines[$i] = $lines{$addr};
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# These two routines will sort based upon IP addresses
+sub ipaddrval {
+    my(@a) = ($_[0] =~ m#^(\d+)\.(\d+)\.(\d+)\.(\d+)$#);
+    # work around uninitialized values warning, requires perl >= 5.010
+    $a[0] //= 0;
+    $a[1] //= 0;
+    $a[2] //= 0;
+    $a[3] //= 0;
+    $a[3] + 256 * ($a[2] + 256 * ($a[1] + 256 * $a[0]));
+}
+sub sortbyipaddr {
+    &ipaddrval($a) <=> &ipaddrval($b);
+}
+
+# This routine parses a single command that returns no required info.
+sub RunCommand {
+    my($INPUT, $OUTPUT, $cmd) = @_;
+    print STDERR "    In RunCommand: $_" if ($debug);
+
+    while (<$INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+    }
+    return(0);
+}
+
+1;

@@ -1,4 +1,4 @@
-Frequently Asked Questions about rancid - last updated 20091111.
+Frequently Asked Questions about rancid - last updated 20120215.
 
 This FAQ contains information that may not apply directly to versions of
 rancid prior to 2.3.  It also contains paths containing tags such as
@@ -51,6 +51,17 @@ A. This may be due to your prompt.  CatOS does not include an implicit '>' in
 	cat5k> enable
 	Password:
 	cat5k> (enable)
+
+
+Q. Why won't a saved HP Procurve configuration load onto the switch to restore
+   the configuration.
+A. Stefan Metzger and Per-Olof Olsson have found that the Procurve O/S does
+   not like the leading comments, the lines beginning with ';', so remove
+   these comments in whatever manner you wish.  Also, they appear to expect a
+   leading comment line that varies between different models, for example:
+	"; Running config file:"
+   OR
+	"; JJBA8<any other chars>"
 
 
 Q. Polling a ZebOS box fails from cron, but is successful from the command-
@@ -406,7 +417,18 @@ A. The possibilities are endless...rancid is non-toxic when applied properly.
    or our NANOG presentation:
 	http://www.shrubbery.net/rancid/NANOG29/
 
-4) License
+
+4) O/S specific
+4a) Linux
+Q. Some device collections have erroneously duplicated characters and which
+   characters are duplicated often change between collections.  Such as:
+   - access-list 1 permit x.x.x.101
+   + access-list 1 permitt x.x.x.101
+A. This is likely a problem with Kerberized-telnet.  See
+   http://ftp.shrubbery.net/pipermail/rancid-discuss/2011-September/005929.html
+   http://www.shrubbery.net/pipermail/rancid-discuss/2012-February/006210.html
+
+5) License
 Q. Please explain the RANCID license.
 A. Quite simple; read it.  It is a slightly modified BSD license; it has an
    additional clause.

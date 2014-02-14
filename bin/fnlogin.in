@@ -75,6 +75,8 @@ set do_script 0
 # tracks if we receive them on the command line.
 set do_passwd 1
 set do_enapasswd 1
+# Sometimes routers take awhile to answer (the default is 10 sec)
+set timeoutdflt 45
 # Save config, if prompted
 set do_saveconfig 0
 
@@ -165,8 +167,11 @@ for {set i 0} {$i < $argc} {incr i} {
 		set password_file [ lindex $argv $i ]
 	    }
 	} -t* {
-	    incr i
-	    set timeout [ lindex $argv $i ]
+	    if {! [regexp .\[tT\](.+) $arg ignore timeout]} {
+		incr i
+		set timeoutdflt [ lindex $argv $i ]
+	    }
+	# command file
         } -x* {
             if {! [  regexp .\[xX\](.+) $arg ignore cmd_file]} {
                 incr i
@@ -303,7 +308,7 @@ proc login { router user userpswd passwd enapasswd prompt cmethod cyphertype } {
 	} elseif [string match "ssh*" $prog] {
 	    regexp {ssh(:([^[:space:]]+))*} $prog methcmd suffix port
 	    set cmd $sshcmd
-	    if {"$port" == ""} {
+	    if {"$port" != ""} {
 		set cmd "$cmd -p $port"
 	    }
 	    set retval [ catch {eval spawn [split "$cmd -c $cyphertype -x -l $user $router" { }]} reason ]
@@ -495,6 +500,12 @@ foreach router [lrange $argv $i end] {
 
     # FortiOS 2.x prompts can end in either '#' or '$'
     set prompt "\[#\\$] "
+
+    # device timeout
+    set timeout [find timeout $router]
+    if { [llength $timeout] == 0 } {
+	set timeout $timeoutdflt
+    }
 
     # Figure out passwords
     if { $do_passwd || $do_enapasswd } {

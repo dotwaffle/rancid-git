@@ -1,9 +1,9 @@
 ## Process this file with automake to produce Makefile.in
 ## A Makefile.in is supplied, in case you do not have automake.
 
-## $Id: Makefile.am 1853 2007-11-16 01:33:38Z heas $
+## $Id: Makefile.am 2583 2012-07-26 16:33:09Z heas $
 ##
-## Copyright (c) 1997-2007 by Terrapin Communications, Inc.
+## Copyright (c) 1997-2012 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -48,10 +48,14 @@
 #AUTOMAKE_OPTIONS=foreign no-dependencies
 AUTOMAKE_OPTIONS=foreign
 
-pkgdata_DATA= lg.conf.sample rancid.conf.sample
-EXTRA_DIST= $(pkgdata_DATA:%=%.in)
+sysconf_DATA= rancid.types.base rancid.types.conf
+pkgdata_nogen = 
+pkgdata_gen = lg.conf.sample rancid.conf.sample
+pkgdata_DATA = $(pkgdata_nogen) $(pkgdata_gen)
 
-CLEANFILES= $(pkgdata_DATA)
+EXTRA_DIST= $(pkgdata_gen:%=%.in) $(pkgdata_nogen) $(sysconf_DATA)
+
+CLEANFILES= $(pkgdata_gen)
 
 if CONF_INSTALL
 DO_CONF_INSTALL=yes
@@ -68,6 +72,13 @@ install-data-local: all
 	else \
 	    $(INSTALL_DATA) rancid.conf.sample $(DESTDIR)$(sysconfdir)/rancid.conf; \
 	fi; \
+	if test -f $(DESTDIR)$(sysconfdir)/rancid.types.conf ; then \
+	    echo ""; \
+	    echo "WARNING: *** $(DESTDIR)$(sysconfdir)/rancid.types.conf exists."; \
+	    echo ""; \
+	else \
+	    $(INSTALL_DATA) rancid.types.conf $(DESTDIR)$(sysconfdir)/rancid.types.conf; \
+	fi; \
 	if test -f $(DESTDIR)$(sysconfdir)/lg.conf ; then \
 	    echo ""; \
 	    echo "WARNING: *** $(DESTDIR)$(sysconfdir)/lg.conf exists.  See "; \
@@ -77,7 +88,8 @@ install-data-local: all
 	else \
 	    $(INSTALL_DATA) lg.conf.sample $(DESTDIR)$(sysconfdir)/lg.conf; \
 	fi; \
-	fi
+	fi; \
+	$(INSTALL_DATA) rancid.types.base $(DESTDIR)$(sysconfdir)/rancid.types.base
 
 #clean:
 #	rm -f Makefile rancid.conf $(BIN_DATAS) $(BIN_PROGS)
@@ -92,6 +104,7 @@ auto_edit = sed \
 	-e 's,@bindir\@,$(bindir),g' \
 	-e 's,@prefix\@,$(prefix),g' \
 	-e 's,@localstatedir\@,$(localstatedir),g' \
+	-e 's,@pkglibdir\@,$(pkglibdir),g' \
 	-e 's,@sysconfdir\@,$(sysconfdir),g' \
 	-e 's,@EXPECT_PATH\@,$(EXPECT_PATH),g' \
 	-e 's,@PERLV_PATH\@,$(PERLV_PATH),g' \

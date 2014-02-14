@@ -1,9 +1,9 @@
 #! @PERLV_PATH@
 ##
-## $Id: xrancid.in 2349 2011-12-07 23:47:09Z heas $
+## $Id: xrancid.in 2605 2012-07-26 23:21:27Z heas $
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
+## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -42,10 +42,10 @@
 # 
 #  RANCID - Really Awesome New Cisco confIg Differ
 #
-# usage: rancid [-dV] [-l] [-f filename | hostname]
+# usage: xrancid [-dltCV] [-f filename | hostname]
 #
 use Getopt::Std;
-getopts('dflV');
+getopts('dflt:CV');
 if ($opt_V) {
     print "@PACKAGE@ @VERSION@\n";
     exit(0);
@@ -202,8 +202,8 @@ sub ShowMemory {
 	last if(/^$prompt/);
 	next if(/^(\s*|\s*$cmd\s*)$/);
 
-	/^Total DRAM Size: (.*)/ &&
-	    ProcessHistory("COMMENTS","keysort","B1","#\n#Memory: $1\n")
+	/^Total DRAM (Size|\(KB\)): (.*)/ &&
+	    ProcessHistory("COMMENTS","keysort","B1","#\n#Memory: $2\n")
     }
     return(0);
 }
@@ -280,9 +280,6 @@ sub ShowSwitch {
 	/^(boot |next reboot)/i && next;
 	/^(auto |qos mode|sys\S*:|temperature|time)/i && next;
 
-	/^system type\s*:\s*(.+)/i &&
-	    ProcessHistory("COMMENTS","keysort","A0","#Chassis type: $1\n") &&
-	    next;
 	/^power supply: (.*)/i &&
 		ProcessHistory("COMMENTS","keysort","C0","#$1") && next;
 	/^license/i && ProcessHistory("COMMENTS","keysort","D0","#Image: $_")
@@ -291,13 +288,31 @@ sub ShowSwitch {
 		ProcessHistory("COMMENTS","keysort","D0","#$_") && next;
 	/^\S+ software version:/i &&
 		ProcessHistory("COMMENTS","keysort","D0","#Image: $_") && next;
-	/^(\S+ )?software/i && ProcessHistory("COMMENTS","keysort","D0","# $_");
-
+	/^(\S+ )?software/i &&
+		ProcessHistory("COMMENTS","keysort","D0","# $_") && next;
+	/System MAC:\s+(.*)$/ &&
+		ProcessHistory("COMMENTS","keysort","B0","#MAC: $1\n") &&
+		next;
+	/System Type:\s+(.*)$/ &&
+		ProcessHistory("COMMENTS","keysort","A0","#Chassis type: $1\n")
+		&& next;
+	/^(Image Selected):\s+(\S+)/ &&
+		ProcessHistory("COMMENTS","keysort","A0","#$1: $2\n") && next;
+	/^(Image Booted):\s+(\S+)/ &&
+		ProcessHistory("COMMENTS","keysort","A0","#$1: $2\n") && next;
+	/^(Primary (\S+ )?ver):\s+(\S+)/i &&
+		ProcessHistory("COMMENTS","keysort","A0","#$1: $3\n") && next;
+	/^(Secondary (\S+ )?ver):\s+(\S+)/i &&
+		ProcessHistory("COMMENTS","keysort","A0","#$1: $3\n") && next;
+	/^(Config Selected):\s+(\S+)/ &&
+		ProcessHistory("COMMENTS","keysort","A0","#$1: $2\n") && next;
+	/^(Config Booted):\s+(\S+)/ &&
+		ProcessHistory("COMMENTS","keysort","A0","#$1: $2\n") && next;
     }
     return(0);
 }
 
-# This routine processes a "write term"
+# This routine processes a "show configuration {detail}"
 sub WriteTerm {
     my($lines) = 0;
     print STDERR "    In WriteTerm: $_" if ($debug);
@@ -321,7 +336,7 @@ sub WriteTerm {
 	# the chassis type at the top of muched o/p before the process history
 	# key changes.
 	if (/^#\s*$/) {
- 	   if ($comment) {
+	   if ($comment) {
 		next;
 	   } else {
 		$comment++;
@@ -402,6 +417,8 @@ sub WriteTerm {
 	}
     }
 
+    printf STDERR "    End WriteTerm: $_" if ($debug);
+
     if ($lines < 3) {
 	printf(STDERR "ERROR: $host configuration appears to be truncated.\n");
 	$found_end = 0;
@@ -411,9 +428,6 @@ sub WriteTerm {
 
     return(0);
 }
-
-# dummy function
-sub DoNothing {print STDOUT;}
 
 # Main
 @commandtable = (
@@ -429,8 +443,9 @@ sub DoNothing {print STDOUT;}
 # commands to the subroutine and track commands that have been completed.
 @commands = map(keys(%$_), @commandtable);
 %commands = map(%$_, @commandtable);
+$commandcnt = scalar(keys %commands);
 
-$cisco_cmds = join(";",@commands);
+$commandstr = join(";",@commands);
 $cmds_regexp = join("|", map quotemeta($_), @commands);
 
 if (length($host) == 0) {
@@ -442,6 +457,10 @@ if (length($host) == 0) {
 	exit(1);
     }
 }
+if ($opt_C) {
+    print "clogin -t $timeo -c\'$commandstr\' $host\n";
+    exit(0);
+}
 open(OUTPUT,">$host.new") || die "Can't open $host.new for writing: $!\n";
 select(OUTPUT);
 # make OUTPUT unbuffered if debugging
@@ -452,13 +471,13 @@ if ($file) {
     print STDOUT "opening file $host\n" if ($log);
     open(INPUT,"<$host") || die "open failed for $host: $!\n";
 } else {
-    print STDERR "executing clogin -t $timeo -c \"$cisco_cmds\" $host\n" if ($debug);
-    print STDOUT "executing clogin -t $timeo -c \"$cisco_cmds\" $host\n" if ($log);
+    print STDERR "executing clogin -t $timeo -c \"$commandstr\" $host\n" if ($debug);
+    print STDOUT "executing clogin -t $timeo -c \"$commandstr\" $host\n" if ($log);
     if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
-	system "clogin -t $timeo -c \"$cisco_cmds\" $host </dev/null > $host.raw 2>&1" || die "clogin failed for $host: $!\n";
+	system "clogin -t $timeo -c \"$commandstr\" $host </dev/null > $host.raw 2>&1" || die "clogin failed for $host: $!\n";
 	open(INPUT, "< $host.raw") || die "clogin failed for $host: $!\n";
     } else {
-	open(INPUT,"clogin -t $timeo -c \"$cisco_cmds\" $host </dev/null |") || die "clogin failed for $host: $!\n";
+	open(INPUT,"clogin -t $timeo -c \"$commandstr\" $host </dev/null |") || die "clogin failed for $host: $!\n";
     }
 }
 
@@ -495,7 +514,7 @@ TOP: while(<INPUT>) {
     # note: this match sucks rocks, but currently the extreme bits are
     # unreliable about echoing the 'exit\n' command.  this match might really
     # be a bad idea, but instead rely upon WriteTerm's found_end?
-    if (/$prompt\s?(quit|exit|Connection( to \S+)? closed)/ && $found_end) {
+    if (/($prompt\s?(quit|exit)|Connection( to \S+)? closed)/ && $found_end) {
 	$clean_run = 1;
 	last;
     }
@@ -520,7 +539,7 @@ TOP: while(<INPUT>) {
 	    $clean_run = 0;
 	    last TOP;
 	}
-	$rval = &{$commands{$cmd}};
+	$rval = &{$commands{$cmd}}(*INPUT, *OUTPUT, $cmd);
 	delete($commands{$cmd});
 	if ($rval == -1) {
 	    printf STDERR "rval = -1\n" if ($debug);
@@ -542,7 +561,9 @@ if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
 
 # check for completeness
 if (scalar(%commands) || !$clean_run || !$found_end) {
-    if (scalar(%commands)) {
+    if (scalar(keys %commands) eq $commandcnt) {
+	printf(STDERR "$host: missed cmd(s): all commands\n");
+    } elsif (scalar(%commands)) {
 	printf(STDOUT "$host: missed cmd(s): %s\n", join(',', keys(%commands)));
 	printf(STDERR "$host: missed cmd(s): %s\n", join(',', keys(%commands))) if ($debug);
     }
