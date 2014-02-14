@@ -1,4 +1,61 @@
-3.0a2
+3.0a3
+	nxrancid: filter Fan Zone Speed
+
+	ios.pm: reverse logic of whether to 'show vlan', skip VTP clients
+
+	f10rancid: skip . & ..
+
+	*login: change -c handling of ;'s for escaping like \;
+
+	rancid.conf: add MAILSPLIT to split large diff mail by kilobytes
+
+	control_rancid: add group-specific rancid.conf file & supporting -f
+	option
+
+	nxrancid: filter snmp communities, tacacs keys and neighbor pwds - Alan
+	McKinnon
+
+	ios.pm: remove lpd neighbor passwords - Alan McKinnon
+
+	ios.pm: remove interface dynamic addresses - Alan McKinnon
+
+	nxrancid: add show (fex|module fex) - Alan McKinnon
+
+	nsrancid: filter last modified lines - Roman Hochuli
+
+	rancid.conf: add check for EUID - Matthew Walster & Ed Ravin
+
+	control_rancid: allow MAX_ROUNDS to be zero - Alan McKinnon
+
+	ios.pm: include 6500 sup-2t CPU info - Per-Olof Olsson
+
+	fnrancid: filter oscillating certs - based on patch from Gavin McCullagh
+
+	flogin: handle -S/do_saveconfig
+
+	xrrancid: filter perpetually changing harddisk:ce_switch.log, a DDTS is
+	open for this
+
+	ios.pm: filter private-multiple-fs flash file found on APs - robert
+	drake
+
+	ios.pm: Removing "AC Revision" from UBRs and some others - robert drake
+
+	ios.pm: GC unused old 7000 series code from ShowEnv - robert drake
+
+	arrancid: Parse power supplies with no power,
+	Skip free flash space altogether,
+	Optionally include the ribd running-config,
+	Skip the "Time:" comment in "show running",
+	Delete a bunch of cruft left over from IOS rancid copy,
+	Include diffs of unsaved changes, if there is a difference between
+	startup-config and running-config.,
+	Handle the common practice of putting the time in the prompt. - Bill
+	Fenner
+
+	hrancid: ignore disclaimer from show tech transceivers starting with
+	procurve 2610 R11.98 - Mika Tiainen
+
 	ios: skip the "^" line that preceeds invalid input consistently
 
 	merge compass branch

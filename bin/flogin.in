@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: flogin.in 2459 2012-04-24 16:55:56Z heas $
+## $Id: flogin.in 2719 2013-07-30 12:44:34Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -513,13 +513,16 @@ proc do_enable { enauser enapasswd } {
 
 # Run commands given on the command line.
 proc run_commands { prompt command } {
-    global in_proc
+    global do_saveconfig in_proc
     set in_proc 1
 
     send -h "skip-page-display\r"
     expect -re "$prompt" {}
 
-    set commands [split $command \;]
+    set sep "\\1\u001"
+    regsub -all {([^\\])\;} $command "$sep" esccommand
+    set sep "\u001"
+    set commands [split $esccommand $sep]
     set num_commands [llength $commands]
     for {set i 0} {$i < $num_commands} { incr i} {
 	send -h -- "[subst -nocommands [lindex $commands $i]]\r"
@@ -543,6 +546,14 @@ proc run_commands { prompt command } {
 						  return 0
 						}
 	eof					{ return 0 }
+	-re "Configuration modified, save\? \[\r\n]*" {
+						  if {$do_saveconfig} {
+						    catch {send "y\r"}
+						  } else {
+						    catch {send "n\r"}
+						  }
+						  exp_continue
+						}
     }
     set in_proc 0
 }

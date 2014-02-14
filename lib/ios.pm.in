@@ -1,6 +1,6 @@
 package ios;
 ##
-## $Id: ios.pm.in 2685 2013-04-16 19:03:36Z heas $
+## $Id: ios.pm.in 2723 2013-08-15 22:21:41Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -307,6 +307,19 @@ sub ShowVersion {
 		}
 		$_ = <$INPUT>;
 	    }
+	    # for 6500 sup-2t
+	    if ($cpu =~ /M8572/) {
+		if (defined($cpu)) {
+		    s/^ CPU://;
+		    ProcessHistory("COMMENTS","keysort","A3", "!CPU: $cpu, $_");
+		}
+LINE:		while (<$INPUT>) {
+		    last LINE if /^\s*$/;
+		    ProcessHistory("COMMENTS","keysort","A3", "!CPU: $_");
+		    last LINE if /^\s*I-cache/;
+		}
+		undef ($cpu);
+	    }
 	    $_ = "" if (! /(cpu at |processor: |$cpu processor,)/i);
 	    tr/\015//d;
 	    s/implementation/impl/i;
@@ -605,14 +618,12 @@ sub ShowInstallActive {
 # This routine parses "show env all"
 sub ShowEnv {
     my($INPUT, $OUTPUT, $cmd) = @_;
-    # Skip if this is not a 7500, 7200, or 7000.
     print STDERR "    In ShowEnv: $_" if ($debug);
 
     while (<$INPUT>) {
 	tr/\015//d;
 	if (/^$prompt/) { $found_env = 1; last};
 	next if (/^(\s*|\s*$cmd\s*)$/);
-	#return(1) if ($type !~ /^7/);
 	next if (/^\s+\^$/);
 	return(1) if (/Line has invalid autocommand /);
 	return(1) if (/(invalid (input|command) detected|type help or )/i);
@@ -638,6 +649,8 @@ sub ShowEnv {
 		"!Chassis type: $2 backplane\n");
 	    next;
 	}
+	# AC revision from UBRs and some others fluctuates
+	s/is AC Revision [A-F]0\./is AC./;
 	/^Power Supply Information$/ && next;
 	/^\s*Power Module\s+Voltage\s+Current$/ && next;
 	/^\s*(Power [^:\n]+)$/ &&
@@ -819,7 +832,8 @@ sub ShowFlash {
 	}
 
 	# Drop these files entirely.
-	/\s+(multiple-fs|LISP-MapCache-IPv\S+|nv_hdr)$/ && next;
+	/\s+(private-multiple-fs|multiple-fs|LISP-MapCache-IPv\S+|nv_hdr)$/ &&
+	    next;
 	ProcessHistory("FLASH","","","!Flash: $_");
     }
     ProcessHistory("","","","!\n");
@@ -971,6 +985,10 @@ sub ShowContAll {
 	/^AM79970 / && ProcessHistory("INT","","","!Interface: $_") && next;
 	/^buffer size \d+  (Universal Serial: .*)/ &&
 	    ProcessHistory("INT","","","!\t$1\n") && next;
+	# Remove dynamic addresses like:
+	# !Interface: FastEthernet0/0, GT96K FE ADDR: 62AFB684, FASTSEND: 6 1579E4C, MCI_INDEX: 0
+	/^Hardware is (.*?)($| ADDR: .*| at 0x.*)/ &&
+	    ProcessHistory("INT","","","!Interface: $INT$1\n") && next;
 	/^Hardware is (.*)/ &&
 	    ProcessHistory("INT","","","!Interface: $INT$1\n") && next;
 	/^(QUICC Serial unit \d),/ &&
@@ -1712,7 +1730,7 @@ sub ShowVTP {
 	    s/^$1\s{$len}//;
 	}
 
-	if (/^VTP Operating Mode\s+:\s+(Transparent|Server)/) {
+	if (/^VTP Operating Mode\s+:\s+(Client)/) {
 	    $DO_SHOW_VLAN = 1;
 	}
 	ProcessHistory("COMMENTS","keysort","I0","!VTP: $_");
@@ -1726,7 +1744,7 @@ sub ShowVLAN {
     my($INPUT, $OUTPUT, $cmd) = @_;
     print STDERR "    In ShowVLAN: $_" if ($debug);
 
-    ($_ = <$INPUT>, return(1)) if (!$DO_SHOW_VLAN);
+    ($_ = <$INPUT>, return(1)) if ($DO_SHOW_VLAN);
 
     while (<$INPUT>) {
 	tr/\015//d;
@@ -1736,13 +1754,15 @@ sub ShowVLAN {
 	return(1) if (/Line has invalid autocommand /);
 	next if (/^\s+\^\s*$/);
 	return(1) if (/(invalid (input|command) detected|type help or )/i);
-	return(1) if (/Ambiguous command/i);
+	return(1) if (/ambiguous command/i);
+	return(1) if (/incomplete command/i);
 	return(-1) if (/command authorization failed/i);
 	# the pager can not be disabled per-session on the PIX
 	if (/^(<-+ More -+>)/) {
 	    my($len) = length($1);
 	    s/^$1\s{$len}//;
 	}
+	return(0) if (/no virtual lans configured/i);
 
 	ProcessHistory("COMMENTS","keysort","IO","!VLAN: $_");
     }
@@ -1921,8 +1941,8 @@ sub WriteTerm {
 	    ProcessHistory("LINE-PASS","","","!$1secret <removed>\n");
 	    next;
 	}
-	if (/^\s*neighbor (\S*) password / && $filter_pwds >= 1) {
-	    ProcessHistory("","","","! neighbor $1 password <removed>\n");
+	if (/^\s*(.*?neighbor.*?) (\S*) password / && $filter_pwds >= 1) {
+	    ProcessHistory("","","","! $1 password <removed>\n");
 	    next;
 	}
 	if (/^(\s*ppp .* hostname) .*/ && $filter_pwds >= 1) {
@@ -1966,6 +1986,10 @@ sub WriteTerm {
 	    ProcessHistory("","","","!$1 <removed>\n"); next;
 	}
 	if (/^( l2tp tunnel \S+ password)/ && $filter_pwds >= 1) {
+	    ProcessHistory("","","","!$1 <removed>\n"); next;
+	}
+	# l2tp-class secret
+	if (/^( digest secret 7?)/ && $filter_pwds >= 1) {
 	    ProcessHistory("","","","!$1 <removed>\n"); next;
 	}
 	# i am told these are plain-text on the PIX

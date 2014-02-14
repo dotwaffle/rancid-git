@@ -195,6 +195,27 @@ sub ShowVersion {
     return(0);
 }
 
+sub DiffConfig {
+    print STDERR "    In DiffConfig: $_" if ($debug);
+    my($havediffs) = 0;
+
+    while (<INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+
+	ProcessHistory("DIFFS","keysort","BB","!$_");
+	$havediffs = 1;
+    }
+    if ($havediffs) {
+	ProcessHistory("DIFFS","keysort","AA","!*****************************\n");
+	ProcessHistory("DIFFS","keysort","AB","!*** unsaved changes exist ***\n");
+	ProcessHistory("DIFFS","keysort","AC","!*****************************\n");
+	ProcessHistory("DIFFS","keysort","CC","!\n");
+    }
+    return;
+}
+
 # This routine parses "show env all"
 sub ShowEnv {
     print STDERR "    In ShowEnv: $_" if ($debug);
@@ -225,7 +246,7 @@ sub ShowEnv {
             $supplies = 1;
             next;
         }
-        $supplies && /^\s*(\d+)\s+(\S+)\s+(\S+)\s+\S+\s+\S+\s+\S+\s+(\S+)/ &&
+        $supplies && /^\s*(\d+)\s+(\S+)\s+(\S+)\s+\S+\s+\S+\s+\S+\s+(.+)/ &&
             ProcessHistory("COMMENTS","keysort","E2","!Power Supply $1: $2 $3 $4\n" ) && next;
     }
     ProcessHistory("COMMENTS","","","!\n");
@@ -305,19 +326,11 @@ sub ShowFlash {
         # skip its updates.
         /\spersist$/ && next;
 
-	if (/.*\((\d+) bytes free\)/) {  
-	    my($tmp) = $1;
-	    if ($tmp >= (1024 * 1024 * 1024)) {   
-		$tmp = int($tmp / (1024 * 1024 * 1024));
-		s/$1 bytes free/$tmp GB free/;
-	    } elsif ($tmp >= (1024 * 1024)) {  
-		$tmp = int($tmp / (1024 * 1024));
-		s/$1 bytes free/$tmp MB free/;
-	    } else {
-		$tmp = int($tmp / 1024);
-		s/$1 bytes free/$tmp KB free/;
-	    }
-	}
+	# Scheduled commands can cause free space to constantly
+	# change.  Even the trick of summarizing the free space
+	# doesn't help, since it can oscillate, e.g., between
+	# 1006MB and 1007MB.  Just skip the free space.
+	/.*\((\d+) bytes free\)/ && next;
 
 	ProcessHistory("FLASH","","","!Flash: $_");
     }
@@ -343,6 +356,23 @@ sub ShowInventory {
     return(0);
 }
 
+# This routine parses "show tech ribd running" for Ribd sub-code commands running.
+sub WriteRibd {
+    print STDERR "    In WriteRibd: $_" if ($debug);
+
+    while (<INPUT>) {
+        tr/\015//d;
+        last if (/^$prompt/);
+        next if (/^(\s*|\s*$cmd\s*)$/);
+        return(1) if /^% Invalid input/;
+        return(0) if /^% Error displaying /;    # Only do this routine once
+
+        ProcessHistory("RIBD","","","!Ribd: $_");
+    }
+    ProcessHistory("RIBD","","","!\n");
+    return(0);
+}
+
 # This routine processes a "write term"
 sub WriteTerm {
     print STDERR "    In WriteTerm: $_" if ($debug);
@@ -362,6 +392,7 @@ sub WriteTerm {
 	$lineauto = 1 if /^ modem auto/;
 	/^ speed / && $lineauto	&& next; # kill speed on serial lines
 	/^ clockrate /		&& next; # kill clockrate on serial interfaces
+	/^! Time: /		&& next; # EOS gives the time that a "show running" command was run
 	if (/^(enable )?(password|passwd)( level \d+)? / && $filter_pwds >= 1) {
 	    ProcessHistory("ENABLE","","","!$1$2$3 <removed>\n");
 	    next;
@@ -391,41 +422,17 @@ sub WriteTerm {
 	    }
 	    next;
 	}
-	# cisco AP w/ IOS
-	if (/^(wlccp \S+ username (\S+)(\s.*)? password) (\d \S+|\S+)/) {
-	    if ($filter_pwds >= 1) {
-		ProcessHistory("USER","keysort","$2","!$1 <removed>\n");
-	    } else {
-		ProcessHistory("USER","keysort","$2","$_");
-	    }
-	    next;
-	}
-	if (/^( set session-key (in|out)bound ah \d+ )/ && $filter_pwds >= 1) {
-	    ProcessHistory("","","","!$1<removed>\n");
-	    next;
-	}
-	if (/^( set session-key (in|out)bound esp \d+ (authenticator|cypher) )/
-	    && $filter_pwds >= 1) {
-	    ProcessHistory("","","","!$1<removed>\n");
-	    next;
-	}
 	if (/^(\s*)password / && $filter_pwds >= 1) {
-	    ProcessHistory("LINE-PASS","","","!$1password <removed>\n");
+	    ProcessHistory("","","","!$1password <removed>\n");
 	    next;
 	}
 	if (/^(\s*)secret / && $filter_pwds >= 2) {
-	    ProcessHistory("LINE-PASS","","","!$1secret <removed>\n");
+	    ProcessHistory("","","","!$1secret <removed>\n");
 	    next;
 	}
 	if (/^\s*neighbor (\S*) password / && $filter_pwds >= 1) {
 	    ProcessHistory("","","","! neighbor $1 password <removed>\n");
 	    next;
-	}
-	if (/^(ppp .* password) 7 .*/ && $filter_pwds >= 1) {
-	    ProcessHistory("","","","!$1 <removed>\n"); next;
-	}
-	if (/^(ip ftp password) / && $filter_pwds >= 1) {
-	    ProcessHistory("","","","!$1 <removed>\n"); next;
 	}
 	if (/^( ip ospf authentication-key) / && $filter_pwds >= 1) {
 	    ProcessHistory("","","","!$1 <removed>\n"); next;
@@ -446,57 +453,6 @@ sub WriteTerm {
 	if (/^(  message-digest-key \d+ md5 (7|encrypted)) /
 	    && $filter_pwds >= 1) {
 	    ProcessHistory("","","","!$1 <removed>\n"); next;
-	}
-	if (/^((crypto )?isakmp key) \S+ / && $filter_pwds >= 1) {
-	    ProcessHistory("","","","!$1 <removed> $'"); next;
-	}
-	# filter HSRP passwords
-	if (/^(\s+standby \d+ authentication) / && $filter_pwds >= 1) {
-	    ProcessHistory("","","","!$1 <removed>\n"); next;
-	}
-	# this appears in "measurement/sla" images
-	if (/^(\s+key-string \d?)/ && $filter_pwds >= 1) {
-	    ProcessHistory("","","","!$1 <removed>\n"); next;
-	}
-	if (/^( l2tp tunnel \S+ password)/ && $filter_pwds >= 1) {
-	    ProcessHistory("","","","!$1 <removed>\n"); next;
-	}
-	# i am told these are plain-text on the PIX
-	if (/^(vpdn username (\S+) password)/) {
-	    if ($filter_pwds >= 1) {
-		ProcessHistory("USER","keysort","$2","!$1 <removed>\n");
-	    } else {
-		ProcessHistory("USER","keysort","$2","$_");
-	    }
-	    next;
-	}
-	# ASA/PIX keys in more system:running-config
-	if (/^( pre-shared-key |failover key ).*/ && $filter_pwds >= 1) {
-	    ProcessHistory("","","","!$1 <removed> $'"); next;
-	}
-	#
-	if (/^( cable shared-secret )/ && $filter_pwds >= 1) {
-	    ProcessHistory("","","","!$1 <removed>\n");
-	    next;
-	}
-	/fair-queue individual-limit/ && next;
-	# sort ip explicit-paths.
-	if (/^ip explicit-path name (\S+)/) {
-	    my($key) = $1;
-	    my($expath) = $_;
-	    while (<INPUT>) {
-		tr/\015//d;
-		last if (/^$prompt/);
-		last if (/^$prompt/ || ! /^(ip explicit-path name |[ !])/);
-		if (/^ip explicit-path name (\S+)/) {
-		    ProcessHistory("EXPATH","keysort","$key","$expath");
-		    $key = $1;
-		    $expath = $_;
-		} else  {
-		    $expath .= $_;
-		}
-	    }
-	    ProcessHistory("EXPATH","keysort","$key","$expath");
 	}
 	# sort route-maps
 	if (/^route-map (\S+)/) {
@@ -580,9 +536,6 @@ sub WriteTerm {
 	    && $filter_pwds >= 1) {
 	    ProcessHistory("","","","!$1 <removed>$'"); next;
 	}
-	# order clns host statements
-	/^clns host \S+ (\S+)/ &&
-	    ProcessHistory("CLNS","keysort","$1","$_") && next;
 	# order alias statements
 	/^alias / && ProcessHistory("ALIAS","keysort","$_","$_") && next;
 	# delete ntp auth password - this md5 is a reversable too
@@ -595,28 +548,6 @@ sub WriteTerm {
 	    ProcessHistory("NTP","keysort",$sortkey,"$_");
 	    next;
 	}
-	# order ip host statements
-	/^ip host (\S+) / &&
-	    ProcessHistory("IPHOST","keysort","$1","$_") && next;
-	# order ip nat source static statements
-	/^ip nat (\S+) source static (\S+)/ &&
-	    ProcessHistory("IP NAT $1","ipsort","$2","$_") && next;
-	# order atm map-list statements
-	/^\s+ip\s+(\d+\.\d+\.\d+\.\d+)\s+atm-vc/ &&
-	    ProcessHistory("ATM map-list","ipsort","$1","$_") && next;
-	# order ip rcmd lines
-	/^ip rcmd/ && ProcessHistory("RCMD","keysort","$_","$_") && next;
-
-	# system controller
-	/^syscon address (\S*) (\S*)/ &&
-	    ProcessHistory("","","","!syscon address $1 <removed>\n") &&
-	    next;
-	if (/^syscon password (\S*)/ && $filter_pwds >= 1) {
-	    ProcessHistory("","","","!syscon password <removed>\n");
-	    next;
-	}
-
-	/^ *Cryptochecksum:/ && next;
 
 	# catch anything that wasnt matched above.
 	ProcessHistory("","","","$_");
@@ -639,6 +570,8 @@ sub WriteTerm {
 	{'show inventory'		=> 'ShowInventory'},
         {'show boot-extensions'         => 'ShowBootExt'},
         {'show extensions'              => 'ShowExt'},
+	{'diff startup-config running-config' => 'DiffConfig'},
+	#{'show tech ribd running'	=> 'WriteRibd'},
 	{'show running-config'		=> 'WriteTerm'},
 );
 # Use an array to preserve the order of the commands and a hash for mapping
@@ -721,6 +654,8 @@ TOP: while(<INPUT>) {
 	if (!defined($prompt)) {
 	    $prompt = ($_ =~ /^([^#]+#)/)[0];
 	    $prompt =~ s/([][}{)(\\])/\\$1/g;
+	    # "time in prompt" hack:
+	    $prompt =~ s/\d+:\d+:\d+/\\d+:\\d+:\\d+/;
 	    print STDERR ("PROMPT MATCH: $prompt\n") if ($debug);
 	}
 	print STDERR ("HIT COMMAND:$_") if ($debug);

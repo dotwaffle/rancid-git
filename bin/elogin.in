@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: elogin.in 2334 2011-11-17 21:09:37Z heas $
+## $Id: elogin.in 2719 2013-07-30 12:44:34Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -410,7 +410,10 @@ proc run_commands { prompt command } {
 
     regsub -all "\[)(]" $prompt {\\&} reprompt
 
-    set commands [split $command \;]
+    set sep "\\1\u001"
+    regsub -all {([^\\])\;} $command "$sep" esccommand
+    set sep "\u001"
+    set commands [split $esccommand $sep]
     set num_commands [llength $commands]
     for {set i 0} {$i < $num_commands} { incr i} {
 	send -- "[subst -nocommands [lindex $commands $i]]\r"

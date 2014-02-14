@@ -1,11 +1,14 @@
 .\"
 .hys 50
-.TH "control_rancid" "1" "5 October 2006"
+.TH "control_rancid" "1" "15 July 2013"
 .SH NAME
 control_rancid \- run rancid for devices of a group
 .SH SYNOPSIS
 .B control_rancid
 [\fB\-V\fR] [\c
+.BI \-f\ \c
+group_config_file]\ \c
+[\c
 .BI \-m\ \c
 mail_rcpt]\ \c
 [\c
@@ -27,6 +30,18 @@ The command-line options are as follows:
 .TP
 .B \-V
 Prints package name and version strings.
+.TP
+.B \-f group_config_file
+Specify a rancid.conf specific to the given group.  The global rancid.conf
+file is read by rancid-run, which calls
+.B control_rancid
+for each group, and 
+.B control_rancid
+reads the group-specific rancid.conf, thereby overriding the global file.
+.sp
+The group-specific rancid.conf may not exist.
+.sp
+Default: <BASEDIR>/<group>/rancid.conf
 .TP
 .B \-m mail_rcpt
 Specify the recipient of diff mail, which is normally rancid-<group>.  The

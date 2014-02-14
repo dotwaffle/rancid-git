@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: rivlogin.in 2468 2012-04-26 22:23:52Z heas $
+## $Id: rivlogin.in 2719 2013-07-30 12:44:34Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -471,7 +471,10 @@ proc start_logfile { output_file } {
 proc run_commands { prompt cmdstring } {
     global sendstring
 
-    set commands [split $cmdstring \;]
+    set sep "\\1\u001"
+    regsub -all {([^\\])\;} $command "$sep" esccommand
+    set sep "\u001"
+    set commands [split $esccommand $sep]
     set num_commands [llength $cmdstring]
 
     for {set i 0} {$i < $num_commands} { incr i} {

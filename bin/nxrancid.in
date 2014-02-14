@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: nxrancid.in 2664 2013-02-28 21:58:27Z heas $
+## $Id: nxrancid.in 2726 2013-08-26 17:17:12Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -312,6 +312,7 @@ sub ShowEnv {
 	return(-1) if (/command authorization failed/i);
 
 	s/ +$//;	# Drop trailing ' '
+	next if (/Fan Zone Speed:/);
 	ProcessHistory("COMMENTS","","","!Env: $_");
     }
     ProcessHistory("COMMENTS","","","!\n");
@@ -626,6 +627,26 @@ sub ShowCores {
     return(0);
 }
 
+# This routine parses "show fex" and "show module fex"
+sub ShowFex {
+    print STDERR "    In ShowFex: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /Line has invalid autocommand /;
+	return(1) if /(Invalid input detected|Type help or )/;
+	return(1) if (/\% Invalid command at /);
+	return(-1) if (/\% Permission denied/);
+	return(-1) if (/command authorization failed/i);
+
+	ProcessHistory("COMMENTS","","","!FEX: $_");
+    }
+    ProcessHistory("COMMENTS","","","!\n");
+    return(0);
+}
+
 # This routine parses "show processes log"
 sub ShowProcLog {
     print STDERR "    In ShowProcLog: $_" if ($debug);
@@ -681,6 +702,20 @@ sub WriteTerm {
 	}
 	# Sort any other username info.
 	/^username (\S+) .*$/ && ProcessHistory("USER","keysort","$1","$_") && next;
+	if (/^\s*(.*?neighbor \S*) password / && $filter_pwds >= 1) {
+	    ProcessHistory("","","","! $1 password <removed>\n");
+	    next;
+	}
+	# Why was this commented out? It shows up in the raw text...
+	if (/^(snmp-server community) (\S+)/) {
+	    if ($filter_commstr) {
+		ProcessHistory("SNMPSERVERCOMM","keysort","$_",
+			       "!$1 <removed>$'") && next;
+	    } else {
+		ProcessHistory("SNMPSERVERCOMM","keysort","$_","$_") && next;
+	    }
+	}
+
 	# Sort snmp user and delete passwords.
 	if (/^snmp-server user (\S+) (\S+) auth md5 (\S+) priv (\S+) localizedkey$/) {
 	    if ($filter_pwds >= 2) {
@@ -702,6 +737,13 @@ sub WriteTerm {
 		ProcessHistory("","","","$_");
 	    }
 	    next;
+	}
+
+	# prune tacacs/radius server keys:
+	# tacacs-server host 196.23.0.13 key 7 "xxxxxxx" port 50 timeout 10
+	if (/^((tacacs|radius)-server.*?\bkey\b.*?) ".*?"(.*)/
+	    && $filter_pwds >= 1) {
+	    ProcessHistory("","","","!$1 <removed>$3\n"); next;
 	}
 
 	# order cli alias names
@@ -779,6 +821,8 @@ sub RunCommand {
 	{'show debug'			=> 'ShowDebug'},
 	{'show cores vdc-all'		=> 'ShowCores'},
 	{'show processes log vdc-all'	=> 'ShowProcLog'},
+	{'show module fex'		=> 'ShowFex'},
+	{'show fex'			=> 'ShowFex'},
 	{'show running-config'		=> 'WriteTerm'},
 );
 # Use an array to preserve the order of the commands and a hash for mapping

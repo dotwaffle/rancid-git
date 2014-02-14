@@ -8,6 +8,12 @@ TERM=network;export TERM
 # Collating locale
 LC_COLLATE="POSIX"; export LC_COLLATE
 #
+# Check that the effective UID is not root, which could lead to permissions
+# problems for user who is supposed to be running rancid.  If you know what
+# you are doing, disable this check by commenting these lines.
+uid=`perl -e 'print "$>"'`
+test "$uid" -eq 0 && echo "Do not run $0 as root!" && exit 1
+#
 # Create files w/o world read/write/exec permissions, but read/exec permissions
 # for group.
 umask 027
@@ -59,7 +65,7 @@ RCSSYS=@RCSSYS@; export RCSSYS
 #NOCOMMSTR=YES; export NOCOMMSTR
 #
 # How many times failed collections are retried (for each run) before
-# giving up.  Minimum: 1
+# giving up.  Minimum: 0
 #MAX_ROUNDS=4; export MAX_ROUNDS
 #
 # How many hours should pass before complaining about routers that
@@ -99,3 +105,6 @@ RCSSYS=@RCSSYS@; export RCSSYS
 #
 # Additional options for sendmail(8).
 #MAILOPTS="-f bounces.go.here@example.com"; export MAILOPTS
+#
+# Split diffs larger then N kbytes
+#MAILSPLIT=0; export MAILSPLIT

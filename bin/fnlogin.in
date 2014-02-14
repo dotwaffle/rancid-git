@@ -455,7 +455,10 @@ proc run_commands { prompt command } {
     expect -re $prompt; send -- "end\r"
     expect -re $prompt;
 
-    set commands [split $command \;]
+    set sep "\\1\u001"
+    regsub -all {([^\\])\;} $command "$sep" esccommand
+    set sep "\u001"
+    set commands [split $esccommand $sep]
     set num_commands [llength $commands]
     for {set i 0} {$i < $num_commands} { incr i} {
 	send -- "[subst -nocommands [lindex $commands $i]]\r"

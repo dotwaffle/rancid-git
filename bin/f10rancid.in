@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: f10rancid.in 2605 2012-07-26 23:21:27Z heas $
+## $Id: f10rancid.in 2720 2013-08-01 13:26:30Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -336,6 +336,8 @@ sub DirSlotN {
 	return(1) if /(Open device \S+ failed|Error opening \S+:)/;
 
 	/Directory of/ && next;
+	# . & ..
+	/ \.{1,2}$/ && next;
 
 	# clean up totals line
 	if (/.* (\d+) bytes total/) {

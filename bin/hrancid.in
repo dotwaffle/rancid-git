@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: hrancid.in 2605 2012-07-26 23:21:27Z heas $
+## $Id: hrancid.in 2686 2013-04-17 18:20:22Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -312,6 +312,14 @@ sub ShowTechTransceivers {
 	return(1) if /^(Invalid|Ambiguous) input:/i;
 
 	s/ Technical Information//i;
+	if (/^ATTENTION: You are entering a diagnostic mode/) {
+	    while (<INPUT>) {
+	    tr/\015//d;
+		return(1) if (/^$prompt/);
+		last if (/^(\s*)$/);
+	    }
+	    next;
+	}
 
 	ProcessHistory("COMMENTS","keysort","G0",";$_");
     }

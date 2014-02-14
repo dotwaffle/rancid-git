@@ -1,6 +1,6 @@
 #! /bin/sh
 ##
-## $Id: control_rancid.in 2672 2013-03-13 06:22:12Z heas $
+## $Id: control_rancid.in 2718 2013-07-26 17:30:56Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -45,11 +45,12 @@
 
 # print a usage message to stderr
 pr_usage() {
-    echo "usage: $0 [-V] [-r device_name] [-m mail rcpt] group" >&2;
+    echo "usage: $0 [-V] [-f group_config_file] [-r device_name] [-m mail rcpt] group" >&2;
 }
 
 # command-line options
 # -V print version string
+# -f <group config file name>
 # -m <mail recipients>
 # -r <device name>
 alt_mailrcpt=0
@@ -60,6 +61,16 @@ if [ $# -ge 1 ] ; then
 	-V)
 	    echo "@PACKAGE@ @VERSION@"
 	    exit 0
+	    ;;
+	-f)
+	    shift
+	    # next arg is the alternate config file name
+	    ENVFILE="$1"
+	    if [ -z $ENVFILE ]; then
+		pr_usage
+		exit 1
+	    fi
+	    shift
 	    ;;
 	-m)
 	    shift
@@ -105,6 +116,12 @@ else
 fi
 DIR=$BASEDIR/$GROUP
 TMP=${TMPDIR:=/tmp}/rancid.$GROUP.$$
+if [ -z "$ENVFILE" ] ; then
+    ENVFILE="$DIR/rancid.conf"
+fi
+if [ -e "$ENVFILE" ] ; then
+    . $ENVFILE
+fi
 trap 'rm -fr $TMP;' 1 2 15
 
 # disable noclobber
@@ -128,10 +145,10 @@ fi
 
 # Number of things par should run in parallel.
 PAR_COUNT=${PAR_COUNT:-5}
-# Number of times failed collections should be retried.  Minimum 1.
+# Number of times failed collections should be retried.  Minimum 0.
 MAX_ROUNDS=${MAX_ROUNDS:-4}
-if [ $MAX_ROUNDS -lt 1 ] ; then
-    echo "Error: MAX_ROUNDS must be at least 1."
+if [ $MAX_ROUNDS -lt 0 ] ; then
+    echo "Error: MAX_ROUNDS must be at least 0 or greater."
     MAX_ROUNDS=1
 fi
 
@@ -164,6 +181,14 @@ EOF
 	svn propset svn:ignore -F .cvsignore .
 	svn update .
 	svn commit -m 'set svn:ignores' .
+    fi
+fi
+
+# check if there is a rancid.conf and if it needs to be added to the RCS
+if [ -e rancid.conf ] ; then
+    LN=`$RCSSYS ls rancid.conf | wc -l`
+    if [ $LN -eq 0 ] ; then
+	$RCSSYS add rancid.conf
     fi
 fi
 
@@ -472,6 +497,16 @@ fi
 
 # Mail out the diffs (if there are any).
 if [ -s $TMP.diff ] ; then
+    MAXSZ=${MAILSPLIT:=0}
+    if [ $MAXSZ -ne 0 ] ; then
+	BLOCKSIZE=1024; export BLOCKSIZE
+	tmpk=`perl -e "my(@S) = stat(\"$TMP.diff\"); print int(\\$S[7] / 1024);"`
+	unset BLOCKSIZE
+	if [ $tmpk -lt $MAXSZ ] ; then
+	    MAXSZ=0
+	fi
+    fi
+    if [ $MAXSZ -eq 0 ] ; then
 	(
 	  echo "To: $mailrcpt"
 	  echo "Subject: $subject"
@@ -479,6 +514,43 @@ if [ -s $TMP.diff ] ; then
 	  echo ""
 	  cat $TMP.diff
 	) | sendmail -t $MAILOPTS
+    else
+	CDIR=`pwd`
+	SDIR=${TMPDIR:=/tmp}/rancid.$GROUP.$$.mail
+	error=`mkdir $SDIR`
+	if [ $? -ne 0 ] ; then
+	    echo "Could not create $SDIR directory" >&2
+	    echo $error >&2
+	else
+	    cd $SDIR
+	    split -b${MAXSZ}k $TMP.diff
+	    nfiles=`ls | wc -l | sed -e 's/^ *//' |cut -d' ' -f1`
+	    n=0
+	    dt=`perl -e 'print time();'`
+	    for file in `ls`; do
+		n=`expr $n + 1`
+		MSGID="<$dt.RANCID$GROUP$$${nfiles}${n}@`hostname`>"
+		(
+		echo "To: $mailrcpt"
+		echo "Subject: $n of ${nfiles}: $subject"
+		echo "Message-Id: $MSGID"
+		if [ $n -gt 1 ] ; then
+		    echo "References: $LASTIDS"
+		fi
+		echo "$MAILHEADERS" | awk '{L = "";LN = $0;while (LN ~ /\\n/) { I = index(LN,"\\n");L = L substr(LN,0,I-1) "\n";LN = substr(LN,I+2,length(LN)-I-1);}print L LN;}'
+		echo ""
+		cat $file
+		) | sendmail -t $MAILOPTS
+		LASTIDS="$LASTIDS $MSGID"
+		if [ $n -lt $nfiles ]; then
+		    # this just tries to make the msgs order right in MUAs
+		    sleep 1
+		fi
+	    done
+	    cd $CDIR
+	    rm -rf $SDIR
+	fi
+    fi
 fi
 
 # If any machines have not been reached within the last $OLDTIME

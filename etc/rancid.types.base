@@ -68,9 +68,9 @@ cisco;command;ios::DirSlotN;dir /all disk2:
 cisco;command;ios::DirSlotN;dir /all harddisk:
 cisco;command;ios::DirSlotN;dir /all harddiska:
 cisco;command;ios::DirSlotN;dir /all harddiskb:
-cisco;command;ios::DirSlotN;dir /all sup-bootdisk:
-cisco;command;ios::DirSlotN;dir /all sup-bootflash:
-cisco;command;ios::DirSlotN;dir /all sup-microcode:
+cisco;command;ios::DirSlotN;dir /all sup-bootdisk:;c6500 sup32
+cisco;command;ios::DirSlotN;dir /all sup-bootflash:;c6500 ios
+cisco;command;ios::DirSlotN;dir /all sup-microcode:;c6500 ios
 cisco;command;ios::DirSlotN;dir /all slavenvram:
 cisco;command;ios::DirSlotN;dir /all slavebootflash:
 cisco;command;ios::DirSlotN;dir /all slaveslot0:
@@ -79,7 +79,7 @@ cisco;command;ios::DirSlotN;dir /all slaveslot1:
 cisco;command;ios::DirSlotN;dir /all slavedisk1:
 cisco;command;ios::DirSlotN;dir /all slaveslot2:
 cisco;command;ios::DirSlotN;dir /all slavedisk2:
-cisco;command;ios::DirSlotN;dir /all slavesup-bootflash:
+cisco;command;ios::DirSlotN;dir /all slavesup-bootflash:;c7600
 cisco;command;ios::DirSlotN;dir /all sec-nvram:
 cisco;command;ios::DirSlotN;dir /all sec-bootflash:
 cisco;command;ios::DirSlotN;dir /all sec-slot0:
@@ -92,8 +92,8 @@ cisco;command;ios::ShowContAll;show controllers
 cisco;command;ios::ShowContCbus;show controllers cbus
 cisco;command;ios::ShowDiagbus;show diagbus
 cisco;command;ios::ShowDiag;show diag
-cisco;command;ios::ShowCapture;show capture
-cisco;command;ios::ShowModule;show module
+cisco;command;ios::ShowCapture;show capture;ASA/PIX
+cisco;command;ios::ShowModule;show module;c6500 ios
 cisco;command;ios::ShowSpeVersion;show spe version
 cisco;command;ios::ShowC7200;show c7200
 cisco;command;ios::ShowInventory;show inventory raw
@@ -104,15 +104,66 @@ cisco;command;ios::ShowDetail;show switch detail
 cisco;command;ios::ShowSDM;show sdm prefer
 cisco;command;ios::ShowMTU;show system mtu
 cisco;command;ios::ShowDebug;show debug
-cisco;command;ios::ShowShun;show shun
-cisco;command;ios::WriteTerm;more system:running-config
-cisco;command;ios::WriteTerm;show running-config view full
+cisco;command;ios::ShowShun;show shun;ASA/PIX
+cisco;command;ios::WriteTerm;more system:running-config;ASA/PIX
+cisco;command;ios::WriteTerm;show running-config view full;workaround for role-based CLI
 cisco;command;ios::WriteTerm;show running-config
 cisco;command;ios::WriteTerm;write term
 #
 cisco-nx;script;nxrancid
 #
-cisco-xr;script;xrrancid
+cisco-xr;script;grancid
+cisco-xr;login;clogin
+cisco-xr;module;iosxr
+cisco-xr;inloop;iosxr::inloop
+cisco-xr;command;iosxr::RunCommand;terminal no-timestamp;Disable timestamps XR 3.6
+cisco-xr;command;iosxr::RunCommand;terminal exec prompt no-timestamp;Disable timestamps XR 3.8
+cisco-xr;command;iosxr::ShowVersion;admin show version
+cisco-xr;command;iosxr::ShowInstallSummary;admin show install summary;XR image
+cisco-xr;command;iosxr::ShowLicense;admin show license;XR image
+cisco-xr;command;iosxr::ShowBootVar;admin show variables boot;XR image
+cisco-xr;command;iosxr::ShowRedundancy;show redundancy secondary
+cisco-xr;command;iosxr::ShowInstallActive;show install active
+cisco-xr;command;iosxr::ShowEnv;admin show env all
+cisco-xr;command;iosxr::DirSlotN;dir /all nvram:
+cisco-xr;command;iosxr::DirSlotN;dir /all bootflash:
+cisco-xr;command;iosxr::DirSlotN;dir /all compactflash:
+cisco-xr;command;iosxr::DirSlotN;dir /all compactflasha:
+cisco-xr;command;iosxr::DirSlotN;dir /all slot0:
+cisco-xr;command;iosxr::DirSlotN;dir /all disk0:
+cisco-xr;command;iosxr::DirSlotN;dir /all disk0a:
+cisco-xr;command;iosxr::DirSlotN;dir /all slot1:
+cisco-xr;command;iosxr::DirSlotN;dir /all disk1:
+cisco-xr;command;iosxr::DirSlotN;dir /all disk1a:
+cisco-xr;command;iosxr::DirSlotN;dir /all slot2:
+cisco-xr;command;iosxr::DirSlotN;dir /all disk2:
+cisco-xr;command;iosxr::DirSlotN;dir /all harddisk:
+cisco-xr;command;iosxr::DirSlotN;dir /all harddiska:
+cisco-xr;command;iosxr::DirSlotN;dir /all harddiskb:
+cisco-xr;command;iosxr::DirSlotN;dir /all slavenvram:
+cisco-xr;command;iosxr::DirSlotN;dir /all slavebootflash:
+cisco-xr;command;iosxr::DirSlotN;dir /all slaveslot0:
+cisco-xr;command;iosxr::DirSlotN;dir /all slavedisk0:
+cisco-xr;command;iosxr::DirSlotN;dir /all slaveslot1:
+cisco-xr;command;iosxr::DirSlotN;dir /all slavedisk1:
+cisco-xr;command;iosxr::DirSlotN;dir /all slaveslot2:
+cisco-xr;command;iosxr::DirSlotN;dir /all slavedisk2:
+cisco-xr;command;iosxr::DirSlotN;dir /all sec-nvram:
+cisco-xr;command;iosxr::DirSlotN;dir /all sec-bootflash:
+cisco-xr;command;iosxr::DirSlotN;dir /all sec-slot0:
+cisco-xr;command;iosxr::DirSlotN;dir /all sec-disk0:
+cisco-xr;command;iosxr::DirSlotN;dir /all sec-slot1:
+cisco-xr;command;iosxr::DirSlotN;dir /all sec-disk1:
+cisco-xr;command;iosxr::DirSlotN;dir /all sec-slot2:
+cisco-xr;command;iosxr::DirSlotN;dir /all sec-disk2:
+cisco-xr;command;iosxr::ShowContAll;show controllers
+cisco-xr;command;iosxr::AdminShowDiag;admin show diag
+cisco-xr;command;iosxr::ShowInventory;admin show inventory raw
+cisco-xr;command;iosxr::ShowVLAN;show vlan
+cisco-xr;command;iosxr::ShowDebug;show debug
+cisco-xr;command;iosxr::ShowRPL;show rpl maximum
+cisco-xr;command;iosxr::AdminShowRunning;admin show running
+cisco-xr;command;iosxr::WriteTerm;show running-config
 #
 compass;script;grancid
 compass;login;complogin

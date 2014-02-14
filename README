@@ -58,10 +58,10 @@ bin/
 	f5rancid.in	Version of rancid.in for F5 BigIPs.
 	fnrancid.in	Version of rancid.in for Fortinet Firewalls.
 	francid.in	Version of rancid.in for Foundry switches.
+	grancid.in	Version of rancid.in that is generic w/ specific libs.
 	hrancid.in	Version of rancid.in for HP Procurve switches.
 	htrancid.in	Version of rancid.in for Hitatchi routers.
 	jerancid.in	Version of rancid.in for Juniper E-series routers.
-	jrancid.in	Version of rancid.in for Juniper routers.
 	mrancid.in	Version of rancid.in for MRT daemons.
 	mtrancid.in	Version of rancid.in for Microtik routers.
 	nrancid.in	Version of rancid.in for Netscreen firewalls.

@@ -360,7 +360,10 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype identfile 
 		continue;
 	    }
 
-	    set commands [split $command \;]
+	    set sep "\\1\u001"
+	    regsub -all {([^\\])\;} $command "$sep" esccommand
+	    set sep "\u001"
+	    set commands [split $esccommand $sep]
 	    set num_commands [llength $commands]
 	    set rshfail 0
 	    for {set i 0} {$i < $num_commands && !$rshfail} { incr i} {

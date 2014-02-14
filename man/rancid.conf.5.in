@@ -1,8 +1,8 @@
 .\"
-.\" $Id: rancid.conf.5.in 2428 2012-03-01 20:42:34Z heas $
+.\" $Id: rancid.conf.5.in 2716 2013-07-26 14:23:08Z heas $
 .\"
 .hys 50
-.TH "rancid.conf" "5" "18 December 2007"
+.TH "rancid.conf" "5" "28 July 2013"
 .SH NAME
 rancid.conf \- rancid environment configuration file
 .SH DESCRIPTION
@@ -152,9 +152,17 @@ By default, this is not set.
 Example: MAILOPTS="-f bounces.go.here@example.com"
 .\"
 .TP
+.B MAILSPLIT
+Defines the maximum BODY size of diffs in kilobytes, such that diffs are
+split clunks no larger than N kbytes.
+The minimum is 0, which disables splitting.
+.sp
+Default: 0.
+.\"
+.TP
 .B MAX_ROUNDS
 Defines how many times rancid should retry collection of devices that fail.
-The minimum is 1.
+The minimum is 0.
 .sp
 Default: 4.
 .\"

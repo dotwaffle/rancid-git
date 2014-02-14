@@ -49,17 +49,16 @@ DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(srcdir)/fnrancid.in $(srcdir)/francid.in $(srcdir)/hlogin.in \
 	$(srcdir)/hrancid.in $(srcdir)/htlogin.in \
 	$(srcdir)/htrancid.in $(srcdir)/jerancid.in \
-	$(srcdir)/jlogin.in $(srcdir)/jrancid.in $(srcdir)/mrancid.in \
-	$(srcdir)/mrvlogin.in $(srcdir)/mrvrancid.in \
-	$(srcdir)/mtlogin.in $(srcdir)/mtrancid.in $(srcdir)/nlogin.in \
-	$(srcdir)/nrancid.in $(srcdir)/nslogin.in \
-	$(srcdir)/nsrancid.in $(srcdir)/nxrancid.in $(srcdir)/par.in \
-	$(srcdir)/prancid.in $(srcdir)/rancid.in $(srcdir)/rivlogin.in \
-	$(srcdir)/rivrancid.in $(srcdir)/rrancid.in \
-	$(srcdir)/srancid.in $(srcdir)/tlogin.in $(srcdir)/tntlogin.in \
-	$(srcdir)/tntrancid.in $(srcdir)/trancid.in \
-	$(srcdir)/xilogin.in $(srcdir)/xirancid.in \
-	$(srcdir)/xrancid.in $(srcdir)/xrrancid.in \
+	$(srcdir)/jlogin.in $(srcdir)/mrancid.in $(srcdir)/mrvlogin.in \
+	$(srcdir)/mrvrancid.in $(srcdir)/mtlogin.in \
+	$(srcdir)/mtrancid.in $(srcdir)/nlogin.in $(srcdir)/nrancid.in \
+	$(srcdir)/nslogin.in $(srcdir)/nsrancid.in \
+	$(srcdir)/nxrancid.in $(srcdir)/par.in $(srcdir)/prancid.in \
+	$(srcdir)/rivlogin.in $(srcdir)/rivrancid.in \
+	$(srcdir)/rrancid.in $(srcdir)/srancid.in $(srcdir)/tlogin.in \
+	$(srcdir)/tntlogin.in $(srcdir)/tntrancid.in \
+	$(srcdir)/trancid.in $(srcdir)/xilogin.in \
+	$(srcdir)/xirancid.in $(srcdir)/xrancid.in \
 	$(srcdir)/zrancid.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/acinclude.m4 \
@@ -70,13 +69,12 @@ mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = $(top_builddir)/include/config.h
 CONFIG_CLEAN_FILES = control_rancid par agmrancid alogin arancid \
 	anlogin anrancid arrancid avologin avorancid blogin brancid \
-	cat5rancid clogin rancid complogin cssrancid elogin erancid \
-	f5rancid f10rancid flogin francid fnlogin fnrancid hlogin \
-	hrancid htlogin htrancid jlogin jrancid jerancid mrancid \
-	mrvlogin mrvrancid mtrancid mtlogin nlogin nrancid nslogin \
-	nsrancid nxrancid prancid rivlogin rivrancid rrancid srancid \
-	tlogin tntlogin tntrancid trancid xilogin xirancid xrancid \
-	xrrancid zrancid
+	cat5rancid clogin complogin cssrancid elogin erancid f5rancid \
+	f10rancid flogin francid fnlogin fnrancid hlogin hrancid \
+	htlogin htrancid jlogin jerancid mrancid mrvlogin mrvrancid \
+	mtrancid mtlogin nlogin nrancid nslogin nsrancid nxrancid \
+	prancid rivlogin rivrancid rrancid srancid tlogin tntlogin \
+	tntrancid trancid xilogin xirancid xrancid zrancid
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
@@ -246,12 +244,11 @@ bin_SCRIPTS = agmrancid alogin anlogin anrancid arancid arrancid \
 	atrancid avologin avorancid blogin brancid cat5rancid clogin \
 	complogin control_rancid cssrancid elogin erancid f5rancid \
 	f10rancid flogin fnlogin fnrancid francid grancid hlogin \
-	hrancid htlogin htrancid jerancid jlogin jrancid mrancid \
-	mrvlogin mrvrancid mtlogin mtrancid nlogin nrancid nslogin \
-	nsrancid nxrancid par prancid rancid rivlogin rivrancid \
-	rrancid srancid tlogin tntlogin tntrancid trancid xilogin \
-	xirancid xrancid xrrancid zrancid lg.cgi lgform.cgi rancid-cvs \
-	rancid-fe rancid-run
+	hrancid htlogin htrancid jerancid jlogin mrancid mrvlogin \
+	mrvrancid mtlogin mtrancid nlogin nrancid nslogin nsrancid \
+	nxrancid par prancid rivlogin rivrancid rrancid srancid tlogin \
+	tntlogin tntrancid trancid xilogin xirancid xrancid zrancid \
+	lg.cgi lgform.cgi rancid-cvs rancid-fe rancid-run
 # XXX hack for the grancid to get pkglibdir, see corresponding XXX below
 bin_in = grancid.in
 EXTRA_DIST = lg.cgi.in lgform.cgi.in rancid-cvs.in rancid-fe.in rancid-run.in \
@@ -354,8 +351,6 @@ cat5rancid: $(top_builddir)/config.status $(srcdir)/cat5rancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 clogin: $(top_builddir)/config.status $(srcdir)/clogin.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-rancid: $(top_builddir)/config.status $(srcdir)/rancid.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 complogin: $(top_builddir)/config.status $(srcdir)/complogin.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 cssrancid: $(top_builddir)/config.status $(srcdir)/cssrancid.in
@@ -385,8 +380,6 @@ htlogin: $(top_builddir)/config.status $(srcdir)/htlogin.in
 htrancid: $(top_builddir)/config.status $(srcdir)/htrancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 jlogin: $(top_builddir)/config.status $(srcdir)/jlogin.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-jrancid: $(top_builddir)/config.status $(srcdir)/jrancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 jerancid: $(top_builddir)/config.status $(srcdir)/jerancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
@@ -433,8 +426,6 @@ xilogin: $(top_builddir)/config.status $(srcdir)/xilogin.in
 xirancid: $(top_builddir)/config.status $(srcdir)/xirancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 xrancid: $(top_builddir)/config.status $(srcdir)/xrancid.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-xrrancid: $(top_builddir)/config.status $(srcdir)/xrrancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 zrancid: $(top_builddir)/config.status $(srcdir)/zrancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@

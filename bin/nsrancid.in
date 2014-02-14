@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: nsrancid.in 2605 2012-07-26 23:21:27Z heas $
+## $Id: nsrancid.in 2707 2013-07-15 19:37:17Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -180,6 +180,7 @@ sub ShowConfig {
 	next if (/^Can\'t find object or class named \"\-all\"\s*$/);
 	next if (/lock-address .*$/);
 	next if (/^\# *uptime +\d+\s*$/);
+	next if (/^\# last modified/i);
 	if (/community label /) {
 	    if ($filter_commstr) {
 		$_ =~ s/community label .*$/community label <removed>/;

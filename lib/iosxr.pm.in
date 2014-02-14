@@ -1,6 +1,6 @@
-#! @PERLV_PATH@
+package iosxr;
 ##
-## $Id: xrrancid.in 2605 2012-07-26 23:21:27Z heas $
+## $Id: ios.pm.in 2690 2013-05-16 20:19:06Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -42,137 +42,122 @@
 #
 #  RANCID - Really Awesome New Cisco confIg Differ
 #
-# usage: xrrancid [-dltCV] [-f filename | hostname]
-#
-use Getopt::Std;
-getopts('dflt:CV');
-if ($opt_V) {
-    print "@PACKAGE@ @VERSION@\n";
-    exit(0);
+#  iosxr.pm - Cisco IOS-XR rancid procedures
+
+use 5.005;
+use strict 'vars';
+use warnings;
+no warnings 'uninitialized';
+require(Exporter);
+our @ISA = qw(Exporter);
+
+#XXX use @VERSION@ when we have a version w/o letters in it
+#XXX use rancid @VERSION@;
+use rancid;
+
+our $proc;
+our $found_env;
+our $found_diag;
+our $found_version;
+our $config_register;			# configuration register value
+
+#XXX our %hwmemd;				# defined in ShowContCbus
+our $type;				# device model, from ShowVersion
+#XXX our %ucode;				# defined in ShowContCbus
+
+our $C0;				# output formatting control
+our $E0;
+our $H0;
+our $I0;
+our $DO_SHOW_VLAN;
+
+@ISA = qw(Exporter rancid main);
+#XXX @Exporter::EXPORT = qw($VERSION @commandtable %commands @commands);
+
+# load-time initialization
+sub import {
+    0;
 }
-$log = $opt_l;
-$debug = $opt_d;
-$file = $opt_f;
-$host = $ARGV[0];
-$proc = "";
-$clean_run = 0;
-$found_end = 0;
-$found_version = 0;
-$found_env = 0;
-$timeo = 90;				# clogin timeout in seconds
 
-my(@commandtable, %commands, @commands);# command lists
-my($aclsort) = ("ipsort");		# ACL sorting mode
-my($config_register);			# configuration register value
-my($filter_commstr);			# SNMP community string filtering
-my($filter_pwds);			# password filtering mode
+# post-open(collection file) initialization
+sub init {
+    $proc = "";
+    $found_env = 0;
+    $found_diag = 0;
+    $found_version = 0;
+    $config_register = undef;		# configuration register value
 
-# This routine is used to print out the router configuration
-sub ProcessHistory {
-    my($new_hist_tag,$new_command,$command_string,@string) = (@_);
-    if ((($new_hist_tag ne $hist_tag) || ($new_command ne $command))
-	&& scalar(%history)) {
-	print eval "$command \%history";
-	undef %history;
-    }
-    if (($new_hist_tag) && ($new_command) && ($command_string)) {
-	if ($history{$command_string}) {
-	    $history{$command_string} = "$history{$command_string}@string";
-	} else {
-	    $history{$command_string} = "@string";
+    # XXX $supbootdisk = 0;			# skip sup-bootflash if sup-bootdisk
+					# worked
+    # XXX $type = undef;			# device model, from ShowVersion
+    # XXX init %ucode;			# defined in ShowContCbus
+
+    # XXX $ssp = 0;				# SSP/SSE info, from ShowVersion
+    # XXX $sspmem = undef;			# SSP/SSE info, from ShowVersion
+
+    $C0 = 0;				# output formatting control
+    $E0 = 0;
+    $H0 = 0;
+    $I0 = 0;
+    # XXX $DO_SHOW_VLAN = 0;
+
+    # add content lines and separators
+    ProcessHistory("","","","!RANCID-CONTENT-TYPE: $devtype\n!\n");
+    ProcessHistory("COMMENTS","keysort","B0","!\n");
+    ProcessHistory("COMMENTS","keysort","D0","!\n");
+    ProcessHistory("COMMENTS","keysort","F0","!\n");
+    ProcessHistory("COMMENTS","keysort","G0","!\n");
+
+    0;
+}
+
+# main loop of input of device output
+sub inloop {
+    my($INPUT, $OUTPUT) = @_;
+    my($cmd, $rval);
+
+TOP: while(<$INPUT>) {
+	tr/\015//d;
+	if (/[>#]\s?exit$/) {
+	    $clean_run = 1;
+	    last;
 	}
-    } elsif (($new_hist_tag) && ($new_command)) {
-	$history{++$#history} = "@string";
-    } else {
-	print "@string";
+	if (/^Error:/) {
+	    print STDOUT ("$host clogin error: $_");
+	    print STDERR ("$host clogin error: $_") if ($debug);
+	    $clean_run = 0;
+	    last;
+	}
+	while (/[>#]\s*($cmds_regexp)\s*$/) {
+	    $cmd = $1;
+	    if (!defined($prompt)) {
+		$prompt = ($_ =~ /^([^#]+#)/)[0];
+		$prompt =~ s/([][}{)(\\])/\\$1/g;
+		print STDERR ("PROMPT MATCH: $prompt\n") if ($debug);
+	    }
+	    print STDERR ("HIT COMMAND:$_") if ($debug);
+	    if (! defined($commands{$cmd})) {
+		print STDERR "$host: found unexpected command - \"$cmd\"\n";
+		$clean_run = 0;
+		last TOP;
+	    }
+	    $rval = &{$commands{$cmd}}($INPUT, $OUTPUT, $cmd);
+	    delete($commands{$cmd});
+	    if ($rval == -1) {
+		$clean_run = 0;
+		last TOP;
+	    }
+	}
     }
-    $hist_tag = $new_hist_tag;
-    $command = $new_command;
-    1;
-}
-
-sub numerically { $a <=> $b; }
-
-# This is a sort routine that will sort numerically on the
-# keys of a hash as if it were a normal array.
-sub keynsort {
-    local(%lines) = @_;
-    local($i) = 0;
-    local(@sorted_lines);
-    foreach $key (sort numerically keys(%lines)) {
-	$sorted_lines[$i] = $lines{$key};
-	$i++;
-    }
-    @sorted_lines;
-}
-
-# This is a sort routine that will sort on the
-# keys of a hash as if it were a normal array.
-sub keysort {
-    local(%lines) = @_;
-    local($i) = 0;
-    local(@sorted_lines);
-    foreach $key (sort keys(%lines)) {
-	$sorted_lines[$i] = $lines{$key};
-	$i++;
-    }
-    @sorted_lines;
-}
-
-# This is a sort routine that will sort on the
-# values of a hash as if it were a normal array.
-sub valsort{
-    local(%lines) = @_;
-    local($i) = 0;
-    local(@sorted_lines);
-    foreach $key (sort values %lines) {
-	$sorted_lines[$i] = $key;
-	$i++;
-    }
-    @sorted_lines;
-}
-
-# This is a numerical sort routine (ascending).
-sub numsort {
-    local(%lines) = @_;
-    local($i) = 0;
-    local(@sorted_lines);
-    foreach $num (sort {$a <=> $b} keys %lines) {
-	$sorted_lines[$i] = $lines{$num};
-	$i++;
-    }
-    @sorted_lines;
-}
-
-# This is a sort routine that will sort on the
-# ip address when the ip address is anywhere in
-# the strings.
-sub ipsort {
-    local(%lines) = @_;
-    local($i) = 0;
-    local(@sorted_lines);
-    foreach $addr (sort sortbyipaddr keys %lines) {
-	$sorted_lines[$i] = $lines{$addr};
-	$i++;
-    }
-    @sorted_lines;
-}
-
-# These two routines will sort based upon IP addresses
-sub ipaddrval {
-    my(@a) = ($_[0] =~ m#^(\d+)\.(\d+)\.(\d+)\.(\d+)$#);
-    $a[3] + 256 * ($a[2] + 256 * ($a[1] +256 * $a[0]));
-}
-sub sortbyipaddr {
-    &ipaddrval($a) <=> &ipaddrval($b);
 }
 
 # This routine parses "admin show version"
 sub ShowVersion {
+    my($INPUT, $OUTPUT, $cmd) = @_;
+    my($slave, $slaveslot);
     print STDERR "    In ShowVersion: $_" if ($debug);
-    my($slaveslot);
 
-    while (<INPUT>) {
+    while (<$INPUT>) {
 	tr/\015//d;
 	if (/^$prompt/) { $found_version = 1; last};
 	next if (/^(\s*|\s*$cmd\s*)$/);
@@ -261,7 +246,7 @@ sub ShowVersion {
 	    # "processor: " unique string.  there are undoubtedly many other
 	    # incantations.  for a slave, we dont get this info, its just a
 	    # blank line.
-	    $_ = <INPUT>;
+	    $_ = <$INPUT>;
 	    if (/processor board id/i) {
 		my($sn);
 
@@ -271,7 +256,7 @@ sub ShowVersion {
 		    ProcessHistory("COMMENTS","keysort","D9",
 				   "!Processor ID: $sn\n");
 		}
-		$_ = <INPUT>;
+		$_ = <$INPUT>;
 	    }
 	    $_ = "" if (! /(cpu at |processor: |$cpu processor,)/i);
 	    tr/\015//d;
@@ -358,15 +343,6 @@ sub ShowVersion {
 	    }
 	    next;
 	}
-	if (/(\S+) Silicon\s*Switch Processor/) {
-	    if (!defined($C0)) {
-		$C0 = 1; ProcessHistory("COMMENTS","keysort","C0","!\n");
-	    }
-	    ProcessHistory("COMMENTS","keysort","C2","!SSP: $1\n");
-	    $ssp = 1;
-	    $sspmem = $1;
-	    next;
-	}
 	/^(\d+[kK]) bytes of multibus/ &&
 	    ProcessHistory("COMMENTS","keysort","B2",
 		"!Memory: multibus $1\n") && next;
@@ -414,9 +390,10 @@ sub ShowVersion {
 # This routine parses "admin show diag".
 # This will create arrays for hw info.
 sub AdminShowDiag {
+    my($INPUT, $OUTPUT, $cmd) = @_;
     print STDERR "    In ShowDiag: $_" if ($debug);
 
-    while (<INPUT>) {
+    while (<$INPUT>) {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
@@ -441,9 +418,10 @@ sub AdminShowDiag {
 
 # This routine parses "admin show running".
 sub AdminShowRunning {
+    my($INPUT, $OUTPUT, $cmd) = @_;
     print STDERR "    In ShowRunning: $_" if ($debug);
 
-    while (<INPUT>) {
+    while (<$INPUT>) {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
@@ -468,9 +446,11 @@ sub AdminShowRunning {
 
 # This routine parses "admin show redundancy"
 sub ShowRedundancy {
+    my($INPUT, $OUTPUT, $cmd) = @_;
+    my($slave, $slaveslot);
     print STDERR "    In ShowRedundancy: $_" if ($debug);
 
-    while (<INPUT>) {
+    while (<$INPUT>) {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
@@ -495,9 +475,10 @@ sub ShowRedundancy {
 
 # This routine parses "show install active"
 sub ShowInstallActive {
+    my($INPUT, $OUTPUT, $cmd) = @_;
     print STDERR "    In ShowInstallActive: $_" if ($debug);
 
-    while (<INPUT>) {
+    while (<$INPUT>) {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
@@ -513,10 +494,11 @@ sub ShowInstallActive {
 
 # This routine parses "admin show env all"
 sub ShowEnv {
+    my($INPUT, $OUTPUT, $cmd) = @_;
     # Skip if this is not a 7500, 7200, or 7000.
     print STDERR "    In ShowEnv: $_" if ($debug);
 
-    while (<INPUT>) {
+    while (<$INPUT>) {
 	tr/\015//d;
 	if (/^$prompt/) { $found_env = 1; last};
 	next if (/^(\s*|\s*$cmd\s*)$/);
@@ -557,11 +539,12 @@ sub ShowEnv {
 
 # This routine parses "dir /all ((disk|slot)N|bootflash|nvram):"
 sub DirSlotN {
+    my($INPUT, $OUTPUT, $cmd) = @_;
     print STDERR "    In DirSlotN: $_" if ($debug);
 
     my($dev) = (/\s([^\s]+):/);
 
-    while (<INPUT>) {
+    while (<$INPUT>) {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
@@ -581,8 +564,8 @@ sub DirSlotN {
 	return(1) if (/(Open device \S+ failed|Error opening \S+:)/);
 	# filter frequently changing files from IOX bootflash, hardiska,
 	# and nvram
-	if ($dev =~ /(bootflash|harddiska|nvram)/) {
-	    if (/(temp_cont|temp_static_data|uptime_cont|volt_cont)\s*$/) {
+	if ($dev =~ /(bootflash|harddisk|nvram)/) {
+	    if (/(ce_switch.log|temp_cont|temp_static_data|uptime_cont|volt_cont)\s*$/) {
 		# change
 		# 57          -rw-  23100       <no date>              volt_cont
 		# 614788      drwx  4096        Fri Aug 20 12:06:25 2010  temp_cont
@@ -632,9 +615,10 @@ sub DirSlotN {
 
 # This routine parses "admin show variables boot"
 sub ShowBootVar {
+    my($INPUT, $OUTPUT, $cmd) = @_;
     print STDERR "    In ShowBootVar: $_" if ($debug);
 
-    while (<INPUT>) {
+    while (<$INPUT>) {
 	# delete non-ascii chars, except new line
 	tr/ -~\n//cd;
 	last if (/^$prompt/);
@@ -658,10 +642,11 @@ sub ShowBootVar {
 
 # This routine parses "show controllers"
 sub ShowContAll {
-    # Skip if this is a 70[01]0, 7500, or 12000.
+    my($INPUT, $OUTPUT, $cmd) = @_;
+    my($INT);
     print STDERR "    In ShowContAll: $_" if ($debug);
 
-    while (<INPUT>) {
+    while (<$INPUT>) {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
@@ -680,12 +665,12 @@ sub ShowContAll {
 	    ProcessHistory("INT","","","!\t$1\n");
 	    if (/(M\dT[^ :]*:) show controller:$/) {
 		my($ctlr) = $1;
-		$_ = <INPUT>; tr/\015//d; s/ subunit \d,//;
+		$_ = <$INPUT>; tr/\015//d; s/ subunit \d,//;
 		ProcessHistory("INT","","","!Interface: $ctlr $_");
 	    }
 	if (/^(\S+) : show controller:$/) {
 	    my($ctlr) = $1;
-	    $_ = <INPUT>; tr/\015//d; s/ subunit \d,//;
+	    $_ = <$INPUT>; tr/\015//d; s/ subunit \d,//;
 	    ProcessHistory("INT","","","!Interface: $ctlr: $_");
 	}
 	/^(HD unit \d), idb/ &&
@@ -717,10 +702,11 @@ sub ShowContAll {
 
 # This routine parses "show debug"
 sub ShowDebug {
+    my($INPUT, $OUTPUT, $cmd) = @_;
     print STDERR "    In ShowDebug: $_" if ($debug);
     my($lines) = 0;
 
-    while (<INPUT>) {
+    while (<$INPUT>) {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
@@ -741,9 +727,10 @@ sub ShowDebug {
 
 # This routine parses "admin show install summary"
 sub ShowInstallSummary {
+    my($INPUT, $OUTPUT, $cmd) = @_;
     print STDERR "    In ShowInstallSummary: $_" if ($debug);
 
-    while (<INPUT>) {
+    while (<$INPUT>) {
 	# delete non-ascii chars, except new line
 	tr/ -~\n//cd;
 	last if (/^$prompt/);
@@ -768,9 +755,10 @@ sub ShowInstallSummary {
 
 # This routine parses "show inventory".
 sub ShowInventory {
+    my($INPUT, $OUTPUT, $cmd) = @_;
     print STDERR "    In ShowInventory: $_" if ($debug);
 
-    while (<INPUT>) {
+    while (<$INPUT>) {
 	# delete non-ascii chars, except new line
 	tr/ -~\n//cd;
 	return if (/^\s*\^$/);
@@ -812,9 +800,10 @@ sub ShowInventory {
 
 # This routine parses "admin show license"
 sub ShowLicense {
+    my($INPUT, $OUTPUT, $cmd) = @_;
     print STDERR "    In ShowLicense: $_" if ($debug);
 
-    while (<INPUT>) {
+    while (<$INPUT>) {
 	# delete non-ascii chars, except new line
 	tr/ -~\n//cd;
 	last if (/^$prompt/);
@@ -838,9 +827,10 @@ sub ShowLicense {
 
 # This routine parses "show rpl maximum"
 sub ShowRPL {
+    my($INPUT, $OUTPUT, $cmd) = @_;
     print STDERR "    In ShowRPL: $_" if ($debug);
 
-    while (<INPUT>) {
+    while (<$INPUT>) {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
@@ -858,11 +848,12 @@ sub ShowRPL {
 
 # This routine parses "show vlan"
 sub ShowVLAN {
+    my($INPUT, $OUTPUT, $cmd) = @_;
     print STDERR "    In ShowVLAN: $_" if ($debug);
 
-    ($_ = <INPUT>, return(1)) if (!$DO_SHOW_VLAN);
+    ($_ = <$INPUT>, return(1)) if (!$DO_SHOW_VLAN);
 
-    while (<INPUT>) {
+    while (<$INPUT>) {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
@@ -880,10 +871,11 @@ sub ShowVLAN {
 
 # This routine processes a "write term"
 sub WriteTerm {
+    my($INPUT, $OUTPUT, $cmd) = @_;
     print STDERR "    In WriteTerm: $_" if ($debug);
     my($lineauto,$comment,$linecnt) = (0,0,0);
 
-    while (<INPUT>) {
+    while (<$INPUT>) {
 	tr/\015//d;
 	last if (/^$prompt/);
 	return(1) if (!$linecnt && /^\s+\^\s*$/);
@@ -908,7 +900,7 @@ sub WriteTerm {
 	$lineauto = 0 if (/^[^ ]/);
 	# skip the crap
 	if (/^(##+|(building|current) configuration)/i) {
-	    while (<INPUT>) {
+	    while (<$INPUT>) {
 		next if (/^Current configuration\s*:/i);
 		next if (/^:/);
 		next if (/^([%!].*|\s*)$/);
@@ -1057,7 +1049,7 @@ sub WriteTerm {
 	if (/^ip explicit-path name (\S+)/) {
 	    my($key) = $1;
 	    my($expath) = $_;
-	    while (<INPUT>) {
+	    while (<$INPUT>) {
 		tr/\015//d;
 		last if (/^$prompt/);
 		last if (! /^(ip explicit-path name |[ !])/);
@@ -1075,7 +1067,7 @@ sub WriteTerm {
 	if (/^route-map (\S+)/) {
 	    my($key) = $1;
 	    my($routemap) = $_;
-	    while (<INPUT>) {
+	    while (<$INPUT>) {
 		tr/\015//d;
 		last if (/^$prompt/ || ! /^(route-map |[ !])/);
 		if (/^route-map (\S+)/) {
@@ -1105,10 +1097,10 @@ sub WriteTerm {
 	    my($nlri, $key) = ($1, $2);
 	    my($seq, $cmd);
 	    ProcessHistory("ACL $nlri $key","","","$_");
-	    while (<INPUT>) {
+	    while (<$INPUT>) {
 		tr/\015//d;
 		last if (/^$prompt/ || /^\S/);
-		($seq, $cmd, $misc, $ip) = ($_ =~ /^\s+(\d+) (\w+) (.*\s)(\w+)/);
+		my($seq, $cmd, $misc, $ip) = ($_ =~ /^\s+(\d+) (\w+) (.*\s)(\w+)/);
 		if ($cmd =~ /(permit|deny)/) {
 		    ProcessHistory("ACL $nlri $key $cmd","$aclsort","$ip",
 				   " $cmd $misc$ip\n");
@@ -1181,7 +1173,7 @@ sub WriteTerm {
 	}
 	# order ntp peers/servers
 	if (/^ntp (server|peer) (\d+)\.(\d+)\.(\d+)\.(\d+)/) {
-	    $sortkey = sprintf("$1 %03d%03d%03d%03d",$2,$3,$4,$5);
+	    my($sortkey) = sprintf("$1 %03d%03d%03d%03d",$2,$3,$4,$5);
 	    ProcessHistory("NTP","keysort",$sortkey,"$_");
 	    next;
 	}
@@ -1220,200 +1212,21 @@ sub WriteTerm {
     return(0);
 }
 
-# This routine processes a "write term"
-sub FilterAll {
-    print STDERR "    In FilterAll: $_" if ($debug);
+# XXX is this necessary?
+## This routine processes a "write term"
+#sub FilterAll {
+#    my($INPUT, $OUTPUT, $cmd) = @_;
+#    print STDERR "    In FilterAll: $_" if ($debug);
+#
+#    while (<$INPUT>) {
+#	tr/\015//d;
+#	last if (/^$prompt/);
+#	return(1) if (/Line has invalid autocommand /);
+#	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
+#	return(1) if (/\%Error: No such file or directory/);
+#	return(-1) if (/command authorization failed/i);
+#	return(-1) if (/% ?configuration buffer full/i);
+#    }
+#}
 
-    while (<INPUT>) {
-	tr/\015//d;
-	last if (/^$prompt/);
-	return(1) if (/Line has invalid autocommand /);
-	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
-	return(1) if (/\%Error: No such file or directory/);
-	return(-1) if (/command authorization failed/i);
-	return(-1) if (/% ?configuration buffer full/i);
-    }
-}
-
-# Main
-@commandtable = (
-	# Disable timestamps in output
-	{'terminal no-timestamp'	=> 'FilterAll' },  # XR 3.6 style
-	{'terminal exec prompt no-timestamp' => 'FilterAll' },  # XR 3.8 style
-
-	{'admin show version'		=> 'ShowVersion'},
-
-	# XR IMAGE commands
-	{'admin show install summary'	=> 'ShowInstallSummary'},
-	{'admin show license'		=> 'ShowLicense'},
-	{'admin show variables boot'	=> 'ShowBootVar'},
-
-	{'show redundancy secondary'	=> 'ShowRedundancy'},
-	{'show install active'		=> 'ShowInstallActive'},
-	{'admin show env all'		=> 'ShowEnv'},
-	{'dir /all nvram:'		=> 'DirSlotN'},
-	{'dir /all bootflash:'		=> 'DirSlotN'},
-	{'dir /all compactflash:'	=> 'DirSlotN'},
-	{'dir /all compactflasha:'	=> 'DirSlotN'},
-	{'dir /all slot0:'		=> 'DirSlotN'},
-	{'dir /all disk0:'		=> 'DirSlotN'},
-	{'dir /all disk0a:'		=> 'DirSlotN'},
-	{'dir /all slot1:'		=> 'DirSlotN'},
-	{'dir /all disk1:'		=> 'DirSlotN'},
-	{'dir /all disk1a:'		=> 'DirSlotN'},
-	{'dir /all slot2:'		=> 'DirSlotN'},
-	{'dir /all disk2:'		=> 'DirSlotN'},
-	{'dir /all harddisk:'		=> 'DirSlotN'},
-	{'dir /all harddiska:'		=> 'DirSlotN'},
-	{'dir /all harddiskb:'		=> 'DirSlotN'},
-	{'dir /all slavenvram:'		=> 'DirSlotN'},
-	{'dir /all slavebootflash:'	=> 'DirSlotN'},
-	{'dir /all slaveslot0:'		=> 'DirSlotN'},
-	{'dir /all slavedisk0:'		=> 'DirSlotN'},
-	{'dir /all slaveslot1:'		=> 'DirSlotN'},
-	{'dir /all slavedisk1:'		=> 'DirSlotN'},
-	{'dir /all slaveslot2:'		=> 'DirSlotN'},
-	{'dir /all slavedisk2:'		=> 'DirSlotN'},
-	{'dir /all sec-nvram:'		=> 'DirSlotN'},
-	{'dir /all sec-bootflash:'	=> 'DirSlotN'},
-	{'dir /all sec-slot0:'		=> 'DirSlotN'},
-	{'dir /all sec-disk0:'		=> 'DirSlotN'},
-	{'dir /all sec-slot1:'		=> 'DirSlotN'},
-	{'dir /all sec-disk1:'		=> 'DirSlotN'},
-	{'dir /all sec-slot2:'		=> 'DirSlotN'},
-	{'dir /all sec-disk2:'		=> 'DirSlotN'},
-	{'show controllers'		=> 'ShowContAll'},
-	{'admin show diag'		=> 'AdminShowDiag'},
-	{'admin show inventory raw'	=> 'ShowInventory'},
-	{'show vlan'			=> 'ShowVLAN'},
-	{'show debug'			=> 'ShowDebug'},
-	{'show rpl maximum'		=> 'ShowRPL'},
-	{'admin show running'		=> 'AdminShowRunning'},
-	{'show running-config'		=> 'WriteTerm'},
-);
-# Use an array to preserve the order of the commands and a hash for mapping
-# commands to the subroutine and track commands that have been completed.
-@commands = map(keys(%$_), @commandtable);
-%commands = map(%$_, @commandtable);
-$commandcnt = scalar(keys %commands);
-
-$commandstr = join(";",@commands);
-$cmds_regexp = join("|", map quotemeta($_), @commands);
-
-if (length($host) == 0) {
-    if ($file) {
-	print(STDERR "Too few arguments: file name required\n");
-	exit(1);
-    } else {
-	print(STDERR "Too few arguments: host name required\n");
-	exit(1);
-    }
-}
-if ($opt_C) {
-    print "clogin -t $timeo -c\'$commandstr\' $host\n";
-    exit(0);
-}
-open(OUTPUT,">$host.new") || die "Can't open $host.new for writing: $!\n";
-select(OUTPUT);
-# make OUTPUT unbuffered if debugging
-if ($debug) { $| = 1; }
-
-if ($file) {
-    print STDERR "opening file $host\n" if ($debug);
-    print STDOUT "opening file $host\n" if ($log);
-    open(INPUT,"<$host") || die "open failed for $host: $!\n";
-} else {
-    print STDERR "executing clogin -t $timeo -c\"$commandstr\" $host\n" if ($debug);
-    print STDOUT "executing clogin -t $timeo -c\"$commandstr\" $host\n" if ($log);
-    if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
-	system "clogin -t $timeo -c \"$commandstr\" $host </dev/null > $host.raw 2>&1" || die "clogin failed for $host: $!\n";
-	open(INPUT, "< $host.raw") || die "clogin failed for $host: $!\n";
-    } else {
-	open(INPUT,"clogin -t $timeo -c \"$commandstr\" $host </dev/null |") || die "clogin failed for $host: $!\n";
-    }
-}
-
-# determine ACL sorting mode
-if ($ENV{"ACLSORT"} =~ /no/i) {
-    $aclsort = "";
-}
-# determine community string filtering mode
-if (defined($ENV{"NOCOMMSTR"}) &&
-    ($ENV{"NOCOMMSTR"} =~ /yes/i || $ENV{"NOCOMMSTR"} =~ /^$/)) {
-    $filter_commstr = 1;
-} else {
-    $filter_commstr = 0;
-}
-# determine password filtering mode
-if ($ENV{"FILTER_PWDS"} =~ /no/i) {
-    $filter_pwds = 0;
-} elsif ($ENV{"FILTER_PWDS"} =~ /all/i) {
-    $filter_pwds = 2;
-} else {
-    $filter_pwds = 1;
-}
-
-ProcessHistory("","","","!RANCID-CONTENT-TYPE: cisco-xr\n!\n");
-ProcessHistory("COMMENTS","keysort","B0","!\n");
-ProcessHistory("COMMENTS","keysort","D0","!\n");
-ProcessHistory("COMMENTS","keysort","F0","!\n");
-ProcessHistory("COMMENTS","keysort","G0","!\n");
-TOP: while(<INPUT>) {
-    tr/\015//d;
-    if (/[>#]\s?exit$/) {
-	$clean_run = 1;
-	last;
-    }
-    if (/^Error:/) {
-	print STDOUT ("$host clogin error: $_");
-	print STDERR ("$host clogin error: $_") if ($debug);
-	$clean_run = 0;
-	last;
-    }
-    while (/#\s*($cmds_regexp)\s*$/) {
-	$cmd = $1;
-	if (!defined($prompt)) {
-	    $prompt = ($_ =~ /^([^#]+#)/)[0];
-	    $prompt =~ s/([][}{)(\\])/\\$1/g;
-	    print STDERR ("PROMPT MATCH: $prompt\n") if ($debug);
-	}
-	print STDERR ("HIT COMMAND:$_") if ($debug);
-	if (! defined($commands{$cmd})) {
-	    print STDERR "$host: found unexpected command - \"$cmd\"\n";
-	    $clean_run = 0;
-	    last TOP;
-	}
-	$rval = &{$commands{$cmd}}(*INPUT, *OUTPUT, $cmd);
-	delete($commands{$cmd});
-	if ($rval == -1) {
-	    $clean_run = 0;
-	    last TOP;
-	}
-    }
-}
-print STDOUT "Done $logincmd: $_\n" if ($log);
-# Flush History
-ProcessHistory("","","","");
-# Cleanup
-close(INPUT);
-close(OUTPUT);
-
-if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
-    unlink("$host.raw") if (! $debug);
-}
-
-# check for completeness
-if (scalar(%commands) || !$clean_run || !$found_end) {
-    if (scalar(keys %commands) eq $commandcnt) {
-	printf(STDERR "$host: missed cmd(s): all commands\n");
-    } elsif (scalar(%commands)) {
-	printf(STDOUT "$host: missed cmd(s): %s\n", join(',', keys(%commands)));
-	printf(STDERR "$host: missed cmd(s): %s\n", join(',', keys(%commands))) if ($debug);
-    }
-    if (!$clean_run || !$found_end) {
-	print STDOUT "$host: End of run not found\n";
-	print STDERR "$host: End of run not found\n" if ($debug);
-	system("/usr/bin/tail -1 $host.new");
-    }
-    unlink "$host.new" if (! $debug);
-}
+1;
