@@ -1,8 +1,3 @@
-# fedora packaging guidelines
-# http://fedoraproject.org/wiki/Packaging:SourceURL#Github
-%global commit 788157aba55301cabcaa94bb39d96f88ed22d173
-%global shortcommit %(c=%{commit}; echo ${c:0:7})
-
 Name:    rancid-git
 Version: 2.3.8
 Release: 0%{?dist}
@@ -11,7 +6,7 @@ Summary: Really Awesome New Cisco confIg Differ (w/ git support)
 Group:   Applications/Internet
 License: BSD with advertising
 URL:     https://github.com/dotwaffle/rancid-git
-Source:  https://github.com/ISEexchange/rancid-git/archive/%{commit}/%{name}-%{version}-%{shortcommit}.tar.gz
+Source:  http://github.com/dotwaffle/rancid-git/tarball/master
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -44,7 +39,7 @@ including software and hardware (cards, serial numbers, etc) and uses CVS
 
 
 %prep
-%setup -q -n %{name}-%{commit}
+%setup -q -n %{name}-%{release}
 
 %build
 aclocal; autoheader; automake; autoconf
