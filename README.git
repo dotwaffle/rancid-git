@@ -2,7 +2,31 @@ This file contains additional information regarding the use of Git with RANCID
 along with some suggested use cases.
 
 
-**** Using type of git v git-remote for RCSSYS ****
+git v git-remote for RCSSYS
+---------------------------
+git commits all changes to a local repository in $BASEDIR/.git
+
+git-remote will push the master branch to all remotes. You can have as many
+remotes as you like. Rancid will loop through and push to them all. There are
+a few things that need to be setup in order for this to work seamlessly.
+
+    1) Add remotes to $BASEDIR
+
+            git remote add [name] [url]
+            Example: git remote add origin git@gitlab.acme.com:user/rancit.git
+
+    2) Generate SSH keys for the rancid user and place the public key on the
+       remote for silent pushing via ssh.
+
+            ssh-keygen -t rsa
+            cat ~/.ssh/id_rsa.pub | ssh git@gitlab.acme.com \
+                                    "cat - >> ~/.ssh/authorized_keys"
+
+        Or simply copy and paste the contents of ~/.ssh/id_rsa.pub to the
+        authorized_keys file or the web interface on the remote (if you are
+        using GitLab or the like).
+
+There is no harm in setting RCSSYS to git-remote if there are no remotes defined.
 
 
 **** git-remote Use Cases ****
