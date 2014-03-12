@@ -33,8 +33,8 @@ Requires: iputils
 Requires: logrotate
 
 %description
-RANCID monitors a router's (or more generally a device's) configuration, 
-including software and hardware (cards, serial numbers, etc) and uses CVS 
+RANCID monitors a router's (or more generally a device's) configuration,
+including software and hardware (cards, serial numbers, etc) and uses CVS
 (Concurrent Version System), Subversion, or git to maintain history of changes.
 
 
@@ -74,6 +74,10 @@ useradd -r -g rancid -d %{_localstatedir}/rancid/ -s /bin/bash \
 -k /etc/skel -m -c "RANCID" rancid
 exit 0
 
+%postun
+getent passwd rancid >/dev/null && userdel rancid
+getent group rancid >/dev/null && groupdel rancid
+if [ -d /var/rancid ]; then rm -rf /var/rancid; fi
 
 %files
 %defattr(-,root,root,-)
@@ -124,7 +128,7 @@ exit 0
 - Changed GECOS name for rancid user
 
 * Wed Jul 22 2009 Gary T. Giesen <giesen@snickers.org> 2.3.2-2
-- Added logrotate (and updated crontab to let logrotate handle log file 
+- Added logrotate (and updated crontab to let logrotate handle log file
   cleanup
 - Removed Requires: for rsh, telnet, and openssh-clients
 - Removed Requires: for cvs
@@ -148,7 +152,7 @@ exit 0
 
 * Tue Sep 30 2008 Aage Olai Johnsen <aage@thaumaturge.org> 2.3.2-0.4a8
 - More fixes (#451189)
-- Patched Makefiles - Supplied by Mamoru Tasaka (mtasaka@ioa.s.u-tokyo.ac.jp) 
+- Patched Makefiles - Supplied by Mamoru Tasaka (mtasaka@ioa.s.u-tokyo.ac.jp)
 
 * Tue Sep 23 2008 Aage Olai Johnsen <aage@thaumaturge.org> 2.3.2-0.3a8
 - More fixes (#451189)
