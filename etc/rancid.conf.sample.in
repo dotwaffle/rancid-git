@@ -25,7 +25,6 @@ TMPDIR=/tmp; export TMPDIR
 BASEDIR=@localstatedir@; export BASEDIR
 PATH=@bindir@:@ENV_PATH@; export PATH
 # Location of the CVS/SVN repository.  Be careful changing this.
-# git does not use $CVSROOT, instead configs are stored in $BASEDIR
 # If RCSSYS is svn, this can be:
 # - an (absolute) path (a subdirectory of BASEDIR by default).
 # - any URL that subversion understands, but beware that:
@@ -33,6 +32,7 @@ PATH=@bindir@:@ENV_PATH@; export PATH
 #   - authentication credentials, if necessary, MUST be cached (see the SVN
 #     book, Ch. 3, Network Model, Caching credentials) before non-interactive
 #     commands can run, e.g. by running rancid-cvs after installation.
+# git does not use $CVSROOT, instead configs are stored in $BASEDIR
 CVSROOT=$BASEDIR/CVS; export CVSROOT
 # Location of log files produced by rancid-run(1).
 LOGDIR=$BASEDIR/logs; export LOGDIR
