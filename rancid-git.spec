@@ -1,3 +1,6 @@
+%global commit 6b843b4f74fac89296b9fb325efa5eac1971b284
+%global shortcommit %(c=%{commit}; echo ${c:0:7})
+
 Name:    rancid-git
 Version: 2.3.8
 Release: 0%{?dist}
@@ -6,7 +9,7 @@ Summary: Really Awesome New Cisco confIg Differ (w/ git support)
 Group:   Applications/Internet
 License: BSD with advertising
 URL:     https://github.com/dotwaffle/rancid-git
-Source:  http://github.com/dotwaffle/rancid-git/tarball/master
+Source:  https://github.com/ISEexchange/rancid-git/archive/%{commit}/%{name}-%{version}-%{shortcommit}.tar.gz
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
