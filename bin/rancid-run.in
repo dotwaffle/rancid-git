@@ -163,7 +163,7 @@ END
 	    trap 'rm -fr $LOCKFILE;exit 1' 1 2 3 6 10 15
 	    touch $LOCKFILE
 	    if [ $? -eq 0 ] ; then
-		control_rancid $CR_ARGV $GROUP
+		@bindir@/control_rancid $CR_ARGV $GROUP
 		rm -f $LOCKFILE
 	    fi
 	    trap ''  1 2 3 6 10 15
