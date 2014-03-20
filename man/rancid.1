@@ -1,6 +1,6 @@
 .\"
 .hys 50
-.TH "rancid" "1" "16 January 2014"
+.TH "rancid" "1" "12 February 2014"
 .SH NAME
 rancid \- Cisco configuration filter
 .SH SYNOPSIS
@@ -9,7 +9,7 @@ rancid \- Cisco configuration filter
 [\fB\-t device_type\fP]
 (\fB\-f\fP filename | hostname)
 .sp
-.B grancid
+.B rancid
 [\fB\-dhlCV\fP]
 \fB\-t device_type\fP
 (\fB\-f\fP filename | hostname)
@@ -26,7 +26,7 @@ product is a file with the name of it's last argument plus the suffix .new.
 For example,
 .IR hostname.new .
 .PP
-.B grancid
+.B rancid
 is also a
 .BR perl (1)
 script that operates much like
@@ -79,9 +79,10 @@ F5 BigIPs
 .B fnrancid
 Fortinet Firewalls
 .TP
-.B grancid
-Generic rancid; supporting Cisco IOS, Cisco IOS-XR, Dell switches, Compass
-EOS, and Juniper JUNOS.
+.B rancid
+The generic rancid script; supporting Cisco IOS, Cisco IOS-XR, Dell switches,
+Compass EOS, and Juniper JUNOS.
+It uses the device O/S modules for parsing routines.
 See
 .BR rancid (3)
 for details.

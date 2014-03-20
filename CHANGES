@@ -1,4 +1,11 @@
-3.0a4
+3.0a6
+	grancid: rename to rancid, now that the IOS script is converted and
+	to reduce confusion.
+
+	rancid.pm: fix syntax error
+
+	hrancid: filter uptime from show stack - Alan McKinnon
+
 	junos.pm: filter primary/secondary on SRX - Frank Eargle
 
 	par: replace par with C version

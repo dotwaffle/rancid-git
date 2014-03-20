@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: grancid.in 2787 2014-01-23 19:32:08Z heas $
+## $Id: rancid.in 2798 2014-02-12 18:25:10Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.

@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 ## A Makefile.in is supplied, in case you do not have automake.
 
-## $Id: Makefile.am 2789 2014-01-23 23:42:35Z heas $
+## $Id: Makefile.am 2798 2014-02-12 18:25:10Z heas $
 ##
 ## Copyright (c) 1997-2013 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -15,13 +15,13 @@ bin_PROGRAMS = hpuifilter par
 bin_SCRIPTS = agmrancid alogin anlogin anrancid arancid arrancid atrancid \
 	avologin avorancid blogin brancid cat5rancid clogin complogin \
 	control_rancid cssrancid dllogin elogin erancid f5rancid f10rancid \
-	flogin fnlogin fnrancid grancid hlogin hrancid htlogin \
+	flogin fnlogin fnrancid hlogin hrancid htlogin \
 	htrancid jerancid jlogin mrancid mrvlogin mtlogin mtrancid \
-	nlogin nrancid nslogin nsrancid nxrancid prancid rivlogin \
+	nlogin nrancid nslogin nsrancid nxrancid prancid rancid rivlogin \
 	rivrancid rrancid srancid tlogin tntlogin tntrancid trancid xilogin \
 	xirancid xrancid zrancid
-# XXX hack for the grancid to get pkglibdir, see corresponding XXX below
-bin_in = grancid.in
+# XXX hack for the rancid to get pkglibdir, see corresponding XXX below
+bin_in = rancid.in
 
 bin_SCRIPTS += lg.cgi lgform.cgi rancid-cvs rancid-fe rancid-run
 EXTRA_DIST= lg.cgi.in lgform.cgi.in rancid-cvs.in rancid-fe.in rancid-run.in \
@@ -82,7 +82,7 @@ $(bin_in:%.in=%): Makefile $(top_builddir)/config.status
 	mv $@.tmp $@
 # XXX there must be a better way to produce these dependencies, perhaps in
 #     configure.
-grancid: $(srcdir)/grancid.in
+rancid: $(srcdir)/rancid.in
 
 lg.cgi: Makefile $(srcdir)/lg.cgi.in
 	rm -f lg.cgi lg.cgi.tmp; \

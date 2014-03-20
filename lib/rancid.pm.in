@@ -1,6 +1,6 @@
 package rancid;
 ##
-## $Id: rancid.pm.in 2787 2014-01-23 19:32:08Z heas $
+## $Id: rancid.pm.in 2797 2014-02-12 17:57:55Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -131,7 +131,7 @@ sub rancidinit {
     # determine password filtering mode
     if (defined($ENV{"FILTER_PWDS"}) && $ENV{"FILTER_PWDS"} =~ /no/i) {
 	$filter_pwds = 0;
-    } elsif (defined($ENV{"FILTER_PWDS"}) && ENV{"FILTER_PWDS"} =~ /all/i) {
+    } elsif (defined($ENV{"FILTER_PWDS"}) && $ENV{"FILTER_PWDS"} =~ /all/i) {
 	$filter_pwds = 2;
     } else {
 	$filter_pwds = 1;

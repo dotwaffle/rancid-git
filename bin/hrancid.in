@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: hrancid.in 2764 2014-01-02 23:14:35Z heas $
+## $Id: hrancid.in 2793 2014-02-07 19:38:02Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -293,6 +293,7 @@ sub ShowStack {
 
 	s/stacking - (Stacking Status).*/$1/i;
 	s/\s*members unreachable .*$//i;
+	next if /^uptime/i;
 
 	ProcessHistory("COMMENTS","keysort","F0",";$_");
 

@@ -1,8 +1,8 @@
 .\"
-.\" $Id: rancid.types.conf.5.in 2787 2014-01-23 19:32:08Z heas $
+.\" $Id: rancid.types.conf.5.in 2798 2014-02-12 18:25:10Z heas $
 .\"
 .hys 50
-.TH "rancid.types.conf" "5" "22 January 2014"
+.TH "rancid.types.conf" "5" "12 February 2014"
 .SH NAME
 rancid.types.conf \- rancid device type configuration file
 .SH DESCRIPTION
@@ -73,7 +73,7 @@ process the input.
 .TP
 .B inloop
 Intended for
-.IR grancid(1),
+.IR rancid(1),
 .B inloop
 defines a function to loop over the input from the device.
 .TP

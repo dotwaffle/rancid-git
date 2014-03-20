@@ -7,9 +7,10 @@
 #
 agm;script;agmrancid
 #
-adtran;script;atrancid
+adtran;script;rancid
 adtran;login;clogin
 # TA5000
+adtran;command;adtran::ShowVersion;show version
 adtran;command;adtran::ShowSystemInventory;show system inventory
 adtran;command;adtran::ShowTableInterfaces;show table interfaces
 adtran;command;adtran::ShowEvc;show evc
@@ -18,13 +19,12 @@ adtran;command;adtran::ShowEfmgroup;show efm-group 1
 adtran;command;adtran::ShowInterfacesShdsl;show interfaces shdsl
 adtran;command;adtran::ShowInterfacesAdsl;show interfaces adsl
 # EFM NTU
-adtran;command;adtran::ShowVersion;show version
 adtran;command;adtran::ShowInterfaces;show interfaces
 adtran;command;adtran::WriteTerm;show running-config
 #
 alteon;script;arancid
 #
-arbor;script;grancid
+arbor;script;rancid
 arbor;login;anlogin
 arbor;module;arbor
 arbor;inloop;arbor::inloop
@@ -41,7 +41,7 @@ baynet;script;brancid
 cat5;script;cat5rancid
 #
 # Cisco IOS device
-cisco;script;grancid
+cisco;script;rancid
 cisco;login;clogin
 cisco;module;ios
 cisco;inloop;ios::inloop
@@ -112,7 +112,7 @@ cisco;command;ios::WriteTerm;write term
 #
 cisco-nx;script;nxrancid
 #
-cisco-xr;script;grancid
+cisco-xr;script;rancid
 cisco-xr;login;clogin
 cisco-xr;module;iosxr
 cisco-xr;inloop;iosxr::inloop
@@ -165,7 +165,7 @@ cisco-xr;command;iosxr::ShowRPL;show rpl maximum
 cisco-xr;command;iosxr::AdminShowRunning;admin show running
 cisco-xr;command;iosxr::WriteTerm;show running-config
 #
-compass;script;grancid
+compass;script;rancid
 compass;login;complogin
 compass;module;eos
 compass;inloop;eos::inloop
@@ -180,7 +180,7 @@ compass;command;eos::ShowConfig;show configuration detail
 #
 css;script;cssrancid
 #
-dell;script;grancid
+dell;script;rancid
 dell;login;dllogin
 dell;module;dell
 dell;command;dell::GetSystem;show switch;
@@ -201,7 +201,7 @@ force10;script;f10rancid
 fortigate;script;fnrancid
 #
 # Foundry and HP procurve OEMs of Foundry
-foundry;script;grancid
+foundry;script;rancid
 foundry;login;flogin
 foundry;module;foundry
 foundry;inloop;foundry::inloop
@@ -216,7 +216,7 @@ hitachi;script;htrancid
 #
 hp;script;hrancid
 #
-juniper;script;grancid
+juniper;script;rancid
 juniper;login;jlogin
 juniper;module;junos
 juniper;inloop;junos::inloop
@@ -240,12 +240,60 @@ juniper;command;junos::ShowSystemCoreDumps;show system core-dumps
 juniper;command;junos::ShowVersion;show version detail
 juniper;command;junos::ShowConfiguration;show configuration
 #
+# juniper-srx type is for SRX with ThreatSTOP; it displays the configuration
+# by section, omitting policy-options, which changes frequently.
+juniper-srx;script;rancid
+juniper-srx;login;jlogin
+juniper-srx;module;junos
+juniper-srx;inloop;junos::inloop
+juniper-srx;command;junos::ShowChassisClocks;show chassis clocks
+juniper-srx;command;junos::ShowChassisEnvironment;show chassis environment
+juniper-srx;command;junos::ShowChassisFirmware;show chassis firmware
+juniper-srx;command;junos::ShowChassisFpcDetail;show chassis fpc detail
+juniper-srx;command;junos::ShowChassisHardware;show chassis hardware detail
+juniper-srx;command;junos::ShowChassisHardware;show chassis hardware models
+juniper-srx;command;junos::ShowChassisRoutingEngine;show chassis routing-engine
+juniper-srx;command;junos::ShowChassisSCB;show chassis scb
+juniper-srx;command;junos::ShowChassisSCB;show chassis sfm detail
+juniper-srx;command;junos::ShowChassisSCB;show chassis ssb
+juniper-srx;command;junos::ShowChassisSCB;show chassis feb detail
+juniper-srx;command;junos::ShowChassisSCB;show chassis feb
+juniper-srx;command;junos::ShowChassisSCB;show chassis cfeb
+juniper-srx;command;junos::ShowChassisAlarms;show chassis alarms
+juniper-srx;command;junos::ShowSystemLicense;show system license
+juniper-srx;command;junos::ShowSystemLicense;show system license keys
+juniper-srx;command;junos::ShowSystemBootMessages;show system boot-messages
+juniper-srx;command;junos::ShowSystemCoreDumps;show system core-dumps
+juniper-srx;command;junos::ShowVersion;show version detail
+juniper-srx;command;junos::ShowConfiguration;show configuration groups
+juniper-srx;command;junos::ShowConfiguration;show configuration apply-groups
+juniper-srx;command;junos::ShowConfiguration;show configuration access
+juniper-srx;command;junos::ShowConfiguration;show configuration applications
+juniper-srx;command;junos::ShowConfiguration;show configuration bridge-domains
+juniper-srx;command;junos::ShowConfiguration;show configuration chassis
+juniper-srx;command;junos::ShowConfiguration;show configuration class-of-service
+juniper-srx;command;junos::ShowConfiguration;show configuration ethernet-switching-options
+juniper-srx;command;junos::ShowConfiguration;show configuration event-options
+juniper-srx;command;junos::ShowConfiguration;show configuration firewall
+juniper-srx;command;junos::ShowConfiguration;show configuration forwarding-options
+juniper-srx;command;junos::ShowConfiguration;show configuration interfaces
+juniper-srx;command;junos::ShowConfiguration;show configuration protocols
+juniper-srx;command;junos::ShowConfiguration;show configuration routing-instances
+juniper-srx;command;junos::ShowConfiguration;show configuration routing-options
+juniper-srx;command;junos::ShowConfiguration;show configuration security
+juniper-srx;command;junos::ShowConfiguration;show configuration services
+juniper-srx;command;junos::ShowConfiguration;show configuration smtp
+juniper-srx;command;junos::ShowConfiguration;show configuration snmp
+juniper-srx;command;junos::ShowConfiguration;show configuration switch-options
+juniper-srx;command;junos::ShowConfiguration;show configuration system
+juniper-srx;command;junos::ShowConfiguration;show configuration vlans
+#
 mikrotik;script;mtrancid
 #
 mrtd;script;mrancid
 #
 # MRV optical switches
-mrv;script;grancid
+mrv;script;rancid
 mrv;login;mrvlogin
 mrv;module;mrv
 mrv;inloop;mrv::inloop

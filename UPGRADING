@@ -3,7 +3,7 @@ The router.db field separator has been changed to ';' from ':' to avoid
 conflict with IPv6 addresses and etc.
 
 3.0 also introduces perl libraries for device O/S specific handling and
-replaces the individual rancid scripts with grancid which imports the
+replaces the individual rancid scripts with rancid which imports the
 libraries.  Also, rancid.pm supplies the functions common among the former
 rancid scripts.
 
