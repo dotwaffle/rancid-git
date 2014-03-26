@@ -38,7 +38,7 @@ update_sha_in_spec() {
 }
 
 create_archive() {
-    git archive -o rancid-git-${version}-${sha_short}.tar.gz \
+    git archive -o rancid-git-${SHA}.tar.gz \
                 --prefix=rancid-git-${SHA}/ ${SHA}
 }
 
