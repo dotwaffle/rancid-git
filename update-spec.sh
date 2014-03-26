@@ -5,15 +5,16 @@
 archive='no'
 spec_file='rancid-git.spec'
 program=$(basename $0)
-export SHA=$(git rev-parse HEAD)
 sha_short=$(git rev-parse --short HEAD)
-version='2.3.8'
-release='0'
+export SHA=$(git rev-parse HEAD)
+export VERSION='2.3.8'
+export RELEASE='0'
 
 
 usage() {
 cat << EOF
-$program [--help] [--commit [sha|tag]] [--archive]
+$program [--help] [--commit [sha|tag]] [--version [number]]
+         [--release [number]] [--archive]
 
   Update the spec file to point at the curret HEAD unless
   a sha or tag is specified.
@@ -22,6 +23,10 @@ $program [--help] [--commit [sha|tag]] [--archive]
 
     --commit    Specify SHA or tag to put in the spec file
                 If a tag is specified, it will be translated to a full SHA
+
+    --version   Specify version number to set in spec file (currently v$version)
+
+    --release   Specify release number to set in spec file (currently $release)
 
     --archive   Create tar.gz archive
 
@@ -35,6 +40,14 @@ update_sha_in_spec() {
     if [[ $archive == "yes" ]]; then
         create_archive
     fi
+}
+
+update_version_in_spec() {
+    perl -pi -e 's/(^Version: )(\d(\.)?)+(\d)?/$1$ENV{VERSION}/g' $spec_file
+}
+
+update_release_in_spec() {
+    perl -pi -e 's/(^Release: )(\d)+/$1$ENV{RELEASE}/g' $spec_file
 }
 
 create_archive() {
@@ -67,6 +80,25 @@ while [ "$1" ]; do
 
             export SHA=$(git rev-parse $ref)
             sha_short=$(git rev-parse --short $ref)
+            shift
+            ;;
+
+        --version )
+            export VERSION="$2"
+
+            # Validate input
+            if [[ $VERSION =~ ^[0-9](\.)? ]]; then
+                update_version_in_spec
+            else
+                echo "\"$VERSION\" is not a valid version number"
+                exit 3
+            fi
+            shift
+            ;;
+
+        --release )
+            export RELEASE="$2"
+            update_release_in_spec
             shift
             ;;
 
