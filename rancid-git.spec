@@ -3,7 +3,7 @@
 
 Name:    rancid-git
 Version: 2.3.8
-Release: 0%{?dist}
+Release: 4%{?dist}
 Summary: Really Awesome New Cisco confIg Differ (w/ git support)
 
 Group:   Applications/Internet
@@ -111,7 +111,13 @@ if [ -d /var/rancid ]; then rm -rf /var/rancid; fi
 
 
 %changelog
-* Wed Jun 05 2013 Paul Morgan <jumanjiman@gmail.com> 2.3.8-0
+* Wed Mar 26 2014 Sam Doran <github@samdoran.com> 2.3.8-4
+- Change source url to match Fedora documentation
+
+* Wed Mar 12 2014 Sam Doran <github@samdoran.com> 2.3.8-4
+- Add postun section to remove rancid user and /var/rancid
+
+* Wed Jun 05 2013 Paul Morgan <jumanjiman@gmail.com> 2.3.8-3
 - use tito to build rpm
 - fix rpm spec file
 
