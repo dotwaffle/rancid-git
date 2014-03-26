@@ -19,17 +19,20 @@ a few things that need to be setup in order for this to work seamlessly.
        remote for silent pushing via ssh.
 
             ssh-keygen -t rsa
-            cat ~/.ssh/id_rsa.pub | ssh git@gitlab.acme.com \
-                                    "cat - >> ~/.ssh/authorized_keys"
+            cat ~/.ssh/id_rsa.pub | \
+                ssh git@gitlab.acme.com "cat - >> ~/.ssh/authorized_keys"
 
         Or simply copy and paste the contents of ~/.ssh/id_rsa.pub to the
         authorized_keys file or the web interface on the remote (if you are
         using GitLab or the like).
 
-There is no harm in setting RCSSYS to git-remote if there are no remotes defined.
+There is no harm in setting $RCSSYS to git-remote if there are no remotes
+defined. Rancid will behave as if there are no remotes and only commit to
+the local repo in $BASEDIR/.git.
 
 
-**** git-remote Use Cases ****
+git-remote Use Cases
+--------------------
 
 ---- Distributed Collectors ----
 
