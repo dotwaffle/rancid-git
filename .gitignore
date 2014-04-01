@@ -55,6 +55,8 @@ bin/nrancid
 bin/nslogin
 bin/nsrancid
 bin/nxrancid
+bin/panlogin
+bin/panrancid
 bin/par
 bin/prancid
 bin/rancid
