@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: nslogin.in 2719 2013-07-30 12:44:34Z heas $
+## $Id: nslogin.in 2808 2014-03-31 05:21:36Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -538,7 +538,7 @@ foreach router [lrange $argv $i end] {
     }
 
     # Figure out prompt.
-    set prompt "#"
+    set prompt ">"
 
     # look for noenable option in .cloginrc
     if { [find noenable $router] == "1" } {
@@ -639,7 +639,7 @@ foreach router [lrange $argv $i end] {
     send "\r"
     expect {
 	-re "\[\r\n]+"		{ exp_continue; }
-	-re "^.+$prompt"	{ set junk $expect_out(0,string);
+	-re "^$prompt"		{ set junk $expect_out(0,string);
 				  regsub -all "\[\]\[]" $junk {\\&} prompt; }
     }
 

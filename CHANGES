@@ -1,4 +1,17 @@
-3.0a6
+3.0
+	nsrancid,nslogin: Fix prompt and end-of-config-markers - from Jesse
+	House confirmed by Tom Luong
+
+	ios.pm: show flash on 867VAE w/ 15.3(3)M2 produces the same output as
+	dir slotN: on "normal" ios, so filtering fials - reported by Reuben
+	Farrelly
+
+	ios.pm: change $type comparisons to eq - reported by Reuben Farrelly
+
+	junos.pm: filter MX2020 fan speed
+
+	ios.pm: update XE match for XE 3.11.00.S - Jan Rheindorf
+
 	grancid: rename to rancid, now that the IOS script is converted and
 	to reduce confusion.
 

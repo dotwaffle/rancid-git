@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: rancid.in 2798 2014-02-12 18:25:10Z heas $
+## $Id: rancid.in 2802 2014-02-24 18:42:26Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -42,10 +42,10 @@
 #
 #  RANCID - Really Awesome New Cisco confIg Differ
 #
-#  grancid - generalized rancid module; command schedule is derived from the
-#	     rancid.{base,types}.conf configurations.
+#  rancid - generalized rancid module; command schedule is derived from the
+#	    rancid.{base,types}.conf configurations.
 #
-# usage: grancid [-dhltCV] -t device_type [-f filename | hostname]
+# usage: rancid [-dhltCV] -t device_type [-f filename | hostname]
 #
 use 5.005;
 use strict 'vars';
@@ -62,7 +62,7 @@ use rancid;
 our @ISA = qw(Exporter rancid);
 
 if ($opt_h) {
-    print STDERR "grancid [-dhltCV] -t device_type [-f filename | hostname]\n";
+    print STDERR "rancid [-dhltCV] -t device_type [-f filename | hostname]\n";
     exit 64;
 }
 

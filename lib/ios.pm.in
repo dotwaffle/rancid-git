@@ -1,6 +1,6 @@
 package ios;
 ##
-## $Id: ios.pm.in 2753 2013-11-07 19:47:48Z heas $
+## $Id: ios.pm.in 2807 2014-03-19 19:47:07Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -191,7 +191,7 @@ sub ShowVersion {
 	    $slaveslot = ", slot $1";
 	    next;
 	}
-	if (/cisco ios .* IOS-XE/i) { $ios = "XE"; }
+	if (/cisco ios.*(IOS-)?XE/i) { $ios = "XE"; }
 	if (/^Application and Content Networking .*Software/) { $type = "CE"; }
 	# treat the ACE like the Content Engines for matching endofconfig
 	if (/^Cisco Application Control Software/) { $type = "CE"; }
@@ -243,13 +243,13 @@ sub ShowVersion {
 	    ProcessHistory("COMMENTS","keysort","B2", "!Memory: Flash $2\n") &&
 	    next;
 	# 3750 switch stacks
-	next if (/^Model revision number/ && $type == "3750");
-	next if (/^Motherboard/ && $type == "3750");
-	next if (/^Power supply/ && $type == "3750");
-	/^Model number                    : (.*)$/ && $type == "3750" &&
+	next if (/^Model revision number/ && $type eq "3750");
+	next if (/^Motherboard/ && $type eq "3750");
+	next if (/^Power supply/ && $type eq "3750");
+	/^Model number                    : (.*)$/ && $type eq "3750" &&
 	ProcessHistory("COMMENTS","keysort","C2", "!Model number:  $1\n") &&
  	    next;
-	/^System serial number            : (.*)$/ && $type == "3750" &&
+	/^System serial number            : (.*)$/ && $type eq "3750" &&
 	ProcessHistory("COMMENTS","keysort","C2", "!Serial number: $1\n") &&
  	    next;
 	# CatOS 3500xl stuff
@@ -818,7 +818,17 @@ sub ShowFlash {
 	#                                     vlan.dat
 	#                                            vlan.dat
 	if (/(dhcp_[^. ]*\.txt|vlan\.dat|sflog)\s*$/) {
-	    if (/(\s*\d+)(\s+)(\d+)(\s+)(\w+ \d+\s+\d+ \d+:\d+:\d+ .\d+:\d+)/) {
+	    if (/(\s*\d+)(\s+[-rwx]+\s+)(\d+)(\s+)(\w+ \d+\s+\d+ \d+:\d+:\d+ .\d+:\d+)/) {
+		my($fn, $a, $sz, $c, $dt, $rem) = ($1, $2, $3, $4, $5, $');
+		my($fnl, $szl, $dtl) = (length($fn), length($sz), length($dt));
+		my($fmt) = "%-". $fnl ."s%s%-". $szl ."s%s%-". $dtl ."s%s";
+		$_ = sprintf($fmt, "", $a, "", $c, "", $rem);
+	    } elsif (/(\s*\d+)(\s+[-rwx]+\s+)(\d+)(\s+)(\w+ \d+\s+\d+ \d+:\d+:\d+)/) {
+		my($fn, $a, $sz, $c, $dt, $rem) = ($1, $2, $3, $4, $5, $');
+		my($fnl, $szl, $dtl) = (length($fn), length($sz), length($dt));
+		my($fmt) = "%-". $fnl ."s%s%-". $szl ."s%s%-". $dtl ."s%s";
+		$_ = sprintf($fmt, "", $a, "", $c, "", $rem);
+	    } elsif (/(\s*\d+)(\s+)(\d+)(\s+)(\w+ \d+\s+\d+ \d+:\d+:\d+ .\d+:\d+)/) {
 		my($fn, $a, $sz, $c, $dt, $rem) = ($1, $2, $3, $4, $5, $');
 		my($fnl, $szl, $dtl) = (length($fn), length($sz), length($dt));
 		my($fmt) = "%-". $fnl ."s%s%-". $szl ."s%s%-". $dtl ."s%s";

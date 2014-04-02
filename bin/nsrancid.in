@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: nsrancid.in 2707 2013-07-15 19:37:17Z heas $
+## $Id: nsrancid.in 2808 2014-03-31 05:21:36Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -66,7 +66,7 @@ my($aclsort) = ("ipsort");		# ACL sorting mode
 my($filter_commstr);			# SNMP community string filtering
 my($filter_pwds);			# password filtering mode
 
-$prompt = "netscaler#";
+$prompt = ">";
 
 # This routine is used to print out the router configuration
 sub ProcessHistory {
@@ -174,6 +174,7 @@ sub ShowConfig {
 
     while (<INPUT>) {
 	tr/\015//d;
+	last if (/ Done$/);
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	next if (/^Reading configuration information/);
@@ -190,7 +191,7 @@ sub ShowConfig {
 	ProcessHistory("","","","$_");
     }
 
-    if (/exit$/) {
+    if (/ Done$/) {
 	$found_end = 1;
 	$clean_run = 1;
 	return(1);

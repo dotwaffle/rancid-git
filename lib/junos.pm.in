@@ -1,6 +1,6 @@
 package junos;
 ##
-## $Id: junos.pm.in 2792 2014-01-30 18:22:55Z heas $
+## $Id: junos.pm.in 2804 2014-03-19 00:27:18Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -198,6 +198,8 @@ sub ShowChassisEnvironment {
 	/(\s*.+) +\d+ degrees C.*$/ &&
 		ProcessHistory("","","","# $1\n") && next;
 	/(^.*\S)\s+ Spinning at .*$/ &&
+		ProcessHistory("","","","# $1\n") && next;
+	/(^.*\S)\s+ \d+ RPM$/ &&
 		ProcessHistory("","","","# $1\n") && next;
 	/(^.*\S)\s+Measurement/ &&
 		ProcessHistory("","","","# $1\n") && next;
