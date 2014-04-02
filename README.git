@@ -10,6 +10,8 @@ git-remote will push the master branch to all remotes. You can have as many
 remotes as you like. Rancid will loop through and push to them all. There are
 a few things that need to be setup in order for this to work seamlessly.
 
+Perform these steps before running bin/rancid-run:
+
     1) Add remotes to $BASEDIR
 
             git remote add [name] [url]
@@ -25,6 +27,10 @@ a few things that need to be setup in order for this to work seamlessly.
         Or simply copy and paste the contents of ~/.ssh/id_rsa.pub to the
         authorized_keys file or the web interface on the remote (if you are
         using GitLab or the like).
+
+    3) Perform inital push to each remote
+
+            git push -u [remote name] master
 
 There is no harm in setting $RCSSYS to git-remote if there are no remotes
 defined. Rancid will behave as if there are no remotes and only commit to
