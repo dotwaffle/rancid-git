@@ -1,4 +1,4 @@
-%global commit 020ea8a526739370ac5b252582ab499c71c5d327
+%global commit a2fc7faa4be4e7f63dc76b89515e95c3026a3c41
 %global shortcommit %(c=%{commit}; echo ${c:0:7})
 
 Name:    rancid-git
@@ -78,9 +78,20 @@ useradd -r -g rancid -d %{_localstatedir}/rancid/ -s /bin/bash \
 exit 0
 
 %postun
-getent passwd rancid >/dev/null && userdel rancid
-getent group rancid >/dev/null && groupdel rancid
-if [ -d /var/rancid ]; then rm -rf /var/rancid; fi
+# Only run if erasing not on update
+if [ "$1" = "0" ]; then
+    # Save folder when erasing
+    if [ -d %{_localstatedir}/rancid ]; then
+        # Backup rancid.rpmsave if it exists
+        if [ -d %{_localstatedir}/rancid.rpmsave ]; then
+            mv %{_localstatedir}/rancid.rpmsave %{_localstatedir}/rancid.rpmsave.$(date +%s)
+        fi
+        mv %{_localstatedir}/rancid %{_localstatedir}/rancid.rpmsave
+        chown -R root:root %{_localstatedir}/rancid.rpmsave
+        echo "warning: %{_localstatedir}/rancid saved as %{_localstatedir}/rancid.rpmsave"
+    fi
+    getent passwd rancid >/dev/null && userdel rancid
+fi
 
 %files
 %defattr(-,root,root,-)
@@ -107,10 +118,14 @@ if [ -d /var/rancid ]; then rm -rf /var/rancid; fi
 #_localstatedir-directories
 %attr(0750,root,rancid) %dir %{_localstatedir}/log/rancid
 %attr(0750,root,rancid) %dir %{_localstatedir}/log/rancid/old
-%attr(0750,root,rancid) %dir %{_localstatedir}/rancid/
+%attr(0770,root,rancid) %dir %{_localstatedir}/rancid/
 
 
 %changelog
+* Fri Apr 04 2014 Sam Doran <github@samdoran.com> 2.3.9-0
+- Change postun script to save /var/rancid on removal and not delete on update
+- Change perms on /var/rancid to 770
+
 * Wed Mar 26 2014 Sam Doran <github@samdoran.com> 2.3.8-4
 - Change source url to match Fedora documentation
 
