@@ -1,9 +1,9 @@
-%global commit 6b843b4f74fac89296b9fb325efa5eac1971b284
+%global commit 020ea8a526739370ac5b252582ab499c71c5d327
 %global shortcommit %(c=%{commit}; echo ${c:0:7})
 
 Name:    rancid-git
-Version: 2.3.8
-Release: 4%{?dist}
+Version: 2.3.9
+Release: 0%{?dist}
 Summary: Really Awesome New Cisco confIg Differ (w/ git support)
 
 Group:   Applications/Internet
