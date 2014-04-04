@@ -129,8 +129,8 @@ if [ ! -d $CVSROOT ]; then
 fi
 
 # Log dir
-if [ ! -d ${LOGDIR#${BASEDIR}} ]; then
-    mkdir ${LOGDIR#${BASEDIR}}
+if [ ! -d ${LOGDIR#${BASEDIR}/} ]; then
+    mkdir ${LOGDIR#${BASEDIR}/}
 fi
 
 # Which groups to do
