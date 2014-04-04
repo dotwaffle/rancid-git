@@ -116,7 +116,7 @@ if [ ! -d $CVSROOT ]; then
 		flock -x 200
 		git init
 		rm -f .gitignore
-		echo "/logs" >> .gitignore
+		echo "${LOGDIR#${BASEDIR}}" >> .gitignore
 		echo "/.lockfile" >> .gitignore
 		echo "*~" >> .gitignore
 		echo ".#*" >> .gitignore
@@ -129,8 +129,8 @@ if [ ! -d $CVSROOT ]; then
 fi
 
 # Log dir
-if [ ! -d logs ]; then
-    mkdir logs
+if [ ! -d ${LOGDIR#${BASEDIR}} ]; then
+    mkdir ${LOGDIR#${BASEDIR}}
 fi
 
 # Which groups to do

@@ -1,6 +1,7 @@
 build-stamp
 *.log
 *.substvars
+*.tar.gz
 patch-stamp
 debian/files
 debian/rancid-cgi/

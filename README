@@ -200,7 +200,7 @@ Quick Installation Guide (an example):
 7) Run rancid-cvs.
    This creates all of the necessary directories and config files for
    each of the groups in LIST_OF_GROUPS and imports them into version control
-   (CVS, Subversion or Git).  This will also be run each time a new group is 
+   (CVS, Subversion or Git).  This will also be run each time a new group is
    added.  Do not create the directories or version control repository manually,
    allow rancid-cvs to do it.  Also see 'man -M <basedir>/man rancid-cvs'.
 
@@ -220,6 +220,8 @@ Quick Installation Guide (an example):
 	juniper-router.domain.com:juniper:up
 	redback-dsl-router.domain.com:redback:down
 	extreme-switch.domain.com:extreme:down
+
+    NOTE: If using git-remote, see README.git before running bin/rancid-run
 
 9) For first-time users or new installations, run bin/rancid-run (with no
    arguments) and check the resulting log file(s) (in logs/*) for errors.
@@ -260,7 +262,7 @@ Problem with clogin/telnet hanging within rancid or scripts?
 If you have experienced rancid (or more precisely, telnet) hanging on a
 solaris 2.6 box; check to be sure you have the following two o/s patches
 installed (see showrev -p).  There may be more recent versions of these
-patches and they are likely included with 2.7 and 2.8: 
+patches and they are likely included with 2.7 and 2.8:
 
 Patch-ID# 105529-08
 Keywords: security tcp rlogin TCP ACK FIN packet listen

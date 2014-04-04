@@ -1,12 +1,15 @@
+%global commit 020ea8a526739370ac5b252582ab499c71c5d327
+%global shortcommit %(c=%{commit}; echo ${c:0:7})
+
 Name:    rancid-git
-Version: 2.3.8
+Version: 2.3.9
 Release: 0%{?dist}
 Summary: Really Awesome New Cisco confIg Differ (w/ git support)
 
 Group:   Applications/Internet
 License: BSD with advertising
 URL:     https://github.com/dotwaffle/rancid-git
-Source:  http://github.com/dotwaffle/rancid-git/tarball/master
+Source:  https://github.com/dotwaffle/rancid-git/archive/%{commit}/%{name}-%{commit}.tar.gz
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -33,13 +36,13 @@ Requires: iputils
 Requires: logrotate
 
 %description
-RANCID monitors a router's (or more generally a device's) configuration, 
-including software and hardware (cards, serial numbers, etc) and uses CVS 
+RANCID monitors a router's (or more generally a device's) configuration,
+including software and hardware (cards, serial numbers, etc) and uses CVS
 (Concurrent Version System), Subversion, or git to maintain history of changes.
 
 
 %prep
-%setup -q -n %{name}-%{release}
+%setup -q -n %{name}-%{commit}
 
 %build
 aclocal; autoheader; automake; autoconf
@@ -74,6 +77,10 @@ useradd -r -g rancid -d %{_localstatedir}/rancid/ -s /bin/bash \
 -k /etc/skel -m -c "RANCID" rancid
 exit 0
 
+%postun
+getent passwd rancid >/dev/null && userdel rancid
+getent group rancid >/dev/null && groupdel rancid
+if [ -d /var/rancid ]; then rm -rf /var/rancid; fi
 
 %files
 %defattr(-,root,root,-)
@@ -104,7 +111,13 @@ exit 0
 
 
 %changelog
-* Wed Jun 05 2013 Paul Morgan <jumanjiman@gmail.com> 2.3.8-0
+* Wed Mar 26 2014 Sam Doran <github@samdoran.com> 2.3.8-4
+- Change source url to match Fedora documentation
+
+* Wed Mar 12 2014 Sam Doran <github@samdoran.com> 2.3.8-4
+- Add postun section to remove rancid user and /var/rancid
+
+* Wed Jun 05 2013 Paul Morgan <jumanjiman@gmail.com> 2.3.8-3
 - use tito to build rpm
 - fix rpm spec file
 
@@ -124,7 +137,7 @@ exit 0
 - Changed GECOS name for rancid user
 
 * Wed Jul 22 2009 Gary T. Giesen <giesen@snickers.org> 2.3.2-2
-- Added logrotate (and updated crontab to let logrotate handle log file 
+- Added logrotate (and updated crontab to let logrotate handle log file
   cleanup
 - Removed Requires: for rsh, telnet, and openssh-clients
 - Removed Requires: for cvs
@@ -148,7 +161,7 @@ exit 0
 
 * Tue Sep 30 2008 Aage Olai Johnsen <aage@thaumaturge.org> 2.3.2-0.4a8
 - More fixes (#451189)
-- Patched Makefiles - Supplied by Mamoru Tasaka (mtasaka@ioa.s.u-tokyo.ac.jp) 
+- Patched Makefiles - Supplied by Mamoru Tasaka (mtasaka@ioa.s.u-tokyo.ac.jp)
 
 * Tue Sep 23 2008 Aage Olai Johnsen <aage@thaumaturge.org> 2.3.2-0.3a8
 - More fixes (#451189)
