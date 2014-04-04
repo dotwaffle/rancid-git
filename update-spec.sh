@@ -7,8 +7,8 @@ spec_file='rancid-git.spec'
 program=$(basename $0)
 sha_short=$(git rev-parse --short HEAD)
 export SHA=$(git rev-parse HEAD)
-export VERSION='2.3.8'
-export RELEASE='4'
+export VERSION='2.3.9'
+export RELEASE='0'
 
 
 usage() {
