@@ -1,3 +1,6 @@
+2.3.9-1
+	fnlogin: check for VDOM before running commands
+
 2.3.9
 	xrrancid: additional file filters for 4.2
 
@@ -341,7 +344,7 @@
 
 	rancid: filter filesize and date of tracelogs dir on IOS-XE
 
-	rancid: summarize bytes free for IOS-XE like XR 
+	rancid: summarize bytes free for IOS-XE like XR
 
 	nsrancid/nslogin: updates for netscalar version 8 - Marco Schirrmeister
 

@@ -1,3 +1,8 @@
+rancid-git (2.3.9-1) unstable; urgency=low
+  * Check for VDOM in fnlogin before running commands
+
+ -- Sam Doran <github@samdoran.com> Mon, 07 Apr 2014 19:09:00 +0000
+
 rancid-git (2.3.8-1) unstable; urgency=low
 
   * backported lots of fixes that were in the debian git repo
@@ -5,6 +10,7 @@ rancid-git (2.3.8-1) unstable; urgency=low
   * introduced a couple of patches from upstream
 
  -- Matthew Walster <matthew@walster.org>  Fri, 31 Jan 2014 14:08:00 +0000
+
 rancid-git (2.3.8) unstable; urgency=low
 
   * updated to version 2.3.8
@@ -45,7 +51,7 @@ rancid (2.3.6-5) unstable; urgency=low
   * With git patch
   * fix Bug in downreport wildcard MAILPUS was not replaced
   * some scripts to bin directory insted of install prefix dir
-  * Additional info to commit message over environment variable    
+  * Additional info to commit message over environment variable
 
  -- Stefan Kublik <stku@kublik.net>  Fri, 06 May 2011 14:18:17 +0200
 
@@ -130,7 +136,7 @@ rancid (2.3.2~a8-1) unstable; urgency=low
     pages to make lintian happy.
   * Add debian/watch file.
   * Update to Standards-Version 3.8.0 (no changes).
-  
+
  -- Roland Rosenfeld <roland@debian.org>  Sun, 29 Jun 2008 12:51:07 +0200
 
 rancid (2.3.2~a7-3) unstable; urgency=low
@@ -256,9 +262,9 @@ rancid (2.3.0-1) unstable; urgency=low
 
   * New upstream release
   * Upstream Author fixed man page for control_rancid (Closes:#219908)
-  * control_rancid should not source env because it's called from do-diff 
+  * control_rancid should not source env because it's called from do-diff
     as the man page say (Closes:#219917)
-  * renamed apache.conf in rancid-lg.conf 
+  * renamed apache.conf in rancid-lg.conf
 
  -- Samuele Giovanni Tonon <samu@debian.org>  Sun, 28 Mar 2004 15:33:33 +0200
 
@@ -303,7 +309,7 @@ rancid (2.2.2-8) unstable; urgency=low
 
 rancid (2.2.2-7) unstable; urgency=low
 
-  * Added some information of what rancid is in rancid-installer 
+  * Added some information of what rancid is in rancid-installer
     description (Closes: Bug#173106)
 
  -- Samuele Giovanni Tonon <samu@debian.org>  Mon, 16 Dec 2002 18:30:38 +0100
@@ -315,7 +321,7 @@ rancid (2.2.2-6) unstable; urgency=low
     following fhs)
   * added link from /var/log/rancid to /var/lib/rancid/logs
   * added a control for default home of user rancid
-  * added a lots of symbolic links to well fit the original structure 
+  * added a lots of symbolic links to well fit the original structure
 
  -- Samuele Giovanni Tonon <samu@debian.org>  Wed, 13 Nov 2002 18:58:00 +0100
 
@@ -329,7 +335,7 @@ rancid (2.2.2-5) unstable; urgency=low
 
 rancid (2.2.2-4) unstable; urgency=low
 
-  * removed dependencies from libc6 
+  * removed dependencies from libc6
 
  -- Samuele Giovanni Tonon <samu@debian.org>  Sun,  6 Oct 2002 18:33:35 +0200
 
@@ -349,7 +355,7 @@ rancid (2.2.2-3) unstable; urgency=low
 
 rancid (2.2.2-2) unstable; urgency=low
 
-  * unstable release (Closes: Bug#125894) 
+  * unstable release (Closes: Bug#125894)
 
  -- Samuele Giovanni Tonon <samu@debian.org>  Thu, 26 Sep 2002 02:30:46 +0200
 
