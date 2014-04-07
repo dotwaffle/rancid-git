@@ -42,9 +42,9 @@
 ## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 #  The expect login scripts were based on Erik Sherk's gwtn, by permission.
-# 
+#
 # Netscreen hacks implemented by Stephen Gill <gillsr@yahoo.com>.
 # Fortinet hacks by Daniel G. Epstein <dan at rootlike.com>
 #
@@ -563,6 +563,16 @@ foreach router [lrange $argv $i end] {
 	} else {
 	  if {[$junk = "(^# $)"]} { set prompt $junk ; }
 	};
+    }
+
+    # Check if VDOMs are in use by looking for absence of "show"
+    # If they are, send config global and everything should work fine
+    send "?"
+    expect {
+        -re "(?!show)" { set vdom 1; }
+    }
+    if { $vdom } {
+        send "config global\r"
     }
 
     if { $do_command } {
