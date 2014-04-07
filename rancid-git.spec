@@ -1,9 +1,9 @@
-%global commit a2fc7faa4be4e7f63dc76b89515e95c3026a3c41
+%global commit 60b3cac8d222d3985080070436c57e63f43e9d22
 %global shortcommit %(c=%{commit}; echo ${c:0:7})
 
 Name:    rancid-git
 Version: 2.3.9
-Release: 0%{?dist}
+Release: 1%{?dist}
 Summary: Really Awesome New Cisco confIg Differ (w/ git support)
 
 Group:   Applications/Internet
@@ -122,6 +122,9 @@ fi
 
 
 %changelog
+* Mon Apr 07 2014 Sam Doran <github@samdoran.com> 2.3.9-1
+- Check for VDOM in fnlogin before running commands
+
 * Fri Apr 04 2014 Sam Doran <github@samdoran.com> 2.3.9-0
 - Change postun script to save /var/rancid on removal and not delete on update
 - Change perms on /var/rancid to 770
