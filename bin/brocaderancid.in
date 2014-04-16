@@ -445,7 +445,7 @@ sub DoNothing {print STDOUT;}
 	{'ipAddrShow'		=> 'IpAddrShow'},
        {'licenseShow'	=> 'LicenseShow'},
 	{'domainsShow'		=> 'DomainsShow'},
-	{'configShow'		=> 'ConfigShow'}
+	{'configShow|grep .'	=> 'ConfigShow'}
 
 );
 # Use an array to preserve the order of the commands and a hash for mapping
