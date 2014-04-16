@@ -785,7 +785,7 @@ foreach router [lrange $argv $i end] {
     }
 
     # Default prompt.
-    set prompt "(#| \\(enable\\))"
+    set prompt "(>|#| \\(enable\\))"
 
     # If a "login" option is used, no "enable" will be required
     # look for login option in .cloginrc
