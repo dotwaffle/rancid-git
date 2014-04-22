@@ -73,6 +73,7 @@ bin/tlogin
 bin/tntlogin
 bin/tntrancid
 bin/trancid
+bin/ucsrancid
 bin/xrancid
 bin/xrrancid
 bin/zrancid

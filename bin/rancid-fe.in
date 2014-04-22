@@ -87,6 +87,7 @@ $vendor =~ tr/[A-Z]/[a-z]/;
     'shell'		=> 'shellrancid',
     'smc'		=> 'srancid',
     'tnt'		=> 'tntrancid',
+    'ciscoucs'		=> 'ucsrancid',
     'zebra'		=> 'zrancid'
 );
 
