@@ -1,0 +1,196 @@
+#! @PERLV_PATH@
+##
+## $Id: rancid.in,v 1.218 2006/10/05 04:27:43 heas Exp $
+##
+## @PACKAGE@ @VERSION@
+## Copyright (C) 1997-2006 by Terrapin Communications, Inc.
+## All rights reserved.
+##
+## This software may be freely copied, modified and redistributed
+## without fee for non-commerical purposes provided that this license
+## remains intact and unmodified with any RANCID distribution.
+##
+## There is no warranty or other guarantee of fitness of this software.
+## It is provided solely "as is".  The author(s) disclaim(s) all
+## responsibility and liability with respect to this software's usage
+## or its effect upon hardware, computer systems, other software, or
+## anything else.
+##
+## Except where noted otherwise, rancid was written by and is maintained by
+## Henry Kilmer, John Heasley, Andrew Partan, Pete Whiting, and Austin Schutz.
+##
+#
+#  RANCID - Really Awesome New Cisco confIg Differ
+#
+# usage: rancid [-dV] [-l] [-f filename | hostname]
+#
+# ucsrancid is a stripped down version of the original rancid script
+# intended to work with Cisco UCS devices.
+#
+# Author: Tore Anderson <tore@fud.no>
+#
+use Getopt::Std;
+getopts('dflV');
+if ($opt_V) {
+    print "@PACKAGE@ @VERSION@\n";
+    exit(0);
+}
+$log = $opt_l;
+$debug = $opt_d;
+$file = $opt_f;
+$host = $ARGV[0];
+$clean_run = 1;
+$found_end = 0;
+$found_version = 0;
+$found_env = 0;
+$found_diag = 0;
+$timeo = 90;				# clogin timeout in seconds
+
+my(@commandtable, %commands, @commands);# command lists
+my(%filter_pwds);			# password filtering mode
+
+# This routine just dump the output of the command
+sub DumpVerbatim {
+    print STDERR "    In DumpVerbatim: $_" if ($debug);
+    print "!COMMAND: $_";
+
+    while (<INPUT>) {
+	last if (/^$prompt/);
+	print;
+    }
+
+    return(0);
+}
+
+# This routine processes a "write term"
+sub ShowConfiguration {
+    print STDERR "    In ShowConfiguration: $_" if ($debug);
+    print "!COMMAND: $_";
+
+    my $linecnt = 0;
+
+    while (<INPUT>) {
+	last if (/^$prompt/);
+	return(0) if ($found_end);		# Only do this routine once
+	$linecnt++;
+	print;
+    }
+
+    # If we've got more than five lines of output, we should be good.
+    if ($linecnt > 5) {
+	$found_end = 1;
+	return(1);
+    }
+
+    return(0);
+}
+
+# Main
+@commandtable = (
+	{'show version'			                    => 'DumpVerbatim'},
+	{'show chassis inventory expand detail'             => 'DumpVerbatim'},
+	{'show fabric-interconnect inventory expand detail' => 'DumpVerbatim'},
+	{'show configuration'		                    => 'ShowConfiguration'},
+);
+# Use an array to preserve the order of the commands and a hash for mapping
+# commands to the subroutine and track commands that have been completed.
+@commands = map(keys(%$_), @commandtable);
+%commands = map(%$_, @commandtable);
+
+$cisco_cmds=join(";",@commands);
+$cmds_regexp=join("|",@commands);
+
+if (length($host) == 0) {
+    if ($file) {
+	print(STDERR "Too few arguments: file name required\n");
+	exit(1);
+    } else {
+	print(STDERR "Too few arguments: host name required\n");
+	exit(1);
+    }
+}
+open(OUTPUT,">$host.new") || die "Can't open $host.new for writing: $!\n";
+select(OUTPUT);
+# make OUTPUT unbuffered if debugging
+if ($debug) { $| = 1; }
+
+if ($file) {
+    print STDERR "opening file $host\n" if ($debug);
+    print STDOUT "opening file $host\n" if ($log);
+    open(INPUT,"<$host") || die "open failed for $host: $!\n";
+} else {
+    print STDERR "executing clogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($debug);
+    print STDOUT "executing clogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($log);
+    if (defined($ENV{NOPIPE})) {
+	system "clogin -t $timeo -c \"$cisco_cmds\" $host </dev/null > $host.raw 2>&1" || die "clogin failed for $host: $!\n";
+	open(INPUT, "< $host.raw") || die "clogin failed for $host: $!\n";
+    } else {
+	open(INPUT,"clogin -t $timeo -c \"$cisco_cmds\" $host </dev/null |") || die "clogin failed for $host: $!\n";
+    }
+}
+
+# determine password filtering mode
+if ($ENV{"FILTER_PWDS"} =~ /no/i) {
+    $filter_pwds = 0;
+} elsif ($ENV{"FILTER_PWDS"} =~ /all/i) {
+    $filter_pwds = 2;
+} else {
+    $filter_pwds = 1;
+}
+
+print "!RANCID-CONTENT-TYPE: ciscoucs\n!\n";
+TOP: while(<INPUT>) {
+    tr/\015//d;
+    if (/[>#]\s?exit$/) {
+	$clean_run=1;
+	last;
+    }
+    if (/^Error:/) {
+	print STDOUT ("$host clogin error: $_");
+	print STDERR ("$host clogin error: $_") if ($debug);
+	$clean_run=0;
+	last;
+    }
+    while (/#\s*($cmds_regexp)\s*$/) {
+	$cmd = $1;
+	if (!defined($prompt)) {
+	    $prompt = ($_ =~ /^([^#]+#)/)[0];
+	    $prompt =~ s/([][}{)(\\])/\\$1/g;
+	    print STDERR ("PROMPT MATCH: $prompt\n") if ($debug);
+	}
+	print STDERR ("HIT COMMAND:$_") if ($debug);
+	if (! defined($commands{$cmd})) {
+	    print STDERR "$host: found unexpected command - \"$cmd\"\n";
+	    $clean_run = 0;
+	    last TOP;
+	}
+	$rval = &{$commands{$cmd}};
+	delete($commands{$cmd});
+	if ($rval == -1) {
+	    $clean_run = 0;
+	    last TOP;
+	}
+    }
+}
+print STDOUT "Done $logincmd: $_\n" if ($log);
+# Cleanup
+close(INPUT);
+close(OUTPUT);
+
+if (defined($ENV{NOPIPE})) {
+    unlink("$host.raw") if (! $debug);
+}
+
+# check for completeness
+if (scalar(%commands) || !$clean_run || !$found_end) {
+    if (scalar(%commands)) {
+	printf(STDOUT "$host: missed cmd(s): %s\n", join(',', keys(%commands)));
+	printf(STDERR "$host: missed cmd(s): %s\n", join(',', keys(%commands))) if ($debug);
+    }
+    if (!$clean_run || !$found_end) {
+	print STDOUT "$host: End of run not found\n";
+	print STDERR "$host: End of run not found\n" if ($debug);
+	system("/usr/bin/tail -1 $host.new");
+    }
+    unlink "$host.new" if (! $debug);
+}
