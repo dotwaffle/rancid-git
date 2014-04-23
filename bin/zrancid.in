@@ -66,7 +66,7 @@ my($filter_commstr);			# SNMP community string filtering
 my($filter_pwds);			# password filtering mode
 
 # force a terminal type so as not to confuse Linux
-$ENV{'TERM'} = "vt100";
+$ENV{'TERM'} = "linux";
 
 # This routine is used to print out the router configuration
 sub ProcessHistory {
