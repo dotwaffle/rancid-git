@@ -628,6 +628,32 @@ sub ShowConfiguration {
     return(0);
 }
 
+# This routine parses "show configuration | display set"
+sub ShowConfigurationDisplaySet {
+    print STDERR "    In ShowConfigurationDisplaySet: $_" if ($debug);
+
+    s/^[a-z]+@//;
+    ProcessHistory("","","","# $_");
+    while (<INPUT>) {
+        tr/\015//d;
+       last if (/^$prompt/);
+        next if (/^system (shutdown message from|going down )/i);
+        next if (/^\{(master|backup)}/);
+       if (/(^.*)(\s+encrypted-password )[^ ;]+/ && $filter_pwds >= 2) {
+           ProcessHistory("","","","### $1$2<removed>\n");
+           next;
+       }
+
+        /Unrecognized command/ && return;
+        /command is not valid/ && return;
+        /^\s+\^/ && return;
+        /syntax error/ && return;
+
+        ProcessHistory("","","","### $_");
+    }
+    return(0);
+}
+
 ###
 ### End of real work
 ###
@@ -656,7 +682,8 @@ sub DoNothing {print STDOUT;}
 	{'show system boot-messages'	=> 'ShowSystemBootMessages'},
 	{'show system core-dumps'	=> 'ShowSystemCoreDumps'},
 	{'show version detail'		=> 'ShowVersion'},
-	{'show configuration'		=> 'ShowConfiguration'}
+	{'show configuration'		=> 'ShowConfiguration'},
+	{'show configuration | display set'     => 'ShowConfigurationDisplaySet'}
 );
 # Use an array to preserve the order of the commands and a hash for mapping
 # commands to the subroutine and track commands that have been completed.
