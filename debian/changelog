@@ -1,7 +1,7 @@
 rancid-git (2.3.9-1) unstable; urgency=low
   * Check for VDOM in fnlogin before running commands
 
- -- Sam Doran <github@samdoran.com> Mon, 07 Apr 2014 19:09:00 +0000
+ -- Sam Doran <github@samdoran.com>  Mon, 07 Apr 2014 19:09:00 +0000
 
 rancid-git (2.3.8-1) unstable; urgency=low
 
