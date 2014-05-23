@@ -1,0 +1,19 @@
+#!/usr/bin/expect -f
+# This script tftp's into a host and retrieves the config file.
+# You need the expect package in order for this to work.
+
+# Assigns host variable from argument used with commit.sh
+set host [lindex $argv 0]
+
+# Establishes TFTP session.
+spawn tftp $host
+sleep 1
+
+# Expect the prompt "tftp>".
+expect "tftp>"
+sleep 1
+
+# Retrieve config file, rename it to the hostname and place it in this directory.
+send "get config.csv /var/lib/rancid/access/configs/$host.new\r"
+sleep 1
+send "quit"
