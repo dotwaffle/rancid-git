@@ -16,7 +16,7 @@ msgstr ""
 "Project-Id-Version: rancid\n"
 "Report-Msgid-Bugs-To: rancid@packages.debian.org\n"
 "POT-Creation-Date: 2009-02-15 21:21+0100\n"
-"PO-Revision-Date: 2005-07-23 17:20+0200\n"
+"PO-Revision-Date: 2010-03-16 20:36+0100\n"
 "Last-Translator: Miroslav Kure <kurem@debian.cz>\n"
 "Language-Team: Czech <debian-l10n-czech@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
@@ -32,7 +32,6 @@ msgstr "Poznámka"
 #. Type: note
 #. Description
 #: ../rancid.templates:1001
-#, fuzzy
 msgid ""
 "Rancid debian package is still in an alpha stage.  If you find problems "
 "first check all the docs and then report them as bugs as soon as possible.  "
@@ -40,30 +39,28 @@ msgid ""
 "it, look at the examples directory under /usr/share/doc/rancid to look for "
 "some example for your configuration."
 msgstr ""
-"Debianí balíček Rancid je stále ve vývoji. Pokud zaznamenáte nějaké "
-"problémy, nejprve je konzultujte s dokumentací a poté je nahlaste jako "
-"chybu. Rancid zatím neobsahuje instalační skript, který by vám pomohl v "
-"nastavení. Nějaké příklady konfigurace naleznete v dokumentaci v podadresáři "
-"s příklady."
+"Debianí balík Rancid je stále ve vývoji. Pokud zaznamenáte nějaké problémy, "
+"nejprve je konzultujte s dokumentací a poté je nahlaste jako chybu. Rancid "
+"zatím neobsahuje instalační skript, který by vám pomohl v nastavení. Nějaké "
+"příklady konfigurace naleznete v /usr/share/doc/rancid."
 
 #. Type: boolean
 #. Description
 #: ../rancid.templates:2001
 msgid "Really continue?"
-msgstr ""
+msgstr "Opravdu pokračovat?"
 
 #. Type: boolean
 #. Description
 #: ../rancid.templates:2001
-#, fuzzy
 msgid ""
 "Please check, whether you made a backup copy of your rancid data.  If it's "
 "your first installation of rancid accept here, otherwise decline, perform "
 "the backup and then run \"dpkg-reconfigure rancid\""
 msgstr ""
 "Zazálohovali jste si data? Pokud je to vaše první instalace rancidu, "
-"odpovězte 'Ano'. V opačném případě zvolte 'Ne', vytvořte zálohu a poté "
-"spusťte 'dpkg-reconfigure rancid'."
+"odpovězte kladně. V opačném případě zvolte „Ne“, vytvořte zálohu a poté "
+"spusťte „dpkg-reconfigure rancid“."
 
 #~ msgid "Dangerous upgrade"
 #~ msgstr "Nebezpečná aktualizace"

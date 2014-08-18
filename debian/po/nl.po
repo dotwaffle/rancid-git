@@ -1,17 +1,17 @@
-# Danish translation rancid.
-# Copyright (C) 2010 rancid & nedenstående oversættere.
+# Dutch translation of rancid debconf templates.
+# Copyright (C) 2012 THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the rancid package.
-# Morten brix Pedersen <morten@wtf.dk>, 2004.
-# Joe Hansen <joedalton2@yahoo.dk>, 2010.
+# Jeroen Schot <schot@a-eskwadraat.nl>, 2012.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: rancid\n"
+"Project-Id-Version: rancid 2.3.6-2\n"
 "Report-Msgid-Bugs-To: rancid@packages.debian.org\n"
 "POT-Creation-Date: 2009-02-15 21:21+0100\n"
-"PO-Revision-Date: 2010-10-01 17:31+0200\n"
-"Last-Translator: Joe Hansen <joedalton2@yahoo.dk>\n"
-"Language-Team: Danish <debian-l10n-danish@lists.debian.org>\n"
+"PO-Revision-Date: 2012-02-28 10:04+0100\n"
+"Last-Translator: Jeroen Schot <schot@a-eskwadraat.nl>\n"
+"Language-Team: Debian l10n Dutch <debian-l10n-dutch@lists.debian.org>\n"
+"Language: nl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -20,7 +20,7 @@ msgstr ""
 #. Description
 #: ../rancid.templates:1001
 msgid "Note"
-msgstr "Bemærk"
+msgstr "Opmerking"
 
 #. Type: note
 #. Description
@@ -32,17 +32,17 @@ msgid ""
 "it, look at the examples directory under /usr/share/doc/rancid to look for "
 "some example for your configuration."
 msgstr ""
-"Debianpakken Rancid er stadig i alpha-stadie. Hvis du finder problemer, så "
-"tjek først dokumentationen og rapporter dem som en fejl så hurtigt som "
-"muligt. På nuværende tidspunkt, har rancid ingen installationsskripter til at "
-"hjælpe dig med at opsætte rancid. Kig i mappen 'examples' under /usr/share/"
-"doc/rancid for at finde nogle eksempler til din konfiguration."
+"Het Debianpakket van rancid bevindt zich nog in een alfa-stadium. Als u "
+"problemen vindt, raadpleeg dan eerst de documentatie en meld ze zo snel "
+"mogelijk als bugs. Er is op dit moment geen installatiescript om u te helpen "
+"met de configuratie, bekijk de voorbeeldenmap onder /usr/share/doc/rancid "
+"voor configuratievoorbeelden."
 
 #. Type: boolean
 #. Description
 #: ../rancid.templates:2001
 msgid "Really continue?"
-msgstr "Fortsæt?"
+msgstr "Echt verdergaan?"
 
 #. Type: boolean
 #. Description
@@ -52,8 +52,7 @@ msgid ""
 "your first installation of rancid accept here, otherwise decline, perform "
 "the backup and then run \"dpkg-reconfigure rancid\""
 msgstr ""
-"Tjek venligst, hvorvidt du har lavet en sikkerhedskopi af dine ranciddata. "
-"Hvis det er din første installation af rancid, så accepter her, ellers afvis, "
-"udfør sikkerhedskopieringen og kør så »dpkg-reconfigure rancid«"
-
-
+"Controleer eerst of u een reservekopie van uw rancid-gegevens heeft gemaakt. "
+"Als dit uw eerste installatie van rancid is, ga dan verder. Anders dient u "
+"te stoppen, een reservekopie te maken en \"dpkg-reconfigure rancid\" uit te "
+"voeren."
