@@ -2,34 +2,36 @@ Source: rancid-git
 Section: net
 Priority: optional
 Maintainer: Roland Rosenfeld <roland@debian.org>
-Build-Depends: debhelper (>= 9), autoconf, expect, perl, openssh-client, git | subversion | cvs,
- iputils-ping | ping, po-debconf, dpatch, exim4 | mail-transport-agent,
- telnet, automake, build-essential
-Standards-Version: 3.8.1
+Build-Depends: debhelper (>= 9), expect, perl, openssh-client, cvs,
+ inetutils-ping [!s390x] | iputils-ping [s390x] | ping, po-debconf, 
+ exim4 | mail-transport-agent, telnet, automake
+Standards-Version: 3.9.4
 Homepage: http://www.shrubbery.net/rancid/
 
 Package: rancid-git
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, expect, perl, git | subversion | cvs,
- passwd, openssh-client | ssh, iputils-ping | ping, telnet,
- debconf (>= 0.2.26) | debconf-2.0, adduser, exim4 | mail-transport-agent
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${perl:Depends}, expect, perl, 
+ cvs | subversion | git, passwd, openssh-client | ssh, inetutils-ping | ping, 
+ debconf (>= 0.2.26) | debconf-2.0, adduser, exim4 | mail-transport-agent,
+ libperl4-corelibs-perl | perl (<< 5.12.3-7)
 Suggests: diffstat
 Provides: rancid-core, rancid-util, rancid
 Replaces: rancid-core (<< 2.3.5), rancid-util (<< 2.3.5)
-Conflicts: rancid-core (<< 2.3.5), rancid-util (<< 2.3.5), rancid
-Description: Really Awesome New Cisco config Differ
+Breaks: rancid-core (<< 2.3.5), rancid-util (<< 2.3.5)
+Conflicts: rancid
+Description: Really Awesome New Cisco confIg Differ
  This is a popular ISP toolkit, based on expect and shell scripts,
  for managing router configurations.
  .
  Rancid monitors a router's (or device's) configuration, including
- software and hardware (cards, serial numbers, etc), using CVS or
- Subversion.
+ software and hardware (cards, serial numbers, etc), using CVS,
+ Subversion or Git.
 
 Package: rancid-cgi
 Architecture: all
-Depends: ${misc:Depends}, rancid-git, liblockfile-simple-perl
+Depends: ${misc:Depends}, ${perl:Depends}, rancid-git, liblockfile-simple-perl
 Suggests: apache2 | httpd-cgi
-Description: CGI for rancid
+Description: looking glass CGI for rancid
  This is a popular ISP toolkit, based on expect and shell scripts,
  for managing router configurations.
  Rancid monitors a router's (or device's) configuration, including
