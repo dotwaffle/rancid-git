@@ -14,9 +14,9 @@ Depends: ${shlibs:Depends}, ${misc:Depends}, expect, perl, git | subversion | cv
  passwd, openssh-client | ssh, iputils-ping | ping, telnet,
  debconf (>= 0.2.26) | debconf-2.0, adduser, exim4 | mail-transport-agent
 Suggests: diffstat
-Provides: rancid-core, rancid-util
+Provides: rancid-core, rancid-util, rancid
 Replaces: rancid-core (<< 2.3.5), rancid-util (<< 2.3.5)
-Conflicts: rancid-core (<< 2.3.5), rancid-util (<< 2.3.5)
+Conflicts: rancid-core (<< 2.3.5), rancid-util (<< 2.3.5), rancid
 Description: Really Awesome New Cisco config Differ
  This is a popular ISP toolkit, based on expect and shell scripts,
  for managing router configurations.
