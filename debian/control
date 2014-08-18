@@ -18,7 +18,7 @@ Suggests: diffstat
 Provides: rancid-core, rancid-util, rancid
 Replaces: rancid-core (<< 2.3.5), rancid-util (<< 2.3.5)
 Breaks: rancid-core (<< 2.3.5), rancid-util (<< 2.3.5)
-Conflicts: rancid
+Conflicts: rancid, par
 Description: Really Awesome New Cisco confIg Differ
  This is a popular ISP toolkit, based on expect and shell scripts,
  for managing router configurations.
