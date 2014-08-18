@@ -37,9 +37,6 @@ case "$1" in
 	    ;;
 	esac
 
-    	db_get "rancid/warning" || true
-    	db_get "rancid/go_on" && true
-	[ "$RET" = "false" ] && exit 0
 	if ! `getent passwd rancid >/dev/null`; then
 		adduser --system --group --home /var/lib/rancid --gecos "RANCID,,," --quiet \
 		    --shell /bin/bash rancid
