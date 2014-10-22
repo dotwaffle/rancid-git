@@ -4,7 +4,7 @@ along with some suggested use cases.
 
 git v git-remote for RCSSYS
 ---------------------------
-git commits all changes to a local repository in $BASEDIR/.git
+git commits all changes to a local repository in $BASEDIR/var/.git
 
 git-remote will push the master branch to all remotes. You can have as many
 remotes as you like. Rancid will loop through and push to them all. There are
@@ -12,7 +12,7 @@ a few things that need to be setup in order for this to work seamlessly.
 
 Perform these steps before running bin/rancid-run:
 
-    1) Add remotes to $BASEDIR
+    1) Add remotes to $BASEDIR/var
 
             git remote add [name] [url]
             Example: git remote add origin git@gitlab.acme.com:user/rancit.git
@@ -31,10 +31,11 @@ Perform these steps before running bin/rancid-run:
     3) Perform inital push to each remote
 
             git push -u [remote name] master
-
-There is no harm in setting $RCSSYS to git-remote if there are no remotes
-defined. Rancid will behave as if there are no remotes and only commit to
-the local repo in $BASEDIR/.git.
+            
+    4) Set $RCSSYS to git-remote in $BASEDIR/etc/rancid.conf
+        If there are no remotes configured and $RCRSYS is set to git-remote,
+        rancid will behave as if there are no remotes and only commit to
+        the local repo in $BASEDIR/var/.git.
 
 
 git-remote Use Cases
