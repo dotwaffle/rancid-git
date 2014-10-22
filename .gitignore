@@ -78,7 +78,6 @@ bin/xrancid
 bin/xrrancid
 bin/zrancid
 config.status
-configure
 etc/Makefile
 etc/lg.conf.sample
 etc/rancid.conf.sample

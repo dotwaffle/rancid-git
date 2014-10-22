@@ -1,4 +1,4 @@
-/* include/config.h.in.  Generated from configure.in by autoheader.  */
+/* include/config.h.in.  Generated from configure.ac by autoheader.  */
 
 
 #ifndef	CONFIG_H
@@ -134,17 +134,11 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
-/* Define to 1 if the C compiler supports function prototypes. */
-#undef PROTOTYPES
-
 /* Define as the return type of signal handlers (`int' or `void'). */
 #undef RETSIGTYPE
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
-
-/* Define like PROTOTYPES; this can be used by system headers. */
-#undef __PROTOTYPES
 
 /* Define to empty if `const' does not conform to ANSI C. */
 #undef const
