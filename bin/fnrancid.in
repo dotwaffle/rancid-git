@@ -206,7 +206,7 @@ sub GetConf {
 	last if (/$prompt/);
 
 	# Lets skip the last-login time too
-        next if (/^\s+set last-login.*/);
+	next if (/^\s+set last-login.*/);
 
 	# System time is fortigate extraction time
 	next if (/^\s*!System time:/);
@@ -214,23 +214,27 @@ sub GetConf {
 	next if (/^#?conf_file_ver=/);
 
 	# filter cycling RSA private keys
-	if (/^\s*set private-key "-----BEGIN RSA PRIVATE KEY-----/) {
-	    ProcessHistory("","","","#$_");
-	    ProcessHistory("","","","# <removed>");
-	    while (<INPUT>) {
-		tr/\015//d;
-		last if (/$prompt/);
+	if ((/^\s*set private-key "-----BEGIN RSA PRIVATE KEY-----/) ||
+		(/^\s*set private-key "-----BEGIN ENCRYPTED PRIVATE KEY-----/)) {
+		ProcessHistory("","","","#$_");
+		ProcessHistory("","","","# <removed>");
+		while (<INPUT>) {
+			tr/015//d;
+			last if (/$prompt/);
 
-		if (/^\s*-----END RSA PRIVATE KEY-----"/) {
-	    	    ProcessHistory("","","","#$_");
-		    last;
+			if ((/^\s*-----END RSA PRIVATE KEY-----"/) ||
+				((/^\s*-----END ENCRYTPED PRIVATE KEY-----"/)) {
+				ProcessHistory("","","","#$_");
+				last;
+			}
 		}
-	    }
 	}
-	# filter cycling password encryption
-	if (/^(\s*)(set [^\s]*)\s(Enc\s[^\s]+)(.*)/i && $filter_pwds > 0 ) {
-	    ProcessHistory("ENC","","","#$1 $2 ENC <removed> $4\n");
-	    next;
+
+	# filter variabilities between configurations.  password encryption
+	# upon each display of the configuration.
+	if (/^(\s*)(set [^\s]*)\s(Enc\s[^\s]+)(.*)/i ) {
+		ProcessHistory("ENC","","","#$1 $2 ENC <removed> $4\n");
+		next;
 	}
 	ProcessHistory("","","","$_");
     }
