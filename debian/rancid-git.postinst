@@ -30,12 +30,17 @@ db_version 2.0
 
 case "$1" in
     configure)
-    	db_get "rancid/warning" || true
-    	db_get "rancid/go_on" && true
-	[ "$RET" = "false" ] && exit 0
+        # change wrong shell /bin/false for user rancid to /bin/bash:
+	case "`getent passwd rancid`" in
+	    *:/bin/false)
+	    usermod -s /bin/bash rancid
+	    ;;
+	esac
+
 	if ! `getent passwd rancid >/dev/null`; then
-		adduser --system --group --home /var/lib/rancid --gecos "RANCID,,," --quiet rancid
-	fi
+		adduser --system --group --home /var/lib/rancid --gecos "RANCID,,," --quiet \
+		    --shell /bin/bash rancid
+        fi
 	if [ -d /var/log/rancid ]; then
 		chown rancid:rancid /var/log/rancid
 	fi

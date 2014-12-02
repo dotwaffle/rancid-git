@@ -1,4 +1,0 @@
-# run config differ hourly
-1 * * * * /usr/bin/rancid-run
-# clean out config differ logs
-50 23 * * * find /var/log/rancid -type f -mtime +2 -exec rm {} \;
