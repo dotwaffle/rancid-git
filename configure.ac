@@ -48,9 +48,8 @@ AC_C_STRINGIZE
 # check includes/headers
 AC_HEADER_STDC
 AC_CHECK_HEADERS(ctype.h errno.h fcntl.h limits.h pty.h malloc.h memory.h \
-		 siginfo.h string.h strings.h stropts.h sys/types.h \
-		 sys/wait.h unistd.h util.h)
-AC_CHECK_HEADERS(sysexits.h)
+		 siginfo.h string.h strings.h stropts.h sys/resource.h \
+		 sys/types.h sys/wait.h sysexits.h unistd.h util.h wait.h)
 
 # check functions
 AC_CHECK_FUNCS(memcpy memmove memset strerror strchr \
@@ -250,7 +249,10 @@ AC_SUBST(DIFF)
 rd_cv_DIFF_CMD=$DIFF_CMD
 AC_SUBST(DIFF_CMD)
 
-AC_PATH_PROG(SENDMAIL,sendmail,no, /usr/sbin:/usr/bin:/usr/lib)
+AC_PATH_PROG(SENDMAIL,sendmail,no, [/usr/sbin:/usr/bin:/usr/lib],
+	[SENDMAIL=$ac_cv_prog_SENDMAIL;
+	 AC_SUBST(SENDMAIL)
+	])
 
 # Find an appropriate tar for use in "dist" targets.  A "best guess"
 # is good enough -- if we can't find GNU tar, we don't really care.
@@ -415,7 +417,9 @@ extern int		errno;
 # define strerror(n)	sys_errlist[n];
 #endif
 
-#if HAVE_SYS_WAIT_H
+#if HAVE_WAIT_H
+# include <wait.h>
+#elif HAVE_SYS_WAIT_H
 # include <sys/wait.h>
 #endif
 #ifndef WEXITSTATUS
@@ -423,15 +427,6 @@ extern int		errno;
 #endif
 #ifndef WIFEXITED
 # define WIFEXITED(stat_val) (((stat_val) & 255) == 0)
-#endif
-
-#if HAVE_MEMSET
-# define bzero(p,s)	memset(p, 0, s)
-# define bcopy(s,d,l)	memcpy(d, s, l)
-#endif
-
-#if HAVE_INDEX && ! HAVE_STRCHR
-# define index(s,c)	strchr(s,c)
 #endif
 
 #if HAVE_SYSEXITS_H

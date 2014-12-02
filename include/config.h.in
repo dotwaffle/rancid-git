@@ -98,6 +98,9 @@
 /* Define to 1 if you have the <sysexits.h> header file. */
 #undef HAVE_SYSEXITS_H
 
+/* Define to 1 if you have the <sys/resource.h> header file. */
+#undef HAVE_SYS_RESOURCE_H
+
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
 
@@ -115,6 +118,9 @@
 
 /* Define to 1 if you have the <util.h> header file. */
 #undef HAVE_UTIL_H
+
+/* Define to 1 if you have the <wait.h> header file. */
+#undef HAVE_WAIT_H
 
 /* Name of package */
 #undef PACKAGE
@@ -200,7 +206,9 @@ extern int		errno;
 # define strerror(n)	sys_errlist[n];
 #endif
 
-#if HAVE_SYS_WAIT_H
+#if HAVE_WAIT_H
+# include <wait.h>
+#elif HAVE_SYS_WAIT_H
 # include <sys/wait.h>
 #endif
 #ifndef WEXITSTATUS
@@ -208,15 +216,6 @@ extern int		errno;
 #endif
 #ifndef WIFEXITED
 # define WIFEXITED(stat_val) (((stat_val) & 255) == 0)
-#endif
-
-#if HAVE_MEMSET
-# define bzero(p,s)	memset(p, 0, s)
-# define bcopy(s,d,l)	memcpy(d, s, l)
-#endif
-
-#if HAVE_INDEX && ! HAVE_STRCHR
-# define index(s,c)	strchr(s,c)
 #endif
 
 #if HAVE_SYSEXITS_H

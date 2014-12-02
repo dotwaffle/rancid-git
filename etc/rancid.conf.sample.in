@@ -33,6 +33,12 @@ TMPDIR=/tmp; export TMPDIR
 # relative.
 BASEDIR=@localstatedir@; export BASEDIR
 PATH=@bindir@:@ENV_PATH@; export PATH
+#
+# Set to the name of the sendmail executable (or script) that will accept the
+# -t option to take its rcpt and other headers from std-in and $MAILOPTS (see
+# below).
+#SENDMAIL="@SENDMAIL@"
+#
 # Location of the CVS/SVN repository.  Be careful changing this.
 # If RCSSYS is svn, this can be:
 # - an (absolute) path (a subdirectory of BASEDIR by default).

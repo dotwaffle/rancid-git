@@ -1,6 +1,6 @@
 #! /bin/sh
 ##
-## $Id: rancid-run.in 2565 2012-07-24 02:02:36Z heas $
+## $Id: rancid-run.in 2813 2014-04-03 04:34:53Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -112,6 +112,8 @@ fi
 
 . $ENVFILE
 
+# SENDMAIL location
+SENDMAIL=${SENDMAIL:=sendmail};
 
 if [ $# -ge 1 ] ; then
     LIST_OF_GROUPS="$*"; export LIST_OF_GROUPS
@@ -155,7 +157,7 @@ do
 rancid $GROUP hung on `hostname`?  Old lockfile still exists:
 `ls -l $LOCKFILE`
 END
-		) | sendmail -t $MAILOPTS
+		) | @SENDMAIL@ -t $MAILOPTS
 	    fi
 	    rm -f $TMPDIR/.$GROUP.old
 	else

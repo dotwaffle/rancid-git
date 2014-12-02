@@ -1,5 +1,5 @@
 .\"
-.\" $Id: rancid.types.conf.5.in 2798 2014-02-12 18:25:10Z heas $
+.\" $Id: rancid.types.conf.5.in 2812 2014-04-02 00:59:29Z heas $
 .\"
 .hys 50
 .TH "rancid.types.conf" "5" "12 February 2014"
@@ -93,7 +93,6 @@ Defines the rancid script used for the <device_type>, which does not need to
 be an FQPN, but then must be found in the path.
 .\"
 .PP
-Each device_type must at least have a 
 .SH FILES
 .Bl -tag -width @sysconfdir@/rancid.types.conf -compact
 .TP

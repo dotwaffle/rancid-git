@@ -1,4 +1,34 @@
+3.1
+	Change rancid script exec(); move cmd-line options to rancid.types.*
+	files.  This allows older scripts to function without change, ie:
+	needing to support -t.
+
+	clogin: missing variable initialization - Per-Olaf Olsson
+
+	ios.pm: filter fan speed setting on 2900, etc.
+
+	fnrancid: fix filter match for encrypted pwd
+
+	ios.pm: filter vlan traffic counters on gsr, 6400 & switches
+
+	srancid: fix up time filter for dell 3448
+
+	ios.pm: some ASAs do not support show vlan
+
+	ios.pm: bgp password filtering removing neighbor address
+
+	rancid.types.base: dell definition missing inloop configuration
+
+	rancid: display useful error if inloop is not configured
+
+	dell.pm: missing variable declarations
+
+	nxrancid: filter INTAKE temps and cycling file BufferMonitor-1HourData -
+	reported by Vincent Aniello
+
 3.0
+	add SENDMAIL variable to rancid.conf - requsted by Mariusz Kruk
+
 	nsrancid,nslogin: Fix prompt and end-of-config-markers - from Jesse
 	House confirmed by Tom Luong
 

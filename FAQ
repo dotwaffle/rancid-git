@@ -31,8 +31,8 @@ Q. I have Hybrid Cisco switch, like a cat5k with an RSM.  How do I collect
    both the routing engine and switch configurations?
 A. Recommended way is to use two entries in the router.db, one for each.
    For example:
-	cat5k_rsm.domain.com:cisco:up
-	cat5k_sw.domain.com:cat5:up
+	cat5k_rsm.domain.com;cisco;up
+	cat5k_sw.domain.com;cat5;up
 
 
 Q. I have a Cisco ??? on which collection stopped working, but clogin works
@@ -143,7 +143,7 @@ A. CVS does not provide a way (AFAIK) to rename files or to rename or delete
    like this (disclaimer: BE VERY CAREFUL mucking around with the repository):
 	% su - rancid_user
 	% cd <LOCALSTATEDIR>
-	% echo "new_device_name:device_type:up" >> <GROUP>/router.db
+	% echo "new_device_name;device_type;up" >> <GROUP>/router.db
 	% cp -p CVS/<GROUP>/configs/old_device_name,v \
 		CVS/<GROUP>/configs/new_device_name,v
 	% cd <GROUP>/configs
@@ -202,6 +202,10 @@ A. cvsweb works with rancid.  Other similar software may as well.
 
 
 3) General
+Q. I have upgraded to rancid >=3.0 and I am not receiving updates for any
+   devices.
+A. Have you updated the format of your router.db files?  The field separator
+   changed in 3.0.
 
 Q. I have a (set of) device(s) on which collection fails.  How can I debug
    this?

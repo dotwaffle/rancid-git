@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: nxrancid.in 2726 2013-08-26 17:17:12Z heas $
+## $Id: nxrancid.in 2818 2014-04-24 21:18:44Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -313,6 +313,7 @@ sub ShowEnv {
 
 	s/ +$//;	# Drop trailing ' '
 	next if (/Fan Zone Speed:/);
+	next if (/INTAKE/);
 	ProcessHistory("COMMENTS","","","!Env: $_");
     }
     ProcessHistory("COMMENTS","","","!\n");
@@ -435,6 +436,8 @@ sub DirSlotN {
 	return(-1) if (/\% Permission denied/);
 	return(-1) if (/command authorization failed/i);
 	return(1) if /(Open device \S+ failed|Error opening \S+:)/;
+
+	next if (/BufferMonitor-1HourData/);
 
 	if (/^\s*(\d+) bytes /) {
 	    my($tmp) = int($1 / (1024 * 1024));

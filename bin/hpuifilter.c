@@ -1,5 +1,5 @@
 /*
- * $Id: hpuifilter.c 2675 2013-03-28 16:35:18Z heas $
+ * $Id: hpuifilter.c 2815 2014-04-19 00:43:00Z heas $
  *
  * Copyright (c) 1997-2008 by Terrapin Communications, Inc.
  * All rights reserved.
@@ -101,6 +101,9 @@
 # include <stropts.h>
 #endif
 #include <sys/ioctl.h>
+#if HAVE_SYS_RESOURCE_H
+# include <sys/resource.h>
+#endif
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <termios.h>

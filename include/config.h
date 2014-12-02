@@ -99,6 +99,9 @@
 /* Define to 1 if you have the <sysexits.h> header file. */
 #define HAVE_SYSEXITS_H 1
 
+/* Define to 1 if you have the <sys/resource.h> header file. */
+#define HAVE_SYS_RESOURCE_H 1
+
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H 1
 
@@ -117,6 +120,9 @@
 /* Define to 1 if you have the <util.h> header file. */
 /* #undef HAVE_UTIL_H */
 
+/* Define to 1 if you have the <wait.h> header file. */
+/* #undef HAVE_WAIT_H */
+
 /* Name of package */
 #define PACKAGE "rancid"
 
@@ -127,7 +133,7 @@
 #define PACKAGE_NAME "rancid"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "rancid 3.0"
+#define PACKAGE_STRING "rancid 3.1"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "rancid"
@@ -136,7 +142,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "3.0"
+#define PACKAGE_VERSION "3.1"
 
 /* Define as the return type of signal handlers (`int' or `void'). */
 #define RETSIGTYPE void
@@ -145,7 +151,7 @@
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "3.0"
+#define VERSION "3.1"
 
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */
@@ -201,7 +207,9 @@ extern int		errno;
 # define strerror(n)	sys_errlist[n];
 #endif
 
-#if HAVE_SYS_WAIT_H
+#if HAVE_WAIT_H
+# include <wait.h>
+#elif HAVE_SYS_WAIT_H
 # include <sys/wait.h>
 #endif
 #ifndef WEXITSTATUS
@@ -209,15 +217,6 @@ extern int		errno;
 #endif
 #ifndef WIFEXITED
 # define WIFEXITED(stat_val) (((stat_val) & 255) == 0)
-#endif
-
-#if HAVE_MEMSET
-# define bzero(p,s)	memset(p, 0, s)
-# define bcopy(s,d,l)	memcpy(d, s, l)
-#endif
-
-#if HAVE_INDEX && ! HAVE_STRCHR
-# define index(s,c)	strchr(s,c)
 #endif
 
 #if HAVE_SYSEXITS_H

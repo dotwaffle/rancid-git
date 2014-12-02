@@ -4,6 +4,7 @@ maintain CVS controlled copies of router configs.
 *** The Following Information is Very Important ****
 Rancid 3.0 converts several device scripts (the remaining will follow) to
 libraries used by the single script, named rancid, to parse device output.
+It also requires perl 5.10 minimum.
 
 Rancid 2.3 introduces a new directory layout.  It has been changed to more
 closely follow the standard path hierarchy, which is defined by the FHS
@@ -116,7 +117,7 @@ cvs		Code revision system available from prep.ai.mit.edu:/pub/gnu
 gnudiff		gnudiff provides the uni-diff (-u) option.  If you do not have
 		a diff that supports -u, configure will set-up rancid to use
 		'diff -c' or 'diff -C'.
-perl5		perl version 5 or greater available from www.cpan.org
+perl5		perl version 5.10 or greater available from www.cpan.org
 expect		http://expect.nist.gov/  We highly suggest that you stick to
 		expect 5.24.1 (or so).  This seems to work best.  Note that
 		you need to have the accompanying tcl &/ tk.

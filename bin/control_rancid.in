@@ -1,6 +1,6 @@
 #! /bin/sh
 ##
-## $Id: control_rancid.in 2738 2013-10-31 23:19:25Z heas $
+## $Id: control_rancid.in 2823 2014-04-28 19:11:14Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -119,13 +119,16 @@ TMP=${TMPDIR:=/tmp}/rancid.$GROUP.$$
 if [ -z "$ENVFILE" ] ; then
     ENVFILE="$DIR/rancid.conf"
 fi
-if [ -e "$ENVFILE" ] ; then
+if [ -f "$ENVFILE" ] ; then
     . $ENVFILE
 fi
 trap 'rm -fr $TMP;' 1 2 15
 
 # disable noclobber
 unset noclobber > /dev/null 2>&1
+
+# SENDMAIL location
+SENDMAIL=${SENDMAIL:=sendmail};
 
 # RCS system
 RCSSYS=${RCSSYS:=cvs};
@@ -163,7 +166,7 @@ if [ ! -d $DIR ] ; then
 	echo ""
 	echo "$DIR does not exist."
 	echo "Run bin/rancid-cvs $GROUP to make all of the needed directories."
-    ) | sendmail -t $MAILOPTS
+    ) | @SENDMAIL@ -t $MAILOPTS
     exit 1
 fi
 cd $DIR
@@ -185,7 +188,7 @@ EOF
 fi
 
 # check if there is a rancid.conf and if it needs to be added to the RCS
-if [ -e rancid.conf ] ; then
+if [ -f rancid.conf ] ; then
     if [ $RCSSYS = svn ] ; then
 	LN=`svn ls rancid.conf | wc -l`
     else
@@ -217,7 +220,7 @@ if [ ! -f $DIR/router.db ] ; then
 	echo "$MAILHEADERS" | awk '{L = "";LN = $0;while (LN ~ /\\n/) { I = index(LN,"\\n");L = L substr(LN,0,I-1) "\n";LN = substr(LN,I+2,length(LN)-I-1);}print L LN;}'
 	echo ""
 	echo "$DIR/router.db does not exist."
-    ) | sendmail -t $MAILOPTS
+    ) | @SENDMAIL@ -t $MAILOPTS
     exit 1;
 fi
 
@@ -303,7 +306,7 @@ if [ $RALL -ne 0 -o $RDOWN -ne 0 -o $RUP -ne 0 ] ; then
 	  echo "$MAILHEADERS" | awk '{L = "";LN = $0;while (LN ~ /\\n/) { I = index(LN,"\\n");L = L substr(LN,0,I-1) "\n";LN = substr(LN,I+2,length(LN)-I-1);}print L LN;}'
 	  echo ""
 	  cat routers.mail
-	) | sendmail -t $MAILOPTS
+	) | @SENDMAIL@ -t $MAILOPTS
     fi
     rm -f routers.mail
 
@@ -518,7 +521,7 @@ if [ -s $TMP.diff ] ; then
 	  echo "$MAILHEADERS" | awk '{L = "";LN = $0;while (LN ~ /\\n/) { I = index(LN,"\\n");L = L substr(LN,0,I-1) "\n";LN = substr(LN,I+2,length(LN)-I-1);}print L LN;}'
 	  echo ""
 	  cat $TMP.diff
-	) | sendmail -t $MAILOPTS
+	) | @SENDMAIL@ -t $MAILOPTS
     else
 	CDIR=`pwd`
 	SDIR=${TMPDIR:=/tmp}/rancid.$GROUP.$$.mail
@@ -545,7 +548,7 @@ if [ -s $TMP.diff ] ; then
 		echo "$MAILHEADERS" | awk '{L = "";LN = $0;while (LN ~ /\\n/) { I = index(LN,"\\n");L = L substr(LN,0,I-1) "\n";LN = substr(LN,I+2,length(LN)-I-1);}print L LN;}'
 		echo ""
 		cat $file
-		) | sendmail -t $MAILOPTS
+		) | @SENDMAIL@ -t $MAILOPTS
 		LASTIDS="$LASTIDS $MSGID"
 		if [ $n -lt $nfiles ]; then
 		    # this just tries to make the msgs order right in MUAs
@@ -577,7 +580,7 @@ if [ -s $DIR/routers.failed ] ; then
 	  echo "more than $OLDTIME hours."
 
 	  cat $DIR/routers.failed
-	) | sendmail -t $MAILOPTS
+	) | @SENDMAIL@ -t $MAILOPTS
 fi
 
 # Cleanup

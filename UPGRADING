@@ -1,4 +1,6 @@
 Rancid 3.0
+3.0 requires a minimum of perl 5.10.
+
 The router.db field separator has been changed to ';' from ':' to avoid
 conflict with IPv6 addresses and etc.
 

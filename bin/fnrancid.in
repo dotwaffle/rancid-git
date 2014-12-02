@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: fnrancid.in 2693 2013-05-29 22:02:45Z heas $
+## $Id: fnrancid.in 2838 2014-05-05 14:18:29Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -225,7 +225,7 @@ sub GetConf {
 	    }
 	}
 	# filter cycling password encryption
-	if (/^\s*(set [^\s]*)\s(Enc\s[^\s]+)(.*)/i && $filter_pwds > 0 ) {
+	if (/^\s*(set [^\s]*)\s(enc\s[^\s]+)(.*)/i && $filter_pwds > 0 ) {
 	    ProcessHistory("ENC","","","#$1 ENC <removed> $3\n");
 	    next;
 	}

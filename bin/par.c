@@ -63,7 +63,10 @@
 # include <strings.h>
 #endif
 #include <sys/time.h>
-#ifdef HAVE_SYS_WAIT_H
+#include <sys/time.h>
+#ifdef HAVE_WAIT_H
+# include <wait.h>
+#elif HAVE_SYS_WAIT_H
 # include <sys/wait.h>
 #endif
 #include <sysexits.h>

@@ -1,6 +1,6 @@
 package ios;
 ##
-## $Id: ios.pm.in 2807 2014-03-19 19:47:07Z heas $
+## $Id: ios.pm.in 2837 2014-05-02 19:11:43Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -661,8 +661,12 @@ sub ShowEnv {
 	    ProcessHistory("COMMENTS","keysort","E2","!Power: $1\n") && next;
 	/^\s*((RPS|power-supply) (\d|is) .*)/i &&
 	    ProcessHistory("COMMENTS","keysort","E2","!Power: $1\n") && next;
-	/^\s*((FAN|fan-tray) (\d|is) .*)/i &&
-	    ProcessHistory("COMMENTS","keysort","E3","!FAN: $1\n") && next;
+	if (/^\s*((FAN|fan-tray) (\d|is) .*)/i) {
+	    my($tmp) = ($1);
+	    $tmp =~ s/, \S+ speed setting//;
+	    ProcessHistory("COMMENTS","keysort","E3","!FAN: $tmp\n");
+	    next;
+	}
     }
     ProcessHistory("COMMENTS","","","!\n");
     return(0);
@@ -1770,10 +1774,22 @@ sub ShowVLAN {
 	    s/^$1\s{$len}//;
 	}
 	return(0) if (/no virtual lans configured/i);
+	# some ASAs do not support show vlan
+	return(0) if (/use .show switch vlan. to view the vlans that have /i);
+
+	# GSR-specific, i think, filter
+	if (/received:\s+transmitted:/i) {
+	    while (<$INPUT>) {
+		last if (/^\s*$/);
+		goto OUT if (/^$prompt/);
+	    }
+	}
+
+	next if (/total.*packets.*(input|output)/i);
 
 	ProcessHistory("COMMENTS","keysort","IO","!VLAN: $_");
     }
-    ProcessHistory("COMMENTS","keysort","IO","!\n");
+OUT:ProcessHistory("COMMENTS","keysort","IO","!\n");
     return(0);
 }
 
@@ -1949,7 +1965,7 @@ sub WriteTerm {
 	    next;
 	}
 	if (/^\s*(.*?neighbor.*?) (\S*) password / && $filter_pwds >= 1) {
-	    ProcessHistory("","","","! $1 password <removed>\n");
+	    ProcessHistory("","","","! $1 $2 password <removed>\n");
 	    next;
 	}
 	if (/^(\s*ppp .* hostname) .*/ && $filter_pwds >= 1) {

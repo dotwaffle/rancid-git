@@ -7,7 +7,7 @@
 #
 agm;script;agmrancid
 #
-adtran;script;rancid
+adtran;script;rancid -t adtran
 adtran;login;clogin
 # TA5000
 adtran;command;adtran::ShowVersion;show version
@@ -24,7 +24,7 @@ adtran;command;adtran::WriteTerm;show running-config
 #
 alteon;script;arancid
 #
-arbor;script;rancid
+arbor;script;rancid -t arbor
 arbor;login;anlogin
 arbor;module;arbor
 arbor;inloop;arbor::inloop
@@ -41,7 +41,7 @@ baynet;script;brancid
 cat5;script;cat5rancid
 #
 # Cisco IOS device
-cisco;script;rancid
+cisco;script;rancid -t cisco
 cisco;login;clogin
 cisco;module;ios
 cisco;inloop;ios::inloop
@@ -112,7 +112,7 @@ cisco;command;ios::WriteTerm;write term
 #
 cisco-nx;script;nxrancid
 #
-cisco-xr;script;rancid
+cisco-xr;script;rancid -t cisco-xr
 cisco-xr;login;clogin
 cisco-xr;module;iosxr
 cisco-xr;inloop;iosxr::inloop
@@ -165,7 +165,7 @@ cisco-xr;command;iosxr::ShowRPL;show rpl maximum
 cisco-xr;command;iosxr::AdminShowRunning;admin show running
 cisco-xr;command;iosxr::WriteTerm;show running-config
 #
-compass;script;rancid
+compass;script;rancid -t compass
 compass;login;complogin
 compass;module;eos
 compass;inloop;eos::inloop
@@ -180,9 +180,10 @@ compass;command;eos::ShowConfig;show configuration detail
 #
 css;script;cssrancid
 #
-dell;script;rancid
+dell;script;rancid -t dell
 dell;login;dllogin
 dell;module;dell
+dell;inloop;dell::inloop
 dell;command;dell::GetSystem;show switch;
 dell;command;dell::GetConf;show config current_config
 #
@@ -201,7 +202,7 @@ force10;script;f10rancid
 fortigate;script;fnrancid
 #
 # Foundry and HP procurve OEMs of Foundry
-foundry;script;rancid
+foundry;script;rancid -t foundry
 foundry;login;flogin
 foundry;module;foundry
 foundry;inloop;foundry::inloop
@@ -216,7 +217,7 @@ hitachi;script;htrancid
 #
 hp;script;hrancid
 #
-juniper;script;rancid
+juniper;script;rancid -t juniper
 juniper;login;jlogin
 juniper;module;junos
 juniper;inloop;junos::inloop
@@ -242,7 +243,7 @@ juniper;command;junos::ShowConfiguration;show configuration
 #
 # juniper-srx type is for SRX with ThreatSTOP; it displays the configuration
 # by section, omitting policy-options, which changes frequently.
-juniper-srx;script;rancid
+juniper-srx;script;rancid -t juniper-srx
 juniper-srx;login;jlogin
 juniper-srx;module;junos
 juniper-srx;inloop;junos::inloop
@@ -293,7 +294,7 @@ mikrotik;script;mtrancid
 mrtd;script;mrancid
 #
 # MRV optical switches
-mrv;script;rancid
+mrv;script;rancid -t mrv
 mrv;login;mrvlogin
 mrv;module;mrv
 mrv;inloop;mrv::inloop

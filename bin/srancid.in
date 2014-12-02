@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: srancid.in 2605 2012-07-26 23:21:27Z heas $
+## $Id: srancid.in 2829 2014-05-01 20:13:48Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -46,6 +46,11 @@
 #  RANCID - Really Awesome New Cisco confIg Differ
 #
 # usage: srancid [-dltCV] [-f filename | hostname]
+#
+# Code tested and working fine on these models:
+#
+#	DELL PowerConnect 62xx
+#	DELL 34xx (partially; configuration is incomplete)
 #
 use Getopt::Std;
 getopts('dflt:CV');
@@ -210,7 +215,7 @@ sub ShowSys {
 	s/[\b]+\s*[\b]*//g;
 
 	# Remove Uptime
-	/ Up time/ && next;
+	/ up time/i && next;
 
 	# filter temperature sensor info for Dell 6428 stacks
 	/Temperature Sensors:/ && next;
@@ -246,7 +251,7 @@ sub ShowVlan {
 	s/[\b]+\s*[\b]*//g;
 
 	# Remove Uptime
-	/ Up time/ && next;
+	/ up time/i && next;
 	ProcessHistory("COMMENTS","keysort","D1","! $_");
     }
     return(0);

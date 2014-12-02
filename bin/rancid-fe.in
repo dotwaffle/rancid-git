@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: rancid-fe.in 2579 2012-07-25 17:43:25Z heas $
+## $Id: rancid-fe.in 2841 2014-05-12 17:57:34Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -78,7 +78,7 @@ if (! defined($script)) {
     printf(STDERR "unknown router manufacturer for $router: $devtype\n");
     exit(-1);
 } else {
-    exec($script . " -t $devtype $router");
+    exec($script . " $router");
 }
 
 printf(STDERR "exec($script) failed router manufacturer $devtype: $!\n");

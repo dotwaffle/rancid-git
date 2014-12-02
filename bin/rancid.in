@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: rancid.in 2802 2014-02-24 18:42:26Z heas $
+## $Id: rancid.in 2820 2014-04-25 19:03:59Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -117,6 +117,9 @@ if ($file) {
 }
 
 # loop over the input using the provided input/main loop
+if (!defined($inloop) || length($inloop) < 1) {
+    die "inloop is not configured for device type $devtype";
+}
 eval($inloop ."(*INPUT, *OUTPUT);") && die "${inloop} failed: $@\n";
 
 print STDOUT "Done $lscript: $_\n" if ($log);
