@@ -470,6 +470,7 @@ if [ -f $DIR/routers.up.missed ] ; then
 fi
 while [ $round -le $pass ]
 do
+    notUpdated=0
     for router in `cat $devlistfile`
     do
 	OFS=$IFS
@@ -480,8 +481,9 @@ do
 
 	if [ ! -s $router.new ]
 	then
-	    echo "$router:$mfg" >> $DIR/routers.up.missed
-	    rm -f $router.new
+		echo "$router:$mfg" >> $DIR/routers.up.missed
+		rm -f $router.new
+		notUpdated=`expr $notUpdated + 1`
 	fi
     done
 
@@ -496,6 +498,11 @@ do
 	round=`expr $pass + 1`
     fi
 done
+
+# keep a list of routers that have been missed on this run
+# so we can monitor it with zabbix or something
+echo "$notUpdated" > $DIR/routers.missed
+
 echo
 
 # Make sure that no empty/truncated configs are accepted.  The remainder are
