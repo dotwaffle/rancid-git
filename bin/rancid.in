@@ -2026,6 +2026,18 @@ sub WriteTerm {
 	    ProcessHistory("","","","! neighbor $1 password <removed>\n");
 	    next;
 	}
+	if (/^\s*authentication username (\S*) password / && $filter_pwds >= 1) {
+	   ProcessHistory("","","","! authentication username $1 password <removed>\n");
+	   next;
+	}
+	if (/^\s*set (aggressive-mode) password / && $filter_pwds >= 1) {
+           ProcessHistory("","","","! set $1 password <removed>\n");
+	   next;
+	}
+	if (/^\s*ip nhrp authentication / && $filter_pwds >= 1) {
+           ProcessHistory("","","","! ip nhrp authentication <removed>\n");
+           next;
+        }
 	if (/^(\s*ppp .* hostname) .*/ && $filter_pwds >= 1) {
 	    ProcessHistory("","","","!$1 <removed>\n"); next;
 	}
