@@ -1,3 +1,5 @@
+- add description of the data path/process of a rancid script
+- add configure option to force the location of perl
 - would like router cmd-line timestamps based on login.  suggest .cloginrc
   knob for pre-cmd ("post-login"), pre-interactive-cmd ("post-interactive-
   login"), and the like.  it would need to be per-mfg, ie: either know the

@@ -1,6 +1,6 @@
 package ios;
 ##
-## $Id: ios.pm.in 2837 2014-05-02 19:11:43Z heas $
+## $Id: ios.pm.in 3000 2015-01-06 18:47:49Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -44,16 +44,14 @@ package ios;
 #
 #  ios.pm - Cisco IOS rancid procedures
 
-use 5.005;
+use 5.010;
 use strict 'vars';
 use warnings;
 no warnings 'uninitialized';
 require(Exporter);
 our @ISA = qw(Exporter);
 
-#XXX use @VERSION@ when we have a version w/o letters in it
-#XXX use rancid @VERSION@;
-use rancid;
+use rancid @VERSION@;
 
 our $proc;
 our $ios;
@@ -97,14 +95,9 @@ sub init {
     $found_diag = 0;
     $config_register = undef;		# configuration register value
 
-    # XXX init %hwbuf;			# defined in ShowContCbus
-    # XXX init %hwmemc;			# defined in ShowContCbus
-    # XXX init %hwmemd;			# defined in ShowContCbus
-    # XXX init %hwucode;			# defined in ShowContCbus
     $supbootdisk = 0;			# skip sup-bootflash if sup-bootdisk
 					# worked
     $type = undef;			# device model, from ShowVersion
-    # XXX init %ucode;			# defined in ShowContCbus
 
     $ssp = 0;				# SSP/SSE info, from ShowVersion
     $sspmem = undef;			# SSP/SSE info, from ShowVersion
@@ -146,7 +139,7 @@ TOP: while(<$INPUT>) {
 	    $cmd = $1;
 	    if (!defined($prompt)) {
 		$prompt = ($_ =~ /^([^#>]+[#>])/)[0];
-		$prompt =~ s/([][}{)(\\])/\\$1/g;
+		$prompt =~ s/([][}{)(+\\])/\\$1/g;
 		print STDERR ("PROMPT MATCH: $prompt\n") if ($debug);
 	    }
 	    print STDERR ("HIT COMMAND:$_") if ($debug);
@@ -282,7 +275,9 @@ sub ShowVersion {
 	    next;
 	/^System image file is "([^\"]*)"$/ &&
 	    ProcessHistory("COMMENTS","keysort","F5","!Image: $1\n") && next;
-	if (/(\S+(?:\sseries)?)\s+(?:\((\S+)\)\s+processor|\(revision[^)]+\)).*\s+with (\S+k) bytes/i) {
+	# 2800 at least don't have a processor line
+	if ((/(\S+(?:\sseries)?)\s+(?:\((\S+)\)\s+processor|\(revision[^)]+\)).*\s+with (\S+k) bytes/i) ||
+	    (/isco\s+(\S+)\s+\(.+\)\s+with (\S+[kK]) bytes/)) {
 	    $proc = $1;
 	    my($cpu) = $2;
 	    my($mem) = $3;
@@ -335,6 +330,14 @@ LINE:		while (<$INPUT>) {
 	    } elsif ($proc =~ /1900/) {
 		$type = "1900";
 		$device = "switch";
+	    } elsif ($proc =~ /2811/) {
+		$type = "2800";
+            } elsif ( $proc =~ /^ME-3400/) {
+                $type = "ME3400";
+            } elsif ( $proc =~ /^ME-C37/) {
+                $type = "ME3700";
+            } elsif ( $proc =~ /^ME-C65/) {
+                $type = "ME6500";
 	    } elsif ($proc =~ /C3750/) {
 		$type = "3750";
 		$device = "switch";
@@ -355,6 +358,9 @@ LINE:		while (<$INPUT>) {
 		$type = "3600";
 	    } elsif ($proc =~ /^37/) {
 		$type = "3700";
+            } elsif ( $proc =~ /WS-C375/) {
+                $type = "3750";
+                $device = "switch";
 	    } elsif ($proc =~ /^38/) {
 		$type = "3800";
 	    } elsif ($proc =~ /WS-C45/) {
@@ -371,6 +377,9 @@ LINE:		while (<$INPUT>) {
 		$device = "switch";
 	    } elsif ($proc eq "WK-C65") {
 		$type = "6500";
+            } elsif ( $proc =~ /WS-C6509/) {
+                $type = "6500";
+                $device = "router";
 	    } elsif ($proc eq "RP") {
 		$type = "7000";
 	    } elsif ($proc eq "RP1") {
@@ -493,13 +502,28 @@ sub ShowMTU {
 	return(1) if (/Line has invalid autocommand /);
 	return(1) if (/(invalid (input|command) detected|type help or )/i);
 
-	ProcessHistory("COMMENTS","keysort","IO","!MTU: $_");
+        if (/System MTU size is (\d+) bytes/) {
+            ProcessHistory("COMMENTS","keysort","IO","!MTU: $1\n");
+            next;
+        }
+        if (/System Jumbo MTU size is (\d+) bytes/) {
+            ProcessHistory("COMMENTS","keysort","IO","!MTU-Jumbo: $1\n");
+            next;
+        }
+        if (/Routing MTU size is (\d+) bytes/) {
+            ProcessHistory("COMMENTS","keysort","IO","!MTU-Routing: $1\n");
+            next;
+        }
+        if (/On next reload, (.*)/) {
+            ProcessHistory("COMMENTS","keysort","IO","!MTU-Reload: $1\n");
+            next;
+        }
     }
     ProcessHistory("COMMENTS","keysort","IO","!\n");
     return(0);
 }
 
-# This routine parses "showSDM"
+# This routine parses "show sdm prefer"
 sub ShowSDM {
     my($INPUT, $OUTPUT, $cmd) = @_;
     print STDERR "    In ShowSDM: $_" if ($debug);
@@ -512,7 +536,19 @@ sub ShowSDM {
 	return(1) if (/Line has invalid autocommand /);
 	return(1) if (/(invalid (input|command) detected|type help or )/i);
 
-	if (/current template is/) {
+        if (/current template is "(.+)" template/) {
+            ProcessHistory("COMMENTS","keysort","IO","!SDM Template: $1\n");
+            next;
+        }
+        if (/current template is the (\S+) template/) {
+            ProcessHistory("COMMENTS","keysort","IO","!SDM Template: $1\n");
+            next;
+        }
+        if (/On next reload, template will be "(.+)" template/) {
+            ProcessHistory("COMMENTS","keysort","IO","!SDM Template-Reload: $1\n");
+            next;
+        }
+	if (/(current template is|next reload)/) {
 	    ProcessHistory("COMMENTS","keysort","IO","!SDM: $_");
 	}
     }
@@ -821,7 +857,7 @@ sub ShowFlash {
 	# to:
 	#                                     vlan.dat
 	#                                            vlan.dat
-	if (/(dhcp_[^. ]*\.txt|vlan\.dat|sflog)\s*$/) {
+	if (/(dhcp_[^. ]*\.txt|vlan\.dat|sflog|syslog)\s*$/) {
 	    if (/(\s*\d+)(\s+[-rwx]+\s+)(\d+)(\s+)(\w+ \d+\s+\d+ \d+:\d+:\d+ .\d+:\d+)/) {
 		my($fn, $a, $sz, $c, $dt, $rem) = ($1, $2, $3, $4, $5, $');
 		my($fnl, $szl, $dtl) = (length($fn), length($sz), length($dt));
@@ -848,6 +884,29 @@ sub ShowFlash {
 	# Drop these files entirely.
 	/\s+(private-multiple-fs|multiple-fs|LISP-MapCache-IPv\S+|nv_hdr)$/ &&
 	    next;
+
+	if (/(\d+) bytes (available|total) \((\d+) bytes used\)/) {
+	    my($tmp);
+	    if ($2 eq "available") {
+		$tmp = $1;
+	    } else {
+		$tmp = $1 - $3;
+	    }
+	    if ($tmp >= (1024 * 1024 * 1024)) {
+		$tmp = int($tmp / (1024 * 1024 * 1024));
+		$_ = "$tmp GB free\n";
+	    } elsif ($tmp >= (1024 * 1024)) {
+		$tmp = int($tmp / (1024 * 1024));
+		$_ = "$tmp MB free\n";
+	    } elsif ($tmp >= (1024)) {
+		$tmp = int($tmp / 1024);
+		$_ = "$tmp KB free\n";
+	    } elsif ($tmp > 0) {
+		$_ = "< 1KB free\n";
+	    } else {
+		$_ = "0 bytes free\n";
+	    }
+	}
 	ProcessHistory("FLASH","","","!Flash: $_");
     }
     ProcessHistory("","","","!\n");
@@ -898,7 +957,7 @@ sub DirSlotN {
 	# to:
 	#       -rw-                                   vlan.dat
 	#       -rw-                                           vlan.dat
-	if (/(dhcp_[^. ]*\.txt|vlan\.dat|sflog)\s*$/) {
+	if (/(dhcp_[^. ]*\.txt|vlan\.dat|sflog|syslog)\s*$/) {
 	    if (/(\s*\d+)(\s+\S+\s+)(\d+)(\s+)(\w+ \d+\s+\d+ \d+:\d+:\d+ .\d+:\d+)/) {
 		my($fn, $a, $sz, $c, $dt, $rem) = ($1, $2, $3, $4, $5, $');
 		my($fnl, $szl, $dtl) = (length($fn), length($sz), length($dt));
@@ -919,7 +978,7 @@ sub DirSlotN {
 	# on dual RP ASR systems
 	next if (/\.issu_loc_lock\s*$/);
 
-	if ($ios eq "XE" && /.*\((\d+) bytes free\)/) {
+	if (/.*\((\d+) bytes free\)/) {
 	    my($tmp) = $1;
 	    if ($tmp >= (1024 * 1024 * 1024)) {
 		$tmp = int($tmp / (1024 * 1024 * 1024));
@@ -927,9 +986,13 @@ sub DirSlotN {
 	    } elsif ($tmp >= (1024 * 1024)) {
 		$tmp = int($tmp / (1024 * 1024));
 		s/$1 bytes free/$tmp MB free/;
-	    } else {
+	    } elsif ($tmp >= (1024)) {
 		$tmp = int($tmp / 1024);
 		s/$1 bytes free/$tmp KB free/;
+	    } elsif ($tmp > 0) {
+		s/$1 bytes free/< 1KB free/;
+	    } else {
+		s/$1 bytes free/0 bytes free/;
 	    }
 	}
 	if ($ios eq "XE" && /^((\s+)?\d+\s+\S+)\s+\d+.*(tracelogs$)/) {
@@ -1904,6 +1967,7 @@ sub WriteTerm {
 		tr/\015//d;
 		last if (/^$prompt/ || ! /^ /);
 		next if (/(rx|tx)speed \d+/);
+		$_ = "$1 <removed>" if (/^(\s+password \d+) /);
 		ProcessHistory("LINE","keysort","$key","$_");
 	    }
 	}
@@ -2084,16 +2148,16 @@ sub WriteTerm {
 	/^access-list\s+(\d\d?)\s+(\S+)\s+(\S+)/ &&
 	    ProcessHistory("ACL $1 $2","$aclsort","$3","$_") && next;
 	# order extended access-lists
-	/^access-list\s+(\d\d\d)\s+(\S+)\s+ip\s+host\s+(\S+)/ &&
-	    ProcessHistory("EACL $1 $2","$aclsort","$3","$_") && next;
-	/^access-list\s+(\d\d\d)\s+(\S+)\s+ip\s+(\d\S+)/ &&
-	    ProcessHistory("EACL $1 $2","$aclsort","$3","$_") && next;
-	/^access-list\s+(\d\d\d)\s+(\S+)\s+ip\s+any/ &&
+	/^access-list\s+(\d\d\d)\s+(\S+)\s+(\S+)\s+host\s+(\S+)/ &&
+	    ProcessHistory("EACL $1 $2","$aclsort","$4","$_") && next;
+	/^access-list\s+(\d\d\d)\s+(\S+)\s+(\S+)\s+(\d\S+)/ &&
+	    ProcessHistory("EACL $1 $2","$aclsort","$4","$_") && next;
+	/^access-list\s+(\d\d\d)\s+(\S+)\s+(\S+)\s+any/ &&
 	    ProcessHistory("EACL $1 $2","$aclsort","0.0.0.0","$_") && next;
 	# order arp lists
 	/^arp\s+(\d+\.\d+\.\d+\.\d+)\s+/ &&
 	    ProcessHistory("ARP","$aclsort","$1","$_") && next;
-	/^ip(v6)? prefix-list\s+(\S+)\s+seq\s+(\d+)\s+(permit|deny)\s+(\S+)(\/.*)$/
+	/^ip(v6)? prefix-list\s+(\S+)\s+seq\s+(\d+)\s+(permit|deny)\s+(\S+)(.*)/
 	    && ProcessHistory("PACL $2 $4","$aclsort","$5",
 			      "ip$1 prefix-list $2 $4 $5$6\n")
 	    && next;

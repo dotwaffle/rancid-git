@@ -1,6 +1,6 @@
 package mrv;
 ##
-## $Id: mrv.pm.in 2780 2014-01-16 23:25:58Z heas $
+## $Id: mrv.pm.in 2953 2014-11-27 00:26:58Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -44,16 +44,14 @@ package mrv;
 #
 #  mrv.pm - MRV rancid procedures
 
-use 5.005;
+use 5.010;
 use strict 'vars';
 use warnings;
 no warnings 'uninitialized';
 require(Exporter);
 our @ISA = qw(Exporter);
 
-#XXX use @VERSION@ when we have a version w/o letters in it
-#XXX use rancid @VERSION@;
-use rancid;
+use rancid @VERSION@;
 
 our $found_version;
 

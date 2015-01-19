@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: clogin.in 2840 2014-05-09 20:54:53Z heas $
+## $Id: clogin.in 3018 2015-01-11 05:51:49Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -39,9 +39,9 @@
 ## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 #  The expect login scripts were based on Erik Sherk's gwtn, by permission.
-# 
+#
 # clogin - Cisco login
 #
 # Most options are intuitive for logging into a Cisco router.
@@ -284,7 +284,7 @@ proc find {var router} {
     upvar int_$var list
     if { [info exists list] } {
 	foreach line $list {
-	    if { [string match [lindex $line 0] $router] } {
+	    if { [string match -nocase [lindex $line 0] $router] } {
 		return [lrange $line 1 end]
 	    }
 	}
@@ -364,6 +364,9 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype identfile 
 		continue;
 	    }
 
+	    # handle escaped ;s in commands, and ;; and ^;
+	    regsub -all {([^\\]);;} $command "\\1;\u002;" esccommand
+	    regsub {^;} $esccommand "\u002;" command
 	    set sep "\\1\u001"
 	    regsub -all {([^\\])\;} $command "$sep" esccommand
 	    set sep "\u001"
@@ -645,8 +648,11 @@ proc run_commands { prompt command } {
     # this is the only way i see to get rid of more prompts in o/p..grrrrr
     log_user 0
 
+    # handle escaped ;s in commands, and ;; and ^;
+    regsub -all {([^\\]);;} $command "\\1;\u002;" esccommand
+    regsub {^;} $esccommand "\u002;" command
     set sep "\\1\u001"
-    regsub -all {([^\\])\;} $command "$sep" esccommand
+    regsub -all {([^\\]);} $command "$sep" esccommand
     set sep "\u001"
     set commands [split $esccommand $sep]
     set num_commands [llength $commands]
@@ -654,7 +660,11 @@ proc run_commands { prompt command } {
     # for the "More" prompt.  the extreme is equally obnoxious in pre-12.3 XOS,
     # with a global switch in the config.
     for {set i 0} {$i < $num_commands} { incr i} {
-	send -- "[subst -nocommands [lindex $commands $i]]\r"
+	if { [lindex $commands $i] == "\u002" } {
+	    send -- "\r"
+	} else {
+	    send -- "[subst -nocommands [lindex $commands $i]]\r"
+	}
 	expect {
 	    -re "\b+"				{ exp_continue }
 	    -re "^\[^\n\r *]*$reprompt"		{ send_user -- "$expect_out(buffer)"
@@ -920,7 +930,7 @@ foreach router [lrange $argv $i end] {
 				  set platform "extreme"
 				}
 	-re "^.+$reprompt"	{ set junk $expect_out(0,string);
-				  regsub -all "\[\]\[\(\)]" $junk {\\&} prompt;
+				  regsub -all "\[\]\[\(\)+]" $junk {\\&} prompt;
 				}
     }
     if { $do_command || $do_script } {

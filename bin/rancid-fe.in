@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: rancid-fe.in 2841 2014-05-12 17:57:34Z heas $
+## $Id: rancid-fe.in 3018 2015-01-11 05:51:49Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -39,10 +39,10 @@
 ## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 #  rancid-FE - front-end to rancid/jrancid/etc. for use with par.
 #
-# usage: rancid-fe <router>:<vendor>
+# usage: rancid-fe <router>;<vendor>
 #
 
 require 5;

@@ -1,9 +1,9 @@
 ## Process this file with automake to produce Makefile.in
 ## A Makefile.in is supplied, in case you do not have automake.
 
-## $Id: Makefile.am 2798 2014-02-12 18:25:10Z heas $
+## $Id: Makefile.am 2997 2014-12-30 19:20:07Z heas $
 ##
-## Copyright (c) 1997-2013 by Terrapin Communications, Inc.
+## Copyright (c) 1997-2015 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## Please see the file COPYING for the text of the license.
@@ -21,11 +21,12 @@ man_nogen_MANS = agmrancid.1 alogin.1 anlogin.1 anrancid.1 arancid.1 \
 		fnrancid.1 hlogin.1 hrancid.1 htlogin.1 \
 		htrancid.1 jerancid.1 jlogin.1 mrancid.1 \
 		mrvlogin.1 mtlogin.1 mtrancid.1 nlogin.1 \
-		nrancid.1 nslogin.1 nsrancid.1 nxrancid.1 par.1 prancid.1 \
+		nrancid.1 nslogin.1 nsrancid.1 nxrancid.1 \
+		panlogin.1 par.1 prancid.1 \
 		rancid-cvs.1 rancid-run.1 rancid.1 \
 		rancid.types.base.5 rancid_intro.1 rivlogin.1 rivrancid.1 \
-		router.db.5 rrancid.1 srancid.1 tlogin.1 tntlogin.1 \
-		xilogin.1 xirancid.1 tntrancid.1 trancid.1 xrancid.1 \
+		router.db.5 rrancid.1 slogin.1 srancid.1 tlogin.1 wlogin.1 \
+		xilogin.1 xirancid.1 trancid.1 xrancid.1 \
 		zrancid.1 \
 		complogin.1 comprancid.1
 

@@ -1,3 +1,88 @@
+3.1.99
+	dllogin, wlogin: handle -t option
+
+	control_rancid: read rancid.conf sooner & fix handling group/ranicd.conf
+
+	rancid-run: pass -f to control_rancid
+
+	Fix the commit command used for -r - Jethro R Binks
+
+	Updates to default mail headers for RFC3834 & MS - Jethro R Binks
+
+	rancid.types: fix show config commands for cisco-wlc*
+
+	ios.pm: filter line password on c2800s & c2900s - Ira Byerly
+
+	add support for git.  See the UPGRADING file.  Based on Jeffrey C.
+	Ollie's patch & thanks Dan Lowe, Job Snijders and a number of folks on
+	rancid-discuss.
+
+	rancid-cvs: add -f option
+
+	dell.pm: filter up time from show switch
+
+	control_rancid: svn cleanup after collection commits
+
+	iosxr.pm: access-list/prefix-list sorting regex fixes
+
+	ios.pm: access-list/prefix-list sorting regex fixes
+
+	nxos.pm: filter ASIC/INTAKE cycling temps - Vincent Aniello
+
+	panos.pm: convert panrancid to a module
+
+	panlogin, panrancid: import palo alto network script from Doug Hughes
+
+	jlogin: set tty width to 132 to avoid problems with cli
+	complete-on-space, which fixes problems occuring when hostnames are
+	longer
+
+	iosxr.pm: access-list regex truncating lines - Peter Jackson
+
+	rancid.pm: improve IP sorting, esp for IPv6
+
+	ios.pm: filter show flash & dir bytes free better
+
+	ciscowlc: add filters for oscillating config & env o/p - Daniel Schmidt
+
+	ciscowlc: convert Cisco WLC scripts to library
+
+	import Cisco WLC scripts from
+	http://www.shrubbery.net/pipermail/rancid-discuss/2010-February/004652.html
+
+	*login.in; fix handling of empty lines in -x input - reported by
+	lee.e.rian
+
+	nxos.pm: recognize invalid command in ShowFex - lee.e.rian
+
+	nxos.pm: does not set $proc - lee.e.rian
+
+	nxrancid: convert nexus to module nxos.pm
+
+	ios.pm: save "next reload" template - lee.e.rian
+
+	tntlogin, tntrancid: remove TNT support
+
+	par, hpuifilter: type fixes for Raspian compatibility - thanks Dan
+	Anderson
+
+	slogin: add switching login
+
+	ios.pm: filter timestamp and size from filename "syslog"
+
+	configure: complain if sendmail is not found
+
+	control_rancid: DIR set too early
+
+	clogin,ios.pm,iosxr.pm: escape plus (+) regex atom in prompt handling
+
+	foundry.pm: remove rogue newline in regex - from P. R. Wilson
+
+	Note Allied Telesis AW+ devices support, works as type 'cisco'
+	according to Allied Telesis Employees
+
+	fix handling of absent sendmail in configure script
+
 3.1
 	Change rancid script exec(); move cmd-line options to rancid.types.*
 	files.  This allows older scripts to function without change, ie:

@@ -1,26 +1,40 @@
 .\"
 .hys 50
-.TH "rancid-cvs" "1" "5 October 2006"
+.TH "rancid-cvs" "1" "18 December 2014"
+.TH "rancid-cvs" "1" "17 December 2014"
 .SH NAME
-rancid-cvs \- initialize CVS or Subversion and rancid group files and directories
+rancid-cvs \- initialize CVS, Subversion or git and rancid group files and directories
 .SH SYNOPSIS
 .B rancid-cvs
-[\fB\-V\fR] [group [group ...]]
+[\fB\-V\fR] [\c
+.BI \-f\ \c
+config_file]\ \c
+[group [group ...]]
 .SH DESCRIPTION
 .B rancid-cvs
 creates the directories and
 .BR router.db (5)
-for each rancid group and handles the revision control system (CVS or
-Subversion) set-up.
-It must be run after installation and whenever a rancid group is added.
+for each rancid group and handles the revision control system (CVS,
+Subversion or git) set-up in the location defined by the
+.I CVSROOT
+in
+.BR rancid.conf (5).
+It must be run after the initial installation and whenever a rancid group is
+added.
+.\"
+If
+.I CVSROOT
+is a URL,
+.B rancid-cvs
+will not initialize the repository, the user must do this themselves.
 .\"
 .PP
 .B rancid-cvs
 reads
 .BR rancid.conf (5)
 to configure itself, then proceeds with the initialization.
-First of the CVS or Subversion repository, if necessary, and then for each
-of the rancid groups listed on the command-line or those in the variable
+First of the CVS, Subversion or git repository, if necessary, and then for
+each of the rancid groups listed on the command-line or those in the variable
 .I LIST_OF_GROUPS
 from
 .BR rancid.conf (5),
@@ -34,25 +48,38 @@ directory already exists, the import into the revision control system
 will be skipped, and if it's
 .BR router.db (5)
 already exists, it will not be altered.
-.\"
 .PP
 .\"
 The command-line options are as follows:
 .TP
 .B \-V
 Prints package name and version strings.
+.TP
+.B \-f group_config_file
+Specify an alternative rancid.conf.  The global rancid.conf file is read by
+.B rancid-run.
 .\"
 .PP
-The best method for adding groups is add the group name to
+The best method for adding groups is by adding the group name to
 .I LIST_OF_GROUPS
 in
 .BR rancid.conf (5),
 then run
-.B rancid-cvs.  Do not create the directories manually, allow rancid-cvs
-to do it.
+.B rancid-cvs.
+.\" This line is intentionally bolded.
+.B Do not create the directories manually, allow rancid-cvs to do it.
 .\"
 .SH "SEE ALSO"
 .BR cvs (1),
+.BR git (1),
 .BR rancid.conf (5),
 .BR router.db (5),
 .BR svn (1)
+.\"
+.SH "CAVEATS"
+In the case of git, the groups are not exactly imported into the repository,
+rather a new repository is created for it, due to the way that git handles,
+what it calls, sparse checkouts.
+Instead, each group is a separate repository under the
+.B CVSROOT
+directory.

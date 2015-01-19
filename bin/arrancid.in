@@ -41,7 +41,7 @@
 ## POSSIBILITY OF SUCH DAMAGE.
 #
 #  RANCID - Really Awesome New ConfIg Differ
-# 
+#
 # Rancid for Arista Networks' switches; cisco mode works but
 # Arista mode is better.
 # Initial version by Bill Fenner <fenner@aristanetworks.com>

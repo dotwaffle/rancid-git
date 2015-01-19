@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: lgform.cgi.in 2334 2011-11-17 21:09:37Z heas $
+## $Id: lgform.cgi.in 3018 2015-01-11 05:51:49Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -39,7 +39,7 @@
 ## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 # The original original lookingglass s/w was written by Ed Kern.  It was
 # a single script that used to be available at http://nitrous.digex.net/.
 # Provided by permission and modified beyond recognition.

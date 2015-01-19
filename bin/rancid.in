@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: rancid.in 2820 2014-04-25 19:03:59Z heas $
+## $Id: rancid.in 2921 2014-10-14 16:05:38Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -43,11 +43,11 @@
 #  RANCID - Really Awesome New Cisco confIg Differ
 #
 #  rancid - generalized rancid module; command schedule is derived from the
-#	    rancid.{base,types}.conf configurations.
+#	    rancid.types.{base,conf} configurations.
 #
 # usage: rancid [-dhltCV] -t device_type [-f filename | hostname]
 #
-use 5.005;
+use 5.010;
 use strict 'vars';
 use warnings;
 no warnings 'uninitialized';
@@ -61,9 +61,14 @@ BEGIN {
 use rancid;
 our @ISA = qw(Exporter rancid);
 
-if ($opt_h) {
+sub usage()
+{
     print STDERR "rancid [-dhltCV] -t device_type [-f filename | hostname]\n";
     exit 64;
+}
+
+if ($opt_h) {
+    usage();
 }
 
 # basic initialization

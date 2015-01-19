@@ -1,7 +1,7 @@
 /*
  * $Id: par.c 4910 2014-01-16 20:12:45Z heas $
  *
- * Copyright (C) 2002-2008 by Henry Kilmer, Andrew Partan, John Heasley
+ * Copyright (C) 2002-2015 by Henry Kilmer, Andrew Partan, John Heasley
  * All rights reserved.
  *
  * This software may be freely copied, modified and redistributed without
@@ -118,6 +118,9 @@ sigset_t	set_chld;			/* SIGCHLD {un}blocking */
 void		arg_free(char ***);
 int		arg_mash(char **, char **);
 int		arg_replace(char **, char **, char **, char ***);
+#ifndef HAVE_ASPRINTF
+int		asprintf(char **, char const *, ...)
+#endif
 int		dispatch_cmd(char **, char **);
 int		execcmd(child *, char **);
 int		line_split(const char *, char ***);
@@ -138,7 +141,6 @@ main(int argc, char **argv, char **envp)
 {
     extern char		*optarg;
     extern int		optind;
-    char		ch;
     time_t		t;
     int			i,
 			line;
@@ -167,8 +169,8 @@ main(int argc, char **argv, char **envp)
     } else
 	errfp = stderr;
 
-    while ((ch = getopt(argc, argv, "defhiqxvc:e:l:n:p:")) != -1 )
-	switch (ch) {
+    while ((i = getopt(argc, argv, "defhiqxvc:e:l:n:p:")) != -1 )
+	switch (i) {
 	case 'c':	/* command to run */
 	    c_opt = optarg;
 	    break;
@@ -657,6 +659,30 @@ arg_replace(char **cmd, char **args, char **tail, char ***new)
     return(0);
 }
 
+#ifndef HAVE_ASPRINTF
+/* crude emulation of asprintf() */
+int
+asprintf(char **str, char const *fmt, va_list ap)
+{
+    int len;
+    va_list apc;
+
+    va_copy(apc, ap);
+    len = vsnprintf(NULL, 0, fmt, apc);
+    va_end(apc);
+    if (len < 0)
+	return len;
+    if ((*str = malloc(len + 1)) == NULL)
+	return -1;
+    if ((len = vsnprintf(*str, len + 1, fmt, ap)) >= 0)
+	return len;
+    len = errno;
+    free(*str);
+    errno = len;
+    return -1;
+}
+#endif
+
 /*
  * find a child/process slot (one of n_opt) to run the command and use
  * run_cmd() to start it.
@@ -912,7 +938,7 @@ read_input(char *fname, FILE **F, int *line, char ***cmd, char ***args)
 
     /* first line might be a command */
     if (*line == 1) {
-	switch ((buf[0] = fgetc(*F))) {
+	switch ((e = fgetc(*F))) {
 	case EOF:
 	    goto ERR;
 	    break;
@@ -933,7 +959,7 @@ read_input(char *fname, FILE **F, int *line, char ***cmd, char ***args)
 	    }
 	    break;
 	default:
-	    ungetc(buf[0], *F);
+	    ungetc(e, *F);
 	    if (*cmd == NULL && c_opt != NULL)
 		if ((e = line_split(c_opt, cmd))) {
 			/* XXX: is strerror(e) right? */
@@ -1368,9 +1394,8 @@ reapchild(int sig)
 void
 usage(void)
 {
-    fprintf(errfp,
-"usage: %s [-dfiqx] [-n #] [-p n] [-l logfile] [-c command] [<command file>]\n",
-	progname);
+    fprintf(errfp, "usage: %s [-dfiqvx] [-n #] [-p n] [-l logfile] [-c "
+		   "command] [<command file>]\n", progname);
     return;
 }
 

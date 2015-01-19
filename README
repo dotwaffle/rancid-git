@@ -1,5 +1,5 @@
 Rancid is a "Really Awesome New Cisco confIg Differ" developed to
-maintain CVS controlled copies of router configs.
+maintain CVS (or Subversion or git) controlled copies of router configs.
 
 *** The Following Information is Very Important ****
 Rancid 3.0 converts several device scripts (the remaining will follow) to
@@ -52,7 +52,6 @@ bin/
 	rancid.in	Runs commands on cisco routers and processes the output.
 
 	agmrancid.in	Version of rancid.in for Cisco Anomaly Guard Module (AGM)
-	anrancid.in	Version of rancid.in for Arbor Networks appliances.
 	arancid.in	Version of rancid.in for Alteon switches.
 	brancid.in	Version of rancid.in for baynet/nortel routers.
 	cat5rancid.in	Version of rancid.in for Cisco Catalyst switches.
@@ -73,7 +72,6 @@ bin/
 	rivancid.in	Version of rancid.in for Riverstone routers.
 	rrancid.in	Version of rancid.in for Redback routers.
 	srancid.in	Version of rancid.in for SMC switches.
-	tntrancid.in	Version of rancid.in for TNT access servers.
 	xirancid.in	Version of rancid.in for Xirrus arrays.
 	xrancid.in	Version of rancid.in for Extreme switches.
 	zrancid.in	Version of rancid.in for Zebra routers.
@@ -90,8 +88,18 @@ bin/
 	nlogin.in	Version of clogin.in for Netscreen firewalls.
 	nslogin.in	Version of clogin.in for Netscalars.
 	rivlogin.in	Version of clogin.in for Riverstone routers.
-	tntlogin.in	Version of clogin.in for TNT access servers.
 	xilogin.in	Version of clogin.in for Xirrus arrays.
+lib/
+	arbor.pm.in	rancid library for Arbor Networks appliances.
+	dell.pm.in	rancid library for some Dell D-Link models.
+	eos.pm.in	rancid library for Compass EOS.
+	foundry.pm.in	rancid library for Foundry (Brocade) switches.
+	ios.pm.in	rancid library for Cisco IOS and IOS-XE.
+	iosxr.pm.in	rancid library for Cisco IOS-XR.
+	junos.pm.in	rancid library for Juniper JunOS.
+	mrv.pm.in	rancid library for MRV MCS.
+	nxos.pm.in	rancid library for Cisco NX-OS.
+	rancid.pm.in	rancid global functions.
 man/		man pages
 share/		Readmes, samples, utilities, contribs, etc
 include/	Include files and rancid version.h
@@ -114,6 +122,7 @@ mkinstalldirs	GNU autoconf shell script to make installation directories
 
 rancid will also need to have the following packages:
 cvs		Code revision system available from prep.ai.mit.edu:/pub/gnu
+git		Code revision system, an alternative to cvs.
 gnudiff		gnudiff provides the uni-diff (-u) option.  If you do not have
 		a diff that supports -u, configure will set-up rancid to use
 		'diff -c' or 'diff -C'.
@@ -124,12 +133,20 @@ expect		http://expect.nist.gov/  We highly suggest that you stick to
 svn		Code revision system, an alternative to cvs.  Available from
 		http://subversion.tigris.org/tarballs/.  Use the configure
 		option --with-svn to configure for Subversion.
+		To convert from CVS to SVN, find the cvs2svn python script,
+		then:
+		cd ~rancid
+		cvs2svn --trunk= --trunk-only -s `pwd`/.svn --keywords-off \
+			`pwd`/CVS
+		sh -c '. /path/to/etc/rancid.conf ; for g in $LIST_OF_GROUPS; \
+			do svn co file://`pwd`/.svn/$g; done'
 tcl		Required by expect.
 
 Bill Fenner (now maintained by others) has a cgi script for interacting
 with CVS repositories via a web interface.  This provides a great way to
 view rancid diffs and full configs, especially for those unfamiliar with
-cvs.  The package is not included, but can be found here:
+cvs.  There are similar tools for Subversion and git.  The package is not
+included, but can be found here:
 
 	http://www.freebsd.org/projects/cvsweb.html
 
@@ -143,7 +160,7 @@ Quick Installation Guide (an example):
 	./configure --prefix=/home/rancid
 
    Rancid uses autoconf's "localstatedir" as the location of it's logs,
-   CVS or Subversion respository, and directories where it's groups are
+   CVS, Subversion or git respository, and directories where it's groups are
    placed.  The user who will run rancid (from cron, etc) will need write
    access to these directories.  By default, this is <prefix>/var, or
    /home/rancid/var following the example above.
@@ -205,12 +222,12 @@ Quick Installation Guide (an example):
 7) Run rancid-cvs.
    This creates all of the necessary directories and config files for
    each of the groups in LIST_OF_GROUPS and imports them into CVS (or
-   Subversion).  This will also be run each time a new group is added.  Do
-   not create the directories or CVS repository manually, allow rancid-cvs
+   Subversion or git).  This will also be run each time a new group is added.
+   Do not create the directories or CVS repository manually, allow rancid-cvs
    do it.  Also see 'man -M <basedir>/man rancid-cvs'.
 
 8) For each "group", modify the router.db file in the group directory.
-   The file is of the form "router:mfg:state" where "router" is
+   The file is of the form "router;mfg;state" where "router" is
    the name (we use FQDN) of the router, mfg is the manufacturer
    from the set of (cat5|cisco|juniper) (see router.db.5 for a complete
    list and description), and "state" is either up or down.  Each router

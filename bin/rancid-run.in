@@ -1,6 +1,6 @@
 #! /bin/sh
 ##
-## $Id: rancid-run.in 2813 2014-04-03 04:34:53Z heas $
+## $Id: rancid-run.in 3018 2015-01-11 05:51:49Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -39,7 +39,7 @@
 ## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 # Run rancid for each of the rancid groups defined by $LIST_OF_GROUPS in
 # @sysconfdir@/rancid.conf or those specified on the command-line.
 #
@@ -77,6 +77,7 @@ if [ $# -ge 1 ] ; then
 		pr_usage
 		exit 1
 	    fi
+	    CR_ARGV="$CR_ARGV -f $1"; export CR_ARGV
 	    shift
 	    ;;
 	-m)
@@ -151,6 +152,8 @@ do
 		  echo "To: @ADMINMAILPLUS@${GROUP}${MAILDOMAIN}"
 		  echo "Subject: rancid hung - $GROUP"
 		  echo "Precedence: bulk"
+		  echo "Auto-submitted: auto-generated"
+		  echo "X-Auto-Response-Suppress: All"
 		  echo ""
 
 		  cat <<END

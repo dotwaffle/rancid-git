@@ -1,0 +1,181 @@
+#! @PERLV_PATH@
+##
+## $Id: rancid.in 2864 2014-09-11 17:05:49Z heas $
+##
+## @PACKAGE@ @VERSION@
+## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
+## All rights reserved.
+##
+## This code is derived from software contributed to and maintained by
+## Terrapin Communications, Inc. by Henry Kilmer, John Heasley, Andrew Partan,
+## Pete Whiting, Austin Schutz, and Andrew Fort.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted provided that the following conditions
+## are met:
+## 1. Redistributions of source code must retain the above copyright
+##    notice, this list of conditions and the following disclaimer.
+## 2. Redistributions in binary form must reproduce the above copyright
+##    notice, this list of conditions and the following disclaimer in the
+##    documentation and/or other materials provided with the distribution.
+## 3. All advertising materials mentioning features or use of this software
+##    must display the following acknowledgement:
+##        This product includes software developed by Terrapin Communications,
+##        Inc. and its contributors for RANCID.
+## 4. Neither the name of Terrapin Communications, Inc. nor the names of its
+##    contributors may be used to endorse or promote products derived from
+##    this software without specific prior written permission.
+## 5. It is requested that non-binding fixes and modifications be contributed
+##    back to Terrapin Communications, Inc.
+##
+## THIS SOFTWARE IS PROVIDED BY Terrapin Communications, INC. AND CONTRIBUTORS
+## ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+## TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+## PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COMPANY OR CONTRIBUTORS
+## BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+## CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+## SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+## INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+## POSSIBILITY OF SUCH DAMAGE.
+#
+#  RANCID - Really Awesome New Cisco confIg Differ
+#
+#  slogin - selective login; use router.db files and rancid.{base,types}.conf
+#	    configurations to determine which login script to execute.
+#
+use 5.0010;
+use strict 'vars';
+use warnings;
+no warnings 'uninitialized';
+use Exporter;
+use Getopt::Long;
+#  use Getopt::Long qw(:config no_ignore_case bundling);
+Getopt::Long::Configure ("bundling", "no_ignore_case");
+our($opt_d, $opt_S, $opt_V, $opt_autoenable, $opt_noenable, $opt_c, @opt_E, $opt_e,
+    $opt_f, $opt_h, $opt_p, $opt_r, $opt_s, $opt_t, $opt_u, $opt_v, $opt_w,
+    $opt_x, $opt_y, $opt_z);
+GetOptions('d' => \$opt_d, 'S' => \$opt_S, 'V' => \$opt_V,
+	'autoenable' => \$opt_autoenable, 'noenable' => \$opt_noenable,
+	'c=s' => \$opt_c, "E=s@" => \@opt_E, 'e=s' => \$opt_e, 'f=s' => \$opt_f,
+	'h=s' => \$opt_h,'p=s' => \$opt_p, 'r=s' => \$opt_r, 's=s' => \$opt_s,
+	't=s' => \$opt_t, 'u=s' => \$opt_u, 'v=s' => \$opt_v, 'w=s' => \$opt_w,
+	'x=s' => \$opt_x, 'y=s' => \$opt_y, 'z=s' => \$opt_z);
+my($BASEDIR, $LIST_OF_GROUPS, $cmd, $i, $j, @routers);
+BEGIN {
+    push(@INC, "@pkglibdir@");
+}
+use rancid;
+our @ISA = qw(Exporter rancid);
+
+sub usage()
+{
+    print STDERR "slogin [-dSV] [-autoenable] [-noenable] [-c command] [-Evar=x] [-e enable-password] [-f cloginrc-file] [-p user-password] [-r passphrase] [-s script-file] [-t timeout] [-u username] [-v vty-password] [-w enable-username] [-x command-file] [-y ssh_cypher_type] [-z device_type] router [router...]\n";
+    exit 64;
+}
+
+# make OUTPUT unbuffered if debugging
+if ($opt_d) { $| = 1; }
+
+if ($opt_h) {
+    usage();
+}
+
+# option handling initialization
+if ($opt_V) {
+    print "slogin: @PACKAGE@ @VERSION@\n";
+    # do not exit; exec the script with -V and it will exit
+}
+$cmd .= " -d" if ($opt_d);
+$cmd .= " -S" if ($opt_S);
+$cmd .= " -V" if ($opt_V);
+$cmd .= " -autoenable" if ($opt_autoenable);
+$cmd .= " -noenable" if ($opt_noenable);
+$cmd .= " -c '$opt_c'" if (length($opt_c));
+foreach $i (@opt_E) {
+    $cmd .= " -E$i";
+}
+$cmd .= " -e '$opt_e'" if (length($opt_e));
+$cmd .= " -f '$opt_f'" if (length($opt_f));
+$cmd .= " -p '$opt_p'" if (length($opt_p));
+$cmd .= " -r '$opt_r'" if (length($opt_r));
+$cmd .= " -s '$opt_s'" if (length($opt_s));
+$cmd .= " -t $opt_s" if (length($opt_t));
+$cmd .= " -u '$opt_u'" if (length($opt_u));
+$cmd .= " -v '$opt_v'" if (length($opt_v));
+$cmd .= " -w '$opt_w'" if (length($opt_w));
+$cmd .= " -x '$opt_x'" if (length($opt_x));
+$cmd .= " -y '$opt_y'" if (length($opt_y));
+$devtype = $opt_z;
+foreach $i (@ARGV) {
+    $cmd .= " $i";
+    push(@routers, $i);
+}
+
+# what is the device type, supplied or looked-up
+if ($opt_z) {
+    $devtype = $opt_z;
+} else {
+    # Look in router.dbs for device type.
+    # read rancid.conf for BASEDIR and LIST_OF_GROUPS?
+    my($ENVFILE) = "@sysconfdir@/rancid.conf";
+    open(INPUT, "< $ENVFILE") || die "Could not open $ENVFILE: $!";
+    close(INPUT);
+    open(INPUT,
+	 "sh -c \'. $ENVFILE; echo \"BASEDIR=\$BASEDIR\"; echo \"LIST_OF_GROUPS=\$LIST_OF_GROUPS\"\' |") ||
+	 die "Could not open $ENVFILE: $!";
+    while (<INPUT>) {
+        chomp;
+	s/#.$//;
+	s/^\s+//;
+        my($varname, $value) = split('=');
+	if ($varname eq "BASEDIR") {
+	    $BASEDIR = $value;
+	}
+	if ($varname eq "LIST_OF_GROUPS") {
+	    $LIST_OF_GROUPS = $value;
+	    $LIST_OF_GROUPS =~ s/^\s+//;
+	    $LIST_OF_GROUPS =~ s/\s+$//;
+	}
+    }
+    close(INPUT);
+
+    # read each router.db for the routername and thus the devtype
+    foreach $i (split(/\s+/, $LIST_OF_GROUPS)) {
+	if (!open(INPUT, "< $BASEDIR/$i/router.db")) {
+	    warn "Could not open $BASEDIR/$i/router.db: $!";
+	    next;
+	}
+	while (<INPUT>) {
+	    chomp;
+	    s/#.$//;
+	    s/^\s+//;
+            my($router, $type, $state) = split('\;');
+	    foreach $j (@routers) {
+		if ($router eq $j) {
+		    $devtype = $type;
+		    close(INPUT);
+		    goto FOUND;
+		}
+	    }
+	}
+	close(INPUT);
+    }
+}
+
+FOUND:
+if (length($devtype) < 1) {
+    die "Couldn't find device type by hostname in router.dbs\n";
+}
+
+# load device type spec, build @commandtable and load modules
+if (loadtype($devtype)) {
+    die "Couldn't load device type spec for $rancid::devtype\n";
+}
+if (! defined($lscript)) {
+    die "login script not defined for device type $rancid::devtype\n";
+}
+exec($lscript . " $cmd") ||
+printf(STDERR "exec($script) failed router manufacturer $devtype: $!\n");
+exit(-1);

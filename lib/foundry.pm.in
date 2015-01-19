@@ -1,6 +1,6 @@
 package foundry;
 ##
-## $Id: foundry.pm.in 2776 2014-01-16 22:58:04Z heas $
+## $Id: foundry.pm.in 2953 2014-11-27 00:26:58Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -44,16 +44,14 @@ package foundry;
 #
 #  foundry.pm - Foundry rancid procedures
 
-use 5.005;
+use 5.010;
 use strict 'vars';
 use warnings;
 no warnings 'uninitialized';
 require(Exporter);
 our @ISA = qw(Exporter);
 
-#XXX use @VERSION@ when we have a version w/o letters in it
-#XXX use rancid @VERSION@;
-use rancid;
+use rancid @VERSION@;
 
 @ISA = qw(Exporter rancid main);
 #XXX @Exporter::EXPORT = qw($VERSION @commandtable %commands @commands);
@@ -124,8 +122,7 @@ sub ShowVersion {
 	last if (/^$prompt/);
 
 	next if (/^(The system |Crash time)/);
-	next if (/^(System|(Active|Standby) Management|LP Slot \d+|Switch Fabric
- Module \d+) (uptime|Up Time) is/);
+	next if (/^(System|(Active|Standby) Management|LP Slot \d+|Switch Fabric Module \d+) (uptime|Up Time) is/);
 	# remove uptime on newer switches
 	s/(STACKID \d+)\s+system uptime is.*$/$1/;
 

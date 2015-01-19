@@ -187,6 +187,7 @@ LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LTLIBOBJS = @LTLIBOBJS@
 MAILPLUS = @MAILPLUS@
+MAINT = @MAINT@
 MAKE = @MAKE@
 MAKEINFO = @MAKEINFO@
 MKDIR = @MKDIR@
@@ -269,11 +270,12 @@ man_nogen_MANS = agmrancid.1 alogin.1 anlogin.1 anrancid.1 arancid.1 \
 		fnrancid.1 hlogin.1 hrancid.1 htlogin.1 \
 		htrancid.1 jerancid.1 jlogin.1 mrancid.1 \
 		mrvlogin.1 mtlogin.1 mtrancid.1 nlogin.1 \
-		nrancid.1 nslogin.1 nsrancid.1 nxrancid.1 par.1 prancid.1 \
+		nrancid.1 nslogin.1 nsrancid.1 nxrancid.1 \
+		panlogin.1 par.1 prancid.1 \
 		rancid-cvs.1 rancid-run.1 rancid.1 \
 		rancid.types.base.5 rancid_intro.1 rivlogin.1 rivrancid.1 \
-		router.db.5 rrancid.1 srancid.1 tlogin.1 tntlogin.1 \
-		xilogin.1 xirancid.1 tntrancid.1 trancid.1 xrancid.1 \
+		router.db.5 rrancid.1 slogin.1 srancid.1 tlogin.1 wlogin.1 \
+		xilogin.1 xirancid.1 trancid.1 xrancid.1 \
 		zrancid.1 \
 		complogin.1 comprancid.1
 
@@ -299,7 +301,7 @@ auto_edit = sed \
 all: all-am
 
 .SUFFIXES:
-$(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
+$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -324,9 +326,9 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 $(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 
-$(top_srcdir)/configure:  $(am__configure_deps)
+$(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
-$(ACLOCAL_M4):  $(am__aclocal_m4_deps)
+$(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
 install-man1: $(man_MANS)

@@ -34,7 +34,7 @@ to hold lock files, log files, and output from cached commands.
 .sp
 Default: ./tmp
 .sp
-Note that the default is relative to the directory where 
+Note that the default is relative to the directory where
 .IR lg.cgi
 runs in the server's document root (e.g.: /usr/local/www/data/lg/tmp).
 .\"
@@ -150,7 +150,7 @@ section for more information.
 .\"
 .SH ERRORS
 .B lg.conf
-is interpreted directly by 
+is interpreted directly by
 .IR perl (1),
 so its syntax follows that of perl.  Syntax errors may produce quite unexpected
 results.

@@ -1,6 +1,6 @@
 .\"
 .hys 50
-.TH "clogin" "1" "17 April 2012"
+.TH "clogin" "1" "25 September 2014"
 .SH NAME
 clogin \- Cisco login script
 .SH SYNOPSIS
@@ -51,7 +51,7 @@ router
 is an
 .BR expect (1)
 script to automate the process of logging into a Cisco router,
-catalyst switch, Extreme switch, Juniper ERX/E-series, Procket Networks,
+Catalyst switch, Extreme switch, Juniper ERX/E-series, Procket Networks,
 or Redback router.
 There are complementary scripts for
 Alteon,
@@ -68,7 +68,7 @@ Netscreen firewalls,
 Netscaler,
 Riverstone,
 Netopia,
-Lucent TNT,
+Cisco WLCs
 and Xirrus arrays,
 named
 .B alogin,
@@ -86,10 +86,20 @@ named
 .B nslogin,
 .B rivlogin,
 .B tlogin,
-.B tntlogin,
+.B wlogin,
 and
 .B xilogin,
 respectively.
+Lastly,
+.B slogin
+is a switching script using the
+.BR router.db (5)
+files of rancid groups and the
+.BR rancid.types.base (5)
+and
+.BR rancid.types.conf (5)
+files to determine which login script to execute for the device type of
+the given device.
 .PP
 .B clogin
 reads the

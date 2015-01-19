@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: erancid.in 2605 2012-07-26 23:21:27Z heas $
+## $Id: erancid.in 3018 2015-01-11 05:51:49Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -39,7 +39,7 @@
 ## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 #  RANCID - Really Awesome New Cisco confIg Differ
 #
 # usage: erancid [-dltCV] [-f filename | hostname]

@@ -1,6 +1,6 @@
 #! /bin/sh
 ##
-## $Id: control_rancid.in 2823 2014-04-28 19:11:14Z heas $
+## $Id: control_rancid.in 3014 2015-01-10 18:57:30Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -39,7 +39,7 @@
 ## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 # control_rancid $GROUP
 #
 
@@ -114,46 +114,21 @@ if [ $# -lt 1 ] ; then
 else
     GROUP=$1
 fi
-DIR=$BASEDIR/$GROUP
 TMP=${TMPDIR:=/tmp}/rancid.$GROUP.$$
 if [ -z "$ENVFILE" ] ; then
-    ENVFILE="$DIR/rancid.conf"
+    ENVFILE="@sysconfdir@/rancid.conf"
 fi
 if [ -f "$ENVFILE" ] ; then
     . $ENVFILE
 fi
 trap 'rm -fr $TMP;' 1 2 15
+DIR=$BASEDIR/$GROUP
 
 # disable noclobber
 unset noclobber > /dev/null 2>&1
 
 # SENDMAIL location
 SENDMAIL=${SENDMAIL:=sendmail};
-
-# RCS system
-RCSSYS=${RCSSYS:=cvs};
-if [ $RCSSYS != "cvs" -a $RCSSYS != "svn" ] ; then
-    echo "$RCSSYS is not a valid value for RCSSYS."
-    exit 1
-fi
-
-# the receipient(s) of diffs & mail options
-mailrcpt=${mailrcpt:-"@MAILPLUS@${GROUP}${MAILDOMAIN}"}; export mailrcpt
-adminmailrcpt=${adminmailrcpt:-"@ADMINMAILPLUS@${GROUP}${MAILDOMAIN}"};
-export adminmailrcpt
-set | grep MAILHEADERS= > /dev/null 2>&1
-if [ $? -ne 0 ] ; then
-    MAILHEADERS="Precedence: bulk\n"; export MAILHEADERS
-fi
-
-# Number of things par should run in parallel.
-PAR_COUNT=${PAR_COUNT:-5}
-# Number of times failed collections should be retried.  Minimum 0.
-MAX_ROUNDS=${MAX_ROUNDS:-4}
-if [ $MAX_ROUNDS -lt 0 ] ; then
-    echo "Error: MAX_ROUNDS must be at least 0 or greater."
-    MAX_ROUNDS=1
-fi
 
 # Bail if we do not have the necessary info to run
 if [ ! -d $DIR ] ; then
@@ -170,11 +145,60 @@ if [ ! -d $DIR ] ; then
     exit 1
 fi
 cd $DIR
+if [ -e "rancid.conf" ] ; then
+    . rancid.conf
+fi
 
-# create a .cvsignore
-if [ ! -f .cvsignore ] ; then
-    rm -f .cvsignore
-    cat >.cvsignore <<EOF
+# RCS system
+RCSSYS=${RCSSYS:=cvs};
+if [ $RCSSYS != "cvs" -a $RCSSYS != "svn" -a $RCSSYS != "git" ] ; then
+    echo "$RCSSYS is not a valid value for RCSSYS. See rancid.conf(5)." >&2
+    exit 1
+fi
+
+# the receipient(s) of diffs & mail options
+mailrcpt=${mailrcpt:-"@MAILPLUS@${GROUP}${MAILDOMAIN}"}; export mailrcpt
+adminmailrcpt=${adminmailrcpt:-"@ADMINMAILPLUS@${GROUP}${MAILDOMAIN}"};
+export adminmailrcpt
+set | grep MAILHEADERS= > /dev/null 2>&1
+if [ $? -ne 0 ] ; then
+    MAILHEADERS="Precedence: bulk\nAuto-submitted: auto-generated\nX-Auto-Response-Suppress: All"; export MAILHEADERS
+fi
+
+# Number of things par should run in parallel.
+PAR_COUNT=${PAR_COUNT:-5}
+# Number of times failed collections should be retried.  Minimum 0.
+MAX_ROUNDS=${MAX_ROUNDS:-4}
+if [ $MAX_ROUNDS -lt 0 ] ; then
+    echo "Error: MAX_ROUNDS must be at least 0 or greater."
+    MAX_ROUNDS=1
+fi
+
+# create a .cvsignore/.gitignore
+case $RCSSYS in
+git )
+    if [ ! -f .gitignore ] ; then
+	rm -rf .gitignore
+	cat > .gitignore <<EOF
+routers.all
+routers.down
+routers.up
+EOF
+	git add .gitignore
+    fi
+    if [ ! -f configs/.gitignore ] ; then
+	rm -rf configs/.gitignore
+	cat > configs/.gitignore <<EOF
+*.new
+*.raw
+EOF
+	git add configs/.gitignore
+    fi
+    ;;
+cvs | svn )
+    if [ ! -f .cvsignore ] ; then
+	rm -rf .cvsignore
+	cat >.cvsignore <<EOF
 .cvsignore
 routers.all
 routers.down
@@ -184,32 +208,51 @@ EOF
 	svn propset svn:ignore -F .cvsignore .
 	svn update .
 	svn commit -m 'set svn:ignores' .
+	fi
     fi
-fi
+    ;;
+esac
 
-# check if there is a rancid.conf and if it needs to be added to the RCS
+# if there is a rancid.conf, check if it needs to be added to the RCS
 if [ -f rancid.conf ] ; then
-    if [ $RCSSYS = svn ] ; then
-	LN=`svn ls rancid.conf | wc -l`
-    else
+    case $RCSSYS in
+    cvs )
 	cvs log -rHEAD rancid.conf > /dev/null 2>&1
 	if [ $? -eq 0 ] ; then LN=1; else LN=0; fi
-    fi
+	;;
+    svn )
+	LN=`(svn ls rancid.conf | wc -l) 2>/dev/null`
+	;;
+    git )
+	git status -s rancid.conf | grep '^?'
+        ;;
+    esac
     if [ $LN -eq 0 ] ; then
 	$RCSSYS add rancid.conf
     fi
 fi
 
-# do cvs update of router.db in case anyone has fiddled.
-$RCSSYS update router.db > $TMP 2>&1
-grep "^C" $TMP > /dev/null
-if [ $? -eq 0 ] ; then
-    echo "There were $RCSSYS conflicts during update."
-    echo ""
-    cat $TMP
-    rm -f $TMP
-    exit 1
-fi
+# do RCS update of router.db in case anyone has fiddled.
+case $RCSSYS in
+git )
+    # git doesnt make this easy.  XXX
+    #git fetch > $TMP 2>&1
+    #git checkout FETCH_HEAD -- router.db
+    #grep "^C" $TMP > /dev/null	# XXX right for git?
+    touch $TMP
+    ;;
+cvs | svn )
+    $RCSSYS update router.db > $TMP 2>&1
+    grep "^C" $TMP > /dev/null
+    if [ $? -eq 0 ] ; then
+	echo "There were $RCSSYS conflicts during update."
+	echo ""
+	cat $TMP
+	rm -f $TMP
+	exit 1
+    fi
+    ;;
+esac
 rm -f $TMP
 
 if [ ! -f $DIR/router.db ] ; then
@@ -322,11 +365,14 @@ if [ $RALL -ne 0 -o $RDOWN -ne 0 -o $RUP -ne 0 ] ; then
 	router=$1
 
 	touch $router
-	if [ $RCSSYS = cvs ] ; then
+	case $RCSSYS in
+	cvs )
 	    cvs add -ko $router
-	else
-	    svn add $router
-	fi
+	    ;;
+	svn | git )
+	    $RCSSYS add $router
+	    ;;
+	esac
 	$RCSSYS commit -m 'new router' $router
 	echo "Added $router"
     done
@@ -352,39 +398,74 @@ trap 'rm -fr $TMP;' 1 2 15
 cd $DIR/configs
 # check for 'up' routers missing in RCS.  no idea how this happens to some folks
 for router in `cut -d\; -f1 ../routers.up` ; do
-    if [ $RCSSYS = cvs ] ; then
+    case $RCSSYS in
+    cvs )
 	cvs status $router | grep -i 'status: unknown' > /dev/null 2>&1
-    else
-	svn status $router | grep '^?' > /dev/null 2>&1
-    fi
-    if [ $? -eq 0 ] ; then
-	touch $router
-	if [ $RCSSYS = cvs ] ; then
+	if [ $? -eq 0 ] ; then
+	    touch $router
 	    cvs add -ko $router
-	else
-	    svn add $router
+	    cvs commit -m 'new router' $router
+	    echo "$RCSSYS added missing router $router"
 	fi
-	echo "$RCSSYS added missing router $router"
-    fi
+	;;
+    svn )
+	if [ ! -e $router ] ; then
+	    touch $router
+	fi
+	svn status $router | grep '^?' > /dev/null 2>&1
+	if [ $? -eq 0 ] ; then
+	    svn add $router
+	    svn commit -m 'new router' $router
+	    echo "$RCSSYS added missing router $router"
+	fi
+        ;;
+    git )
+	if [ ! -e $router ] ; then
+	    touch $router
+	fi
+	git status $router | grep '^?' > /dev/null 2>&1
+	if [ $? -eq 0 ] ; then
+	    git add $router
+	    git commit -m 'new router' $router
+	    echo "$RCSSYS added missing router $router"
+	fi
+        ;;
+    esac
 done
 echo
 # delete configs from RCS for routers not listed in routers.up.
-for router in `find . \( -name \*.new -prune -o -name CVS -prune -o -name .svn -prune \) -o -type f -print | sed -e 's/^.\///'` ; do
+for router in `find . \( -name \*.new -prune -o -name CVS -prune -o -name .svn -prune -o -name .gitignore -prune \) -o -type f -print | sed -e 's/^.\///'` ; do
     grep -i "^$router\;" ../router.db > /dev/null 2>&1
     if [ $? -eq 1 ] ; then
 	rm -f $router
-	$RCSSYS delete $router
-	$RCSSYS commit -m 'deleted router' $router
+	case $RCSSYS in
+	cvs | svn )
+	    $RCSSYS delete $router
+	    $RCSSYS commit -m "deleted router $router" $router
+	    ;;
+	git )
+	    git rm $router
+	    git commit -m "deleted router $router" $router
+	    ;;
+	esac
 	echo "Deleted $router"
     fi
 done
 cd $DIR
 
 # no routers, empty list or all 'down'
-if [ ! -s routers.up ]
-then
+if [ ! -s routers.up ] ; then
     # commit router.db
-    $RCSSYS commit -m updates router.db
+    message="updates of group $GROUP"
+    case $RCSSYS in
+    cvs | svn )
+	$RCSSYS commit -m "$message" router.db
+	;;
+    git )
+	git add router.db
+	git commit -m "$message" router.db
+	;;
+    esac
     exit;
 fi
 
@@ -449,14 +530,8 @@ echo
 
 # Make sure that no empty/truncated configs are accepted.  The remainder are
 # renamed from device_name.new -> device_name.
-for router in `cat $devlistfile`
+for router in `cat $devlistfile | cut -d\; -f1`
 do
-    OFS=$IFS
-    IFS=';'
-    set $router
-    IFS=$OFS
-    router=$1;
-
     if [ ! -s $router.new ] ; then
 	rm -f $router.new
     else
@@ -483,12 +558,18 @@ done
 # Diff the directory and then checkin.
 trap 'rm -fr $TMP $TMP.diff $DIR/routers.single;' 1 2 15
 cd $DIR
-if [ $RCSSYS = "cvs" ] ; then
+case $RCSSYS in
+cvs )
     cvs -f @DIFF_CMD@ -ko | sed -e '/^RCS file: /d' -e '/^--- /d' \
 	-e '/^+++ /d' -e 's/^\([-+ ]\)/\1 /' >$TMP.diff
-else
+    ;;
+svn )
     svn diff | sed -e '/^+++ /d' -e 's/^\([-+ ]\)/\1 /' >$TMP.diff
-fi
+    ;;
+git )
+    git diff | sed -e '/^+++ /d' -e 's/^\([-+ ]\)/\1 /' >$TMP.diff
+    ;;
+esac
 
 if [ $alt_mailrcpt -eq 1 ] ; then
     subject="router config diffs - courtesy of $mailrcpt"
@@ -496,12 +577,30 @@ else
     subject="router config diffs"
 fi
 if [ "X$device" != "X" ] ; then
-    $RCSSYS commit -m "updates - courtesy of $mailrcpt"
+    if [ $RCSSYS = git ] ; then
+	$RCSSYS commit -am "updates - courtesy of $mailrcpt"
+    else
+	$RCSSYS commit -m "updates - courtesy of $mailrcpt"
+    fi
     subject="$GROUP/$device $subject"
 else
-    $RCSSYS commit -m updates
+    if [ $RCSSYS = git ] ; then
+	$RCSSYS commit -am updates
+    else
+	$RCSSYS commit -m updates
+    fi
     subject="$GROUP $subject"
 fi
+
+# working-directory maintenance
+case $RCSSYS in
+svn )
+    svn cleanup
+    ;;
+git )
+    git push
+    ;;
+esac
 
 # Mail out the diffs (if there are any).
 if [ -s $TMP.diff ] ; then

@@ -83,26 +83,25 @@ DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/mkinstalldirs $(srcdir)/control_rancid.in \
 	$(srcdir)/agmrancid.in $(srcdir)/alogin.in \
 	$(srcdir)/arancid.in $(srcdir)/anlogin.in \
-	$(srcdir)/anrancid.in $(srcdir)/arrancid.in \
-	$(srcdir)/avologin.in $(srcdir)/avorancid.in \
-	$(srcdir)/blogin.in $(srcdir)/brancid.in \
-	$(srcdir)/cat5rancid.in $(srcdir)/clogin.in \
-	$(srcdir)/complogin.in $(srcdir)/cssrancid.in \
-	$(srcdir)/dllogin.in $(srcdir)/elogin.in $(srcdir)/erancid.in \
-	$(srcdir)/f5rancid.in $(srcdir)/f10rancid.in \
-	$(srcdir)/flogin.in $(srcdir)/fnlogin.in $(srcdir)/fnrancid.in \
-	$(srcdir)/hlogin.in $(srcdir)/hrancid.in $(srcdir)/htlogin.in \
+	$(srcdir)/arrancid.in $(srcdir)/avologin.in \
+	$(srcdir)/avorancid.in $(srcdir)/blogin.in \
+	$(srcdir)/brancid.in $(srcdir)/cat5rancid.in \
+	$(srcdir)/clogin.in $(srcdir)/complogin.in \
+	$(srcdir)/cssrancid.in $(srcdir)/dllogin.in \
+	$(srcdir)/elogin.in $(srcdir)/erancid.in $(srcdir)/f5rancid.in \
+	$(srcdir)/f10rancid.in $(srcdir)/flogin.in \
+	$(srcdir)/fnlogin.in $(srcdir)/fnrancid.in $(srcdir)/hlogin.in \
+	$(srcdir)/hrancid.in $(srcdir)/htlogin.in \
 	$(srcdir)/htrancid.in $(srcdir)/jlogin.in \
 	$(srcdir)/jerancid.in $(srcdir)/mrancid.in \
 	$(srcdir)/mrvlogin.in $(srcdir)/mtrancid.in \
 	$(srcdir)/mtlogin.in $(srcdir)/nlogin.in $(srcdir)/nrancid.in \
 	$(srcdir)/nslogin.in $(srcdir)/nsrancid.in \
-	$(srcdir)/nxrancid.in $(srcdir)/prancid.in \
+	$(srcdir)/panlogin.in $(srcdir)/prancid.in \
 	$(srcdir)/rivlogin.in $(srcdir)/rivrancid.in \
 	$(srcdir)/rrancid.in $(srcdir)/srancid.in $(srcdir)/tlogin.in \
-	$(srcdir)/tntlogin.in $(srcdir)/tntrancid.in \
 	$(srcdir)/trancid.in $(srcdir)/xilogin.in \
-	$(srcdir)/xirancid.in $(srcdir)/xrancid.in \
+	$(srcdir)/xirancid.in $(srcdir)/xrancid.in $(srcdir)/wlogin.in \
 	$(srcdir)/zrancid.in $(top_srcdir)/depcomp
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/acinclude.m4 \
@@ -112,13 +111,12 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = $(top_builddir)/include/config.h
 CONFIG_CLEAN_FILES = control_rancid agmrancid alogin arancid anlogin \
-	anrancid arrancid avologin avorancid blogin brancid cat5rancid \
-	clogin complogin cssrancid dllogin elogin erancid f5rancid \
-	f10rancid flogin fnlogin fnrancid hlogin hrancid htlogin \
-	htrancid jlogin jerancid mrancid mrvlogin mtrancid mtlogin \
-	nlogin nrancid nslogin nsrancid nxrancid prancid rivlogin \
-	rivrancid rrancid srancid tlogin tntlogin tntrancid trancid \
-	xilogin xirancid xrancid zrancid
+	arrancid avologin avorancid blogin brancid cat5rancid clogin \
+	complogin cssrancid dllogin elogin erancid f5rancid f10rancid \
+	flogin fnlogin fnrancid hlogin hrancid htlogin htrancid jlogin \
+	jerancid mrancid mrvlogin mtrancid mtlogin nlogin nrancid \
+	nslogin nsrancid panlogin prancid rivlogin rivrancid rrancid \
+	srancid tlogin trancid xilogin xirancid xrancid wlogin zrancid
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
@@ -260,6 +258,7 @@ LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LTLIBOBJS = @LTLIBOBJS@
 MAILPLUS = @MAILPLUS@
+MAINT = @MAINT@
 MAKE = @MAKE@
 MAKEINFO = @MAKEINFO@
 MKDIR = @MKDIR@
@@ -335,22 +334,22 @@ top_srcdir = @top_srcdir@
 
 #AUTOMAKE_OPTIONS=foreign no-dependencies
 AUTOMAKE_OPTIONS = foreign
-bin_SCRIPTS = agmrancid alogin anlogin anrancid arancid arrancid \
-	atrancid avologin avorancid blogin brancid cat5rancid clogin \
-	complogin control_rancid cssrancid dllogin elogin erancid \
-	f5rancid f10rancid flogin fnlogin fnrancid hlogin hrancid \
-	htlogin htrancid jerancid jlogin mrancid mrvlogin mtlogin \
-	mtrancid nlogin nrancid nslogin nsrancid nxrancid prancid \
-	rancid rivlogin rivrancid rrancid srancid tlogin tntlogin \
-	tntrancid trancid xilogin xirancid xrancid zrancid lg.cgi \
-	lgform.cgi rancid-cvs rancid-fe rancid-run
+bin_SCRIPTS = agmrancid alogin anlogin arancid arrancid avologin \
+	avorancid blogin brancid cat5rancid clogin complogin \
+	control_rancid cssrancid dllogin elogin erancid f5rancid \
+	f10rancid flogin fnlogin fnrancid hlogin hrancid htlogin \
+	htrancid jerancid jlogin mrancid mrvlogin mtlogin mtrancid \
+	nlogin nrancid nslogin nsrancid panlogin rancid rivlogin \
+	rivrancid rrancid slogin srancid tlogin trancid wlogin xilogin \
+	xirancid xrancid zrancid lg.cgi lgform.cgi rancid-cvs \
+	rancid-fe rancid-run
 # XXX hack for the rancid to get pkglibdir, see corresponding XXX below
-bin_in = rancid.in
+bin_in = rancid.in slogin.in
 EXTRA_DIST = lg.cgi.in lgform.cgi.in rancid-cvs.in rancid-fe.in rancid-run.in \
 	$(bin_in)
 
 #dist_bin_SCRIPTS= $(bin_SCRIPTS:%=%.in)
-CLEANFILES = lg.cgi lgform.cgi rancid-cvs rancid-fe rancid-run
+CLEANFILES = lg.cgi lgform.cgi rancid rancid-cvs rancid-fe rancid-run slogin
 #CLEANFILES= $(bin_SCRIPTS)
 hpuifilter_SOURCES = hpuifilter.c
 par_SOURCES = par.c
@@ -390,7 +389,7 @@ all: all-am
 
 .SUFFIXES:
 .SUFFIXES: .c .o .obj
-$(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
+$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -415,9 +414,9 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 $(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 
-$(top_srcdir)/configure:  $(am__configure_deps)
+$(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
-$(ACLOCAL_M4):  $(am__aclocal_m4_deps)
+$(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
 control_rancid: $(top_builddir)/config.status $(srcdir)/control_rancid.in
@@ -429,8 +428,6 @@ alogin: $(top_builddir)/config.status $(srcdir)/alogin.in
 arancid: $(top_builddir)/config.status $(srcdir)/arancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 anlogin: $(top_builddir)/config.status $(srcdir)/anlogin.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-anrancid: $(top_builddir)/config.status $(srcdir)/anrancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 arrancid: $(top_builddir)/config.status $(srcdir)/arrancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
@@ -494,7 +491,7 @@ nslogin: $(top_builddir)/config.status $(srcdir)/nslogin.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 nsrancid: $(top_builddir)/config.status $(srcdir)/nsrancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-nxrancid: $(top_builddir)/config.status $(srcdir)/nxrancid.in
+panlogin: $(top_builddir)/config.status $(srcdir)/panlogin.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 prancid: $(top_builddir)/config.status $(srcdir)/prancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
@@ -508,10 +505,6 @@ srancid: $(top_builddir)/config.status $(srcdir)/srancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 tlogin: $(top_builddir)/config.status $(srcdir)/tlogin.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-tntlogin: $(top_builddir)/config.status $(srcdir)/tntlogin.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-tntrancid: $(top_builddir)/config.status $(srcdir)/tntrancid.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 trancid: $(top_builddir)/config.status $(srcdir)/trancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 xilogin: $(top_builddir)/config.status $(srcdir)/xilogin.in
@@ -519,6 +512,8 @@ xilogin: $(top_builddir)/config.status $(srcdir)/xilogin.in
 xirancid: $(top_builddir)/config.status $(srcdir)/xirancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 xrancid: $(top_builddir)/config.status $(srcdir)/xrancid.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+wlogin: $(top_builddir)/config.status $(srcdir)/wlogin.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 zrancid: $(top_builddir)/config.status $(srcdir)/zrancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
@@ -848,6 +843,7 @@ $(bin_in:%.in=%): Makefile $(top_builddir)/config.status
 # XXX there must be a better way to produce these dependencies, perhaps in
 #     configure.
 rancid: $(srcdir)/rancid.in
+slogin: $(srcdir)/slogin.in
 
 lg.cgi: Makefile $(srcdir)/lg.cgi.in
 	rm -f lg.cgi lg.cgi.tmp; \

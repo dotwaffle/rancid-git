@@ -1,6 +1,6 @@
-package arbor;
+package ciscowlc;
 ##
-## $Id: arbor.pm.in 2953 2014-11-27 00:26:58Z heas $
+## $Id: ciscowlc.pm.in 3011 2015-01-09 03:26:47Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -42,11 +42,13 @@ package arbor;
 #
 #  RANCID - Really Awesome New Cisco confIg Differ
 #
-#  arbor.pm - Arbor Networks appliances rancid procedures
-
+#  ciscowlc.pm - Cisco WLC V4.X
+#
+#  based on modified version of ciscoips by Josh Yost on 4/16/2008
 use 5.010;
 use strict 'vars';
 use warnings;
+no warnings 'uninitialized';
 require(Exporter);
 our @ISA = qw(Exporter);
 
@@ -57,15 +59,15 @@ use rancid @VERSION@;
 
 # load-time initialization
 sub import {
+    $timeo = 90;			# wlogin timeout in seconds
     0;
 }
 
 # post-open(collection file) initialization
 sub init {
-    $timeo = 90;			# anlogin timeout in seconds
-
     # add content lines and separators
-    ProcessHistory("","","","#RANCID-CONTENT-TYPE: $devtype\n#\n");
+    ProcessHistory("","","","!RANCID-CONTENT-TYPE: $devtype\n!\n");
+
     0;
 }
 
@@ -76,20 +78,20 @@ sub inloop {
 
 TOP: while(<$INPUT>) {
 	tr/\015//d;
-	if ( (/\>\s?logout$/) || $found_end ) {
-	    $clean_run=1;
+	if (/^.*logout$/)  {
+	    $clean_run = 1;
 	    last;
 	}
 	if (/^Error:/) {
-	    print STDOUT ("$host anlogin error: $_");
-	    print STDERR ("$host anlogin error: $_") if ($debug);
-	    $clean_run=0;
+	    print STDOUT ("$host wlogin error: $_");
+	    print STDERR ("$host wlogin error: $_") if ($debug);
+	    $clean_run = 0;
 	    last;
 	}
-	while (/[#>]\s*($cmds_regexp)\s*$/) {
+	while (/($cmds_regexp)/) {
 	    $cmd = $1;
 	    if (!defined($prompt)) {
-		$prompt = ($_ =~ /^([^#>]+[#>])/)[0];
+		$prompt = ($_ =~ /^([^#]+>)/)[0];
 		$prompt =~ s/([][}{)(\\])/\\$1/g;
 		print STDERR ("PROMPT MATCH: $prompt\n") if ($debug);
 	    }
@@ -99,6 +101,7 @@ TOP: while(<$INPUT>) {
 		$clean_run = 0;
 		last TOP;
 	    }
+	    print STDERR ("HIT COMMAND:$_") if ($debug);
 	    $rval = &{$commands{$cmd}}($INPUT, $OUTPUT, $cmd);
 	    delete($commands{$cmd});
 	    if ($rval == -1) {
@@ -109,53 +112,47 @@ TOP: while(<$INPUT>) {
     }
 }
 
-# This routine parses "show configuration"
+# This routine parses "show running-config"
 sub ShowConfig {
     my($INPUT, $OUTPUT, $cmd) = @_;
     my($linecnt) = 0;
     print STDERR "    In ShowConfig: $_" if ($debug);
+    ProcessHistory("","","","\n!--WLC Begin Config Data--!\n");
 
     while (<$INPUT>) {
-	tr/\015//d;
-	last if (/^$prompt/);
-	next if (/^(\s*|\s*$cmd\s*)$/);
-	return(1) if (/invalid command/i);
+        tr/\015//d;
+        tr/\020//d;
 
-	if (/(services sp device edit .+ snmp community set )\S+/) {
-	    if ($filter_commstr) {
-		ProcessHistory("","","","# $1 <removed>$'"); next;
-	    }
-	}
+        my($skipprocess) = 0;
 
-	if (/^(services sp router edit \S+ bgp md5_secret set )\S+/
-	    && $filter_pwds >= 1) {
-	    ProcessHistory("","","","# $1<removed>$'");
-	    next;
-	}
+        # remove snmp community string data
+        if (/^(\s*snmp community create)/ && $filter_pwds >= 1) {
+            ProcessHistory("","","","!$1 <removed>\n"); next;
+        }
+        if (/^(\s*snmp community accessmode (ro|rw))/ && $filter_pwds >= 1) {
+            ProcessHistory("","","","!$1 <removed>\n"); next;
+        }
+        if (/^(\s*snmp community ipaddr\s\S+\s\S+) / && $filter_pwds >= 1) {
+            ProcessHistory("","","","!$1 <removed>\n"); next;
+        }
+	if (/^\s*rogue ap classify/) { $skipprocess = 1; }
+	if (/^\s*rogue adhoc alert/) { $skipprocess = 1; }
 
-	if (/^(services sp portal .+ edit .+ key set )\S+/
-	    && $filter_pwds >= 1) {
-	    ProcessHistory("","","","# $1<removed>$'");
-	    next;
-	}
 
-	if (/^(services aaa tacacs server .* encrypted )\S+/
-	    && $filter_pwds >= 1) {
-	    ProcessHistory("","","","# $1<removed>$'");
-	    next;
-	}
+        last if (/^$prompt/);
+        next if (/^(\s*|\s*$cmd\s*)$/);
 
-	if (/^(services aaa local add .* encrypted )\S+/
-	    && $filter_pwds >= 2) {
-	    ProcessHistory("","","","# $1<removed>$'");
-	    next;
-	}
-
-	ProcessHistory("","","","$_");
 	$linecnt++;
+        if (! /^$prompt/) {
+                if (! $skipprocess) {
+                        print STDERR "      ShowConfig Data: $_" if ($debug);
+                        ProcessHistory("","","","$_");
+                }
+        }
     }
-
-    # Arbor lacks a definitive "end of config" marker.
+    ProcessHistory("","","","\n!--WLC End Config Data--!\n");
+    print STDERR "    Exiting ShowConfig: $_" if ($debug);
+    # WLC lacks a definitive "end of config" marker.
     if ($linecnt > 5) {
 	$found_end = 1;
 	return(1);
@@ -163,40 +160,52 @@ sub ShowConfig {
     return(0);
 }
 
-# This routine parses "system hardware"
-sub ShowHardware {
+# This routine parses "show sysinfo"
+sub ShowSysinfo {
     my($INPUT, $OUTPUT, $cmd) = @_;
-    print STDERR "    In ShowHardware: $_" if ($debug);
+    print STDERR "    In ShowSysinfo: $_" if ($debug);
+    ProcessHistory("","","","\n!WLC Show Sysinfo Start\n!\n");
 
     while (<$INPUT>) {
 	tr/\015//d;
+
+	my($skipprocess) = 0;
+
+	if (/^System Up Time/) { $skipprocess = 1; }
+	if (/^Number of Active Clients/) { $skipprocess = 1; }
+	if (/^(Internal|External) Temperature/) { $skipprocess=1; }
+	if (/rpm$/) { $skipprocess = 1; }
+
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
-	return(1) if (/invalid command/i);
-
-	next if (/^boot time: /i);
-	next if (/^load averages: /i);
-
-	ProcessHistory("Inventory","","","# $_");
+	if (! /^$prompt/) {
+		if (! $skipprocess) {
+			print STDERR "      ShowSysinfo Data: $_" if ($debug);
+			ProcessHistory("","","","! $_");
+		}
+	}
     }
-    ProcessHistory("Inventory","","","#\n");
+    ProcessHistory("","","","!\n!WLC Show Sysinfo End\n");
+    print STDERR "    Exiting ShowSysinfo: $_" if ($debug);
     return(0);
 }
 
-# This routine parses "show system version", "show system build-parameters"
-sub ShowVersion {
+# This routine parses "show udi"
+sub ShowUdi {
     my($INPUT, $OUTPUT, $cmd) = @_;
-    print STDERR "    In ShowVersion: $_" if ($debug);
+    print STDERR "    In ShowUdi: $_" if ($debug);
+    ProcessHistory("","","","\n!WLC Show Udi Start\n!\n");
 
     while (<$INPUT>) {
 	tr/\015//d;
+
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
-	return(1) if (/invalid command/i);
-
-	ProcessHistory("Version","","","# $_");
+	print STDERR "      ShowUdi Data: $_" if ($debug);
+	ProcessHistory("","","","! $_");
     }
-    ProcessHistory("Version","","","#\n");
+    ProcessHistory("","","","!\n!WLC Show Udi End\n");
+    print STDERR "    Exiting ShowSysinfo: $_" if ($debug);
     return(0);
 }
 

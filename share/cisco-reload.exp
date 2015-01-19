@@ -1,7 +1,7 @@
 ##
-## $Id: cisco-reload.exp 2096 2009-06-17 21:49:46Z heas $
+## $Id: cisco-reload.exp 2997 2014-12-30 19:20:07Z heas $
 ##
-## Copyright (c) 1997-2007 by Terrapin Communications, Inc.
+## Copyright (c) 1997-2015 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by

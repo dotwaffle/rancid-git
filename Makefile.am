@@ -1,9 +1,9 @@
 ## Process this file with automake to produce Makefile.in
 ## A Makefile.in is supplied, in case you do not have automake.
 
-## $Id: Makefile.am 2742 2013-11-01 00:02:43Z heas $
+## $Id: Makefile.am 2997 2014-12-30 19:20:07Z heas $
 ##
-## Copyright (C) 1997-2013 by Terrapin Communications, Inc.
+## Copyright (C) 1997-2015 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## Please see the file COPYING for the text of the license.

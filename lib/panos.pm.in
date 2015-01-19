@@ -1,6 +1,6 @@
-package arbor;
+package ios;
 ##
-## $Id: arbor.pm.in 2953 2014-11-27 00:26:58Z heas $
+## $Id: panos.pm.in 3019 2015-01-11 05:54:59Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -40,13 +40,21 @@ package arbor;
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
 #
+# Amazingly hacked version of Hank's rancid - this one tries to
+# deal with Palo Altos
+#
 #  RANCID - Really Awesome New Cisco confIg Differ
 #
-#  arbor.pm - Arbor Networks appliances rancid procedures
+#  panos.pm - Palo Alto Networks rancid procedures
+#
+# 2013-01-05 - fix to put cli pager after scripting-mode is off - doug
+#			   hughesd@deshawresearch.com
+#
 
 use 5.010;
 use strict 'vars';
 use warnings;
+no warnings 'uninitialized';
 require(Exporter);
 our @ISA = qw(Exporter);
 
@@ -62,10 +70,10 @@ sub import {
 
 # post-open(collection file) initialization
 sub init {
-    $timeo = 90;			# anlogin timeout in seconds
 
     # add content lines and separators
-    ProcessHistory("","","","#RANCID-CONTENT-TYPE: $devtype\n#\n");
+    ProcessHistory("","","","!RANCID-CONTENT-TYPE: $devtype\n!\n");
+
     0;
 }
 
@@ -74,26 +82,38 @@ sub inloop {
     my($INPUT, $OUTPUT) = @_;
     my($cmd, $rval);
 
+    # Paloalto buffers commands and prints them twice, once while buffering,
+    # and once while executing. It's a bit weird and causes default rancid
+    # code a bit of a conniption, so we need to only execute the callbacks
+    # on second discovery.
+
 TOP: while(<$INPUT>) {
 	tr/\015//d;
-	if ( (/\>\s?logout$/) || $found_end ) {
-	    $clean_run=1;
+	if  (/[>#]\s?exit$/) {
+	    $clean_run = 1;
+	    print STDERR "exiting\n" if ($debug);
+	    # because exit occurs implicitly, too
+	    delete($commands{exit});
 	    last;
 	}
+	print STDERR ("line: $_") if ($debug);
 	if (/^Error:/) {
-	    print STDOUT ("$host anlogin error: $_");
-	    print STDERR ("$host anlogin error: $_") if ($debug);
-	    $clean_run=0;
+	    print STDOUT ("$host panlogin error: $_");
+	    print STDERR ("$host panlogin error: $_") if ($debug);
+	    $clean_run = 0;
 	    last;
 	}
-	while (/[#>]\s*($cmds_regexp)\s*$/) {
+	while (/\w+@\S+[>#]\s*($cmds_regexp)\s*$/) {
 	    $cmd = $1;
 	    if (!defined($prompt)) {
-		$prompt = ($_ =~ /^([^#>]+[#>])/)[0];
-		$prompt =~ s/([][}{)(\\])/\\$1/g;
+		$prompt = ($_ =~ /^([^>]+>)/)[0];
+		$prompt =~ s/>/\[#>\]/;
+		$prompt =~ s/\(/\\(/;
+		$prompt =~ s/\)/\\)/;
 		print STDERR ("PROMPT MATCH: $prompt\n") if ($debug);
 	    }
-	    print STDERR ("HIT COMMAND:$_") if ($debug);
+	    print STDERR ("HIT COMMAND:$_\n") if ($debug);
+	    print STDERR ("COMMAND is: $cmd|$commands{$cmd}\n") if ($debug);
 	    if (! defined($commands{$cmd})) {
 		print STDERR "$host: found unexpected command - \"$cmd\"\n";
 		$clean_run = 0;
@@ -109,95 +129,41 @@ TOP: while(<$INPUT>) {
     }
 }
 
-# This routine parses "show configuration"
+# This routine parses "show system info"
+sub ShowInfo {
+    my($INPUT, $OUTPUT, $cmd) = @_;
+    my($slot);
+
+    print STDERR "    In ShowInfo:: $_" if ($debug);
+
+    while (<$INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(time:|uptime:)/);
+
+	ProcessHistory("INFO","","","#$_");
+    }
+    ProcessHistory("INFO","","","#\n");
+    return(0);
+}
+
+
+# This routine parses "show config running"
 sub ShowConfig {
     my($INPUT, $OUTPUT, $cmd) = @_;
-    my($linecnt) = 0;
     print STDERR "    In ShowConfig: $_" if ($debug);
 
     while (<$INPUT>) {
 	tr/\015//d;
-	last if (/^$prompt/);
-	next if (/^(\s*|\s*$cmd\s*)$/);
-	return(1) if (/invalid command/i);
-
-	if (/(services sp device edit .+ snmp community set )\S+/) {
-	    if ($filter_commstr) {
-		ProcessHistory("","","","# $1 <removed>$'"); next;
-	    }
-	}
-
-	if (/^(services sp router edit \S+ bgp md5_secret set )\S+/
-	    && $filter_pwds >= 1) {
-	    ProcessHistory("","","","# $1<removed>$'");
-	    next;
-	}
-
-	if (/^(services sp portal .+ edit .+ key set )\S+/
-	    && $filter_pwds >= 1) {
-	    ProcessHistory("","","","# $1<removed>$'");
-	    next;
-	}
-
-	if (/^(services aaa tacacs server .* encrypted )\S+/
-	    && $filter_pwds >= 1) {
-	    ProcessHistory("","","","# $1<removed>$'");
-	    next;
-	}
-
-	if (/^(services aaa local add .* encrypted )\S+/
-	    && $filter_pwds >= 2) {
-	    ProcessHistory("","","","# $1<removed>$'");
-	    next;
+	if (/^}\s*$|\[edit\]/) {
+	    $found_end = 1;
+	    return(1);
 	}
 
 	ProcessHistory("","","","$_");
-	$linecnt++;
+	# end of config
     }
-
-    # Arbor lacks a definitive "end of config" marker.
-    if ($linecnt > 5) {
-	$found_end = 1;
-	return(1);
-    }
-    return(0);
-}
-
-# This routine parses "system hardware"
-sub ShowHardware {
-    my($INPUT, $OUTPUT, $cmd) = @_;
-    print STDERR "    In ShowHardware: $_" if ($debug);
-
-    while (<$INPUT>) {
-	tr/\015//d;
-	last if (/^$prompt/);
-	next if (/^(\s*|\s*$cmd\s*)$/);
-	return(1) if (/invalid command/i);
-
-	next if (/^boot time: /i);
-	next if (/^load averages: /i);
-
-	ProcessHistory("Inventory","","","# $_");
-    }
-    ProcessHistory("Inventory","","","#\n");
-    return(0);
-}
-
-# This routine parses "show system version", "show system build-parameters"
-sub ShowVersion {
-    my($INPUT, $OUTPUT, $cmd) = @_;
-    print STDERR "    In ShowVersion: $_" if ($debug);
-
-    while (<$INPUT>) {
-	tr/\015//d;
-	last if (/^$prompt/);
-	next if (/^(\s*|\s*$cmd\s*)$/);
-	return(1) if (/invalid command/i);
-
-	ProcessHistory("Version","","","# $_");
-    }
-    ProcessHistory("Version","","","#\n");
-    return(0);
+    return 0;
 }
 
 1;

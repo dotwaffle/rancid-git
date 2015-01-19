@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: alogin.in 2752 2013-11-01 22:01:49Z heas $
+## $Id: alogin.in 3015 2015-01-11 05:34:43Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -262,7 +262,7 @@ proc find {var router} {
     upvar int_$var list
     if { [info exists list] } {
 	foreach line $list {
-	    if { [string match [lindex $line 0] $router ] } {
+	    if { [string match -nocase [lindex $line 0] $router ] } {
 		return [lrange $line 1 end]
 	    }
 	}
@@ -395,7 +395,7 @@ proc login { router user userpswd passwd prompt cmethod cyphertype } {
 	    send_user "\nError: host key mismatch for $router.  Update the SSH known_hosts file accordingly.\n"
 	    return 1
 	}
-	-re "NOTICE:\[^\n\r]* - display now \[^\n\r]*:" { 
+	-re "NOTICE:\[^\n\r]* - display now \[^\n\r]*:" {
 	    send "no\r"
 	    exp_continue
 	}
@@ -440,6 +440,9 @@ proc run_commands { prompt command } {
 
     regsub -all "\[)(]" $prompt {\\&} reprompt
 
+    # handle escaped ;s in commands, and ;; and ^;
+    regsub -all {([^\\]);;} $command "\\1;\u002;" esccommand
+    regsub {^;} $esccommand "\u002;" command
     set sep "\\1\u001"
     regsub -all {([^\\])\;} $command "$sep" esccommand
     set sep "\u001"

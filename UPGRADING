@@ -1,5 +1,13 @@
-Rancid 3.0
-3.0 requires a minimum of perl 5.10.
+RANCiD 3.2
+3.2 includes support for the git SCM.  It is based on the patch from Jeffrey C.
+Ollie.  However, unlike the patch, which places all of the rancid collections
+into one repository rooted at rancid.conf:$BASEDIR, we've chosen to use
+separate respositories as remote located in rancid.conf:$BASEDIR.  This allows
+the code to be same whether the master repository is local or remote and allows
+each to be in a different location and autonomous.
+
+RANCiD 3.0
+3.0 requires minimum revisions of perl 5.10 and expect 5.43.
 
 The router.db field separator has been changed to ';' from ':' to avoid
 conflict with IPv6 addresses and etc.
@@ -10,7 +18,7 @@ libraries.  Also, rancid.pm supplies the functions common among the former
 rancid scripts.
 
 
-Rancid 2.3 introduces a new directory layout.  It has been changed to more
+RANCiD 2.3 introduces a new directory layout.  It has been changed to more
 closely follow the standard path hierarchy, which is defined by the FHS
 standard and autoconf, and/or make these locations more easily configurable
 within rancid.

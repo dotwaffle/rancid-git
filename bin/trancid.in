@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: trancid.in 2605 2012-07-26 23:21:27Z heas $
+## $Id: trancid.in 2880 2014-09-29 18:23:24Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -61,7 +61,6 @@ $found_version = 0;
 $found_env = 0;
 $found_diag = 0;
 $timeo = 90;			# clogin timeout in seconds
-$clogin_pgm= $ENV{'RANCID_CLOGIN'} || "tlogin";
 
 my(%filter_pwds);		# password filtering mode
 
@@ -238,7 +237,7 @@ if (length($host) == 0) {
     }
 }
 if ($opt_C) {
-    print "$clogin_pgm -t $timeo -c\'$commandstr\' $host\n";
+    print "tlogin -t $timeo -c\'$commandstr\' $host\n";
     exit(0);
 }
 open(OUTPUT,">$host.new") || die "Can't open $host.new for writing: $!\n";
@@ -251,13 +250,13 @@ if ($file) {
     print STDOUT "opening file $host\n" if ($log);
     open(INPUT,"<$host") || die "open failed for $host: $!\n";
 } else {
-    print STDERR "executing $clogin_pgm -t $timeo -c\"$commandstr\" $host\n" if ($debug);
-    print STDOUT "executing $clogin_pgm -t $timeo -c\"$commandstr\" $host\n" if ($log);
+    print STDERR "executing tlogin -t $timeo -c\"$commandstr\" $host\n" if ($debug);
+    print STDOUT "executing tlogin -t $timeo -c\"$commandstr\" $host\n" if ($log);
     if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
-	system "$clogin_pgm -t $timeo -c \"$commandstr\" $host </dev/null > $host.raw 2>&1" || die "$clogin_pgm failed for $host: $!\n";
-	open(INPUT, "< $host.raw") || die "$clogin_pgm failed for $host: $!\n";
+	system "tlogin -t $timeo -c \"$commandstr\" $host </dev/null > $host.raw 2>&1" || die "tlogin failed for $host: $!\n";
+	open(INPUT, "< $host.raw") || die "tlogin failed for $host: $!\n";
     } else {
-	open(INPUT,"$clogin_pgm -t $timeo -c \"$commandstr\" $host </dev/null |") || die "$clogin_pgm failed for $host: $!\n";
+	open(INPUT,"tlogin -t $timeo -c \"$commandstr\" $host </dev/null |") || die "tlogin failed for $host: $!\n";
     }
 }
 
@@ -282,8 +281,8 @@ TOP: while(<INPUT>) {
 	last;
     }
     if (/^Error:/) {
-	print STDOUT ("$host $clogin_pgm error: $_");
-	print STDERR ("$host $clogin_pgm error: $_") if ($debug);
+	print STDOUT ("$host tlogin error: $_");
+	print STDERR ("$host tlogin error: $_") if ($debug);
 	$clean_run=0;
 	last;
     }

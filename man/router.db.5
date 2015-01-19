@@ -1,6 +1,6 @@
 .\"
 .hys 50
-.TH "router.db" "5" "29 April 2014"
+.TH "router.db" "5" "25 November 2014"
 .SH NAME
 router.db \- rancid group configuration file
 .SH DESCRIPTION
@@ -89,6 +89,10 @@ A Cisco Nexus switch/router.
 A Cisco device running IOS-XR.
 .TP
 .ID 15n
+.B cisco-wlc
+A Cisco Wireless Controller.
+.TP
+.ID 15n
 .B css
 A Cisco content services switch.
 .TP
@@ -165,6 +169,10 @@ A Netscalar load balancer.
 A Netscreen firewall.
 .TP
 .ID 15n
+.B paloalto
+A Palo Alto Networks device.
+.TP
+.ID 15n
 .B procket
 A Procket router.
 .TP
@@ -181,8 +189,8 @@ A Riverstone NAS or Cabletron (starting with version ~9.0.3) router.
 A SMC switch (some Dell OEMs).
 .TP
 .ID 15n
-.B tnt
-A Lucent TNT.
+.B ciscowlc
+A Cisco WLC.
 .TP
 .ID 15n
 .B xirrus
@@ -243,3 +251,9 @@ within \fI$BASEDIR/etc/rancid.conf\fR.
 .BR control_rancid (1),
 .BR rancid (1),
 .BR rancid.conf (5)
+.\"
+.SH HISTORY 
+In RANCID releases prior to 3.0,
+.B router.db
+used colons (:) as its field separator.
+This was changed to allow IPv6 addresses to be used in router.db.

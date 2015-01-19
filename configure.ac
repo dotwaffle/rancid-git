@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-AC_PREREQ(2.13)
+AC_PREREQ(2.69)
 
 dnl	VERSION needs to be updated such that 'make dist' uses the correct
 dnl	filename for the directory name and tarball.
@@ -15,14 +15,14 @@ AC_INIT(m4_esyscmd(configure.vers package_name),
 	[rancid@shrubbery.net])
 AC_CONFIG_SRCDIR(CHANGES)
 AM_INIT_AUTOMAKE
-COPYYEARS="1997-2014"
+COPYYEARS="1997-2015"
 AC_SUBST(COPYYEARS)
 
 
 dnl default install location
 AC_PREFIX_DEFAULT(/usr/local/rancid)
 
-dnl AM_MAINTAINER_MODE()
+AM_MAINTAINER_MODE([disable])
 
 dnl AC_CONFIG_SUBDIRS(util)
 
@@ -47,12 +47,13 @@ AC_C_STRINGIZE
 
 # check includes/headers
 AC_HEADER_STDC
-AC_CHECK_HEADERS(ctype.h errno.h fcntl.h limits.h pty.h malloc.h memory.h \
-		 siginfo.h string.h strings.h stropts.h sys/resource.h \
-		 sys/types.h sys/wait.h sysexits.h unistd.h util.h wait.h)
+AC_CHECK_HEADERS(ctype.h errno.h fcntl.h libutil.h limits.h pty.h malloc.h \
+		 memory.h siginfo.h string.h strings.h stropts.h \
+		 sys/resource.h sys/types.h sys/wait.h sysexits.h unistd.h \
+		 util.h wait.h)
 
 # check functions
-AC_CHECK_FUNCS(memcpy memmove memset strerror strchr \
+AC_CHECK_FUNCS(asprintf memcpy memmove memset strerror strchr \
 		strrchr strstr strtok strrtok index rindex unsetenv)
 AC_CHECK_FUNCS(openpty, openpty=1, openpty=0)
 # openpty() is not in the default libraries.  See if it is in some other lib.
@@ -249,10 +250,12 @@ AC_SUBST(DIFF)
 rd_cv_DIFF_CMD=$DIFF_CMD
 AC_SUBST(DIFF_CMD)
 
-AC_PATH_PROG(SENDMAIL,sendmail,no, [/usr/sbin:/usr/bin:/usr/lib],
-	[SENDMAIL=$ac_cv_prog_SENDMAIL;
-	 AC_SUBST(SENDMAIL)
-	])
+AC_PATH_PROG(SENDMAIL, [sendmail], [no], [/usr/sbin:/usr/bin:/usr/lib])
+if test "$SENDMAIL" = "no"; then
+    echo "WARNING: sendmail not found" >&2
+    SENDMAIL=''
+fi
+AC_SUBST(SENDMAIL)
 
 # Find an appropriate tar for use in "dist" targets.  A "best guess"
 # is good enough -- if we can't find GNU tar, we don't really care.
@@ -321,7 +324,7 @@ rd_cv_lg_ping_cmd=$LG_PING_CMD
 # locate tools to build $PATH for rancid.conf.  order is significant.  want
 # to be sure that we pick up the the proper diff and ucbmail in
 # etc/rancid.conf.
-ENV_PATH="`dirname $PERLV_PATH`:`dirname $EXPECT_PATH`:`dirname $SENDMAIL`"
+ENV_PATH="`dirname $PERLV_PATH`:`dirname $EXPECT_PATH`:`dirname \"$SENDMAIL\"`"
 ENV_PATH="$ENV_PATH:`dirname $DIRNAME`:`dirname $DIFF`"
 
 if test $RCSSYS = "cvs" ; then
@@ -450,7 +453,7 @@ AC_CONFIG_HEADERS(include/config.h)
 AC_CONFIG_FILES(bin/control_rancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/agmrancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/alogin bin/arancid, [chmod a+x $ac_file])
-AC_CONFIG_FILES(bin/anlogin bin/anrancid, [chmod a+x $ac_file])
+AC_CONFIG_FILES(bin/anlogin, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/arrancid, [chmod a+x $ac_file])
 dnl AC_CONFIG_FILES(bin/atrancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/avologin bin/avorancid, [chmod a+x $ac_file])
@@ -471,16 +474,16 @@ AC_CONFIG_FILES(bin/mrancid bin/mrvlogin, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/mtrancid bin/mtlogin, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/nlogin bin/nrancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/nslogin bin/nsrancid, [chmod a+x $ac_file])
-AC_CONFIG_FILES(bin/nxrancid, [chmod a+x $ac_file])
+AC_CONFIG_FILES(bin/panlogin, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/prancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/rivlogin bin/rivrancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/rrancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/srancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/tlogin, [chmod a+x $ac_file])
-AC_CONFIG_FILES(bin/tntlogin bin/tntrancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/trancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/xilogin bin/xirancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/xrancid, [chmod a+x $ac_file])
+AC_CONFIG_FILES(bin/wlogin, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/zrancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(share/rtrfilter, [chmod a+x $ac_file])
 

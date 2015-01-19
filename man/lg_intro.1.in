@@ -28,7 +28,7 @@ there is an error in the file's syntax or if the file can not be found, error
 messages will be displayed on standard-error.  The Apache http server
 redirects standard-error to its error log file by default.
 .PP
-lgform.cgi displays a html form consisting of a list of possible 
+lgform.cgi displays a html form consisting of a list of possible
 router commands that can be run and a scrolling list of routers that
 these commands may be run on.  When the form is submitted, lg.cgi is
 run.
@@ -43,7 +43,7 @@ results of the command are cached if applicable and displayed for the
 user.
 .\"
 .SH "GETTING STARTED"
-Besides 
+Besides
 .BR lg.conf (5),
 additional instructions for setting up the looking glass can be found
 in the README file under

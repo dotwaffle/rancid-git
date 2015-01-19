@@ -1,6 +1,6 @@
 #! /bin/sh
 ##
-## $Id: rancid-cvs.in 2340 2011-11-29 22:30:30Z heas $
+## $Id: rancid-cvs.in 2982 2014-12-23 21:20:03Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -51,7 +51,7 @@ ENVFILE="@sysconfdir@/rancid.conf"
 
 # print a usage message to stderr
 pr_usage() {
-    echo "usage: $0 [-V] [group [group ...]]" >&2;
+    echo "usage: $0 [-V] [-f config_file] [group [group ...]]" >&2;
 }
 
 # command-line options
@@ -62,6 +62,16 @@ if [ $# -ge 1 ] ; then
 	-V)
 	    echo "@PACKAGE@ @VERSION@"
 	    exit 0
+	    ;;
+	-f)
+	    shift
+	    # next arg is the alternate config file name
+	    ENVFILE="$1"
+	    if [ -z $ENVFILE ]; then
+		pr_usage
+		exit 1
+	    fi
+	    shift
 	    ;;
 	-*)
 	    echo "unknown option: $1" >&2
@@ -87,17 +97,19 @@ cd $BASEDIR
 
 # RCS system
 RCSSYS=${RCSSYS:=cvs};
-if [ $RCSSYS != "cvs" -a $RCSSYS != "svn" ] ; then
-    echo "$RCSSYS is not a valid value for RCSSYS."
+if [ $RCSSYS != "cvs" -a $RCSSYS != "svn" -a $RCSSYS != "git" ] ; then
+    echo "$RCSSYS is not a valid value for RCSSYS. See rancid.conf(5)." >&2
     exit 1
 fi
 
-# Top level CVS stuff
-if [ $RCSSYS = cvs ]; then
+# Top level RCS stuff
+case $RCSSYS in
+cvs )
     if [ ! -d $CVSROOT ]; then
 	cvs -d $CVSROOT init
     fi
-else
+    ;;
+svn )
     if echo "$CVSROOT" | grep -q "://"; then
 	# do nothing because CVSROOT is some sort of a URL
 	# also assume the repository has already been provisioned
@@ -108,7 +120,19 @@ else
 	fi
 	CVSROOT="file://$CVSROOT"
     fi
-fi
+    ;;
+git)
+    if echo "$CVSROOT" | grep -q "://"; then
+	# do nothing because CVSROOT is some sort of a URL
+	# also assume the repository has already been provisioned
+	:
+    else
+	if [ ! -d $CVSROOT ]; then
+	    mkdir $CVSROOT
+	fi
+    fi
+    ;;
+esac
 
 # Log dir
 if [ ! -d logs ]; then
@@ -125,33 +149,52 @@ fi
 
 for GROUP in `echo $LIST_OF_GROUPS` ;
 do
-
     DIR=$BASEDIR/$GROUP
 
     # Directory for the group and the configs
     if [ ! -d $DIR ]; then
 	mkdir -p $DIR
 	cd $DIR
-	if [ $RCSSYS = cvs ]; then
+	case $RCSSYS in
+	cvs )
 	    cvs import -m "$GROUP" $GROUP new rancid
 	    cd $BASEDIR
 	    cvs checkout $GROUP
-	else
+	    ;;
+	svn )
 	    svn import -m "$GROUP" . $CVSROOT/$GROUP
 	    cd $BASEDIR
 	    svn checkout $CVSROOT/$GROUP $GROUP
 	    cd $DIR
 	    svn update
-	fi
+	    ;;
+	git )
+	    git init --bare $CVSROOT/$GROUP
+	    git clone $CVSROOT/$GROUP .
+	    git config --global user.name RANCiD
+	    git config --global user.email $USER$MAILDOMAIN
+	    git config --global push.default simple
+	    ;;
+	esac
     fi
     cd $DIR
     if [ ! -d configs ]; then
+	rm -f configs
 	mkdir configs
+	if [ $RCSSYS = "git" ]; then
+	    cat > configs/.gitignore <<EOF
+*.new
+*.raw
+EOF
+	fi
 	$RCSSYS add configs
 	$RCSSYS commit -m 'new' configs
+	if [ $RCSSYS = "git" ]; then
+	    git push
+	fi
     fi
 
-    # main files
+    # config and status files
     if [ ! -f routers.all ]; then
 	touch routers.all
     fi
@@ -165,5 +208,8 @@ do
 	touch router.db
 	$RCSSYS add router.db
 	$RCSSYS commit -m 'new' router.db
+	if [ $RCSSYS = "git" ]; then
+	    git push
+	fi
     fi
 done

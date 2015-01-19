@@ -8,6 +8,8 @@
 agm;script;agmrancid
 #
 adtran;script;rancid -t adtran
+adtran;module;adtran
+adtran;inloop;adtran::inloop
 adtran;login;clogin
 # TA5000
 adtran;command;adtran::ShowVersion;show version
@@ -23,6 +25,7 @@ adtran;command;adtran::ShowInterfaces;show interfaces
 adtran;command;adtran::WriteTerm;show running-config
 #
 alteon;script;arancid
+alteon;login;alogin
 #
 arbor;script;rancid -t arbor
 arbor;login;anlogin
@@ -33,14 +36,18 @@ arbor;command;arbor::ShowHardware;system hardware
 arbor;command;arbor::ShowConfig;config show
 #
 arista;script;arrancid
+arista;login;clogin
 #
 avocent;script;avorancid
+avocent;login;avologin
 #
 baynet;script;brancid
+baynet;login;blogin
 #
 cat5;script;cat5rancid
+cat5;login;clogin
 #
-# Cisco IOS device
+# Cisco IOS device & Allied Telesis AW+
 cisco;script;rancid -t cisco
 cisco;login;clogin
 cisco;module;ios
@@ -110,14 +117,50 @@ cisco;command;ios::WriteTerm;show running-config view full;workaround for role-b
 cisco;command;ios::WriteTerm;show running-config
 cisco;command;ios::WriteTerm;write term
 #
-cisco-nx;script;nxrancid
+cisco-nx;script;rancid -t cisco-nx
+cisco-nx;login;clogin
+cisco-nx;module;nxos
+cisco-nx;inloop;nxos::inloop
+cisco-nx;command;rancid::RunCommand;term no monitor-force
+cisco-nx;command;nxos::ShowVersion;show version
+cisco-nx;command;nxos::ShowVersionBuild;show version build-info all
+cisco-nx;command;nxos::ShowLicense;show license
+cisco-nx;command;nxos::ShowLicense;show license usage
+cisco-nx;command;nxos::ShowLicense;show license host-id
+cisco-nx;command;nxos::ShowRedundancy;show system redundancy status
+cisco-nx;command;nxos::ShowEnv;show environment clock
+cisco-nx;command;nxos::ShowEnv;show environment fan
+cisco-nx;command;nxos::ShowEnv;show environment fex all fan
+cisco-nx;command;nxos::ShowEnvTemp;show environment temperature
+cisco-nx;command;nxos::ShowEnvPower;show environment power
+cisco-nx;command;nxos::ShowBoot;show boot
+cisco-nx;command;nxos::DirSlotN;dir bootflash:
+cisco-nx;command;nxos::DirSlotN;dir debug:
+cisco-nx;command;nxos::DirSlotN;dir logflash:
+cisco-nx;command;nxos::DirSlotN;dir slot0:
+cisco-nx;command;nxos::DirSlotN;dir usb1:
+cisco-nx;command;nxos::DirSlotN;dir usb2:
+cisco-nx;command;nxos::DirSlotN;dir volatile:
+cisco-nx;command;nxos::ShowModule;show module
+cisco-nx;command;nxos::ShowModule;show module xbar
+#cisco-nx;command;nxos::ShowModule;show module X;add, but wait for show all
+#cisco-nx;command;nxos::ShowModule;show module X epld;add, but wait for show all
+cisco-nx;command;nxos::ShowInventory;show inventory
+cisco-nx;command;nxos::ShowVTP;show vtp status;drop?
+cisco-nx;command;nxos::ShowVLAN;show vlan
+cisco-nx;command;nxos::ShowDebug;show debug
+cisco-nx;command;nxos::ShowCores;show cores vdc-all
+cisco-nx;command;nxos::ShowProcLog;show processes log vdc-all
+cisco-nx;command;nxos::ShowFex;show module fex
+cisco-nx;command;nxos::ShowFex;show fex
+cisco-nx;command;nxos::WriteTerm;show running-config
 #
 cisco-xr;script;rancid -t cisco-xr
 cisco-xr;login;clogin
 cisco-xr;module;iosxr
 cisco-xr;inloop;iosxr::inloop
-cisco-xr;command;iosxr::RunCommand;terminal no-timestamp;Disable timestamps XR 3.6
-cisco-xr;command;iosxr::RunCommand;terminal exec prompt no-timestamp;Disable timestamps XR 3.8
+cisco-xr;command;rancid::RunCommand;terminal no-timestamp;Disable timestamps XR 3.6
+cisco-xr;command;rancid::RunCommand;terminal exec prompt no-timestamp;Disable timestamps XR 3.8
 cisco-xr;command;iosxr::ShowVersion;admin show version
 cisco-xr;command;iosxr::ShowInstallSummary;admin show install summary;XR image
 cisco-xr;command;iosxr::ShowLicense;admin show license;XR image
@@ -165,6 +208,22 @@ cisco-xr;command;iosxr::ShowRPL;show rpl maximum
 cisco-xr;command;iosxr::AdminShowRunning;admin show running
 cisco-xr;command;iosxr::WriteTerm;show running-config
 #
+cisco-wlc4;script;rancid -t cisco-wlc4
+cisco-wlc4;login;wlogin
+cisco-wlc4;module;ciscowlc
+cisco-wlc4;inloop;ciscowlc::inloop
+cisco-wlc4;command;ciscowlc::ShowUdi;show udi
+cisco-wlc4;command;ciscowlc::ShowSysinfo;show sysinfo
+cisco-wlc4;command;ciscowlc::ShowConfig;show runnning-config
+#
+cisco-wlc5;script;rancid -t cisco-wlc5
+cisco-wlc5;login;wlogin
+cisco-wlc5;module;ciscowlc
+cisco-wlc5;inloop;ciscowlc::inloop
+cisco-wlc5;command;ciscowlc::ShowUdi;show udi
+cisco-wlc5;command;ciscowlc::ShowSysinfo;show sysinfo
+cisco-wlc5;command;ciscowlc::ShowConfig;show run-config commands
+#
 compass;script;rancid -t compass
 compass;login;complogin
 compass;module;eos
@@ -179,6 +238,7 @@ compass;command;eos::ShowInventory;show system hardware
 compass;command;eos::ShowConfig;show configuration detail 
 #
 css;script;cssrancid
+css;login;clogin
 #
 dell;script;rancid -t dell
 dell;login;dllogin
@@ -188,18 +248,25 @@ dell;command;dell::GetSystem;show switch;
 dell;command;dell::GetConf;show config current_config
 #
 enterasys;script;rivrancid
+enterasys;login;rivlogin
 #
 erx;script;jerancid
+erx;login;clogin
 #
 extreme;script;xrancid
+extreme;login;clogin
 #
 ezt3;script;erancid
+ezt3;login;elogin
 #
 f5;script;f5rancid
+f5;login;clogin
 #
 force10;script;f10rancid
+force10;login;clogin
 #
 fortigate;script;fnrancid
+fortigate;login;fnlogin
 #
 # Foundry and HP procurve OEMs of Foundry
 foundry;script;rancid -t foundry
@@ -214,8 +281,10 @@ foundry;command;foundry::WriteTerm;write term
 foundry;command;foundry::WriteTerm;show running-config
 #
 hitachi;script;htrancid
+hitachi;login;htlogin
 #
 hp;script;hrancid
+hp;login;hlogin
 #
 juniper;script;rancid -t juniper
 juniper;login;jlogin
@@ -290,8 +359,10 @@ juniper-srx;command;junos::ShowConfiguration;show configuration system
 juniper-srx;command;junos::ShowConfiguration;show configuration vlans
 #
 mikrotik;script;mtrancid
+mikrotik;login;mtlogin
 #
 mrtd;script;mrancid
+mrtd;login;clogin
 #
 # MRV optical switches
 mrv;script;rancid -t mrv
@@ -304,21 +375,37 @@ mrv;command;mrv::ShowSlots;show slots
 mrv;command;mrv::WriteTerm;show running-config
 #
 netopia;script;trancid
+netopia;login;tlogin
 #
 netscaler;script;nsrancid
+netscaler;login;nslogin
 #
 netscreen;script;nrancid
+netscreen;login;nlogin
+#
+paloalto;script;rancid -t paloalto
+paloalto;login;panlogin
+paloalto;module;panos
+paloalto;inloop;panos::inloop
+paloalto;command;rancid::RunCommand;set cli scripting-mode on
+paloalto;command;rancid::RunCommand;set cli pager off
+paloalto;command;panos::ShowInfo;show system info
+paloalto;command;panos::ShowConfig;show config running
 #
 procket;script;prancid
+procket;login;clogin
 #
 redback;script;rrancid
+redback;login;clogin
 #
 riverstone;script;rivrancid
+riverstone;login;rivlogin
 #
 smc;script;srancid
-#
-tnt;script;tntrancid
+smc;login;hlogin
 #
 xirrus;script;xirancid
+xirrus;login;xilogin
 #
 zebra;script;zrancid
+zebra;login;clogin

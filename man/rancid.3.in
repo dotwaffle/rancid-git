@@ -1,8 +1,8 @@
 .\"
-.\" $Id: rancid.3.in 2798 2014-02-12 18:25:10Z heas $
+.\" $Id: rancid.3.in 2968 2014-12-17 21:31:38Z heas $
 .\"
 .hys 50
-.TH "rancid" "3" "12 February 2014"
+.TH "rancid" "3" "17 December 2014"
 .SH NAME
 rancid \- rancid perl module
 .SH INTRODUCTION
@@ -19,7 +19,7 @@ but it could be used by any perl program for site-specific handling or
 additional automata.
 .PP Input handling functions:
 .TP
-.B RunCommand(*input, *output, command)
+.B RunCommand(*INPUT, *OUTPUT, command)
 Parse a single command that returns no required info; the output is dropped.
 This could be used as the processing function in a command definition in
 a rancid.types file.
@@ -28,13 +28,21 @@ a rancid.types file.
 Output handling functions:
 .sp
 .TP
-.B ProcessHistory(tag, command, command argument, string)
-Save the configuration on exit, if the device prompts at logout time.
-This only has affect when used with -s.
-XXX
+.B ProcessHistory([tag], [sort_function], [sort_function_argument], string)
+If the optional tag string and sort_function arguments are omitted, the
+string is output immediately.
+Otherwise, the strings are accumulated in a hash, by the hash key
+sort_function_argument, each time
+.B ProcessHistory()
+is called until the tag or sort_function changes, at which time the queue
+is flushed and the new string is handled.  If sort_function had been supplied,
+it is called with the hash as its argument.
+.sp
+Note that if the hash key sort_function_argument exists, the new strings is
+appended to the existing hash value.
 .\"
 .TP
-.B keysort(XXX)
+.B keysort(%hash)
 A sort routine that will sort on the keys of a hash as if it were a normal
 array.
 For example:
@@ -47,7 +55,7 @@ ProcessHistory("TAG","keysort","D0","!\\n");
 B0 and D0 are the sort keys.
 .\"
 .TP
-.B valsort(XXX)
+.B valsort(%hash)
 A sort routine that will sort on the values of a hash as if it were a normal
 array.
 .sp
@@ -57,12 +65,12 @@ ProcessHistory("TAG","valsort","","!D0\\n");
 .fi
 .\"
 .TP
-.B numsort(XXX)
+.B numsort(%hash)
 A numerical sort routine (ascending).
 .\"
 .TP
-.B ipsort(IPv4 dotted-quad)
-A sort routine that will sort on the ip address when the ip address is
+.B ipsort(IPv4/v6 dotted-quad)
+A sort routine that will sort on the ip address when the IP address is
 anywhere in the strings.
 .sp
 .nf
@@ -72,9 +80,9 @@ ProcessHistory("TAG","ipsort","192.168.1.0","!D0\\n");
 .\"
 .TP
 .B sortbyipaddr(XXX)
-A sort routine that will sort based upon IPv4 addresses.
+A sort routine that will sort based upon IPv4/v6 addresses.
 .PP
-Please see the library code for export variables.
+Please see the library code for exported variables.
 .PP
 .\"
 .SH "SEE ALSO"

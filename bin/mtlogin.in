@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id$
+## $Id: mtlogin.in 2935 2014-11-21 05:38:27Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -256,7 +256,7 @@ proc find {var router} {
     upvar int_$var list
     if { [info exists list] } {
 	foreach line $list {
-	    if { [string match [lindex $line 0] $router ] } {
+	    if { [string match -nocase [lindex $line 0] $router ] } {
 		return [lrange $line 1 end]
 	    }
 	}
@@ -419,6 +419,9 @@ proc run_commands { prompt command } {
 
     regsub -all "\[)(]" $prompt {\\&} reprompt
 
+    # handle escaped ;s in commands, and ;; and ^;
+    regsub -all {([^\\]);;} $command "\\1;\u002;" esccommand
+    regsub {^;} $esccommand "\u002;" command
     set sep "\\1\u001"
     regsub -all {([^\\])\;} $command "$sep" esccommand
     set sep "\u001"

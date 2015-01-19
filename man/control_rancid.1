@@ -7,7 +7,7 @@ control_rancid \- run rancid for devices of a group
 .B control_rancid
 [\fB\-V\fR] [\c
 .BI \-f\ \c
-group_config_file]\ \c
+config_file]\ \c
 [\c
 .BI \-m\ \c
 mail_rcpt]\ \c
@@ -32,8 +32,9 @@ The command-line options are as follows:
 Prints package name and version strings.
 .TP
 .B \-f group_config_file
-Specify a rancid.conf specific to the given group.  The global rancid.conf
-file is read by rancid-run, which calls
+Specify an alternative rancid.conf.  The global rancid.conf file is read by
+.B rancid-run,
+which calls
 .B control_rancid
 for each group, and 
 .B control_rancid

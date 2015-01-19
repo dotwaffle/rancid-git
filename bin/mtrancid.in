@@ -8,15 +8,15 @@
 ##
 ## This code is derived from software contributed to and maintained by
 ## Terrapin Communications, Inc. by Henry Kilmer, John Heasley, Andrew Partan,
-## Pete Whiting, Austin Schutz, and Andrew Fort. 
+## Pete Whiting, Austin Schutz, and Andrew Fort.
 ##
-## Redistribution and use in source and binary forms, with or without  
+## Redistribution and use in source and binary forms, with or without
 ## modification, are permitted provided that the following conditions
 ## are met:
 ## 1. Redistributions of source code must retain the above copyright
 ##    notice, this list of conditions and the following disclaimer.
 ## 2. Redistributions in binary form must reproduce the above copyright
-##    notice, this list of conditions and the following disclaimer in the  
+##    notice, this list of conditions and the following disclaimer in the
 ##    documentation and/or other materials provided with the distribution.
 ## 3. All advertising materials mentioning features or use of this software
 ##    must display the following acknowledgement:
@@ -27,7 +27,7 @@
 ##    this software without specific prior written permission.
 ## 5. It is requested that non-binding fixes and modifications be contributed
 ##    back to Terrapin Communications, Inc.
-## 
+##
 ## THIS SOFTWARE IS PROVIDED BY Terrapin Communications, INC. AND CONTRIBUTORS
 ## ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 ## TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -39,7 +39,6 @@
 ## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
-#
 #
 #  RANCID - Really Awesome New Cisco confIg Differ
 #
@@ -59,7 +58,6 @@ $host = $ARGV[0];
 $clean_run = 0;
 $found_end = 0;
 $timeo = 90;			# clogin timeout in seconds
-$clogin_pgm= $ENV{'RANCID_CLOGIN'} || "mtlogin";
 
 my(@commandtable, %commands, @commands);# command lists
 my(%filter_pwds);		# password filtering mode
@@ -293,7 +291,7 @@ if (length($host) == 0) {
     }
 }
 if ($opt_C) {
-    print "$clogin_pgm -t $timeo -c\'$commandstr\' $host\n";
+    print "mtlogin -t $timeo -c\'$commandstr\' $host\n";
     exit(0);
 }
 open(OUTPUT,">$host.new") || die "Can't open $host.new for writing: $!\n";
@@ -306,13 +304,13 @@ if ($file) {
     print STDOUT "opening file $host\n" if ($log);
     open(INPUT,"<$host") || die "open failed for $host: $!\n";
 } else {
-    print STDERR "executing $clogin_pgm -t $timeo -c\"$commandstr\" $host\n" if ($debug);
-    print STDOUT "executing $clogin_pgm -t $timeo -c\"$commandstr\" $host\n" if ($log);
+    print STDERR "executing mtlogin -t $timeo -c\"$commandstr\" $host\n" if ($debug);
+    print STDOUT "executing mtlogin -t $timeo -c\"$commandstr\" $host\n" if ($log);
     if (defined($ENV{NOPIPE})) {
-	system "$clogin_pgm -t $timeo -c \"$commandstr\" $host </dev/null > $host.raw 2>&1" || die "$clogin_pgm failed for $host: $!\n";
-	open(INPUT, "< $host.raw") || die "$clogin_pgm failed for $host: $!\n";
+	system "mtlogin -t $timeo -c \"$commandstr\" $host </dev/null > $host.raw 2>&1" || die "mtlogin failed for $host: $!\n";
+	open(INPUT, "< $host.raw") || die "mtlogin failed for $host: $!\n";
     } else {
-	open(INPUT,"$clogin_pgm -t $timeo -c \"$commandstr\" $host </dev/null |") || die "$clogin_pgm failed for $host: $!\n";
+	open(INPUT,"mtlogin -t $timeo -c \"$commandstr\" $host </dev/null |") || die "mtlogin failed for $host: $!\n";
     }
 }
 
@@ -337,8 +335,8 @@ TOP: while(<INPUT>) {
 	last;
     }
     if (/^Error:/) {
-	print STDOUT ("$host $clogin_pgm error: $_");
-	print STDERR ("$host $clogin_pgm error: $_") if ($debug);
+	print STDOUT ("$host mtlogin error: $_");
+	print STDERR ("$host mtlogin error: $_") if ($debug);
 	$clean_run=0;
 	last;
     }

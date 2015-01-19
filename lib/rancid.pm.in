@@ -1,6 +1,6 @@
 package rancid;
 ##
-## $Id: rancid.pm.in 2797 2014-02-12 17:57:55Z heas $
+## $Id: rancid.pm.in 2972 2014-12-18 00:05:16Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -101,7 +101,7 @@ sub rancidinit {
     }
 
     $command = $hist_tag = "";		# ProcessHistory state
-    for (keys %history) {
+    for (keys(%history)) {
         delete $history{$_};
     }
     @history = ();
@@ -145,6 +145,11 @@ sub rancidinit {
 	    print(STDERR "Too few arguments: host name required\n");
 	    exit(1);
 	}
+    }
+
+    if (!defined($main::opt_t) || length($main::opt_t) == 0) {
+	print(STDERR "Too few arguments: -t option is required\n");
+	exit(1);
     }
 
     # make OUTPUT unbuffered if debugging
@@ -237,9 +242,9 @@ sub loadtype {
     # commands to the subroutine and track commands that have been completed.
     @commands = map(keys(%$_), @commandtable);
     %commands = map(%$_, @commandtable);
-    $commandcnt = scalar(keys %commands);
+    $commandcnt = scalar(keys(%commands));
 
-    $commandstr = join(";",@commands);
+    $commandstr = join(";", @commands);
     $cmds_regexp = join("|", map quotemeta($_), @commands);
 
     if ($main::opt_C) {
@@ -250,9 +255,14 @@ sub loadtype {
     0;
 }
 
-# This routine is used to print out the router configuration
+# This routine is used to print out the router configuration.  Each line is
+# fed to ProcessHistory([tag], [output/sort func], [func argument], line/string)
+# which outputs the line/strings if there is no tag or sort function, else it
+# accumulates the lines/strings until either the optional tag changes or the
+# optional output function changes.
 sub ProcessHistory {
-    my($new_hist_tag,$new_command,$command_string,@string) = (@_);
+    my($new_hist_tag, $new_command, $command_string, @string) = (@_);
+
     if ((($new_hist_tag ne $hist_tag) || ($new_command ne $command))
 	&& scalar(%history)) {
 	print eval "$command \%history";
@@ -277,86 +287,123 @@ sub ProcessHistory {
 
 sub numerically { $a <=> $b; }
 
-# This is a sort routine that will sort numerically on the
-# keys of a hash as if it were a normal array.
+# keynsort(%hash) is a sort routine that will sort numerically on the
+# keys of the hash as if it were a normal array.
 sub keynsort {
     my(%lines) = @_;
     my($i) = 0;
     my($key, @sorted_lines);
     foreach $key (sort numerically keys(%lines)) {
-	$sorted_lines[$i] = $lines{$key};
-	$i++;
+	$sorted_lines[$i++] = $lines{$key};
     }
     @sorted_lines;
 }
 
-# This is a sort routine that will sort on the
-# keys of a hash as if it were a normal array.
+# keysort(%hash) is a sort routine that will sort alpha-numerically on the
+# keys of the hash as if it were a normal array.
 sub keysort {
     my(%lines) = @_;
     my($i) = 0;
     my($key, @sorted_lines);
     foreach $key (sort keys(%lines)) {
-	$sorted_lines[$i] = $lines{$key};
-	$i++;
+	$sorted_lines[$i++] = $lines{$key};
     }
     @sorted_lines;
 }
 
-# This is a sort routine that will sort on the
-# values of a hash as if it were a normal array.
+# valsort(%hash) is a sort routine that will sort on the values of the hash
+# as if it were a normal array.
 sub valsort {
     my(%lines) = @_;
     my($i) = 0;
     my($key, @sorted_lines);
-    foreach $key (sort values %lines) {
-	$sorted_lines[$i] = $key;
-	$i++;
+    foreach $key (sort values(%lines)) {
+	$sorted_lines[$i++] = $key;
     }
     @sorted_lines;
 }
 
-# This is a numerical sort routine (ascending).
+# numsort(%hash) is a numerical sort routine (ascending).
 sub numsort {
     my(%lines) = @_;
     my($i) = 0;
     my($num, @sorted_lines);
-    foreach $num (sort {$a <=> $b} keys %lines) {
-	$sorted_lines[$i] = $lines{$num};
-	$i++;
+    foreach $num (sort {$a <=> $b} keys(%lines)) {
+	$sorted_lines[$i++] = $lines{$num};
     }
     @sorted_lines;
 }
 
-# This is a sort routine that will sort on the
-# ip address when the ip address is anywhere in
-# the strings.
+# ipsort(%hash) is a sort routine that will sort on the IPv4/v6 address keys
+# of the hash as if it were a normal array.
 sub ipsort {
     my(%lines) = @_;
     my($i) = 0;
     my($addr, @sorted_lines);
-    foreach $addr (sort sortbyipaddr keys %lines) {
-	$sorted_lines[$i] = $lines{$addr};
-	$i++;
+    foreach $addr (sort sortbyipaddr keys(%lines)) {
+	$sorted_lines[$i++] = $lines{$addr};
     }
     @sorted_lines;
 }
 
-# These two routines will sort based upon IP addresses
+# ipaddrval(IPaddr) converts and IPv4/v6 address to a string for comparison.
+# Some may ask why not use Net::IP; performance.  We tried and it was horribly
+# slow.
 sub ipaddrval {
-    my(@a) = ($_[0] =~ m#^(\d+)\.(\d+)\.(\d+)\.(\d+)$#);
-    # work around uninitialized values warning, requires perl >= 5.010
-    $a[0] //= 0;
-    $a[1] //= 0;
-    $a[2] //= 0;
-    $a[3] //= 0;
-    $a[3] + 256 * ($a[2] + 256 * ($a[1] + 256 * $a[0]));
-}
-sub sortbyipaddr {
-    &ipaddrval($a) <=> &ipaddrval($b);
+    my($a) = @_;
+
+    if ($a =~ /:/) {
+	my($p, $l, @a, $i, $n, $z);
+	if ($a eq "::") {
+	    return("0000000000000000000000000000000000000000000");
+	}
+	if ($a =~ /\//) {
+	    ($a, $l) = split(/\//, $a);
+	} else {
+	    $l = 128;
+	}
+	@a = split(/:/, $a, -1);
+	$n = $#a;
+
+	$a ="";
+	for ($i = 0; $i <= $n; $i++) {
+	    if ($n < 7 && $i < ($n) && length($a[$i]) == 0) {
+		# fill-in the ::s with 0s
+		for ($z = 8 - $i - ($n - $i); $z; $z--) {
+		    $a .= "00000";
+		}
+		next;
+	    }
+	    # work around uninitialized values warning, requires perl >= 5.010
+	    $a[$i] //= 0;
+	    $a .= sprintf("%05d", hex($a[$i]));
+	}
+	$a .= sprintf("%03d", $l);
+	return($a);
+    } else {
+	my(@a, $l);
+	if ($a =~ /\//) {
+	    ($a, $l) = split(/\//, $a);
+	} else {
+	    $l = 32;
+	}
+	@a = split(/\./, $a, -1);
+	# work around uninitialized values warning, requires perl >= 5.010
+	$a[0] //= 0;
+	$a[1] //= 0;
+	$a[2] //= 0;
+	$a[3] //= 0;
+	return(sprintf("%03d%03d%03d%03d%02d", $a[0], $a[1], $a[2], $a[3], $l));
+    }
 }
 
-# This routine parses a single command that returns no required info.
+# sortbyipaddr(IPaddr, IPaddr) compares two IPv4/v6 addresses like strcmp().
+sub sortbyipaddr {
+    &ipaddrval($a) cmp &ipaddrval($b);
+}
+
+# This routine parses a single command that returns no required info.  The
+# output is discarded.
 sub RunCommand {
     my($INPUT, $OUTPUT, $cmd) = @_;
     print STDERR "    In RunCommand: $_" if ($debug);

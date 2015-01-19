@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: htlogin.in 2719 2013-07-30 12:44:34Z heas $
+## $Id: htlogin.in 3018 2015-01-11 05:51:49Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -39,9 +39,9 @@
 ## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 #  The expect login scripts were based on Erik Sherk's gwtn, by permission.
-# 
+#
 # htlogin - Hitachi router login
 #
 # Most options are intuitive for logging into an Hitachi router login.
@@ -265,7 +265,7 @@ proc find {var router} {
     upvar int_$var list
     if { [info exists list] } {
 	foreach line $list {
-	    if { [string match [lindex $line 0] $router ] } {
+	    if { [string match -nocase [lindex $line 0] $router ] } {
 		return [lrange $line 1 end]
 	    }
 	}
@@ -407,6 +407,9 @@ proc run_commands { prompt command } {
     global in_proc
     set in_proc 1
 
+    # handle escaped ;s in commands, and ;; and ^;
+    regsub -all {([^\\]);;} $command "\\1;\u002;" esccommand
+    regsub {^;} $esccommand "\u002;" command
     set sep "\\1\u001"
     regsub -all {([^\\])\;} $command "$sep" esccommand
     set sep "\u001"

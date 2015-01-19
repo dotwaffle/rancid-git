@@ -1,9 +1,9 @@
 ## Process this file with automake to produce Makefile.in
 ## A Makefile.in is supplied, in case you do not have automake.
 
-## $Id: Makefile.am 2813 2014-04-03 04:34:53Z heas $
+## $Id: Makefile.am 2997 2014-12-30 19:20:07Z heas $
 ##
-## Copyright (c) 1997-2013 by Terrapin Communications, Inc.
+## Copyright (c) 1997-2015 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## Please see the file COPYING for the text of the license.
@@ -12,23 +12,24 @@
 AUTOMAKE_OPTIONS=foreign
 
 bin_PROGRAMS = hpuifilter par
-bin_SCRIPTS = agmrancid alogin anlogin anrancid arancid arrancid atrancid \
+bin_SCRIPTS = agmrancid alogin anlogin arancid arrancid \
 	avologin avorancid blogin brancid cat5rancid clogin complogin \
 	control_rancid cssrancid dllogin elogin erancid f5rancid f10rancid \
 	flogin fnlogin fnrancid hlogin hrancid htlogin \
 	htrancid jerancid jlogin mrancid mrvlogin mtlogin mtrancid \
-	nlogin nrancid nslogin nsrancid nxrancid prancid rancid rivlogin \
-	rivrancid rrancid srancid tlogin tntlogin tntrancid trancid xilogin \
-	xirancid xrancid zrancid
+	nlogin nrancid nslogin nsrancid panlogin \
+	rancid rivlogin \
+	rivrancid rrancid slogin srancid tlogin trancid wlogin \
+	xilogin xirancid xrancid zrancid
 # XXX hack for the rancid to get pkglibdir, see corresponding XXX below
-bin_in = rancid.in
+bin_in = rancid.in slogin.in
 
 bin_SCRIPTS += lg.cgi lgform.cgi rancid-cvs rancid-fe rancid-run
 EXTRA_DIST= lg.cgi.in lgform.cgi.in rancid-cvs.in rancid-fe.in rancid-run.in \
 	$(bin_in)
 #dist_bin_SCRIPTS= $(bin_SCRIPTS:%=%.in)
 
-CLEANFILES= lg.cgi lgform.cgi rancid-cvs rancid-fe rancid-run
+CLEANFILES= lg.cgi lgform.cgi rancid rancid-cvs rancid-fe rancid-run slogin
 #CLEANFILES= $(bin_SCRIPTS)
 
 hpuifilter_SOURCES = hpuifilter.c
@@ -84,6 +85,7 @@ $(bin_in:%.in=%): Makefile $(top_builddir)/config.status
 # XXX there must be a better way to produce these dependencies, perhaps in
 #     configure.
 rancid: $(srcdir)/rancid.in
+slogin: $(srcdir)/slogin.in
 
 lg.cgi: Makefile $(srcdir)/lg.cgi.in
 	rm -f lg.cgi lg.cgi.tmp; \

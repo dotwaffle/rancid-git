@@ -1,6 +1,6 @@
 package dell;
 ##
-## $Id: dlrancid.in 2258 2010-10-11 20:49:05Z heas $
+## $Id: dell.pm.in 2978 2014-12-18 21:37:37Z heas $
 ##
 ## fnrancid patched to dlrancid to accomplish D-Link support
 ## adapted by: Gavin McCullagh <gmccullagh at gmail.com>
@@ -58,16 +58,14 @@ package dell;
 #
 # dell.pm - Dell D-Link rancid procedures
 #
-use 5.005;
+use 5.010;
 use strict 'vars';
 use warnings;
 no warnings 'uninitialized';
 require(Exporter);
 our @ISA = qw(Exporter);
 
-#XXX use @VERSION@ when we have a version w/o letters in it
-#XXX use rancid @VERSION@;
-use rancid;
+use rancid @VERSION@;
 
 our $proc;
 our $found_version;
@@ -144,7 +142,7 @@ sub GetSystem {
 	next if /^\s*$/;
 	last if (/$prompt/);
 
-	#next if (/^System Time:/i);
+	next if (/^system up time:/i);
 	#next if (/^\s*Virus-DB: .*/);
 	#next if (/^\s*Extended DB: .*/);
 	#next if (/^\s*IPS-DB: .*/);

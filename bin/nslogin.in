@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: nslogin.in 2808 2014-03-31 05:21:36Z heas $
+## $Id: nslogin.in 3018 2015-01-11 05:51:49Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -39,9 +39,9 @@
 ## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 #  The expect login scripts were based on Erik Sherk's gwtn, by permission.
-# 
+#
 # nslogin - Netscaler login
 #
 # Hacks from Anshuman Kanwar.
@@ -281,7 +281,7 @@ proc find {var router} {
     upvar int_$var list
     if { [info exists list] } {
 	foreach line $list {
-	    if { [string match [lindex $line 0] $router ] } {
+	    if { [string match -nocase [lindex $line 0] $router ] } {
 		return [lrange $line 1 end]
 	    }
 	}
@@ -463,6 +463,9 @@ proc run_commands { prompt command } {
     # this is the only way i see to get rid of more prompts in o/p..grrrrr
     log_user 0
 
+    # handle escaped ;s in commands, and ;; and ^;
+    regsub -all {([^\\]);;} $command "\\1;\u002;" esccommand
+    regsub {^;} $esccommand "\u002;" command
     set sep "\\1\u001"
     regsub -all {([^\\])\;} $command "$sep" esccommand
     set sep "\u001"

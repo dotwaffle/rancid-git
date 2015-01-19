@@ -1,8 +1,8 @@
 .\"
-.\" $Id: rancid.conf.5.in 2716 2013-07-26 14:23:08Z heas $
+.\" $Id: rancid.conf.5.in 3016 2015-01-11 05:43:58Z heas $
 .\"
 .hys 50
-.TH "rancid.conf" "5" "28 July 2013"
+.TH "rancid.conf" "5" "9 January 2015"
 .SH NAME
 rancid.conf \- rancid environment configuration file
 .SH DESCRIPTION
@@ -55,10 +55,23 @@ Default: @localstatedir@
 and
 .IR rancid-cvs (1)
 use this environment variable to locate the CVS repository.
-In some cases, and for Subversion, it is used as an argument to commands.
-It should not be necessary to alter it.
+In some cases, particularly for Subversion and git, it is used as an argument
+to commands.
+In general, it should not be necessary to alter it, but it could be set
+to a remote location if the the RCS system supports it.
+If it is a remote location, any necessary authentication must be handled
+separately from RANCiD, which provides no means of interacting with the
+remote.
 .sp
 Default: $BASEDIR/CVS
+.\"
+.TP
+.B DIFFSCRIPT
+Defines an alternate filter for the output of the RCS diff.
+The filter should read from stdin and write to stdout.
+The default is defined in control_rancid and only improves readability.
+.sp
+Example: DIFFSCRIPT="sed -e '/^=/d' | expand"; export DIFFSCRIPT
 .\"
 .TP
 .B FILTER_PWDS
@@ -179,7 +192,7 @@ this is not set.
 If set,
 .IR rancid (1)
 will use temporary files to save the output from the router and then read
-these to build the file which will be saved in CVS (or Subversion).
+these to build the file which will be saved in CVS (or Subversion or git).
 Otherwise, an IPC pipe will be used.  We have found that the buffering
 mechanisms used in perl and expect are heinous.
 Using temporary files may result in a noticeable improvement in speed.
@@ -228,7 +241,9 @@ note that it must include @bindir@.
 Sets which revision control system is in use.
 Valid values are
 .B cvs
-for CVS
+for CVS,
+.B git
+for Git
 or
 .B svn
 for Subversion.
@@ -263,7 +278,7 @@ present in the environment of child processes, each must be exported.  See
 for more information on the built-in command export.
 .SH ERRORS
 .B rancid.conf
-is interpreted directly by 
+is interpreted directly by
 .IR sh (1),
 so its syntax follows that of the bourne shell.  Errors
 may produce quite unexpected results.

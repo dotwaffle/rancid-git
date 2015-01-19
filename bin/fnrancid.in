@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: fnrancid.in 2838 2014-05-05 14:18:29Z heas $
+## $Id: fnrancid.in 3018 2015-01-11 05:51:49Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -39,7 +39,7 @@
 ## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 # A library built on Stephen Gill's Netscreen stuff to accomodate
 # the Fortinet product line.  [d_pfleger@juniper.net]
 #
@@ -313,7 +313,7 @@ TOP: while(<INPUT>) {
     while (/^.+(#|\$)\s*($cmds_regexp)\s*$/) {
 	$cmd = $2;
 	# - FortiGate prompts end with either '#' or '$'. Further, they may
-	# be prepended with a '~' if the hostname is too long. Therefore, 
+	# be prepended with a '~' if the hostname is too long. Therefore,
 	# we need to figure out what our prompt really is.
 	if (!defined($prompt)) {
 	    if ($_ =~ m/^.+\~\$/) {

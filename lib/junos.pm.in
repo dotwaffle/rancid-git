@@ -1,6 +1,6 @@
 package junos;
 ##
-## $Id: junos.pm.in 2804 2014-03-19 00:27:18Z heas $
+## $Id: junos.pm.in 2953 2014-11-27 00:26:58Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -45,16 +45,14 @@ package junos;
 #  junos.pm - Juniper JunOS rancid procedures
 #
 
-use 5.005;
+use 5.010;
 use strict 'vars';
 use warnings;
 require(Exporter);
 our @ISA = qw(Exporter);
 $Exporter::Verbose=1;
 
-#XXX use @VERSION@ when we have a version w/o letters in it
-#XXX use rancid @VERSION@;
-use rancid;
+use rancid @VERSION@;
 
 our $ShowChassisSCB;			# Only run ShowChassisSCB() once
 

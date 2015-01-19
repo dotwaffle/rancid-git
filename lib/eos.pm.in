@@ -1,6 +1,6 @@
 package eos;
 ##
-## $Id: ios.pm.in 2582 2012-07-26 16:23:46Z heas $
+## $Id: eos.pm.in 2953 2014-11-27 00:26:58Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -44,16 +44,14 @@ package eos;
 #
 #  eos.pm - Compass EOS rancid procedures
 
-use 5.005;
+use 5.010;
 use strict 'vars';
 use warnings;
 no warnings 'uninitialized';
 require(Exporter);
 our @ISA = qw(Exporter);
 
-#XXX use @VERSION@ when we have a version w/o letters in it
-#XXX use rancid @VERSION@;
-use rancid;
+use rancid @VERSION@;
 
 our $proc;
 our $ios;
