@@ -39,7 +39,7 @@
 ## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 # control_rancid $GROUP
 #
 
@@ -382,7 +382,7 @@ for router in `cut -d: -f1 ../routers.up` ; do
            fi
            ;;
        git | git-remote )
-           git ls-files $router > /dev/null 2>&1 
+           git ls-files $router > /dev/null 2>&1
            if [ $? -eq 1 ]; then
                touch $router
                (
@@ -397,7 +397,7 @@ for router in `cut -d: -f1 ../routers.up` ; do
 done
 echo
 # delete configs from RCS for routers not listed in routers.up.
-for router in `find . \( -name \*.new -prune -o -name CVS -prune -o -name .cvsignore -prune -o -name .svn -prune -o -name .git -prune -o -name .gitignore -prune \) -o -type f -print | sed -e 's/^.\///'` ; do
+for router in `find . \( -name \*.new -prune -o -name CVS -prune -o -name .cvsignore -prune -o -name .svn -prune -o -name .git -prune -o -name .gitignore -o -name .gitkeep -prune \) -o -type f -print | sed -e 's/^.\///'` ; do
     grep -i "^$router:" ../router.db > /dev/null 2>&1
     if [ $? -eq 1 ] ; then
 	rm -f $router
