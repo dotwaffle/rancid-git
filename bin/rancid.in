@@ -2038,9 +2038,9 @@ sub WriteTerm {
            ProcessHistory("","","","! ip nhrp authentication <removed>\n");
            next;
     }
-    if (/^\s*add http/ && $filter_pwds >= 1) {
-           ProcessHistory("","","","! add http://<removed>\n");
-           next;
+    if (/^\s*add (\S*:\/\/\S*:)\S*(@\S*)/ && $filter_pwds >= 1) {
+        ProcessHistory("","","","! add $1<removed>$2\n");
+        next;
     }
 	if (/^(\s*ppp .* hostname) .*/ && $filter_pwds >= 1) {
 	    ProcessHistory("","","","!$1 <removed>\n"); next;
