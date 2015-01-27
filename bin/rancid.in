@@ -1631,6 +1631,7 @@ sub ShowInterface {
 	    my($len) = length($1);
 	    s/^$1\s{$len}//;
 	}
+	next if (/^Virtual-Access/);
 	if (/^([\w\/\.\-]+) is ([\w\s]+), line protocol is ([\w\s]+)/) {
 	    ProcessHistory("INT","keysort",$interface->{'name'},"!Interface: " . PrintInterface($interface) . "\n") if (defined $interface);
 	    $interface = {
