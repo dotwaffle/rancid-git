@@ -1,5 +1,9 @@
 rancid-git (2.3.9-0) UNRELEASED; urgency=low
 
+  [ Vincent Bernat ]
   * Unofficial package.
+
+  [ Jesse Norell ]
+  * Added support for Telco Systems T5C (telcorancid)
 
  -- Vincent Bernat <bernat@debian.org>  Mon, 18 Aug 2014 10:05:05 +0200
