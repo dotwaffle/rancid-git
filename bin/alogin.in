@@ -47,6 +47,10 @@
 # afort@choqolat.org is responsible for this particular mess
 # (andrew fort)
 #
+# Sat Jan 31 2015 Remi Vichery <remi.vichery@gmail.com>
+# 	Private keys prompt handling when issuing /cfg/dump command
+#	Sync peer prompt handling when issuing exit command
+#
 
 # Usage line
 set usage "Usage: $argv0 \[-dSV\] \[-c command\] \[-Evar=x\] \
@@ -435,6 +439,10 @@ proc run_commands { prompt command } {
     global in_proc
     set in_proc 1
 
+    set privatekeys 0
+    set passphrase "example"
+    set syncpeer 0
+
     send "lines 0\r"
     expect -re $prompt {}
 
@@ -445,6 +453,18 @@ proc run_commands { prompt command } {
     for {set i 0} {$i < $num_commands} { incr i} {
 	send -- "[subst -nocommands [lindex $commands $i]]\r"
 	expect {
+		-re "^Display private keys"	{
+									  if {$privatekeys == 1} {
+									    send "y\r"
+                                        send $passphrase
+                                        send "\r"
+                                        send $passphrase
+                                        send "\r"
+									  } else {
+									    send "n\r"
+									  }
+									  exp_continue
+									}
 	    -re "^\[^\n\r]*$reprompt"		{}
 	    -re "^\[^\n\r ]*>>.*$reprompt"	{ exp_continue }
 	    -re "\[\n\r]+"			{ exp_continue }
@@ -452,6 +472,14 @@ proc run_commands { prompt command } {
     }
     send "exit\r"
     expect {
+    -re "^Confirm Sync to Peer"	{
+								  if {$syncpeer == 1} {
+								    send "y\r"
+								  } else {
+								    send "n\r"
+								  }
+								  exp_continue
+								}
 	-re "^WARNING: There are unsaved configuration changes." {
 						 send "y\r"
 						 exp_continue
