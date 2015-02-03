@@ -1,8 +1,8 @@
-#! /usr/bin/perl
+#! @PERLV_PATH@
 ##
 ## $Id: pfrancid.in 2160 2011-06-28 12:21:15Z buraglio $
 ##
-## rancid 2.3.4
+## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
@@ -51,7 +51,7 @@
 use Getopt::Std;
 getopts('dflV');
 if ($opt_V) {
-    print "rancid 2.3.4\n";
+    print "@PACKAGE@ @VERSION@\n";
     exit(0);
 }
 $debug = $opt_d;

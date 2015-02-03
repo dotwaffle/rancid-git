@@ -1,8 +1,8 @@
-#! /usr/bin/expect --
+#! @EXPECT_PATH@ --
 ##
-## $Id: pfrancid.in 2160 2011-06-28 12:21:15Z buraglio $
+## $Id: pflogin.in 2160 2011-06-28 12:21:15Z buraglio $
 ##
-## rancid 2.3.4
+## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2009 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
@@ -134,7 +134,7 @@ for {set i 0} {$i < $argc} {incr i} {
 	    set do_passwd 0
 	# Version string
 	} -V* {
-	    send_user "rancid 2.3.4\n"
+	    send_user "@PACKAGE@ @VERSION@\n"
 	    exit 0
 	# passphrase
 	} -r* {
