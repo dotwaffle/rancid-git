@@ -1,0 +1,358 @@
+#! @PERLV_PATH@
+#
+# @PACKAGE@ @VERSION@
+#
+# By Damian Fantini, modified by Marco Agostani
+# usage: vrancid [-dV] [-l] [-f filename | hostname]
+#
+use Getopt::Std;
+getopts('dflV');
+if ($opt_V) {
+    print "@PACKAGE@ @VERSION@\n";
+    exit(0);
+}
+$debug = $opt_d;
+$log = $opt_l;
+$file = $opt_f;
+$host = $ARGV[0];
+
+$clean_run = 0;
+$found_end = 0;
+$timeo = 120;				# clogin timeout in seconds
+
+my(@commandtable, %commands, @commands);# command lists
+my($aclsort) = ("ipsort");		# ACL sorting mode
+my($filter_commstr);			# SNMP community string filtering
+my($filter_pwds);			# password filtering mode
+#my($ShowChassisSCB);			# Only run ShowChassisSCB() once
+
+# This routine is used to print out the router configuration
+sub ProcessHistory {
+    my($new_hist_tag,$new_command,$command_string,@string) = (@_);
+    if ((($new_hist_tag ne $hist_tag) || ($new_command ne $command))
+	&& scalar(%history)) {
+	print eval "$command \%history";
+	undef %history;
+    }
+    if (($new_hist_tag) && ($new_command) && ($command_string)) {
+	if ($history{$command_string}) {
+	    $history{$command_string} = "$history{$command_string}@string";
+	} else {
+	    $history{$command_string} = "@string";
+	}
+    } elsif (($new_hist_tag) && ($new_command)) {
+	$history{++$#history} = "@string";
+    } else {
+	print "@string";
+    }
+    $hist_tag = $new_hist_tag;
+    $command = $new_command;
+    1;
+}
+
+sub numerically { $a <=> $b; }
+
+# This is a sort routine that will sort numerically on the
+# keys of a hash as if it were a normal array.
+sub keynsort {
+    local(%lines) = @_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $key (sort numerically keys(%lines)) {
+	$sorted_lines[$i] = $lines{$key};
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# This is a sort routine that will sort on the
+# keys of a hash as if it were a normal array.
+sub keysort {
+    local(%lines) = @_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $key (sort keys(%lines)) {
+	$sorted_lines[$i] = $lines{$key};
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# This is a sort routine that will sort on the
+# values of a hash as if it were a normal array.
+sub valsort{
+    local(%lines) = @_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $key (sort values %lines) {
+	$sorted_lines[$i] = $key;
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# This is a numerical sort routine (ascending).
+sub numsort {
+    local(%lines) = @_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $num (sort {$a <=> $b} keys %lines) {
+	$sorted_lines[$i] = $lines{$num};
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# This is a sort routine that will sort on the
+# ip address when the ip address is anywhere in
+# the strings.
+sub ipsort {
+    local(%lines) = @_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $addr (sort sortbyipaddr keys %lines) {
+	$sorted_lines[$i] = $lines{$addr};
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# These two routines will sort based upon IP addresses
+sub ipaddrval {
+    my(@a) = ($_[0] =~ m#^(\d+)\.(\d+)\.(\d+)\.(\d+)$#);
+    $a[3] + 256 * ($a[2] + 256 * ($a[1] +256 * $a[0]));
+}
+sub sortbyipaddr {
+    &ipaddrval($a) <=> &ipaddrval($b);
+}
+
+###
+### Start of real work
+###
+
+
+
+# This routine parses "show configuration"
+sub ShowConfiguration {
+    my($lines) = 0;
+    my($snmp) = 0;
+    print STDERR "    In ShowConfiguration: $_" if ($debug);
+
+    s/^[a-z]+@//;
+    ProcessHistory("","","","# $_");
+    while (<INPUT>) {
+	tr/\015//d;
+	next if (/^\s*$/);
+	# end of config - hopefully.  juniper does not have a reliable
+	# end-of-config tag.  appears to end with "\nPROMPT>", but not sure.
+	if (/$prompt/) {
+	    $found_end++;
+	    last;
+	}
+	next if (/^system (shutdown message from|going down )/i);
+	next if (/^\{(master|backup)(:\d+)?\}/);
+	$lines++;
+
+	/^database header mismatch: / && return(-1);
+	/^version .*;\d+$/ && return(-1);
+
+	s/ # SECRET-DATA$//;
+	s/ ## SECRET-DATA$//;
+	# filter snmp community, when in snmp { stanza }
+	/^snmp/ && $snmp++;
+	/^}/ && ($snmp = 0);
+	if ($snmp && /^(\s*)(community|trap-group) [^ ;]+(\s?[;{])$/) {
+		if ($filter_commstr) {
+		    $_ = "$1$2 \"<removed>\"$3\n";
+		}
+	}
+	if (/(\s*authentication-key )[^ ;]+/ && $filter_pwds >= 1) {
+	    ProcessHistory("","","","#$1<removed>$'");
+	    next;
+	}
+	if (/(\s*md5 \d+ key )[^ ;]+/ && $filter_pwds >= 1) {
+	    ProcessHistory("","","","#$1<removed>$'");
+	    next;
+	}
+	if (/(\s*hello-authentication-key )[^ ;]+/ && $filter_pwds >= 1) {
+	    ProcessHistory("","","","#$1<removed>$'");
+	    next;
+	}
+	# don't filter this one - there is no secret here.
+	if (/^\s*permissions .* secret /) {
+	    ProcessHistory("","","","$_");
+	    next;
+	}
+	if (/^(.*\ssecret )[^ ;]+/ && $filter_pwds >= 1) {
+	    ProcessHistory("","","","#$1<removed>$'");
+	    next;
+	}
+	if (/(\s+encrypted-password )[^ ;]+/ && $filter_pwds >= 2) {
+	    ProcessHistory("","","","#$1<removed>$'");
+	    next;
+	}
+	if (/(\s+ssh-(rsa|dsa) )\"/ && $filter_pwds >= 2) {
+	    ProcessHistory("","","","#$1<removed>;\n");
+	    next;
+	}
+	if (/^(\s+(pre-shared-|)key (ascii-text|hexadecimal) )[^ ;]+/ && $filter_pwds >= 1) {
+	    ProcessHistory("","","","#$1<removed>$'");
+	    next;
+	}
+	ProcessHistory("","","","$_");
+    }
+
+    if ($lines < 3) {
+	printf(STDERR "ERROR: $host configuration appears truncated.\n");
+	$found_end = 0;
+	return(-1);
+    }
+
+    return(0);
+}
+
+###
+### End of real work
+###
+
+# dummy function
+sub DoNothing {print STDOUT;}
+
+# Main
+@commandtable = (
+	{'show version | grep -v Uptime'    => 'ShowConfiguration'},
+        {'show configuration'           => 'ShowConfiguration'},
+        {'show configuration commands'  => 'ShowConfiguration'},
+);
+# Use an array to preserve the order of the commands and a hash for mapping
+# commands to the subroutine and track commands that have been completed.
+@commands = map(keys(%$_), @commandtable);
+%commands = map(%$_, @commandtable);
+
+$jnx_commands=join(";",@commands);
+$cmds_regexp = join("|", map quotemeta($_), @commands);
+
+if (length($host) == 0) {
+    if ($file) {
+	print(STDERR "Too few arguments: file name required\n");
+	exit(1);
+    } else {
+	print(STDERR "Too few arguments: host name required\n");
+	exit(1);
+    }
+}
+open(OUTPUT,">$host.new") || die "Can't open $host.new for writing: $!\n";
+select(OUTPUT);
+# make OUTPUT unbuffered
+if ($debug) { $| = 1; }
+
+if ($file) {
+    print STDERR "opening file $host\n" if ($debug);
+    print STDOUT "opening file $host\n" if ($log);
+    open(INPUT,"< $host") || die "open failed for $host: $!\n";
+} else {
+    print(STDERR "executing echo vlogin -t $timeo -c\"$jnx_commands\" $host\n") if ($debug);
+
+    if (defined($ENV{NOPIPE})) {
+	system "vlogin -t $timeo -c \"$jnx_commands\" $host </dev/null > $host.raw" || die "vlogin failed for $host: $!\n";
+	open(INPUT, "< $host.raw") || die "vlogin failed for $host: $!\n";
+    } else {
+	open(INPUT,"vlogin -t $timeo -c \"$jnx_commands\" $host </dev/null |") || die "vlogin failed for $host: $!\n";
+    }
+
+}
+
+# determine ACL sorting mode
+if ($ENV{"ACLSORT"} =~ /no/i) {
+    $aclsort = "";
+}
+# determine community string filtering mode
+if (defined($ENV{"NOCOMMSTR"}) &&
+    ($ENV{"NOCOMMSTR"} =~ /yes/i || $ENV{"NOCOMMSTR"} =~ /^$/)) {
+    $filter_commstr = 1;
+} else {
+    $filter_commstr = 0;
+}
+# determine password filtering mode
+if ($ENV{"FILTER_PWDS"} =~ /no/i) {
+    $filter_pwds = 0;
+} elsif ($ENV{"FILTER_PWDS"} =~ /all/i) {
+    $filter_pwds = 2;
+} else {
+    $filter_pwds = 1;
+}
+
+ProcessHistory("","","","# RANCID-CONTENT-TYPE: vyatta\n#\n");
+TOP: while (<INPUT>) {
+    tr/\015//d;
+    if (/^Error:/) {
+	print STDOUT ("$host vlogin error: $_");
+	print STDERR ("$host vlogin error: $_") if ($debug);
+	$clean_run=0;
+	last;
+    }
+    if (/System shutdown message/) {
+	print STDOUT ("$host shutdown msg: $_");
+	print STDERR ("$host shutdown msg: $_") if ($debug);
+	$clean_run = 0;
+	last;
+    }
+    if (/error: cli version does not match Managment Daemon/i) {
+	print STDOUT ("$host mgd version mismatch: $_");
+	print STDERR ("$host mgd version mismatch: $_") if ($debug);
+	$clean_run = 0;
+	last;
+    }
+    while (/\s*($cmds_regexp)\s*$/) {
+	$cmd = $1;
+	$prompt = ":~";
+ 
+	if (!defined($prompt)) {
+	    $prompt = ($_ =~ /^([^>]+$)/)[0];
+	    $prompt =~ s/([][}{)(\\])/\\$1/g;
+	    print STDERR ("PROMPT MATCH: $prompt\n") if ($debug);
+	
+	}
+	print STDERR ("HIT COMMAND:$_") if ($debug);
+	if (! defined($commands{$cmd})) {
+	    print STDERR "$host: found unexpected command - \"$cmd\"\n";
+	    $clean_run = 0;
+	    last TOP;
+	}
+	$rval = &{$commands{$cmd}};
+	delete($commands{$cmd});
+	if ($rval == -1) {
+	    $clean_run = 0;
+	    last TOP;
+	}
+    }
+    if (/\s*exit/) {
+	$clean_run=1;
+	last;
+    }
+}
+print STDOUT "Done vlogin: $_\n" if ($log);
+# Flush History
+ProcessHistory("","","","");
+# Cleanup
+close(INPUT);
+close(OUTPUT);
+
+if (defined($ENV{NOPIPE})) {
+    unlink("$host.raw") if (! $debug);
+}
+
+# check for completeness
+$commands = join(", ", keys(%commands));
+if (scalar(%commands) || !$clean_run || !$found_end) {
+    if (scalar(%commands)) {
+	printf(STDOUT "$host: missed cmd(s): %s\n", join(',', keys(%commands)));
+	printf(STDERR "$host: missed cmd(s): %s\n", join(',', keys(%commands))) if ($debug);
+    }
+    if  (!$clean_run  || !$found_end) {
+	print STDOUT "$host: End of run not found\n";
+	print STDERR "$host: End of run not found\n" if ($debug);
+	system("/usr/bin/tail -1 $host.new");
+    }
+    unlink "$host.new" if (! $debug);
+}

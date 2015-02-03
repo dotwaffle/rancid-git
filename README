@@ -69,6 +69,7 @@ bin/
 	rrancid.in	Version of rancid.in for Redback routers.
 	srancid.in	Version of rancid.in for SMC switches.
 	tntrancid.in	Version of rancid.in for TNT access servers.
+	vrancid.in	Version of rancid.in for VyOS firewalls.
 	xrancid.in	Version of rancid.in for Extreme switches.
 	zrancid.in	Version of rancid.in for Zebra routers.
 
@@ -84,6 +85,7 @@ bin/
 	nslogin.in	Version of clogin.in for Netscalars.
 	rivlogin.in	Version of clogin.in for Riverstone routers.
 	tntlogin.in	Version of clogin.in for TNT access servers.
+	vlogin.in	Version of clogin.in for VyOS firewalls.
 man/		man pages
 share/		Readmes, samples, utilities, contribs, etc
 include/	Include files and rancid version.h
