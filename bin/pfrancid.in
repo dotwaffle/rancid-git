@@ -68,7 +68,7 @@ my($aclsort) = ("ipsort");		# ACL sorting mode
 my($filter_commstr);			# SNMP community string filtering
 my($filter_pwds);			# password filtering mode
 my($ShowChassisSCB);			# Only run ShowChassisSCB() once
-my $prompt = "# ";
+my $prompt = "pfSense# ";   # prompt set by pflogin
 
 # This routine is used to print out the router configuration
 sub ProcessHistory {
@@ -179,6 +179,7 @@ sub default_handler {
 
 
 	while(<INPUT>) {
+		tr/\015//d;
 		last if (/^$prompt/);
 		$_ =~ s/(<password>)[^<]+(<\/password>)/$1removed$2/ if $_ =~ m/^\s*<password>/;
 		print $_;
@@ -206,10 +207,8 @@ sub DoNothing {print STDOUT;}
 @commands = map(keys(%$_), @commandtable);
 %commands = map(%$_, @commandtable);
 
-@set_commands = ("set prompt=\\\"$prompt\\\"", 'set autologout=\\"0\\"');
-
-$jnx_commands=join(";", @set_commands, @commands);
-$cmds_regexp = join("|", map quotemeta($_), @set_commands, @commands);
+$jnx_commands=join(";", @commands);
+$cmds_regexp = join("|", map quotemeta($_), @commands);
 
 if (length($host) == 0) {
     if ($file) {
@@ -243,22 +242,24 @@ if ($file) {
 
 }
 
+print "!RANCID-CONTENT-TYPE: pfsense\n!\n";
+
 TOP: while(<INPUT>) {
+   tr/\015//d;
 
    while (/$prompt\s*($cmds_regexp)/) {
     $cmd = $1;
-	print STDERR $cmd if ($debug);
-	if ($cmd =~ /^set /) {
-	    print STDERR ("SKIP SET COMMAND") if ($debug);
-	    next;
-	}
-	print "\n$prompt".$cmd."\n";
+    if ($cmd =~ /^set /) {
+        print STDERR ("SKIP SET COMMAND: $_") if ($debug);
+        next;
+    }
     if (!defined($prompt)) {
         $prompt = ($_ =~ /^([^#]+#)/)[0];
         $prompt =~ s/([][}{)(\\])/\\$1/g;
         print STDERR ("PROMPT MATCH: $prompt\n") if ($debug);
     }
-    print STDERR ("HIT COMMAND:$_") if ($debug);
+    print STDERR ("HIT COMMAND: $_") if ($debug);
+    print "\n$prompt".$cmd."\n";
     if (! defined($commands{$cmd})) {
         print STDERR "$host: found unexpected command - \"$cmd\"\n";
         $clean_run = 0;
@@ -267,13 +268,15 @@ TOP: while(<INPUT>) {
     $rval = &{$commands{$cmd}};
     delete($commands{$cmd});
     if ($rval == -1) {
+        print STDERR "$host: handler failed for \"$cmd\"\n";
         $clean_run = 0;
         last TOP;
     }
     }
-    if (/>\s*quit/) {
-    $clean_run=1;
-    last;
+    if (/$prompt\s*exit/) {
+	print STDERR ("exit matched: $_\n") if ($debug);
+        $clean_run=1;
+        last;
     }
 
 	print STDERR $_ if ($debug);
