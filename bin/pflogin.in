@@ -400,7 +400,7 @@ proc login { router user passwd cmethod cyphertype identfile} {
 						  send -- "$user\r"
 						  exp_continue
 	    					}
-	    "\[Pp]assword:"			{
+	    -re "\[Pp]assword( for .+@.+)?:"
 						  sleep 1; send -- "$passwd\r"
 						  exp_continue
 						}
@@ -408,7 +408,7 @@ proc login { router user passwd cmethod cyphertype identfile} {
 				send "8\r"
 				exp_continue
 		}
-	    "$prompt"		{ break; }
+	    -re "$prompt"		{ break; }
 	    denied	{ send_user "\nError: Check your password for $router\n"
 	                  catch {close}; catch {wait}; return 1
 	                }
@@ -437,7 +437,7 @@ proc run_commands { prompt command } {
     for {set i 0} {$i < $num_commands} { incr i} {
 	send "[lindex $commands $i]\r"
 	expect {
-		"$prompt" { continue; }
+		-re "$prompt" { continue; }
 	}
 	}
 	send "exit\r0\r"
@@ -467,7 +467,7 @@ foreach router [lrange $argv $i end] {
 
 # This works in pfSense 1.x.x, needs better regex for new prompt in 2.0
     #set prompt "\:\s "
-    set prompt "# "
+    set prompt "(\[.*\].*\:\s?|# )"
 
     # Figure out username
     if {[info exists username]} {

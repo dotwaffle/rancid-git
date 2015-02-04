@@ -68,7 +68,7 @@ my($aclsort) = ("ipsort");		# ACL sorting mode
 my($filter_commstr);			# SNMP community string filtering
 my($filter_pwds);			# password filtering mode
 my($ShowChassisSCB);			# Only run ShowChassisSCB() once
-my $prompt = "#";
+my $prompt = "# ";
 
 # This routine is used to print out the router configuration
 sub ProcessHistory {
@@ -206,8 +206,10 @@ sub DoNothing {print STDOUT;}
 @commands = map(keys(%$_), @commandtable);
 %commands = map(%$_, @commandtable);
 
-$jnx_commands=join(";",@commands);
-$cmds_regexp = join("|", map quotemeta($_), @commands);
+@set_commands = ("set prompt=\\\"$prompt\\\"", 'set autologout=\\"0\\"');
+
+$jnx_commands=join(";", @set_commands, @commands);
+$cmds_regexp = join("|", map quotemeta($_), @set_commands, @commands);
 
 if (length($host) == 0) {
     if ($file) {
@@ -246,7 +248,11 @@ TOP: while(<INPUT>) {
    while (/$prompt\s*($cmds_regexp)/) {
     $cmd = $1;
 	print STDERR $cmd if ($debug);
-	print "$prompt".$cmd."\n";
+	if ($cmd =~ /^set /) {
+	    print STDERR ("SKIP SET COMMAND") if ($debug);
+	    next;
+	}
+	print "\n$prompt".$cmd."\n";
     if (!defined($prompt)) {
         $prompt = ($_ =~ /^([^#]+#)/)[0];
         $prompt =~ s/([][}{)(\\])/\\$1/g;
