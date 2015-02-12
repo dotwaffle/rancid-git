@@ -182,7 +182,7 @@ sub default_handler {
 		tr/\015//d;
 		last if (/^$prompt/);
 		$_ =~ s/(<password>)[^<]+(<\/password>)/$1removed$2/ if $_ =~ m/^\s*<password>/;
-		print $_;
+		print OUTPUT $_;
 	}
 
     return(0);
@@ -221,8 +221,7 @@ if (length($host) == 0) {
 }
 open(OUTPUT,">$host.new") || die "Can't open $host.new for writing: $!\n";
 select(OUTPUT);
-# make OUTPUT unbuffered
-if ($debug) { $| = 1; }
+$| = 1; # make OUTPUT unbuffered
 
 if ($file) {
     print STDERR "opening file $host\n" if ($debug);
@@ -236,13 +235,12 @@ if ($file) {
 	system "pflogin  -t $timeo -c \"$jnx_commands\" $host  </dev/null > $host.raw" || die "pflogin failed for $host: $!\n";
 	open(INPUT, "< $host.raw") || die "pflogin failed for $host: $!\n";
     } else {
-	#open(INPUT,"pflogin root\@$host \"$jnx_commands\" </dev/null |") || die "pflogin failed for $host: $!\n";
 	open(INPUT,"pflogin -t $timeo -c \"$jnx_commands\" $host </dev/null |") || die "pflogin failed for $host: $!\n";
     }
 
 }
 
-print "!RANCID-CONTENT-TYPE: pfsense\n!\n";
+print OUTPUT "!RANCID-CONTENT-TYPE: pfsense\n!\n";
 
 TOP: while(<INPUT>) {
    tr/\015//d;
@@ -259,7 +257,7 @@ TOP: while(<INPUT>) {
         print STDERR ("PROMPT MATCH: $prompt\n") if ($debug);
     }
     print STDERR ("HIT COMMAND: $_") if ($debug);
-    print "\n$prompt".$cmd."\n";
+    print OUTPUT "\n$prompt".$cmd."\n";
     if (! defined($commands{$cmd})) {
         print STDERR "$host: found unexpected command - \"$cmd\"\n";
         $clean_run = 0;
@@ -274,13 +272,12 @@ TOP: while(<INPUT>) {
     }
     }
     if (/$prompt\s*exit/) {
-	print STDERR ("exit matched: $_\n") if ($debug);
+    	print STDERR ("exit matched: $_\n") if ($debug);
         $clean_run=1;
         last;
     }
 
 	print STDERR $_ if ($debug);
-
 
 };
 

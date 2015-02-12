@@ -429,16 +429,23 @@ proc run_commands { prompt command } {
     set commands [split $command \;]
     set num_commands [llength $commands]
     for {set i 0} {$i < $num_commands} { incr i} {
-	send "[lindex $commands $i]\r"
-	expect {
-		-re "$prompt" { continue; }
+		send "[lindex $commands $i]\r"
+		expect {
+			-re "$prompt" { sleep 1; continue; }
+			timeout	{ catch {close}; catch {wait}; return 0 }
+			eof		{ return 0 }
+		}
 	}
-	}
+	# causes expect to read everything from telnet into its internal buffer
+	set timeout 5
+	expect "SOMEthing-THAT-wont-EVER-match-Or.at.least.we.Hope.Not."
+	# this matches the whole buffer
+	expect "*"
 	send "exit\r0\r"
     expect {
-	"\n"	{ exp_continue }
-	timeout	{ catch {close}; catch {wait}; return 0 }
-	eof		{ return 0 }
+		"\n"	{ exp_continue }
+		timeout	{ catch {close}; catch {wait}; return 0 }
+		eof		{ return 0 }
     }
     set in_proc 0
 }
@@ -492,6 +499,7 @@ foreach router [lrange $argv $i end] {
 
     # Figure out passphrase to use
     if {[info exists avpassphrase]} {
+      #if { "$cyphertype" == "" } { set cyphertype "3des" }
 	set passphrase $avpassphrase
     } else {
 	set passphrase [join [lindex [find passphrase $router] 0] ""]
@@ -506,7 +514,6 @@ foreach router [lrange $argv $i end] {
       set cyphertype $cypher
     } else {
       set cyphertype [find cyphertype $router]
-      #if { "$cyphertype" == "" } { set cyphertype "3des" }
       if { "$cyphertype" == "" } { set cyphertype "arcfour256" }
     }
 
@@ -520,16 +527,16 @@ foreach router [lrange $argv $i end] {
 
     # Login to the router
     if {[login $router $loginname $passwd $cmethod $cyphertype $identfile]} {
-	incr exitval
-	continue
+		incr exitval
+		continue
     }
 
     if { $do_command } {
         set prompt "pfSense# "
         send "set prompt='pfSense# '\r"
-        expect -re $prompt  {}
+        expect -re "$prompt" { sleep 0.2; }
         send "set autologout='0'\r"
-        expect -re $prompt  {}
+        expect -re "$prompt" { sleep 0.2; }
         if {[run_commands $prompt $command]} {
             incr exitval
             continue
@@ -537,15 +544,15 @@ foreach router [lrange $argv $i end] {
     } elseif { $do_script } {
         set prompt "pfSense# "
         send "set prompt='pfSense# '\r"
-        expect -re $prompt  {}
+        expect -re "$prompt" { sleep 0.2; }
         send "set autologout='0'\r"
-        expect -re $prompt  {}
+        expect -re "$prompt" { sleep 0.2; }
         source $sfile
         catch {close};
     } else {
-	label $router
-	log_user 1
-	interact
+		label $router
+		log_user 1
+		interact
     }
 
     # End of for each router
