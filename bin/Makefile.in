@@ -110,6 +110,8 @@ DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(srcdir)/srancid.in $(srcdir)/tlogin.in $(srcdir)/tntlogin.in \
 	$(srcdir)/tntrancid.in $(srcdir)/trancid.in \
 	$(srcdir)/ucsrancid.in $(srcdir)/xrancid.in \
+	$(srcdir)/vlogin.in $(srcdir)/vlogin.in \
+	$(srcdir)/vrancid.in $(srcdir)/vrancid.in \
 	$(srcdir)/xrrancid.in $(srcdir)/zrancid.in \
 	$(top_srcdir)/depcomp
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -127,7 +129,7 @@ CONFIG_CLEAN_FILES = agmrancid alogin arancid arrancid avologin \
 	mrvrancid mtrancid mtlogin nlogin nrancid nslogin nsrancid \
 	nxrancid prancid rancid_par rivlogin rivrancid rrancid \
 	shellrancid shelllogin srancid tlogin tntlogin tntrancid \
-	trancid ucsrancid xrancid xrrancid zrancid
+	trancid ucsrancid vlogin vrancid xrancid xrrancid zrancid
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
@@ -349,7 +351,7 @@ bin_SCRIPTS = agmrancid alogin arancid arrancid avologin avorancid \
 	jlogin jrancid mrancid mrvlogin mrvrancid mtlogin mtrancid \
 	nlogin nrancid nslogin nsrancid nxrancid rancid_par prancid \
 	rancid rivlogin rivrancid rrancid srancid tlogin tntlogin \
-	tntrancid trancid ucsrancid xrancid xrrancid zrancid dlogin \
+	tntrancid trancid ucsrancid vlogin vrancid xrancid xrrancid zrancid dlogin \
 	drancid shelllogin shellrancid lg.cgi lgform.cgi rancid-cvs \
 	rancid-fe rancid-run control_rancid
 EXTRA_DIST = lg.cgi.in lgform.cgi.in rancid-cvs.in rancid-fe.in rancid-run.in \
@@ -530,6 +532,10 @@ tntrancid: $(top_builddir)/config.status $(srcdir)/tntrancid.in
 trancid: $(top_builddir)/config.status $(srcdir)/trancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 ucsrancid: $(top_builddir)/config.status $(srcdir)/ucsrancid.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+vlogin: $(top_builddir)/config.status $(srcdir)/vlogin.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+vrancid: $(top_builddir)/config.status $(srcdir)/vrancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 xrancid: $(top_builddir)/config.status $(srcdir)/xrancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
