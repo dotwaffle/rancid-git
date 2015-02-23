@@ -121,6 +121,8 @@ if [ ! -d $CVSROOT ]; then
 		echo "*~" >> .gitignore
 		echo ".#*" >> .gitignore
 		echo "*.new" >> .gitignore
+		echo "/.*" >> .gitignore
+		echo "!/.gitignore" >> .gitignore
 		git add .gitignore
 		git commit -m "Initializing repository."
 	    ) 200>$BASEDIR/.lockfile
