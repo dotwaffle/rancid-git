@@ -25,7 +25,8 @@ BuildRequires: iputils
 BuildRequires: automake
 BuildRequires: libtool
 
-Conflicts: rancid
+Obsoletes: rancid
+Provides: rancid
 
 Requires: shadow-utils
 Requires: findutils
