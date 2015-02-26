@@ -698,7 +698,7 @@ proc run_commands { prompt command } {
 							}
 						  exp_continue
 						}
-	    -re "^ *---?More---?\[^\n\r]*"		{
+	    -re "^ *-+ ?\[Mm]ore ?-+\[^\n\r]*"	{
 						  send " "
 						  exp_continue }
 	    -re "^<-+ More -+>\[^\n\r]*"	{
