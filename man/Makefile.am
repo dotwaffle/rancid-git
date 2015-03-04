@@ -60,7 +60,7 @@ man_nogen_MANS = agmrancid.1 alogin.1 arancid.1 arrancid.1 avologin.1 \
 		par.1 prancid.1 rancid-cvs.1 rancid-run.1 rancid.1 \
 		rancid_intro.1 rivlogin.1 rivrancid.1 router.db.5 rrancid.1 \
 		srancid.1 telcorancid.1 tlogin.1 tntlogin.1 tntrancid.1 trancid.1 xrancid.1 \
-		xrrancid.1 zrancid.1
+		xrrancid.1 zrancid.1 zyrancid.1
 
 man_MANS = $(man_nogen_MANS) $(man_gen_MANS)
 
