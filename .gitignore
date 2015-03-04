@@ -9,6 +9,7 @@ debian/rancid-core/
 debian/rancid-util/
 debian/rancid.postrm.debhelper
 debian/rancid/
+debian/rancid-git/
 Makefile
 aclocal.m4
 autom4te.cache/
