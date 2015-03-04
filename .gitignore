@@ -70,6 +70,7 @@ bin/shelllogin
 bin/shellrancid
 bin/srancid
 bin/tlogin
+bin/telcorancid
 bin/tntlogin
 bin/tntrancid
 bin/trancid
