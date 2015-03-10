@@ -197,7 +197,6 @@ sub ShowSNMP        { ShowMisc("E1"); }
 sub ShowAccount     { ShowMisc("F1"); }
 sub ShowAuthen      { ShowMisc("G1"); }
 sub ShowAuthoriz    { ShowMisc("H1"); }
-sub ShowVlan        { ShowMisc("I1"); }
 
 sub ShowConfig {
     print STDERR "    In ShowConfig: $_" if ($debug);
@@ -235,7 +234,6 @@ sub DoNothing {print STDOUT;}
     {'show aaa accounting'        => "ShowAccount"},
     {'show aaa authentication'    => "ShowAuthen"},
     {'show aaa authorization'     => "ShowAuthoriz"},
-    {'show vlan'                  => "ShowVlan"},
     {'show running-config'        => "ShowConfig"},
 );
 
