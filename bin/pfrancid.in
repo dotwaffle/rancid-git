@@ -1,0 +1,292 @@
+#! @PERLV_PATH@
+##
+## $Id: pfrancid.in 2160 2011-06-28 12:21:15Z buraglio $
+##
+## @PACKAGE@ @VERSION@
+## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
+## All rights reserved.
+##
+## This code is derived from software contributed to and maintained by
+## Terrapin Communications, Inc. by Henry Kilmer, John Heasley, Andrew Partan,
+## Pete Whiting, Austin Schutz, and Andrew Fort.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted provided that the following conditions
+## are met:
+## 1. Redistributions of source code must retain the above copyright
+##    notice, this list of conditions and the following disclaimer.
+## 2. Redistributions in binary form must reproduce the above copyright
+##    notice, this list of conditions and the following disclaimer in the
+##    documentation and/or other materials provided with the distribution.
+## 3. All advertising materials mentioning features or use of this software
+##    must display the following acknowledgement:
+##        This product includes software developed by Terrapin Communications,
+##        Inc. and its contributors for RANCID.
+## 4. Neither the name of Terrapin Communications, Inc. nor the names of its
+##    contributors may be used to endorse or promote products derived from
+##    this software without specific prior written permission.
+## 5. It is requested that non-binding fixes and modifications be contributed
+##    back to Terrapin Communications, Inc.
+##
+## THIS SOFTWARE IS PROVIDED BY Terrapin Communications, INC. AND CONTRIBUTORS
+## ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+## TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+## PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COMPANY OR CONTRIBUTORS
+## BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+## CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+## SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+## INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+## POSSIBILITY OF SUCH DAMAGE.
+# 
+# Amazingly hacked version of jrancid rancid - this one tries to
+# deal with pfSense firewalls and was modified from John Skopis m0n0rancid by 
+# Nick Buraglio nick at buraglio dot com.
+#
+#  RANCID - Really Awesome New Cisco confIg Differ
+#
+# usage: pfrancid [-dV] [-l] [-f filename | hostname]
+#
+use Getopt::Std;
+getopts('dflV');
+if ($opt_V) {
+    print "@PACKAGE@ @VERSION@\n";
+    exit(0);
+}
+$debug = $opt_d;
+$log = $opt_l;
+$file = $opt_f;
+$host = $ARGV[0];
+
+$clean_run = 0;
+$found_end = 0;
+$timeo = 120;				# clogin timeout in seconds
+
+my(@commandtable, %commands, @commands);# command lists
+my($aclsort) = ("ipsort");		# ACL sorting mode
+my($filter_commstr);			# SNMP community string filtering
+my($filter_pwds);			# password filtering mode
+my($ShowChassisSCB);			# Only run ShowChassisSCB() once
+my $prompt = "pfSense# ";   # prompt set by pflogin
+
+# This routine is used to print out the router configuration
+sub ProcessHistory {
+    my($new_hist_tag,$new_command,$command_string,@string) = (@_);
+    if ((($new_hist_tag ne $hist_tag) || ($new_command ne $command))
+	&& (%history)) {
+	print eval "$command \%history";
+	undef %history;
+    }
+    if (($new_hist_tag) && ($new_command) && ($command_string)) {
+	if ($history{$command_string}) {
+	    $history{$command_string} = "$history{$command_string}@string";
+	} else {
+	    $history{$command_string} = "@string";
+	}
+    } elsif (($new_hist_tag) && ($new_command)) {
+	$history{++$#history} = "@string";
+    } else {
+	print "@string";
+    }
+    $hist_tag = $new_hist_tag;
+    $command = $new_command;
+    1;
+}
+
+sub numerically { $a <=> $b; }
+
+# This is a sort routine that will sort numerically on the
+# keys of a hash as if it were a normal array.
+sub keynsort {
+    local(%lines) = @_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $key (sort numerically keys(%lines)) {
+	$sorted_lines[$i] = $lines{$key};
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# This is a sort routine that will sort on the
+# keys of a hash as if it were a normal array.
+sub keysort {
+    local(%lines) = @_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $key (sort keys(%lines)) {
+	$sorted_lines[$i] = $lines{$key};
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# This is a sort routine that will sort on the
+# values of a hash as if it were a normal array.
+sub valsort{
+    local(%lines) = @_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $key (sort values %lines) {
+	$sorted_lines[$i] = $key;
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# This is a numerical sort routine (ascending).
+sub numsort {
+    local(%lines) = @_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $num (sort {$a <=> $b} keys %lines) {
+	$sorted_lines[$i] = $lines{$num};
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# This is a sort routine that will sort on the
+# ip address when the ip address is anywhere in
+# the strings.
+sub ipsort {
+    local(%lines) = @_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $addr (sort sortbyipaddr keys %lines) {
+	$sorted_lines[$i] = $lines{$addr};
+	$i++;
+    }
+    @sorted_lines;
+}
+
+# These two routines will sort based upon IP addresses
+sub ipaddrval {
+    my(@a) = ($_[0] =~ m#^(\d+)\.(\d+)\.(\d+)\.(\d+)$#);
+    $a[3] + 256 * ($a[2] + 256 * ($a[1] +256 * $a[0]));
+}
+sub sortbyipaddr {
+    &ipaddrval($a) <=> &ipaddrval($b);
+}
+
+###
+### Start of real work
+###
+
+#this is the default handler
+sub default_handler {
+
+
+	while(<INPUT>) {
+		tr/\015//d;
+		last if (/^$prompt/);
+		$_ =~ s/(<password>)[^<]+(<\/password>)/$1removed$2/ if $_ =~ m/^\s*<password>/;
+		print OUTPUT $_;
+	}
+
+    return(0);
+}
+
+
+###
+### End of real work
+###
+
+# dummy function
+sub DoNothing {print STDOUT;}
+
+# Main
+@commandtable = (
+	{'/sbin/sysctl kern.ostype kern.hostname kern.version hw.model hw.ncpu hw.realmem'	=> 'default_handler'},
+	{'uname -a'					=> 'default_handler'},
+	{'cat /cf/conf/config.xml'			=> 'default_handler'},
+);
+# Use an array to preserve the order of the commands and a hash for mapping
+# commands to the subroutine and track commands that have been completed.
+@commands = map(keys(%$_), @commandtable);
+%commands = map(%$_, @commandtable);
+
+$jnx_commands=join(";", @commands);
+$cmds_regexp = join("|", map quotemeta($_), @commands);
+
+if (length($host) == 0) {
+    if ($file) {
+	print(STDERR "Too few arguments: file name required\n");
+	exit(1);
+    } else {
+	print(STDERR "Too few arguments: host name required\n");
+	exit(1);
+    }
+}
+open(OUTPUT,">$host.new") || die "Can't open $host.new for writing: $!\n";
+select(OUTPUT);
+$| = 1; # make OUTPUT unbuffered
+
+if ($file) {
+    print STDERR "opening file $host\n" if ($debug);
+    print STDOUT "opening file $host\n" if ($log);
+    open(INPUT,"< $host") || die "open failed for $host: $!\n";
+} else {
+    print(STDERR "exec pflogin  -t $timeo -c \"$jnx_commands\" $host\n") if ($debug);
+    print(STDOUT "exec pflogin  -t $timeo -c \"$jnx_commands\" $host\n") if ($debug);
+
+    if (defined($ENV{NOPIPE})) {
+	system "pflogin  -t $timeo -c \"$jnx_commands\" $host  </dev/null > $host.raw" || die "pflogin failed for $host: $!\n";
+	open(INPUT, "< $host.raw") || die "pflogin failed for $host: $!\n";
+    } else {
+	open(INPUT,"pflogin -t $timeo -c \"$jnx_commands\" $host </dev/null |") || die "pflogin failed for $host: $!\n";
+    }
+
+}
+
+print OUTPUT "!RANCID-CONTENT-TYPE: pfsense\n!\n";
+
+TOP: while(<INPUT>) {
+   tr/\015//d;
+
+   while (/$prompt\s*($cmds_regexp)/) {
+    $cmd = $1;
+    if ($cmd =~ /^set /) {
+        print STDERR ("SKIP SET COMMAND: $_") if ($debug);
+        next;
+    }
+    if (!defined($prompt)) {
+        $prompt = ($_ =~ /^([^#]+#)/)[0];
+        $prompt =~ s/([][}{)(\\])/\\$1/g;
+        print STDERR ("PROMPT MATCH: $prompt\n") if ($debug);
+    }
+    print STDERR ("HIT COMMAND: $_") if ($debug);
+    print OUTPUT "\n$prompt".$cmd."\n";
+    if (! defined($commands{$cmd})) {
+        print STDERR "$host: found unexpected command - \"$cmd\"\n";
+        $clean_run = 0;
+        last TOP;
+    }
+    $rval = &{$commands{$cmd}};
+    delete($commands{$cmd});
+    if ($rval == -1) {
+        print STDERR "$host: handler failed for \"$cmd\"\n";
+        $clean_run = 0;
+        last TOP;
+    }
+    }
+    if (/$prompt\s*exit/) {
+    	print STDERR ("exit matched: $_\n") if ($debug);
+        $clean_run=1;
+        last;
+    }
+
+	print STDERR $_ if ($debug);
+
+};
+
+# Cleanup
+close(INPUT);
+close(OUTPUT);
+
+if (defined($ENV{NOPIPE})) {
+    unlink("$host.raw") if (! $debug);
+}
+
+# check for completeness

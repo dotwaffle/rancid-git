@@ -65,6 +65,7 @@ bin/
 	nrancid.in	Version of rancid.in for Netscreen firewalls.
 	nsrancid.in	Version of rancid.in for Netscalars.
 	prancid.in	Version of rancid.in for Procket routers.
+	pfrancid.in	Version of rancid.in for pfSense firewalls.
 	rivancid.in	Version of rancid.in for Riverstone routers.
 	rrancid.in	Version of rancid.in for Redback routers.
 	srancid.in	Version of rancid.in for SMC switches.
@@ -85,6 +86,7 @@ bin/
 	jlogin.in	Version of clogin.in for Juniper routers.
 	nlogin.in	Version of clogin.in for Netscreen firewalls.
 	nslogin.in	Version of clogin.in for Netscalars.
+	pflogin.in	Version of clogin.in for pfSense firewalls.
 	rivlogin.in	Version of clogin.in for Riverstone routers.
 	tntlogin.in	Version of clogin.in for TNT access servers.
 	vlogin.in	Version of clogin.in for VyOS firewalls.

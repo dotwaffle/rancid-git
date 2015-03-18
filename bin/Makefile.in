@@ -102,8 +102,8 @@ DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(srcdir)/mrancid.in $(srcdir)/mrvlogin.in \
 	$(srcdir)/mrvrancid.in $(srcdir)/mtrancid.in \
 	$(srcdir)/mtlogin.in $(srcdir)/nlogin.in $(srcdir)/nrancid.in \
-	$(srcdir)/nslogin.in $(srcdir)/nsrancid.in \
-	$(srcdir)/nxrancid.in $(srcdir)/prancid.in \
+	$(srcdir)/nslogin.in $(srcdir)/nsrancid.in $(srcdir)/nxrancid.in \
+	$(srcdir)/pflogin.in $(srcdir)/pfrancid.in $(srcdir)/prancid.in \
 	$(srcdir)/rancid_par.in $(srcdir)/rivlogin.in \
 	$(srcdir)/rivrancid.in $(srcdir)/rrancid.in \
 	$(srcdir)/shellrancid.in $(srcdir)/shelllogin.in \
@@ -127,7 +127,7 @@ CONFIG_CLEAN_FILES = agmrancid alogin arancid arrancid avologin \
 	f10rancid flogin francid fnlogin fnrancid hlogin hrancid \
 	htlogin htrancid jlogin jrancid jerancid mrancid mrvlogin \
 	mrvrancid mtrancid mtlogin nlogin nrancid nslogin nsrancid \
-	nxrancid prancid rancid_par rivlogin rivrancid rrancid \
+	nxrancid pflogin pfrancid prancid rancid_par rivlogin rivrancid rrancid \
 	shellrancid shelllogin srancid telcorancid tlogin tntlogin \
 	tntrancid trancid ucsrancid vlogin vrancid xrancid xrrancid \
 	zrancid zyrancid
@@ -350,7 +350,7 @@ bin_SCRIPTS = agmrancid alogin arancid arrancid avologin avorancid \
 	cssrancid elogin erancid f5rancid f10rancid flogin fnlogin \
 	fnrancid francid hlogin hrancid htlogin htrancid jerancid \
 	jlogin jrancid mrancid mrvlogin mrvrancid mtlogin mtrancid \
-	nlogin nrancid nslogin nsrancid nxrancid rancid_par prancid \
+	nlogin nrancid nslogin nsrancid nxrancid rancid_par pflogin pfrancid prancid \
 	rancid rivlogin rivrancid rrancid srancid telcorancid tlogin tntlogin \
 	tntrancid trancid ucsrancid vlogin vrancid xrancid xrrancid zrancid \
 	zyrancid dlogin drancid shelllogin shellrancid lg.cgi lgform.cgi rancid-cvs \
@@ -507,6 +507,10 @@ nslogin: $(top_builddir)/config.status $(srcdir)/nslogin.in
 nsrancid: $(top_builddir)/config.status $(srcdir)/nsrancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 nxrancid: $(top_builddir)/config.status $(srcdir)/nxrancid.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+pflogin: $(top_builddir)/config.status $(srcdir)/pflogin.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+pfrancid: $(top_builddir)/config.status $(srcdir)/pfrancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 prancid: $(top_builddir)/config.status $(srcdir)/prancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@

@@ -60,6 +60,8 @@ bin/nsrancid
 bin/nxrancid
 bin/par
 bin/prancid
+bin/pflogin
+bin/pfrancid
 bin/rancid
 bin/rancid-cvs
 bin/rancid-fe
