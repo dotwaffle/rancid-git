@@ -150,8 +150,8 @@ sub ShowMisc { # keyval
     tr/\015//d;
 #    s/\x1b\x37//g;	# ANSI escape code: Save Cursor Position
     if (/^$prompt/) { $found_version=1; last};
-    next if(/^(\s*|\s*$cmd\s*|\s*^\s*)$/);
-    return(1) if (/\% Invalid input detected at '^' marker\./);
+    next if(/^\s*$cmd\s*$/);
+    return(1) if (/^\s*(^|\% Invalid input detected at '^' marker\.)\s*$/);
 
     # in case the pager prompt shows up
     s/^--More-- or \(q\)uit//;
@@ -174,8 +174,8 @@ sub ShowConfig {
     tr/\015//d;
 #    s/\x1b\x37//g;	# ANSI escape code: Save Cursor Position
     if (/^$prompt/) { $found_end=1; $clean_run=1; return 0};
-    next if(/^(\s*|\s*$cmd\s*|\s*^\s*)$/);
-    return(1) if (/\% Invalid input detected at '^' marker\./);
+    next if(/^\s*$cmd\s*$/);
+    return(1) if (/^\s*(^|\% Invalid input detected at '^' marker\.)\s*$/);
 
     # in case the pager prompt shows up
     s/^--More-- or \(q\)uit//;
@@ -239,14 +239,6 @@ TOP: while(<INPUT>) {
     tr/\015//d;
 #    s/\x1b\x37//g;	# ANSI escape code: Save Cursor Position
 
-    # ZyXel logouts get you EPIPE, it's not an error (probably)
-    if (/^(($prompt)exit|Write failed: Broken pipe)$/) { 
-        $clean_run=1;
-        last;
-    }
-# fixme: comment
-    # clogin sends cisco commands the ZyXel complains of - just ignore these
-    #next if (/\s+\%Invalid command \".*\"/);
     next if (/^\s*(^|\% Invalid input detected at '^' marker\.)\s*$/);
 
     while (/($prompt)\s*($cmds_regexp)/) {
