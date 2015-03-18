@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: panlogin.in 2946 2014-11-26 15:53:38Z heas $
+## $Id: panlogin.in 3046 2015-03-01 18:05:36Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -75,6 +75,8 @@ set avautoenable 1
 set do_passwd 1
 # Sometimes routers take awhile to answer (the default is 10 sec)
 set timeoutdflt 120
+# Some CLIs having problems if we write too fast (Extreme, PIX, Cat)
+set send_human {.2 .1 .4 .2 1}
 
 # Find the user in the ENV, or use the unix userid.
 if {[ info exists env(CISCO_USER) ]} {
@@ -543,9 +545,9 @@ proc run_commands { prompt command } {
     expect -re $prompt {}
 
     regsub  ">$" $prompt {[>#]} reprompt
-    #send_user "reprompt is $reprompt"
 
-	expect *	; # throw away everything in the expect buffer
+    expect *	; # throw away everything in the expect buffer
+
     # Is this a multi-command?
     if [ string match "*\;*" "$command" ] {
 	set commands [split $command \;]

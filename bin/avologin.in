@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: avologin.in 2935 2014-11-21 05:38:27Z heas $
+## $Id: avologin.in 3047 2015-03-01 18:17:07Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -80,6 +80,8 @@ set do_enapasswd 1
 set do_saveconfig 0
 # Sometimes routers take awhile to answer (the default is 10 sec)
 set timeoutdflt 45
+# Some CLIs having problems if we write too fast (Extreme, PIX, Cat)
+set send_human {.2 .1 .4 .2 1}
 
 # Find the user in the ENV, or use the unix userid.
 if {[info exists env(CISCO_USER)]} {
@@ -509,12 +511,13 @@ proc run_commands { prompt command } {
 
     # The pager cant be completely disabled
     send "stty rows 1024\r"
+
+    # match cisco config mode prompts too, such as router(config-if)#,
+    # but catalyst does not change in this fashion.
+    regsub -lineanchor -- {^(.{1,14}).*([#>])$} $prompt {\1} reprompt
     # escape any parens in the prompt, such as "(enable)"
-    regsub -all {[)(]} $prompt {\\&} reprompt
-# XXX
-# match cisco config mode prompts too, such as router(config-if)#,
-# but catalyst does not change in this fashion.
-regsub -all {^(.{1,14}).*([#>])$} $reprompt {\1([^#>\r\n]+)?[#>](\\([^)\\r\\n]+\\))?} reprompt
+    regsub -all {[)(]} $reprompt {\\&} reprompt
+    append reprompt {([^#>\r\n]+)?[#>](\\([^)\\r\\n]+\\))?}
     expect {
 	-re $reprompt	{}
 	-re "\[\n\r]+"	{ exp_continue }

@@ -1,6 +1,6 @@
 package rancid;
 ##
-## $Id: rancid.pm.in 2972 2014-12-18 00:05:16Z heas $
+## $Id: rancid.pm.in 3053 2015-03-09 15:50:00Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -48,6 +48,7 @@ package rancid;
 use 5.010;
 use strict 'vars';
 use warnings;
+use Socket qw(AF_INET AF_INET6 inet_pton);
 require(Exporter);
 our @ISA = qw(Exporter);
 
@@ -248,6 +249,10 @@ sub loadtype {
     $cmds_regexp = join("|", map quotemeta($_), @commands);
 
     if ($main::opt_C) {
+	if (!defined($lscript)) {
+	    printf(STDERR "$devtype: login script not defined\n");
+	    exit(1);
+	}
 	print "$lscript -t $timeo -c \'$commandstr\' $host\n";
 	exit(0);
     }
@@ -351,50 +356,30 @@ sub ipsort {
 # slow.
 sub ipaddrval {
     my($a) = @_;
+    my($norder);
 
     if ($a =~ /:/) {
-	my($p, $l, @a, $i, $n, $z);
-	if ($a eq "::") {
-	    return("0000000000000000000000000000000000000000000");
-	}
+	my($l);
 	if ($a =~ /\//) {
 	    ($a, $l) = split(/\//, $a);
 	} else {
 	    $l = 128;
 	}
-	@a = split(/:/, $a, -1);
-	$n = $#a;
-
-	$a ="";
-	for ($i = 0; $i <= $n; $i++) {
-	    if ($n < 7 && $i < ($n) && length($a[$i]) == 0) {
-		# fill-in the ::s with 0s
-		for ($z = 8 - $i - ($n - $i); $z; $z--) {
-		    $a .= "00000";
-		}
-		next;
-	    }
-	    # work around uninitialized values warning, requires perl >= 5.010
-	    $a[$i] //= 0;
-	    $a .= sprintf("%05d", hex($a[$i]));
-	}
-	$a .= sprintf("%03d", $l);
-	return($a);
+	$norder = inet_pton(AF_INET6, $a);
+	return unpack("H*", $norder) . unpack("H*", pack("C", $l));
     } else {
-	my(@a, $l);
+	my($l);
 	if ($a =~ /\//) {
 	    ($a, $l) = split(/\//, $a);
 	} else {
 	    $l = 32;
 	}
-	@a = split(/\./, $a, -1);
-	# work around uninitialized values warning, requires perl >= 5.010
-	$a[0] //= 0;
-	$a[1] //= 0;
-	$a[2] //= 0;
-	$a[3] //= 0;
-	return(sprintf("%03d%03d%03d%03d%02d", $a[0], $a[1], $a[2], $a[3], $l));
+	$norder = inet_pton(AF_INET, $a);
+	return(unpack("H*", $norder) . unpack("H*", pack("C", $l)));
     }
+
+    # otherwise return the original key value, so as not to sort on null
+    return($_[0]);
 }
 
 # sortbyipaddr(IPaddr, IPaddr) compares two IPv4/v6 addresses like strcmp().

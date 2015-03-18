@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: htlogin.in 3018 2015-01-11 05:51:49Z heas $
+## $Id: htlogin.in 3022 2015-01-13 20:00:00Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -74,6 +74,8 @@ set do_passwd 1
 set do_saveconfig 0
 # Sometimes routers take awhile to answer (the default is 10 sec)
 set timeoutdflt 45
+# Some CLIs having problems if we write too fast (Extreme, PIX, Cat)
+set send_human {.2 .1 .4 .2 1}
 
 # Find the user in the ENV, or use the unix userid.
 if {[ info exists env(CISCO_USER) ]} {

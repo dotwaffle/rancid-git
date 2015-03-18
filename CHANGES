@@ -1,4 +1,54 @@
-3.1.99
+3.2
+	mtlogin: support cloginrc passphrase and identity
+
+	ios.pm: add ios::ShowCellular() and cmd show cellular 0 profile
+
+	control_rancid: fix mail rcpt bug in error path
+
+	rancid-cvs: change git push.default to current - Per Carlson
+
+	add .old to configs/{.cvsignore,.gitignore}; see control_rancid.1
+
+	rancid.pm: rework IP address sorting based on patch from Nick Hilliard
+
+	ciscowlc.pm: filter some config junk that wont import
+
+	nxos.pm: not all nexus have show process log vdc-all
+
+	f5rancid: filter fluctuating monitor state in config
+
+	FAQ: updates - Thomas Greer
+
+	ios.pm: drop the fabricated portion of the "Chassis type:" line; its
+	too much to try to track it accurately and doesnt seem to provide any
+	value
+
+	foundry.pm: filter altitude and pressure in ShowChassis
+
+	ios.pm: cellular modem speeds not filtered on C819G
+
+	ios.pm: 3560X w/ XE has different show sdm prefer and show system mtu
+	formats - Reuben Farrelly
+
+	update lg for router.db delimeter change - Buchan Milne
+
+	rename slogin to plogin (poly-login), as slogin collides with ssh pkg -
+	Reuben Farrelly
+
+	jlogin, mtlogin: set tty init options when there is no controlling tty,
+	and update jlogin to match this method to an error from stty on the O/S
+	used by the user, Linux, I believe.
+	http://www.shrubbery.net/pipermail/rancid-discuss/2015-January/007981.html
+
+	flogin: send term length 0 for MLX & other cases.
+
+	flogin: remove sleeps, send -h should work, and lower send_human timers
+
+	*login: set base send_human values and lower (faster) values where it
+	was already set (clogin, complogin, etc), except flogin.
+
+	rancid.conf: add DIFFSCRIPT knob
+
 	dllogin, wlogin: handle -t option
 
 	control_rancid: read rancid.conf sooner & fix handling group/ranicd.conf

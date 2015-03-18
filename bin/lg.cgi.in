@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: lg.cgi.in 3018 2015-01-11 05:51:49Z heas $
+## $Id: lg.cgi.in 3030 2015-02-03 17:08:18Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -177,7 +177,7 @@ sub readrouters
 		    while (<RTR>) {
 			next if (/^\s*(#|$)/);
 			# fqdn:mfg:state
-			@record = split('\:', $_);
+			@record = split('\;', $_);
 			next if ($record[2] !~ /up/i || $record[1] !~ /(cisco|foundry|juniper)/);
 			push(@rtrlist, join(':', ($record[0], $record[1])));
 			$rtrlabels{join(':', ($record[0], $record[1]))} = $record[0];
@@ -194,7 +194,7 @@ sub readrouters
 	    while (<RTR>) {
 		next if (/^\s*(#|$)/);
 		# fqdn:mfg:state
-		@record = split('\:', $_);
+		@record = split('\;', $_);
 		next if ($record[2] !~ /up/i || $record[1] !~ /(cisco|foundry|juniper)/);
 		push(@rtrlist, join(':', ($record[0], $record[1])));
 		$rtrlabels{join(':', ($record[0], $record[1]))} = $record[0];

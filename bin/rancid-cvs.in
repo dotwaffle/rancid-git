@@ -1,6 +1,6 @@
 #! /bin/sh
 ##
-## $Id: rancid-cvs.in 2982 2014-12-23 21:20:03Z heas $
+## $Id: rancid-cvs.in 3055 2015-03-12 18:24:07Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -173,7 +173,7 @@ do
 	    git clone $CVSROOT/$GROUP .
 	    git config --global user.name RANCiD
 	    git config --global user.email $USER$MAILDOMAIN
-	    git config --global push.default simple
+	    git config --global push.default current
 	    ;;
 	esac
     fi
@@ -183,6 +183,7 @@ do
 	mkdir configs
 	if [ $RCSSYS = "git" ]; then
 	    cat > configs/.gitignore <<EOF
+.old
 *.new
 *.raw
 EOF

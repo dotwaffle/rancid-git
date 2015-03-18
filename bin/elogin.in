@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: elogin.in 3018 2015-01-11 05:51:49Z heas $
+## $Id: elogin.in 3046 2015-03-01 18:05:36Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -72,6 +72,8 @@ set do_passwd 1
 set do_saveconfig 0
 # Sometimes routers take awhile to answer (the default is 10 sec)
 set timeoutdflt 45
+# Some CLIs having problems if we write too fast (Extreme, PIX, Cat)
+set send_human {.2 .1 .4 .2 1}
 
 # Find the user in the ENV, or use the unix userid.
 if {[ info exists env(CISCO_USER) ]} {
@@ -408,6 +410,7 @@ proc run_commands { prompt command } {
     send "screen 0\r"
     expect $prompt {}
 
+    # escape any parens in the prompt, such as "(enable)"
     regsub -all "\[)(]" $prompt {\\&} reprompt
 
     # handle escaped ;s in commands, and ;; and ^;

@@ -1,6 +1,6 @@
 package foundry;
 ##
-## $Id: foundry.pm.in 2953 2014-11-27 00:26:58Z heas $
+## $Id: foundry.pm.in 3037 2015-02-18 17:43:37Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -174,7 +174,7 @@ sub ShowChassis {
 	if (/THERMAL PLANE/) {
 	    $skip = 1;
 	}
-	if (/temperature:/i) {
+	if (/(pressure|altitude|temperature):/i) {
 	    $skip = 1;
 	}
 	s/(Fan \d+ \S+), speed .*/$1/;

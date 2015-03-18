@@ -42,7 +42,7 @@
 #
 #  RANCID - Really Awesome New Cisco confIg Differ
 #
-#  slogin - selective login; use router.db files and rancid.{base,types}.conf
+#  plogin - poly-login; use router.db files and rancid.{base,types}.conf
 #	    configurations to determine which login script to execute.
 #
 use 5.0010;
@@ -71,7 +71,7 @@ our @ISA = qw(Exporter rancid);
 
 sub usage()
 {
-    print STDERR "slogin [-dSV] [-autoenable] [-noenable] [-c command] [-Evar=x] [-e enable-password] [-f cloginrc-file] [-p user-password] [-r passphrase] [-s script-file] [-t timeout] [-u username] [-v vty-password] [-w enable-username] [-x command-file] [-y ssh_cypher_type] [-z device_type] router [router...]\n";
+    print STDERR "plogin [-dSV] [-autoenable] [-noenable] [-c command] [-Evar=x] [-e enable-password] [-f cloginrc-file] [-p user-password] [-r passphrase] [-s script-file] [-t timeout] [-u username] [-v vty-password] [-w enable-username] [-x command-file] [-y ssh_cypher_type] [-z device_type] router [router...]\n";
     exit 64;
 }
 
@@ -84,7 +84,7 @@ if ($opt_h) {
 
 # option handling initialization
 if ($opt_V) {
-    print "slogin: @PACKAGE@ @VERSION@\n";
+    print "plogin: @PACKAGE@ @VERSION@\n";
     # do not exit; exec the script with -V and it will exit
 }
 $cmd .= " -d" if ($opt_d);

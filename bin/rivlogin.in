@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: rivlogin.in 2935 2014-11-21 05:38:27Z heas $
+## $Id: rivlogin.in 3022 2015-01-13 20:00:00Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -64,6 +64,8 @@ set config   0
 
 # in seconds to wait for data back from device
 set timeoutdflt 10
+# Some CLIs having problems if we write too fast (Extreme, PIX, Cat)
+set send_human {.2 .1 .4 .2 1}
 set tempfile "/tmp/rivlogin.[exec date]"
 
 # cli command prompt

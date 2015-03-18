@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: flogin.in 3018 2015-01-11 05:51:49Z heas $
+## $Id: flogin.in 3024 2015-01-13 20:04:53Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -83,8 +83,8 @@ set do_enapasswd 1
 set do_saveconfig 0
 # Sometimes routers take awhile to answer (the default is 10 sec)
 set timeoutdflt 45
-#
-set send_human {.4 .4 .7 .3 5}
+# Some CLIs having problems if we write too fast (Extreme, PIX, Cat)
+set send_human {.2 .1 .4 .2 1}
 
 # Find the user in the ENV, or use the unix userid.
 if {[ info exists env(CISCO_USER) ]} {
@@ -451,17 +451,15 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 				}
 	-re "@\[^\r\n]+ $p_prompt"	{
 					  # ssh pwd prompt
-					  sleep 1
 					  send -h -- "$userpswd\r"
 					  exp_continue
-					}
+				}
 	-re "$u_prompt"		{
 				  send -h -- "$user\r"
 				  set uprompt_seen 1
 				  exp_continue
 				}
 	-re "$p_prompt"		{
-				  sleep 1
 				  if {$uprompt_seen == 1} {
 					send -h -- "$userpswd\r"
 				  } else {
@@ -487,7 +485,6 @@ proc do_enable { enauser enapasswd } {
     global u_prompt e_prompt
     set in_proc 1
 
-    sleep 1;		# dont go too fast for it now...
     send -h "enable\r"
     expect {
 	-re "$u_prompt"	{ send -h -- "$enauser\r"; exp_continue}
@@ -517,6 +514,14 @@ proc run_commands { prompt command } {
     set in_proc 1
 
     send -h "skip-page-display\r"
+    expect -re "$prompt" {}
+    # If logging in as an unpriv user (i.e., level 5 read-only), then
+    # "skip-page-display" isn't available, unless you also configure:
+    # privilege exec level 5 skip-page-display
+    #
+    # On some platforms, like the MLX, you can work around that
+    # with this:
+    send "terminal length 0\r"
     expect -re "$prompt" {}
 
     # handle escaped ;s in commands, and ;; and ^;
@@ -713,6 +718,14 @@ foreach router [lrange $argv $i end] {
 	# fucking foundry
 	send -h "skip-page-display\r"
 	expect -re $prompt	{}
+	# If logging in as an unpriv user (i.e., level 5 read-only), then
+	# "skip-page-display" isn't available, unless you also configure:
+	# privilege exec level 5 skip-page-display
+	#
+	# On some platforms, like the MLX, you can work around that
+	# with this:
+	send "terminal length 0\r"
+	expect -re "$prompt" {}
 	source $sfile
 	catch {close};
     } else {

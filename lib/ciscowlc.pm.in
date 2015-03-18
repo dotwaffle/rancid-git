@@ -1,6 +1,6 @@
 package ciscowlc;
 ##
-## $Id: ciscowlc.pm.in 3011 2015-01-09 03:26:47Z heas $
+## $Id: ciscowlc.pm.in 3050 2015-03-08 08:18:17Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -123,32 +123,38 @@ sub ShowConfig {
         tr/\015//d;
         tr/\020//d;
 
-        my($skipprocess) = 0;
-
-        # remove snmp community string data
-        if (/^(\s*snmp community create)/ && $filter_pwds >= 1) {
-            ProcessHistory("","","","!$1 <removed>\n"); next;
-        }
-        if (/^(\s*snmp community accessmode (ro|rw))/ && $filter_pwds >= 1) {
-            ProcessHistory("","","","!$1 <removed>\n"); next;
-        }
-        if (/^(\s*snmp community ipaddr\s\S+\s\S+) / && $filter_pwds >= 1) {
-            ProcessHistory("","","","!$1 <removed>\n"); next;
-        }
-	if (/^\s*rogue ap classify/) { $skipprocess = 1; }
-	if (/^\s*rogue adhoc alert/) { $skipprocess = 1; }
-
-
-        last if (/^$prompt/);
-        next if (/^(\s*|\s*$cmd\s*)$/);
+	next if (/^\s*rogue ap classify/);
+	next if (/^\s*rogue adhoc alert/);
 
 	$linecnt++;
-        if (! /^$prompt/) {
-                if (! $skipprocess) {
-                        print STDERR "      ShowConfig Data: $_" if ($debug);
-                        ProcessHistory("","","","$_");
-                }
-        }
+
+	# These can not be imported, so comment them
+	if (/^\s*service port.*/i) {
+	    ProcessHistory("","","","!$_"); next;
+	}
+	if (/^\s*wlan express setup.*/i) {
+	    ProcessHistory("","","","!$_"); next;
+	}
+
+        # remove snmp community string data
+	if (/^(\s*snmp community create)/ && $filter_pwds >= 1) {
+	    ProcessHistory("","","","!$1 <removed>\n"); next;
+	}
+	if (/^(\s*snmp community accessmode (ro|rw))/ && $filter_pwds >= 1) {
+	    ProcessHistory("","","","!$1 <removed>\n"); next;
+	}
+	if (/^(\s*snmp community ipaddr\s\S+\s\S+) / && $filter_pwds >= 1) {
+	    ProcessHistory("","","","!$1 <removed>\n"); next;
+	}
+
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+
+	$linecnt++;
+	if (! /^$prompt/) {
+	    print(STDERR "      ShowConfig Data: $_") if ($debug);
+	    ProcessHistory("","","","$_");
+	}
     }
     ProcessHistory("","","","\n!--WLC End Config Data--!\n");
     print STDERR "    Exiting ShowConfig: $_" if ($debug);

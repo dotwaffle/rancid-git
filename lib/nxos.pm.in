@@ -1,6 +1,6 @@
 package nxos;
 ##
-## $Id: nxos.pm.in 3010 2015-01-09 00:54:20Z asp $
+## $Id: nxos.pm.in 3049 2015-03-05 10:12:42Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -709,7 +709,7 @@ sub ShowProcLog {
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if /Line has invalid autocommand /;
 	return(1) if /(Invalid input detected|Type help or )/;
-	return(-1) if (/\% Invalid command at /);
+	return(1) if (/\% Invalid command at /);
 	return(-1) if (/\% Permission denied/);
 	return(-1) if (/command authorization failed/i);
 

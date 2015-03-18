@@ -1,4 +1,4 @@
-Frequently Asked Questions about rancid - last updated 20140910.
+Frequently Asked Questions about rancid - last updated 20150216.
 
 This FAQ contains information that may not apply directly to versions of
 rancid prior to 2.3.  It also contains paths containing tags such as
@@ -18,15 +18,15 @@ rancid.
 
 The most recent FAQ can be found at http://www.shrubbery.net/rancid/FAQ
 
-TOC
-1) Platform specific
+ToC
+1) Platform/Device specific
 2) CVS and filesystem permissions
 3) General
 4) O/S specific
 5) I am still stuck
 6) License
 
-1) Platform specific
+1) Platform/Device specific
 Q. I have a Cisco Catalyst 6500 series switch running the IOS (NOT catOS)
    software, is the router.db device type cisco or cat5?
 A. A catalyst running IOS is type "cisco".  The 'show version' output will
@@ -174,7 +174,7 @@ A. CVS does not provide a way (AFAIK) to rename files or to rename or delete
 
 Q. I am new to svn.  Where can I find more information?
 A. The svn so-called "red book" is the definitive guide.
-   http://svnbook.red-bean.com/en/1.5/svn-book.html 
+   http://svnbook.red-bean.com/en/1.5/svn-book.html
 
 
 Q. I am removing a group and would like to remove all traces of it from the
@@ -276,8 +276,8 @@ A. The trickiest part about clogin (et al) is recognizing the prompt
    device's prompt is, in your prompt or in your banner or other motd.
 
 
-Q. I am having experiencing random login failures using telnet and am seeing
-   a kerberos message like:
+Q. I am experiencing random login failures using telnet and am seeing a
+   kerberos message like:
 	Kerberos: No default realm defined for Kerberos!
 A. This diagnostic output can confuse rancid if it appears amid a login prompt.
    The easiest work around is to tell telnet not to attempt kerberos
@@ -344,10 +344,10 @@ A. Using a syslog watcher script, one can trigger RANCID from the syslog
    type=SingleWithSuppress
    ptype=RegExp
    pattern=\s\S+:\S+\S+\s(\S+)\.example\.com.*SYS-5-CONFIG_I
-   action=shellcmd /opt/rancid/bin/do-diffs -r $1
+   action=shellcmd /opt/rancid/bin/run-rancid -r $1
    window=1800
 
-   This will execute the command '/opt/rancid/bin/do-diffs -r acc1.geo269'
+   This will execute the command '/opt/rancid/bin/run-rancid -r acc1.geo269'
    when it is fed a line like that syslog line.  The command will be run at
    most once every 1800 seconds.  If you do not get hostnames in your
    log lines that match your router.db entries, either fix your reverse
@@ -376,6 +376,26 @@ A. Strictly speaking, no.  Rancid needs permission to read device configuration
 
    For RADIUS, Justin Grote suggested privilege levels:
    http://www.cisco.com/univercd/cc/td/doc/product/software/ios122/122newft/122t/122t13/ftprienh.htm
+
+   Or, on a Juniper, configure a login class, such as below:
+
+	set system login class RANCID permissions access
+	set system login class RANCID permissions admin
+	set system login class RANCID permissions firewall
+	set system login class RANCID permissions flow-tap
+	set system login class RANCID permissions interface
+	set system login class RANCID permissions network
+	set system login class RANCID permissions routing
+	set system login class RANCID permissions secret
+	set system login class RANCID permissions security
+	set system login class RANCID permissions snmp
+	set system login class RANCID permissions storage
+	set system login class RANCID permissions system
+	set system login class RANCID permissions trace
+	set system login class RANCID permissions view
+	set system login class RANCID permissions view-configuration
+
+	set system login user rancid class RANCID
 
 
 Q. For approximately X hosts (configs), what size server should we be
@@ -425,7 +445,7 @@ A. You can adjust PAR_COUNT in rancid.conf to achieve maximum efficiency
    If you _do_ share resources with other processes but want rancid to
    run efficiently, probably the vmstat method above will work better -
    rancid may take a little longer to run but you won't be stepping on
-   other people's toes.
+   other processes.
 
 
 Q. What else can I do with rancid?
@@ -434,6 +454,15 @@ A. The possibilities are endless...rancid is non-toxic when applied properly.
 	http://www.nanog.org/mtg-0210/abley.html
    or our NANOG presentation:
 	http://www.shrubbery.net/rancid/NANOG29/
+
+
+Q. I wrote scripts for an unsupported device in rancid 2.x, but I am upgrading
+   to 3.x and rancid-fe no longer works in the same manner.  Can I use the
+   script with 3.x?
+A. Yes.  The device type must be added to etc/rancid.types.conf such as:
+	DeviceTypeName;script;RancidScriptName
+	DeviceTypeName;login;LoginScriptName
+   See rancid.types.conf(5)
 
 
 4) O/S specific

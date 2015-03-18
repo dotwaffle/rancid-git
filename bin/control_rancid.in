@@ -1,6 +1,6 @@
 #! /bin/sh
 ##
-## $Id: control_rancid.in 3014 2015-01-10 18:57:30Z heas $
+## $Id: control_rancid.in 3056 2015-03-12 23:02:27Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -132,6 +132,7 @@ SENDMAIL=${SENDMAIL:=sendmail};
 
 # Bail if we do not have the necessary info to run
 if [ ! -d $DIR ] ; then
+    adminmailrcpt=${adminmailrcpt:-"@ADMINMAILPLUS@${GROUP}${MAILDOMAIN}"};
     echo "$DIR does not exist."
     echo "Run bin/rancid-cvs $GROUP to make all of the needed directories."
     (
@@ -189,6 +190,7 @@ EOF
     if [ ! -f configs/.gitignore ] ; then
 	rm -rf configs/.gitignore
 	cat > configs/.gitignore <<EOF
+.old
 *.new
 *.raw
 EOF
@@ -204,8 +206,17 @@ routers.all
 routers.down
 routers.up
 EOF
+    if [ ! -f configs/.cvsignore ] ; then
+	rm -rf configs/.cvsignore
+	cat > configs/.cvsignore <<EOF
+.old
+*.new
+*.raw
+EOF
+    fi
     if [ $RCSSYS = svn ] ; then
 	svn propset svn:ignore -F .cvsignore .
+	svn propset svn:ignore -F configs/.cvsignore configs
 	svn update .
 	svn commit -m 'set svn:ignores' .
 	fi
@@ -558,18 +569,26 @@ done
 # Diff the directory and then checkin.
 trap 'rm -fr $TMP $TMP.diff $DIR/routers.single;' 1 2 15
 cd $DIR
-case $RCSSYS in
-cvs )
-    cvs -f @DIFF_CMD@ -ko | sed -e '/^RCS file: /d' -e '/^--- /d' \
+if [ "X$DIFFSCRIPT" = "X" ]; then
+    case $RCSSYS in
+    cvs )
+	cvs -f @DIFF_CMD@ -ko | sed -e '/^RCS file: /d' -e '/^--- /d' \
 	-e '/^+++ /d' -e 's/^\([-+ ]\)/\1 /' >$TMP.diff
-    ;;
-svn )
-    svn diff | sed -e '/^+++ /d' -e 's/^\([-+ ]\)/\1 /' >$TMP.diff
-    ;;
-git )
-    git diff | sed -e '/^+++ /d' -e 's/^\([-+ ]\)/\1 /' >$TMP.diff
-    ;;
-esac
+	;;
+    svn | git )
+	$RCSSYS diff | sed -e '/^+++ /d' -e 's/^\([-+ ]\)/\1 /' >$TMP.diff
+	;;
+    esac
+else
+    case $RCSSYS in
+    cvs )
+	cvs -f @DIFF_CMD@ -ko | ($DIFFSCRIPT) 2>&1 >$TMP.diff
+	;;
+    svn | git )
+	$RCSSYS diff | ($DIFFSCRIPT) 2>&1 >$TMP.diff
+	;;
+    esac
+fi
 
 if [ $alt_mailrcpt -eq 1 ] ; then
     subject="router config diffs - courtesy of $mailrcpt"

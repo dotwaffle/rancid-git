@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: nslogin.in 3018 2015-01-11 05:51:49Z heas $
+## $Id: nslogin.in 3046 2015-03-01 18:05:36Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -82,6 +82,8 @@ set do_enapasswd 1
 set do_saveconfig 0
 # Sometimes routers take awhile to answer (the default is 10 sec)
 set timeoutdflt 45
+# Some CLIs having problems if we write too fast (Extreme, PIX, Cat)
+set send_human {.2 .1 .4 .2 1}
 
 # Find the user in the ENV, or use the unix userid.
 if {[ info exists env(CISCO_USER) ]} {
@@ -459,6 +461,7 @@ proc run_commands { prompt command } {
     global in_proc
     set in_proc 1
 
+    # escape any parens in the prompt, such as "(enable)"
     regsub -all "\[)(]" $prompt {\\&} reprompt
     # this is the only way i see to get rid of more prompts in o/p..grrrrr
     log_user 0

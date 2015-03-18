@@ -1,6 +1,6 @@
 package ios;
 ##
-## $Id: ios.pm.in 3000 2015-01-06 18:47:49Z heas $
+## $Id: ios.pm.in 3058 2015-03-14 14:55:56Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -281,7 +281,6 @@ sub ShowVersion {
 	    $proc = $1;
 	    my($cpu) = $2;
 	    my($mem) = $3;
-	    my($device) = "router";
 
 	    # the next line ought to be the more specific cpu info, grab it.
 	    # yet, some boards/IOS vers have a processor ID line between these
@@ -329,7 +328,6 @@ LINE:		while (<$INPUT>) {
 		$type = "AGS+";
 	    } elsif ($proc =~ /1900/) {
 		$type = "1900";
-		$device = "switch";
 	    } elsif ($proc =~ /2811/) {
 		$type = "2800";
             } elsif ( $proc =~ /^ME-3400/) {
@@ -340,32 +338,26 @@ LINE:		while (<$INPUT>) {
                 $type = "ME6500";
 	    } elsif ($proc =~ /C3750/) {
 		$type = "3750";
-		$device = "switch";
 	    } elsif ($proc =~ /^(AS)?25[12][12]/) {
 		$type = "2500";
 	    } elsif ($proc =~ /261[01]/ || $proc =~ /262[01]/ ) {
 		$type = "2600";
 	    } elsif ($proc =~ /WS-C29/) {
 		$type = "2900XL";
-		$device = "switch";
 	    } elsif ($proc =~ /WS-C355/) {
 		$type = "3550";
-		$device = "switch";
 	    } elsif ($proc =~ /WS-C35/) {
 		$type = "3500XL";
-		$device = "switch";
 	    } elsif ($proc =~ /^36[0246][0-9]/) {
 		$type = "3600";
 	    } elsif ($proc =~ /^37/) {
 		$type = "3700";
             } elsif ( $proc =~ /WS-C375/) {
                 $type = "3750";
-                $device = "switch";
 	    } elsif ($proc =~ /^38/) {
 		$type = "3800";
 	    } elsif ($proc =~ /WS-C45/) {
 		$type = "4500";
-		$device = "switch";
 	    } elsif ( $proc =~ /^AS5300/) {
 		$type = "AS5300";
 	    } elsif ( $proc =~ /^AS5350/) {
@@ -374,12 +366,10 @@ LINE:		while (<$INPUT>) {
 		$type = "AS5400";
 	    } elsif ($proc =~ /6000/) {
 		$type = "6000";
-		$device = "switch";
 	    } elsif ($proc eq "WK-C65") {
 		$type = "6500";
             } elsif ( $proc =~ /WS-C6509/) {
                 $type = "6500";
-                $device = "router";
 	    } elsif ($proc eq "RP") {
 		$type = "7000";
 	    } elsif ($proc eq "RP1") {
@@ -408,7 +398,7 @@ LINE:		while (<$INPUT>) {
 
 	    print STDERR "TYPE = $type\n" if ($debug);
 	    ProcessHistory("COMMENTS","keysort","A1",
-		"!Chassis type:$slave $proc - a $type $device\n");
+		"!Chassis type:$slave $proc\n");
 	    ProcessHistory("COMMENTS","keysort","B1",
 		"!Memory:$slave main $mem\n");
 	    if (defined($cpu)) {
@@ -470,6 +460,25 @@ LINE:		while (<$INPUT>) {
     return(0);
 }
 
+# This routine parses "showCellular"
+sub ShowCellular {
+    my($INPUT, $OUTPUT, $cmd) = @_;
+    print STDERR "    In ShowDetail: $_" if ($debug);
+
+    while (<$INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	next if (/^\s+\^$/);
+	return(1) if (/Line has invalid autocommand /);
+	return(1) if (/(invalid (input|command) detected|type help or )/i);
+
+	ProcessHistory("COMMENTS","keysort","CELL","!CELL: $_");
+    }
+    ProcessHistory("COMMENTS","keysort","CELL","!\n");
+    return(0);
+}
+
 # This routine parses "showDetail"
 sub ShowDetail {
     my($INPUT, $OUTPUT, $cmd) = @_;
@@ -514,6 +523,11 @@ sub ShowMTU {
             ProcessHistory("COMMENTS","keysort","IO","!MTU-Routing: $1\n");
             next;
         }
+	# XE version
+        if (/Global Ethernet MTU is (\d+) bytes./) {
+            ProcessHistory("COMMENTS","keysort","IO","!MTU-Global: $1\n");
+            next;
+        }
         if (/On next reload, (.*)/) {
             ProcessHistory("COMMENTS","keysort","IO","!MTU-Reload: $1\n");
             next;
@@ -541,6 +555,11 @@ sub ShowSDM {
             next;
         }
         if (/current template is the (\S+) template/) {
+            ProcessHistory("COMMENTS","keysort","IO","!SDM Template: $1\n");
+            next;
+        }
+	# XE version
+        if (/This is the (\S+.*) template/) {
             ProcessHistory("COMMENTS","keysort","IO","!SDM Template: $1\n");
             next;
         }
@@ -1061,7 +1080,7 @@ sub ShowContAll {
 	    ProcessHistory("INT","","","!\t$1\n") && next;
 	# Remove dynamic addresses like:
 	# !Interface: FastEthernet0/0, GT96K FE ADDR: 62AFB684, FASTSEND: 6 1579E4C, MCI_INDEX: 0
-	/^Hardware is (.*?)($| ADDR: .*| at 0x.*)/ &&
+	/^ *Hardware is (.*?)($| ADDR: .*| at 0x.*)/ &&
 	    ProcessHistory("INT","","","!Interface: $INT$1\n") && next;
 	/^Hardware is (.*)/ &&
 	    ProcessHistory("INT","","","!Interface: $INT$1\n") && next;
@@ -1887,9 +1906,10 @@ sub ShowShun {
 sub WriteTerm {
     my($INPUT, $OUTPUT, $cmd) = @_;
     print STDERR "    In WriteTerm: $_" if ($debug);
-    my($lineauto, $comment, $linecnt) = (0,0,0);
+    my($comment, $linecnt) = (0,0);
 
     while (<$INPUT>) {
+TOP:
 	tr/\015//d;
 	last if (/^$prompt/);
 	return(1) if (!$linecnt && /^\s+\^\s*$/);
@@ -1919,7 +1939,6 @@ sub WriteTerm {
 	/Non-Volatile memory is in use/ && return(-1); # NvRAM is locked
 	/% Configuration buffer full, / && return(-1); # buffer is in use
 	$linecnt++;
-	$lineauto = 0 if (/^[^ ]/);
 	# skip the crap
 	if (/^(##+|(building|current) configuration)/i) {
 	    while (<$INPUT>) {
@@ -1954,20 +1973,32 @@ sub WriteTerm {
 	# Dog gone Cool matches to process the rest of the config
 	/^tftp-server flash /   && next; # kill any tftp remains
 	/^ntp clock-period /    && next; # kill ntp clock-period
-	/^ length /		&& next; # kill length on serial lines
-	/^ width /		&& next; # kill width on serial lines
-	$lineauto = 1 if /^ modem auto/;
-	/^ speed / && $lineauto	&& next; # kill speed on serial lines
 	/^ clockrate /		&& next; # kill clockrate on serial interfaces
-	# kill rx/txspeed on cellular modem cards
-	if (/^line \d+\/\d+\/\d+/) {
+	# kill rx/txspeed (particularly on cellular modem cards)
+	if (/^(line (\d+(\/\d+\/\d+)?|con|aux|vty))/) {
 	    my($key) = $1;
+	    my($lineauto) = (0);
+	    if ($key =~ /con/) {
+		$key = -1;
+	    } elsif ($key =~ /aux/) {
+		$key = -2;
+	    } elsif ($key =~ /vty/) {
+		$key = -3;
+	    }
 	    ProcessHistory("LINE","keysort","$key","$_");
 	    while (<$INPUT>) {
 		tr/\015//d;
-		last if (/^$prompt/ || ! /^ /);
-		next if (/(rx|tx)speed \d+/);
-		$_ = "$1 <removed>" if (/^(\s+password \d+) /);
+		last if (/^$prompt/);
+		goto TOP if (! /^ /);
+		next if (/\s*(rx|tx)speed \d+/);
+		next if (/^ length /);	# kill length on serial lines
+		next if (/^ width /);	# kill width on serial lines
+		$lineauto = 0 if (/^[^ ]/);
+		$lineauto = 1 if /^ modem auto/;
+		/^ speed / && $lineauto	&& next; # kill speed on serial lines
+		if (/^(\s+password) \d+ / && $filter_pwds >= 1) {
+		    $_ = "!$1 <removed>\n";
+		}
 		ProcessHistory("LINE","keysort","$key","$_");
 	    }
 	}

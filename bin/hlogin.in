@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: hlogin.in 3018 2015-01-11 05:51:49Z heas $
+## $Id: hlogin.in 3047 2015-03-01 18:17:07Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -80,7 +80,7 @@ set do_enapasswd 1
 set do_saveconfig 0
 # Sometimes routers take awhile to answer (the default is 10 sec)
 set timeoutdflt 45
-#
+# Some CLIs having problems if we write too fast (Extreme, PIX, Cat)
 set send_human {.2 .1 .4 .2 1}
 
 # Find the user in the ENV, or use the unix userid.
@@ -530,8 +530,11 @@ proc run_commands { prompt command } {
 
     # Turn off the pager and escape regex meta characters in the $prompt
     send "no page\r"
-    regsub -all {[)(]} $prompt {\\&} reprompt
-    regsub -all {^(.{1,11}).*([#>])$} $reprompt {\1([^#>\r\n]+)?[#>](\\([^)\\r\\n]+\\))?} reprompt
+    # match cisco config mode prompts too, such as router(config-if)#
+    regsub -all {^(.{1,11}).*([#>])$} $prompt {\1} reprompt
+    # escape any parens in the prompt, such as "(enable)"
+    regsub -all {[)(]} $reprompt {\\&} reprompt
+    append reprompt {([^#>\r\n]+)?[#>](\\([^)\\r\\n]+\\))?}
     expect {
 	-re $reprompt	{}
 	-re "\[\n\r]+"	{ exp_continue }

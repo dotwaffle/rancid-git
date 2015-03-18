@@ -103,6 +103,7 @@ cisco;command;ios::ShowCapture;show capture;ASA/PIX
 cisco;command;ios::ShowModule;show module;c6500 ios
 cisco;command;ios::ShowSpeVersion;show spe version
 cisco;command;ios::ShowC7200;show c7200
+cisco;command;ios::ShowCellular;show cellular 0 profile;Cellular modem
 cisco;command;ios::ShowInventory;show inventory raw
 cisco;command;ios::ShowVTP;show vtp status
 cisco;command;ios::ShowVLAN;show vlan
@@ -244,7 +245,7 @@ dell;script;rancid -t dell
 dell;login;dllogin
 dell;module;dell
 dell;inloop;dell::inloop
-dell;command;dell::GetSystem;show switch;
+dell;command;dell::GetSystem;show switch
 dell;command;dell::GetConf;show config current_config
 #
 enterasys;script;rivrancid

@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: f5rancid.in 2657 2012-12-05 21:00:58Z heas $
+## $Id: f5rancid.in 3048 2015-03-04 09:44:23Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -501,6 +501,9 @@ sub WriteTerm {
 	# order ip nat source static statements
 	/^ip nat (\S+) source static (\S+)/ &&
 	    ProcessHistory("IP NAT $1","ipsort","$2","$_") && next;
+
+	# monitor state
+	/^\s+monitor state (\S+)/ && next;
 
 	# catch anything that wasnt matched above.
 	ProcessHistory("","","","$_");

@@ -1,6 +1,6 @@
 .\"
 .hys 50
-.TH "control_rancid" "1" "15 July 2013"
+.TH "control_rancid" "1" "11 March 2015"
 .SH NAME
 control_rancid \- run rancid for devices of a group
 .SH SYNOPSIS
@@ -25,7 +25,12 @@ run rancid for each of the devices, possibly re-run rancid for devices
 that failed collection, e-mail diffs, and e-mail error reports.
 .\"
 .PP
+.B control_rancid
+also creates and/or re-creates the .cvsignore/.gitignore files for each
+group.  For the configs sub-directory, it includes ".old", where a user
+may keep files they would like to be ignored.
 .\"
+.PP
 The command-line options are as follows:
 .TP
 .B \-V

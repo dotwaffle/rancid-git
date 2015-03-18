@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: anlogin.in 3018 2015-01-11 05:51:49Z heas $
+## $Id: anlogin.in 3022 2015-01-13 20:00:00Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -73,8 +73,8 @@ set do_enapasswd 1
 set do_saveconfig 0
 # Sometimes routers take awhile to answer (the default is 10 sec)
 set timeoutdflt 45
-#
-set send_human {.4 .4 .7 .3 5}
+# Some CLIs having problems if we write too fast (Extreme, PIX, Cat)
+set send_human {.2 .1 .4 .2 1}
 # spawn tty options
 set spawnopts {}
 

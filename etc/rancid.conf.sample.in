@@ -92,6 +92,11 @@ RCSSYS=@RCSSYS@; export RCSSYS
 # more groups...
 #LIST_OF_GROUPS="$LIST_OF_GROUPS noc billybobisp"
 #
+# Define an alternate filter for the output of the RCS diff.  The filter
+# should read from stdin and write to stdout.  The default is defined in
+# control_rancid and just improves readability.
+#DIFFSCRIPT="filter1 | filter2"; export DIFFSCRIPT
+#
 # For each group, define a list of people to receive the diffs.
 # in sendmail's /etc/aliases.
 #   rancid-group:	joe,moe@foo
