@@ -78,6 +78,7 @@ bin/tntlogin
 bin/tntrancid
 bin/trancid
 bin/ucsrancid
+bin/ubnt-es-rancid
 bin/xrancid
 bin/xrrancid
 bin/zrancid
