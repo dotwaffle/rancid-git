@@ -1,3 +1,9 @@
+3.2.99
+	rancid.pm: check result from inet_pton()
+
+	ciscowlc.pm: comment a few config lines that can not be imported
+
+
 3.2
 	mtlogin: support cloginrc passphrase and identity
 

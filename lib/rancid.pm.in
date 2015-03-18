@@ -366,7 +366,9 @@ sub ipaddrval {
 	    $l = 128;
 	}
 	$norder = inet_pton(AF_INET6, $a);
-	return unpack("H*", $norder) . unpack("H*", pack("C", $l));
+	if (defined($norder)) {
+	    return unpack("H*", $norder) . unpack("H*", pack("C", $l));
+	}
     } else {
 	my($l);
 	if ($a =~ /\//) {
@@ -375,7 +377,9 @@ sub ipaddrval {
 	    $l = 32;
 	}
 	$norder = inet_pton(AF_INET, $a);
-	return(unpack("H*", $norder) . unpack("H*", pack("C", $l)));
+	if (defined($norder)) {
+	    return(unpack("H*", $norder) . unpack("H*", pack("C", $l)));
+	}
     }
 
     # otherwise return the original key value, so as not to sort on null
