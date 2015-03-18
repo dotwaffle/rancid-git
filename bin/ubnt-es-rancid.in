@@ -18,11 +18,11 @@
 ## anything else.
 ##
 #
-# ubnt-es - adapted for Ubiquiti EdgeSwitch by Jesse Norell <jesse at kci.net>
+# ubnt-es-rancid - adapted for Ubiquiti EdgeSwitch by Jesse Norell <jesse at kci.net>
 #
 #  RANCID - Really Awesome New Cisco confIg Differ
 #
-# usage: ubnt-es [-d] [-l] [-f filename | $host]
+# usage: ubnt-es-rancid [-d] [-l] [-f filename | $host]
 #
 use Getopt::Std;
 getopts('dfl');
