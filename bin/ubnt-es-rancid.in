@@ -150,8 +150,8 @@ sub ShowMisc { # keyval
     tr/\015//d;
 #    s/\x1b\x37//g;	# ANSI escape code: Save Cursor Position
     if (/^$prompt/) { $found_version=1; last};
-    next if(/^\s*$cmd\s*$/);
-    return(1) if (/^\s*(^|\% Invalid input detected at '^' marker\.)\s*$/);
+    next if(/^\s*($cmd)\s*$/);
+    return(1) if (/^\s*(\^|\% Invalid input detected at '^' marker\.)\s*$/);
 
     # in case the pager prompt shows up
     s/^--More-- or \(q\)uit//;
@@ -174,8 +174,8 @@ sub ShowConfig {
     tr/\015//d;
 #    s/\x1b\x37//g;	# ANSI escape code: Save Cursor Position
     if (/^$prompt/) { $found_end=1; $clean_run=1; return 0};
-    next if(/^\s*$cmd\s*$/);
-    return(1) if (/^\s*(^|\% Invalid input detected at '^' marker\.)\s*$/);
+    next if(/^\s*($cmd)\s*$/);
+    return(1) if (/^\s*(\^|\% Invalid input detected at '^' marker\.)\s*$/);
 
     # in case the pager prompt shows up
     s/^--More-- or \(q\)uit//;
@@ -238,6 +238,11 @@ ProcessHistory("","","","!RANCID-CONTENT-TYPE: EdgeSwitch\n!\n");
 TOP: while(<INPUT>) {
     tr/\015//d;
 #    s/\x1b\x37//g;	# ANSI escape code: Save Cursor Position
+
+    if (/^($prompt)exit$/) {
+        $clean_run=1;
+        last;
+    }
 
     next if (/^\s*(^|\% Invalid input detected at '^' marker\.)\s*$/);
 
