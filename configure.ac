@@ -505,6 +505,7 @@ AC_CONFIG_FILES(bin/ucsrancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/xrancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/xrrancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/zrancid, [chmod a+x $ac_file])
+AC_CONFIG_FILES(bin/zyrancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(share/rtrfilter, [chmod a+x $ac_file])
 
 AC_OUTPUT()

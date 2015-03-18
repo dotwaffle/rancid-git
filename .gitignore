@@ -79,6 +79,7 @@ bin/ucsrancid
 bin/xrancid
 bin/xrrancid
 bin/zrancid
+bin/zyrancid
 config.status
 etc/Makefile
 etc/lg.conf.sample

@@ -73,6 +73,7 @@ bin/
 	vrancid.in	Version of rancid.in for VyOS firewalls.
 	xrancid.in	Version of rancid.in for Extreme switches.
 	zrancid.in	Version of rancid.in for Zebra routers.
+	zyrancid.in	Version of rancid.in for ZyXel switches.
 
 	alogin.in	Version of clogin.in for Alteon switches.
 	blogin.in	Version of clogin.in for baynet/Nortel routers.
