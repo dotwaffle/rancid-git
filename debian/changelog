@@ -4,8 +4,8 @@ rancid-git (2.3.9-0) UNRELEASED; urgency=low
   * Unofficial package.
 
   [ Jesse Norell ]
-  * Added support for Telco Systems T5C (telcorancid)
-  * Added support for ZyXel switches (zyrancid)
+  * Added support for Telco Systems T5C (telco)
+  * Added support for ZyXel switches (zyxel)
   * Added support for pfSense (pfsense)
   * Added support for Uniquiti EdgeSwitch (ubnt-es)
 
