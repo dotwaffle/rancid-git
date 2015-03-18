@@ -9,6 +9,7 @@ debian/rancid-core/
 debian/rancid-util/
 debian/rancid.postrm.debhelper
 debian/rancid/
+debian/rancid-git/
 Makefile
 aclocal.m4
 autom4te.cache/
@@ -70,6 +71,7 @@ bin/shelllogin
 bin/shellrancid
 bin/srancid
 bin/tlogin
+bin/telcorancid
 bin/tntlogin
 bin/tntrancid
 bin/trancid

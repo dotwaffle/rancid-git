@@ -107,8 +107,8 @@ DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(srcdir)/rancid_par.in $(srcdir)/rivlogin.in \
 	$(srcdir)/rivrancid.in $(srcdir)/rrancid.in \
 	$(srcdir)/shellrancid.in $(srcdir)/shelllogin.in \
-	$(srcdir)/srancid.in $(srcdir)/tlogin.in $(srcdir)/tntlogin.in \
-	$(srcdir)/tntrancid.in $(srcdir)/trancid.in \
+	$(srcdir)/srancid.in $(srcdir)/telcorancid.in $(srcdir)/tlogin.in \
+	$(srcdir)/tntlogin.in $(srcdir)/tntrancid.in $(srcdir)/trancid.in \
 	$(srcdir)/ucsrancid.in $(srcdir)/xrancid.in \
 	$(srcdir)/vlogin.in $(srcdir)/vlogin.in \
 	$(srcdir)/vrancid.in $(srcdir)/vrancid.in \
@@ -128,8 +128,8 @@ CONFIG_CLEAN_FILES = agmrancid alogin arancid arrancid avologin \
 	htlogin htrancid jlogin jrancid jerancid mrancid mrvlogin \
 	mrvrancid mtrancid mtlogin nlogin nrancid nslogin nsrancid \
 	nxrancid prancid rancid_par rivlogin rivrancid rrancid \
-	shellrancid shelllogin srancid tlogin tntlogin tntrancid \
-	trancid ucsrancid vlogin vrancid xrancid xrrancid zrancid
+	shellrancid shelllogin srancid telcorancid tlogin tntlogin \
+	tntrancid trancid ucsrancid vlogin vrancid xrancid xrrancid zrancid
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
@@ -350,7 +350,7 @@ bin_SCRIPTS = agmrancid alogin arancid arrancid avologin avorancid \
 	fnrancid francid hlogin hrancid htlogin htrancid jerancid \
 	jlogin jrancid mrancid mrvlogin mrvrancid mtlogin mtrancid \
 	nlogin nrancid nslogin nsrancid nxrancid rancid_par prancid \
-	rancid rivlogin rivrancid rrancid srancid tlogin tntlogin \
+	rancid rivlogin rivrancid rrancid srancid telcorancid tlogin tntlogin \
 	tntrancid trancid ucsrancid vlogin vrancid xrancid xrrancid zrancid dlogin \
 	drancid shelllogin shellrancid lg.cgi lgform.cgi rancid-cvs \
 	rancid-fe rancid-run control_rancid
@@ -522,6 +522,8 @@ shellrancid: $(top_builddir)/config.status $(srcdir)/shellrancid.in
 shelllogin: $(top_builddir)/config.status $(srcdir)/shelllogin.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 srancid: $(top_builddir)/config.status $(srcdir)/srancid.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+telcorancid: $(top_builddir)/config.status $(srcdir)/telcorancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 tlogin: $(top_builddir)/config.status $(srcdir)/tlogin.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
