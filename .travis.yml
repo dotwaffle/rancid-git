@@ -1,6 +1,8 @@
+---
 language: c
 compiler: gcc
 before_install:
         - sudo apt-get update -qq
-        - sudo apt-get install -y -qq expect perl openssh-client adduser perl
+install:
+        - sudo apt-get install -y -qq expect perl openssh-client adduser perl inetutils-ping cvs subversion po-debconf telnet automake git passwd mail-transport-agent
 script: ./configure && make
