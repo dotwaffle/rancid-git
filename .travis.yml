@@ -4,7 +4,7 @@ compiler: gcc
 before_install:
         - sudo apt-get update -qq
 install:
-        - sudo apt-get install -y -qq expect perl openssh-client adduser perl inetutils-ping cvs subversion po-debconf telnet automake git passwd mail-transport-agent
+        - sudo apt-get install -y -qq expect perl openssh-client adduser perl inetutils-ping cvs subversion po-debconf telnet automake git passwd
 script:
         - autoreconf -fmi
         - ./configure
