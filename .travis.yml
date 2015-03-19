@@ -10,3 +10,7 @@ script:
         - ./configure
         - make
         - sudo make install
+branches:
+        only:
+                - master
+                - integrate
