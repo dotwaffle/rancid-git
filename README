@@ -71,6 +71,7 @@ bin/
 	srancid.in	Version of rancid.in for SMC switches.
 	tntrancid.in	Version of rancid.in for TNT access servers.
 	telcorancid.in	Version of rancid.in for Telco Systems T5C.
+	ubnt-es-rancid.in	Version of rancid.in for Ubiquiti EdgeSwitch.
 	vrancid.in	Version of rancid.in for VyOS firewalls.
 	xrancid.in	Version of rancid.in for Extreme switches.
 	zrancid.in	Version of rancid.in for Zebra routers.

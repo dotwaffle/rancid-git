@@ -595,6 +595,14 @@ proc run_commands { prompt command } {
 						  }
 						  exp_continue
 						}
+	"Would you like to save them now? "			{
+						  if {$do_saveconfig} {
+						    catch {send "y\r"}
+						  } else {
+						    catch {send "n\r"}
+						  }
+						  exp_continue
+						}
 	"Do you want to log out" 		{
 						  catch {send "y\r"}
 						  exp_continue
