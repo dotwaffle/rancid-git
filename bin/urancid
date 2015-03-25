@@ -147,9 +147,10 @@ sub ShowConfig {
 		if (/$prompt/) { $found_end=1; $clean_run=1; return 0};
 		next if(/^(\s*|\s*$cmd\s*)$/);
 		next if(/^#/);
-		return(1) if /(bad command name )/;
+		return(1) if /.*: not found$/;
 		s/^\s+//g;
 
+# Should remove this for Ubiquiti?
 # RouterOS splits long lines with backslashes - this joins them back up
 		if (/\\\n$/) {
 			s/\s*\\\n$//;
