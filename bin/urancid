@@ -140,7 +140,6 @@ sub sortbyipaddr {
 
 sub ShowConfig {
 	print STDERR "    In ShowConfig $_" if ($debug);
-	my $buffer = "";
 
 	while (<INPUT>) {
 		tr/\015//d;
@@ -150,24 +149,7 @@ sub ShowConfig {
 		return(1) if /.*: not found$/;
 		s/^\s+//g;
 
-# Should remove this for Ubiquiti?
-# RouterOS splits long lines with backslashes - this joins them back up
-		if (/\\\n$/) {
-			s/\s*\\\n$//;
-			$buffer .= $_;
-			if (!/=$/ && !/="[^"]+$/ ) {
-				$buffer .= " ";
-			}
-		}
-		else {
-			$buffer .= $_;
-
-			# Fix quoted strings
-			$buffer =~ s/(\S+)="(\S+)"/$1=$2/g;
-
-			ProcessHistory("","","","$buffer");
-			$buffer = "";
-		}
+		ProcessHistory("","","","$_");
 	}
 }
 
