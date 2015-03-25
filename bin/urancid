@@ -23,6 +23,8 @@
 #
 # usage: urancid [-d] [-l] [-f filename | $host]
 #
+# adapted for use on Ubiquiti gear by Jesse Norell and others
+#
 use Getopt::Std;
 getopts('dfl');
 $log = $opt_l;
@@ -136,8 +138,8 @@ sub sortbyipaddr {
     &ipaddrval($a) <=> &ipaddrval($b);
 }
 
-sub Export {
-	print STDERR "    In Export: $_" if ($debug);
+sub ShowConfig {
+	print STDERR "    In ShowConfig $_" if ($debug);
 	my $buffer = "";
 
 	while (<INPUT>) {
@@ -170,7 +172,7 @@ sub Export {
 
 # Main
 @commandtable=(
-	{'sort /tmp/system.cfg'	=> "Export"},
+	{'sort /tmp/system.cfg'	=> "ShowConfig"},
 );
 
 # Use array to preserve order of commands, and hash for mapping to subroutine
@@ -180,7 +182,7 @@ foreach (@commandtable) {
 	$commands{$commands[$#commands]}= (values(%{$_}))[0];
 };
 
-$cisco_cmds=join(";",@commands);
+$clogin_cmds=join(";",@commands);
 $cmds_regexp=join("|",@commands);
 
 open(OUTPUT,">$host.new") || die "Can't open $host.new for writing: $!\n";
@@ -193,13 +195,13 @@ if ($file) {
     print STDOUT "opening file $host\n" if ($log);
     open(INPUT,"<$host") || die "open failed for $host: $!\n";
 } else {
-    print STDERR "executing $clogin_pgm -t $timeo -c\"$cisco_cmds\" $host\n" if ($debug);
-    print STDOUT "executing $clogin_pgm -t $timeo -c\"$cisco_cmds\" $host\n" if ($log);
+    print STDERR "executing $clogin_pgm -t $timeo -c\"$clogin_cmds\" $host\n" if ($debug);
+    print STDOUT "executing $clogin_pgm -t $timeo -c\"$clogin_cmds\" $host\n" if ($log);
     if (defined($ENV{NOPIPE})) {
-	system "$clogin_pgm -t $timeo -c \"$cisco_cmds\" $host </dev/null > $host.raw 2>&1" || die "$clogin_pgm failed for $host: $!\n";
+	system "$clogin_pgm -t $timeo -c \"$clogin_cmds\" $host </dev/null > $host.raw 2>&1" || die "$clogin_pgm failed for $host: $!\n";
 	open(INPUT, "< $host.raw") || die "$clogin_pgm failed for $host: $!\n";
     } else {
-	open(INPUT,"$clogin_pgm -t $timeo -c \"$cisco_cmds\" $host </dev/null |") || die "$clogin_pgm failed for $host: $!\n";
+	open(INPUT,"$clogin_pgm -t $timeo -c \"$clogin_cmds\" $host </dev/null |") || die "$clogin_pgm failed for $host: $!\n";
     }
 }
 
@@ -212,12 +214,9 @@ if ($ENV{"FILTER_PWDS"} =~ /no/i) {
     $filter_pwds = 1;
 }
 
-ProcessHistory("","","","#RANCID-CONTENT-TYPE: ubiquiti#\n");
-ProcessHistory("","","","# $host #\n");
-ProcessHistory("COMMENTS","keysort","B0","#\n");
-ProcessHistory("COMMENTS","keysort","D0","#\n");
-ProcessHistory("COMMENTS","keysort","F0","#\n");
-ProcessHistory("COMMENTS","keysort","G0","#\n");
+ProcessHistory("","","","#RANCID-CONTENT-TYPE: ubiquiti\n#\n");
+ProcessHistory("","","","# $host \n#\n");
+
 TOP: while(<INPUT>) {
     tr/\015//d;
     if (/[>#]\s*quit$/) {
@@ -251,7 +250,7 @@ TOP: while(<INPUT>) {
 	}
     }
 }
-print STDOUT "Done $logincmd: $_\n" if ($log);
+print STDOUT "Done $clogin_pgm $_\n" if ($log);
 # Flush History
 ProcessHistory("","","","");
 # Cleanup
