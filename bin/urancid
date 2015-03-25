@@ -21,9 +21,8 @@
 #
 #  RANCID - Really Awesome New Cisco confIg Differ
 #
-# usage: rancid [-d] [-l] [-f filename | $host]
+# usage: urancid [-d] [-l] [-f filename | $host]
 #
-# Modified by Chris Boot for MikroTik.
 use Getopt::Std;
 getopts('dfl');
 $log = $opt_l;
@@ -34,7 +33,6 @@ $clean_run = 0;
 $found_end = 0;
 $timeo = 90;			# clogin timeout in seconds
 $clogin_pgm= $ENV{'RANCID_CLOGIN'} || "clogin";
-$clogin_pgm= "/usr/local/rancid/bin/clogin";
 
 my(%filter_pwds);		# password filtering mode
 
