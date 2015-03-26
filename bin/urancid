@@ -157,6 +157,7 @@ sub ShowConfig {
 
 # Main
 @commandtable=(
+	{'uname -a'         	=> "ShowConfig"},
 	{'sort /tmp/system.cfg'	=> "ShowConfig"},
 );
 
