@@ -141,6 +141,8 @@ sub sortbyipaddr {
 sub ShowConfig {
 	print STDERR "    In ShowConfig $_" if ($debug);
 
+	ProcessHistory("COMMENTS","","","\n# $cmd\n");
+
 	while (<INPUT>) {
 		tr/\015//d;
 		if (/$prompt/) { $found_end=1; $clean_run=1; return 0};
