@@ -25,6 +25,7 @@
 #
 # adapted for use on Ubiquiti gear by Jesse Norell and others
 #
+use 5.010;
 use Getopt::Std;
 getopts('dfl');
 $log = $opt_l;
@@ -35,6 +36,7 @@ $clean_run = 0;
 $found_end = 0;
 $timeo = 90;			# clogin timeout in seconds
 $clogin_pgm= $ENV{'RANCID_CLOGIN'} || "clogin";
+$prompt = '.*#';
 
 my(%filter_pwds);		# password filtering mode
 
@@ -140,12 +142,13 @@ sub sortbyipaddr {
 
 sub ShowConfig {
 	print STDERR "    In ShowConfig $_" if ($debug);
+	state $cmd_counter=0;
 
 	ProcessHistory("COMMENTS","","","\n# $cmd\n");
 
 	while (<INPUT>) {
 		tr/\015//d;
-		if (/$prompt/) { $found_end=1; $clean_run=1; return 0};
+		if (/^$prompt/) { $found_end=1; ($cmd_counter++ == $#commandtable) && ($clean_run=1); return 0};
 		next if(/^(\s*|\s*$cmd\s*)$/);
 		next if(/^#/);
 		return(1) if /.*: not found$/;
@@ -154,6 +157,7 @@ sub ShowConfig {
 		ProcessHistory("","","","$_");
 	}
 }
+
 
 # Main
 @commandtable=(
@@ -205,7 +209,8 @@ ProcessHistory("","","","# $host \n#\n");
 
 TOP: while(<INPUT>) {
     tr/\015//d;
-    if (/[>#]\s*quit$/) {
+    next if /^$prompt\s*$/;
+    if (/^(($prompt)\s*exit)$/) {
 	$clean_run=1;
 	last;
     }
@@ -215,13 +220,14 @@ TOP: while(<INPUT>) {
 	$clean_run=0;
 	last;
     }
-    while (/\s*($cmds_regexp)\s*$/) {
-	$cmd = $1;
-	if (!defined($prompt)) {
-	    $prompt = "\] > ";  # crude but effective
-	    $prompt = "X.*\#";  # crude but effective
-	    print STDERR ("PROMPT MATCH: $prompt\n") if ($debug);
-	}
+    while (/($prompt)\s*($cmds_regexp)\s*$/) {
+	$cmd = $2;
+    if (!defined($actual_prompt)) {
+        $actual_prompt = ($_ =~ /^([^#]+#)/)[0];
+        print STDERR ("PROMPT MATCH: $actual_prompt\n") if ($debug);
+        $prompt = $actual_prompt;
+    }
+
 	print STDERR ("HIT COMMAND:$_") if ($debug);
 	if (! defined($commands{$cmd})) {
 	    print STDERR "$host: found unexpected command - \"$cmd\"\n";
