@@ -44,7 +44,7 @@ my(%filter_pwds);		# password filtering mode
 sub ProcessHistory {
     my($new_hist_tag,$new_command,$command_string,@string)=(@_);
     if((($new_hist_tag ne $hist_tag) || ($new_command ne $command))
-       && defined %history) {
+       && %history) {
 	print eval "$command \%history";
 	undef %history;
     }
