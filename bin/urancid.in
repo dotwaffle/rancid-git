@@ -1,7 +1,9 @@
-#! /usr/bin/perl
+#! @PERLV_PATH@
 ##
 ## $Id$
 ##
+## @PACKAGE@ @VERSION@
+## Copyright (C) 2015 by Kentec Communications, Inc.
 ## Copyright (C) 1997-2004 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
