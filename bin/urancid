@@ -154,6 +154,8 @@ sub ShowConfig {
 		return(1) if /.*: not found$/;
 		s/^\s+//g;
 
+		($filter_pwds) && (s/^(.*password=).*$/$1<removed>/g);
+
 		ProcessHistory("","","","$_");
 	}
 }
