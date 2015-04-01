@@ -72,6 +72,7 @@ bin/
 	tntrancid.in	Version of rancid.in for TNT access servers.
 	telcorancid.in	Version of rancid.in for Telco Systems T5C.
 	ubnt-es-rancid.in	Version of rancid.in for Ubiquiti EdgeSwitch.
+	urancid.in	Version of rancid.in for Ubiquiti AirOS radios and ToughSwitch.
 	vrancid.in	Version of rancid.in for VyOS firewalls.
 	xrancid.in	Version of rancid.in for Extreme switches.
 	zrancid.in	Version of rancid.in for Zebra routers.

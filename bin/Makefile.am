@@ -55,7 +55,7 @@ bin_SCRIPTS = agmrancid alogin arancid arrancid avologin avorancid blogin \
 	hlogin hrancid htlogin htrancid jerancid jlogin jrancid mrancid \
 	mrvlogin mrvrancid mtlogin mtrancid nlogin nrancid nslogin nsrancid \
 	nxrancid rancid_par pflogin pfrancid prancid rancid rivlogin rivrancid rrancid srancid \
-	telcorancid tlogin tntlogin tntrancid trancid ubnt-es-rancid ucsrancid \
+	telcorancid tlogin tntlogin tntrancid trancid ubnt-es-rancid urancid ucsrancid \
 	xrancid xrrancid zrancid zyrancid dlogin drancid shelllogin shellrancid
 
 bin_SCRIPTS += lg.cgi lgform.cgi rancid-cvs rancid-fe rancid-run control_rancid

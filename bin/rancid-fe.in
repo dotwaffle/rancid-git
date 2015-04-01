@@ -91,6 +91,7 @@ $vendor =~ tr/[A-Z]/[a-z]/;
     'smc'		=> 'srancid',
     'telco'		=> 'telcorancid',
     'tnt'		=> 'tntrancid',
+    'ubnt'		=> 'urancid',
     'ubnt-es'	=> 'ubnt-es-rancid',
     'vyos'            => 'vrancid',
     'zebra'		=> 'zrancid',
