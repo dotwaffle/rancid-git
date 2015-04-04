@@ -109,7 +109,7 @@ DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(srcdir)/shellrancid.in $(srcdir)/shelllogin.in \
 	$(srcdir)/srancid.in $(srcdir)/telcorancid.in $(srcdir)/tlogin.in \
 	$(srcdir)/tntlogin.in $(srcdir)/tntrancid.in $(srcdir)/trancid.in \
-	$(srcdir)/ubnt-es-rancid.in $(srcdir)/ucsrancid.in \
+	$(srcdir)/ubnt-es-rancid.in $(srcdir)/ucsrancid.in $(srcdir)/urancid.in \
 	$(srcdir)/vlogin.in $(srcdir)/vlogin.in \
 	$(srcdir)/vrancid.in $(srcdir)/vrancid.in \
 	$(srcdir)/xrancid.in $(srcdir)/xrrancid.in \
@@ -130,7 +130,7 @@ CONFIG_CLEAN_FILES = agmrancid alogin arancid arrancid avologin \
 	mrvrancid mtrancid mtlogin nlogin nrancid nslogin nsrancid \
 	nxrancid pflogin pfrancid prancid rancid_par rivlogin rivrancid rrancid \
 	shellrancid shelllogin srancid telcorancid tlogin tntlogin \
-	tntrancid trancid ubnt-es-rancid ucsrancid vlogin vrancid \
+	tntrancid trancid ubnt-es-rancid ucsrancid urancid vlogin vrancid \
 	xrancid xrrancid zrancid zyrancid
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(bindir)"
@@ -353,8 +353,8 @@ bin_SCRIPTS = agmrancid alogin arancid arrancid avologin avorancid \
 	jlogin jrancid mrancid mrvlogin mrvrancid mtlogin mtrancid \
 	nlogin nrancid nslogin nsrancid nxrancid rancid_par pflogin pfrancid prancid \
 	rancid rivlogin rivrancid rrancid srancid telcorancid tlogin tntlogin \
-	tntrancid trancid ubnt-es-rancid ucsrancid vlogin vrancid xrancid xrrancid zrancid \
-	zyrancid dlogin drancid shelllogin shellrancid lg.cgi lgform.cgi rancid-cvs \
+	tntrancid trancid ubnt-es-rancid ucsrancid urancid vlogin vrancid xrancid xrrancid \
+	zrancid zyrancid dlogin drancid shelllogin shellrancid lg.cgi lgform.cgi rancid-cvs \
 	rancid-fe rancid-run control_rancid
 EXTRA_DIST = lg.cgi.in lgform.cgi.in rancid-cvs.in rancid-fe.in rancid-run.in \
 	control_rancid.in
@@ -542,6 +542,8 @@ trancid: $(top_builddir)/config.status $(srcdir)/trancid.in
 ubnt-es-rancid: $(top_builddir)/config.status $(srcdir)/ubnt-es-rancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 ucsrancid: $(top_builddir)/config.status $(srcdir)/ucsrancid.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+urancid: $(top_builddir)/config.status $(srcdir)/urancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 vlogin: $(top_builddir)/config.status $(srcdir)/vlogin.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@

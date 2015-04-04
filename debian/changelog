@@ -8,5 +8,6 @@ rancid-git (2.3.9-0) UNRELEASED; urgency=low
   * Added support for ZyXel switches (zyxel)
   * Added support for pfSense (pfsense)
   * Added support for Uniquiti EdgeSwitch (ubnt-es)
+  * Added support for Uniquiti AirOS radios and ToughSwitch (ubnt)
 
  -- Vincent Bernat <bernat@debian.org>  Mon, 18 Aug 2014 10:05:05 +0200
