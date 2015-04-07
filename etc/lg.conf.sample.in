@@ -6,7 +6,7 @@
 #
 # adjust the path to find [cfj]login, telnet, ssh, rsh, etc.
 #
-$ENV{PATH}="@prefix@/bin:@ENV_PATH@";
+$ENV{PATH}="@bindir@:@sbindir@:@ENV_PATH@";
 #
 #
 # LG_CACHE_DIR	is the location of the cache directory.  the LG uses this
