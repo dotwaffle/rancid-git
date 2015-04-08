@@ -128,7 +128,7 @@ $queries = {};
 # Interface queries
 $queries->{"interface"} = {
 	framerelay => "show frame-relay PVC [DLCI]",
-	interface => "show interface [interface]"
+	interface => "show interface [interface]",
 };
 #
 # Routing queries
@@ -140,14 +140,14 @@ $queries->{"routing"} = {
 	regex => "show ip bgp regex <regex>",
 	route => "show ip route <prefix> [netmask]",
 	routemap => "show route-map <policy_name/number>",
-	summary => "show ip bgp summary"
+	summary => "show ip bgp summary",
 };
 #
 # Debug queries
 $queries->{"debug"} = {
 	log => "Show Logs [ | <match_string>]",
 	ping => "ping <IP_addr | FQDN>",
-	trace => "traceroute <IP_addr | FQDN>"
+	trace => "traceroute <IP_addr | FQDN>",
 };
 #
 # Multicast queries
@@ -171,19 +171,19 @@ $queries->{"multicast"} = {
 	# show ip pim rp mapping/show pim rps
 	## pim_rp => "Show PIM Rendez-vous Points [detail]",
 	# show ip rpf [address] /show multicast rpf [address]
-	## rpf => "Test Multicast RPF <address>"
+	## rpf => "Test Multicast RPF <address>",
 };
 #
 # IPv6 commands
 $queries->{"ipv6"} = {
 	# show bgp ipv6 / ???
-	## v6_bgp => "Show IPv6 BGP table";
+	## v6_bgp => "Show IPv6 BGP table",
 	# show ipv6 interface / show interface
-	## v6_interface => "Show IPv6 interface parameters [interface]";
+	## v6_interface => "Show IPv6 interface parameters [interface]",
 	# show bgp ipv6 summary / show bgp summary
-	## v6_summary => "Show IPv6 BGP Summary";
+	## v6_summary => "Show IPv6 BGP Summary",
 	# show ipv6 route / show route table inet6.0
-	## v6_route => "Show IPv6 Routes <prefix>";
+	## v6_route => "Show IPv6 Routes <prefix>",
 };
 #
 # %EOF%
