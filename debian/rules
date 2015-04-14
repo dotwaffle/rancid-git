@@ -41,9 +41,9 @@ override_dh_auto_install:
 		debian/rancid-cgi/usr/lib/cgi-bin/lg/; \
 	mv debian/rancid-git/etc/rancid/lg.conf \
 		debian/rancid-cgi/etc/rancid/; \
-	sed -rie 's|(#\$$LG_CACHE_DIR="\./tmp";)|\1\n\$$LG_CACHE_DIR="/var/cache/rancid-cgi";|' \
+	sed -ri 's|(#\$$LG_CACHE_DIR="\./tmp";)|\1\n\$$LG_CACHE_DIR="/var/cache/rancid-cgi";|' \
 		debian/rancid-cgi/etc/rancid/lg.conf; \
-	sed -rie 's|(#\$$LG_LOG="local0";)|\1\n\$$LG_LOG="/var/log/rancid/lg.log";|' \
+	sed -ri 's|(#\$$LG_LOG="local0";)|\1\n\$$LG_LOG="/var/log/rancid/lg.log";|' \
 		debian/rancid-cgi/etc/rancid/lg.conf; \
 	mv debian/rancid-git/usr/share/man/man1/lg_intro.1 \
 		debian/rancid-cgi/usr/share/man/man1/; \
