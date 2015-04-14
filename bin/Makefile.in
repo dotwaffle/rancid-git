@@ -102,16 +102,16 @@ DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(srcdir)/mrancid.in $(srcdir)/mrvlogin.in \
 	$(srcdir)/mrvrancid.in $(srcdir)/mtrancid.in \
 	$(srcdir)/mtlogin.in $(srcdir)/nlogin.in $(srcdir)/nrancid.in \
-	$(srcdir)/nslogin.in $(srcdir)/nsrancid.in $(srcdir)/nxrancid.in \
-	$(srcdir)/pflogin.in $(srcdir)/pfrancid.in $(srcdir)/prancid.in \
+	$(srcdir)/nslogin.in $(srcdir)/nsrancid.in \
+	$(srcdir)/nxrancid.in $(srcdir)/pflogin.in \
+	$(srcdir)/pfrancid.in $(srcdir)/prancid.in \
 	$(srcdir)/rancid_par.in $(srcdir)/rivlogin.in \
 	$(srcdir)/rivrancid.in $(srcdir)/rrancid.in \
 	$(srcdir)/shellrancid.in $(srcdir)/shelllogin.in \
-	$(srcdir)/srancid.in $(srcdir)/telcorancid.in $(srcdir)/tlogin.in \
-	$(srcdir)/tntlogin.in $(srcdir)/tntrancid.in $(srcdir)/trancid.in \
-	$(srcdir)/ubnt-es-rancid.in $(srcdir)/ucsrancid.in $(srcdir)/urancid.in \
-	$(srcdir)/vlogin.in $(srcdir)/vlogin.in \
-	$(srcdir)/vrancid.in $(srcdir)/vrancid.in \
+	$(srcdir)/srancid.in $(srcdir)/tlogin.in $(srcdir)/tntlogin.in \
+	$(srcdir)/tntrancid.in $(srcdir)/telcorancid.in \
+	$(srcdir)/trancid.in $(srcdir)/ubnt-es-rancid.in \
+	$(srcdir)/ucsrancid.in $(srcdir)/urancid.in \
 	$(srcdir)/xrancid.in $(srcdir)/xrrancid.in \
 	$(srcdir)/zrancid.in $(srcdir)/zyrancid.in \
 	$(top_srcdir)/depcomp
@@ -128,10 +128,10 @@ CONFIG_CLEAN_FILES = agmrancid alogin arancid arrancid avologin \
 	f10rancid flogin francid fnlogin fnrancid hlogin hrancid \
 	htlogin htrancid jlogin jrancid jerancid mrancid mrvlogin \
 	mrvrancid mtrancid mtlogin nlogin nrancid nslogin nsrancid \
-	nxrancid pflogin pfrancid prancid rancid_par rivlogin rivrancid rrancid \
-	shellrancid shelllogin srancid telcorancid tlogin tntlogin \
-	tntrancid trancid ubnt-es-rancid ucsrancid urancid vlogin vrancid \
-	xrancid xrrancid zrancid zyrancid
+	nxrancid pflogin pfrancid prancid rancid_par rivlogin \
+	rivrancid rrancid shellrancid shelllogin srancid tlogin \
+	tntlogin tntrancid telcorancid trancid ubnt-es-rancid \
+	ucsrancid urancid xrancid xrrancid zrancid zyrancid
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
@@ -351,10 +351,11 @@ bin_SCRIPTS = agmrancid alogin arancid arrancid avologin avorancid \
 	cssrancid elogin erancid f5rancid f10rancid flogin fnlogin \
 	fnrancid francid hlogin hrancid htlogin htrancid jerancid \
 	jlogin jrancid mrancid mrvlogin mrvrancid mtlogin mtrancid \
-	nlogin nrancid nslogin nsrancid nxrancid rancid_par pflogin pfrancid prancid \
-	rancid rivlogin rivrancid rrancid srancid telcorancid tlogin tntlogin \
-	tntrancid trancid ubnt-es-rancid ucsrancid urancid vlogin vrancid xrancid xrrancid \
-	zrancid zyrancid dlogin drancid shelllogin shellrancid lg.cgi lgform.cgi rancid-cvs \
+	nlogin nrancid nslogin nsrancid nxrancid rancid_par pflogin \
+	pfrancid prancid rancid rivlogin rivrancid rrancid srancid \
+	telcorancid tlogin tntlogin tntrancid trancid ubnt-es-rancid \
+	urancid ucsrancid xrancid xrrancid zrancid zyrancid dlogin \
+	drancid shelllogin shellrancid lg.cgi lgform.cgi rancid-cvs \
 	rancid-fe rancid-run control_rancid
 EXTRA_DIST = lg.cgi.in lgform.cgi.in rancid-cvs.in rancid-fe.in rancid-run.in \
 	control_rancid.in
@@ -529,13 +530,13 @@ shelllogin: $(top_builddir)/config.status $(srcdir)/shelllogin.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 srancid: $(top_builddir)/config.status $(srcdir)/srancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-telcorancid: $(top_builddir)/config.status $(srcdir)/telcorancid.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 tlogin: $(top_builddir)/config.status $(srcdir)/tlogin.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 tntlogin: $(top_builddir)/config.status $(srcdir)/tntlogin.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 tntrancid: $(top_builddir)/config.status $(srcdir)/tntrancid.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+telcorancid: $(top_builddir)/config.status $(srcdir)/telcorancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 trancid: $(top_builddir)/config.status $(srcdir)/trancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
@@ -544,10 +545,6 @@ ubnt-es-rancid: $(top_builddir)/config.status $(srcdir)/ubnt-es-rancid.in
 ucsrancid: $(top_builddir)/config.status $(srcdir)/ucsrancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 urancid: $(top_builddir)/config.status $(srcdir)/urancid.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-vlogin: $(top_builddir)/config.status $(srcdir)/vlogin.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-vrancid: $(top_builddir)/config.status $(srcdir)/vrancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 xrancid: $(top_builddir)/config.status $(srcdir)/xrancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
