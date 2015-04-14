@@ -45,6 +45,10 @@ override_dh_auto_install:
 		debian/rancid-cgi/etc/rancid/lg.conf; \
 	sed -ri 's|(#\$$LG_LOG="local0";)|\1\n\$$LG_LOG="/var/log/rancid/lg.log";|' \
 		debian/rancid-cgi/etc/rancid/lg.conf; \
+	sed -ri 's|(#\$$LG_CLOGINRC="\$$ENV\(HOME\)/.cloginrc";)|\1\n\$$LG_CLOGINRC="/etc/rancid/cloginrc";|' \
+		debian/rancid-cgi/etc/rancid/lg.conf; \
+	sed -ri 's|#(\$$LG_ROUTERDB="/etc/rancid/router.db";)|\1|' \
+		debian/rancid-cgi/etc/rancid/lg.conf; \
 	mv debian/rancid-git/usr/share/man/man1/lg_intro.1 \
 		debian/rancid-cgi/usr/share/man/man1/; \
 	mv debian/rancid-git/usr/share/man/man5/lg.conf.5 \
