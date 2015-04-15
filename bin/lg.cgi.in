@@ -533,6 +533,7 @@ if ($mfg =~ /cisco/i) {
 		route => "show ip route",
 		routemap => "show route-map",
 		rpf => "show ip rpf",
+        run => "show running-config",
 		summary => "show ip bgp summary",
 		trace => "traceroute",
 		v6_bgp => "show bgp ipv6",
@@ -863,6 +864,29 @@ if ($type eq "prefix" || $type eq "mbgp" ) {
 		$arg .= " received-routes";
 	    }
 	}
+    }
+} elsif ($type eq "run") {
+    if ($#arg == -1) {
+        $arg = "brief";
+    } else while ($_ = shift(@arg)) {
+        if ($_ m~ /^br$/) {
+            $arg .= " brief";
+        } elsif ($_ m~ /^in/ && defined $arg[0] && $arg[0] m~ /^\D+\d+(/\d+)*(\.\d+)?$/) {
+            $arg .= " interface " . shift(@arg);
+        } elsif ($_ m~ /^li/) {
+            $arg .= " linenum";
+        } elsif ($_ m~ /^ma/) {
+            $arg .= " map-class";
+        } elsif ($_ m~ /^po/) {
+            $arg .= " policy-map";
+        } elsif ($_ m~ /^vc/) {
+            $arg .= " policy-map";
+        } elsif ($_ m~ /^view/) {
+            $arg .= " view full";
+            shift(@arg);
+        } else {
+            &Error("Invalid argument.\n");
+        }
     }
 } elsif ($type eq "damp" || $type eq "summary" || $type eq "mbgpsum") {
     undef($arg);

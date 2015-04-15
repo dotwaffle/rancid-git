@@ -144,6 +144,11 @@ $queries->{"routing"} = {
 	summary => "show ip bgp summary",
 };
 #
+# Config queries
+$queries->{"config"} = {
+	run => "show running-config",
+};
+#
 # Debug queries
 $queries->{"debug"} = {
 	log => "Show Logs [ | <match_string>]",
