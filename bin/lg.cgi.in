@@ -537,7 +537,8 @@ if ($mfg =~ /cisco/i) {
 		trace => "traceroute",
 		v6_bgp => "show bgp ipv6",
 		v6_interface => "show ipv6 interface",
-		v6_summary => "show bgp ipv6 summary"
+		v6_summary => "show bgp ipv6 summary",
+		vlans => "show vlans",
     );
 } elsif ($mfg =~ /foundry/i) {
     %mfgCmd = (
@@ -685,6 +686,14 @@ if ($type eq "prefix" || $type eq "mbgp" ) {
     } else {
 	undef($arg);
     }
+} elsif ($type eq "vlans") {
+	if ($#arg == 1 && $arg[0] =~ /^dot1q$/ && $arg[1] =~ /^\d{1,4}$/) {
+	    $arg = join(' ', @arg);
+	} elsif ($#arg == 0 && $arg[0] =~ /\d{1,4}$/) {
+	    $arg = join(' ', @arg);
+	} elsif ($#arg != -1) {
+	    &Error("Invalid argument for vlan ID (should be a number).");
+	}
 } elsif ($type eq "interface" || $type eq "v6_interface") {
 
 	# XXX: wtf is arg[1]?
