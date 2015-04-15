@@ -138,7 +138,7 @@ $queries->{"routing"} = {
 	prefix => "show ip bgp <prefix> [netmask]",
 	prefixlist => "show ip prefix-list <list_name>",
 	regex => "show ip bgp regex <regex>",
-	route => "show ip route <prefix> [netmask]",
+	route => "show ip route <protocol | prefix [netmask]>",
 	routemap => "show route-map <policy_name/number>",
 	summary => "show ip bgp summary",
 };

@@ -643,8 +643,25 @@ if (! defined($mfgCmd{$type})) {
 $cmd = $mfgCmd{$type};
 
 # handle each query/command type
-if ($type eq "prefix" || $type eq "mbgp" || $type eq "route" ) {
+if ($type eq "prefix" || $type eq "mbgp" ) {
     if ($arg[0] !~ /^\d+\.\d+\.\d+\.\d+$/) {
+	&Error("The IP address \"$arg[0]\" is not valid and lacking an " .
+				"address would over-burden our router.\n");
+    } elsif (defined($arg[1]) && $arg[1] !~ /^\d+\.\d+\.\d+\.\d+$/) {
+	&Error("The IP netmask \"$arg[1]\" is not valid.\n");
+    }
+    if ($mfg =~ /juniper/i && defined($arg[1])) {
+	$arg = $arg[0] . "/" . mask2len($arg[1]);
+    }
+} elsif ($type eq "route" ) {
+    if ($mfg =~ /cisco/ && $arg[0] =~ /(bgp|connected|dhcp|eigrp|isis|mobile|odr|ospf|rip|static|summary|supernets-only|track-table|update-queue)/ ) {
+        if ($arg[0] =~ /bgp/ && ! (defined($LG_BGP_RT) && $LG_BGP_RT)) {
+            &Error("Configuration does not allow showing all BGP routes, " .
+                "which can impact router performance.\n");
+        } else {
+            $arg = $arg[0];
+        }
+    } elsif ($arg[0] !~ /^\d+\.\d+\.\d+\.\d+$/) {
 	&Error("The IP address \"$arg[0]\" is not valid and lacking an " .
 				"address would over-burden our router.\n");
     } elsif (defined($arg[1]) && $arg[1] !~ /^\d+\.\d+\.\d+\.\d+$/) {
