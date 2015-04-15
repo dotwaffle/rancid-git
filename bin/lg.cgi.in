@@ -689,7 +689,7 @@ if ($type eq "prefix" || $type eq "mbgp" ) {
 } elsif ($type eq "vlans") {
 	if ($#arg == 1 && $arg[0] =~ /^dot1q$/ && $arg[1] =~ /^\d{1,4}$/) {
 	    $arg = join(' ', @arg);
-	} elsif ($#arg == 0 && $arg[0] =~ /\d{1,4}$/) {
+	} elsif ($#arg == 0 && $arg[0] =~ /^\d{1,4}$/) {
 	    $arg = join(' ', @arg);
 	} elsif ($#arg != -1) {
 	    &Error("Invalid argument for vlan ID (should be a number).");
