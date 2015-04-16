@@ -223,7 +223,7 @@ sub GetConf {
 			last if (/$prompt/);
 
 			if ((/^\s*-----END RSA PRIVATE KEY-----"/) ||
-				((/^\s*-----END ENCRYTPED PRIVATE KEY-----"/)) {
+				(/^\s*-----END ENCRYPTED PRIVATE KEY-----"/)) {
 				ProcessHistory("","","","#$_");
 				last;
 			}
