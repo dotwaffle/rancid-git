@@ -270,7 +270,7 @@ sub DoCmd
     } elsif ($mfg =~ /juniper/i) {
 	open(CMD, "sh -c \"jlogin -f $cloginrc -c \'$cmd $arg\' $rtr\" 2>&1 |");
     } else {
-	open(CMD, "sh -c \"clogin -noenable -f $cloginrc -c \'$cmd $arg\' $rtr\" 2>&1 |");
+	open(CMD, "sh -c \"clogin -f $cloginrc -c \'$cmd $arg\' $rtr\" 2>&1 |");
     }
     while (<CMD>) {
 	tr/\015//d;
@@ -860,28 +860,39 @@ if ($type eq "prefix" || $type eq "mbgp" ) {
 	}
     }
 } elsif ($type eq "run") {
-    if ($#arg == -1) {
-        $arg = "brief";
-    } else while ($_ = shift(@arg)) {
-        if ($_ m~ /^br$/) {
-            $arg .= " brief";
-        } elsif ($_ m~ /^in/ && defined $arg[0] && $arg[0] m~ /^\D+\d+(/\d+)*(\.\d+)?$/) {
-            $arg .= " interface " . shift(@arg);
-        } elsif ($_ m~ /^li/) {
-            $arg .= " linenum";
-        } elsif ($_ m~ /^ma/) {
-            $arg .= " map-class";
-        } elsif ($_ m~ /^po/) {
-            $arg .= " policy-map";
-        } elsif ($_ m~ /^vc/) {
-            $arg .= " policy-map";
-        } elsif ($_ m~ /^view/) {
-            $arg .= " view full";
-            shift(@arg);
-        } else {
-            &Error("Invalid argument.\n");
-        }
-    }
+	$arg = "";
+	if ($#arg == -1) {
+		$arg = "brief";
+	} else {
+		$arg = "";
+		while ($_ = shift(@arg)) {
+		if (m/^br/) {
+			$arg .= " brief";
+		} elsif (m/^in/ && defined($arg[0]) && ($arg[0] =~ /^\D+\d+(\/\d+)*(\.\d+)?$/) ) {
+			$arg .= " interface " . shift(@arg);
+		} elsif (m/^li/) {
+			$arg .= " linenum";
+			if (defined($arg[0]) && ($arg[0] =~ /^br/)) {
+				$arg .= " brief";
+				shift(@arg);
+			} elsif (defined($arg[0]) && ($arg[0] =~ /^fu/)) {
+				$arg .= " full";
+				shift(@arg);
+			}
+		} elsif (m/^ma/) {
+			$arg .= " map-class";
+		} elsif (m/^po/) {
+			$arg .= " policy-map";
+		} elsif (m/^vc/) {
+			$arg .= " vc-class";
+		} elsif (m/^view/) {
+			$arg .= " view full";
+			shift(@arg);
+		} else {
+			&Error("Invalid argument.\n");
+		}
+		}
+	}
 } elsif ($type eq "damp" || $type eq "summary" || $type eq "mbgpsum") {
     undef($arg);
 }
