@@ -369,8 +369,6 @@ END
 
 # start the page and log the transaction...
 sub start_page {
-    my($mfg) = @_;
-    my($cmd);
 
     my($timestr) = strftime("%a %b %e %H:%M:%S %Y", gmtime);
     dolog(LOG_INFO, sprintf("%s %s %s %s\n",
@@ -381,21 +379,13 @@ sub start_page {
 	print $query->start_html(-title =>"LookingGlass form",
 						-style => {'src' => $LG_STYLE});
     } else {
-	print $query->start_html(-title =>"LookingGlass from");
+	print $query->start_html(-title =>"LookingGlass form");
     }
 
     $timestr = strftime("%a %b %e %H:%M:%S %Y %Z", gmtime);
 
     # add the company image, LG_IMAGE
     print $LG_IMAGE;
-
-    if ($mfg =~ /foundry/i) {
-	$cmd = $foundryCmd{$type};
-    } elsif ($mfg =~ /juniper/i) {
-	$cmd = $juniperCmd{$type};
-    } else {
-	$cmd = $ciscoCmd{$type};
-    }
 
     print <<HEAD ;
 	</b></font>
@@ -406,6 +396,10 @@ sub start_page {
 	<center>
 	<b>Date:</b> $timestr
 	<p>
+	<b>Router:</b> $router
+	<br>
+	<b>Mfg:</b> $mfg
+	<br>
 	<b>Query:</b> $cmd
 	<br>
 HEAD
@@ -533,7 +527,7 @@ if ($mfg =~ /cisco/i) {
 		route => "show ip route",
 		routemap => "show route-map",
 		rpf => "show ip rpf",
-        run => "show running-config",
+		run => "show running-config",
 		summary => "show ip bgp summary",
 		trace => "traceroute",
 		v6_bgp => "show bgp ipv6",
