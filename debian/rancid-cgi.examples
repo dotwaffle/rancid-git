@@ -1,2 +1,2 @@
-debian/rancid-lg.conf
+debian/rancid-cgi.apache2
 debian/rancid-cgi.cron
