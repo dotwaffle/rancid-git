@@ -762,6 +762,8 @@ sub DirSlotN {
 	}
 	# Filter dhcp database
 	next if (/dhcp_[^. ]*\.txt/);
+	# Filter tracelogs
+	next if (/tracelogs(\.\d+)?/);
 
 	if ($ios eq "XE" && /.*\((\d+) bytes free\)/) {
 	    my($tmp) = $1;
@@ -772,9 +774,6 @@ sub DirSlotN {
 		$tmp = int($tmp / (1024 * 1024));
 		s/$1 bytes free/$tmp MB free/;
 	    }
-	}
-	if ($ios eq "XE" && /^((\s+)?\d+\s+\S+)\s+\d+.*(tracelogs$)/) {
-	    $_ = "$1" . sprintf("%43s", "") . "$3\n";
 	}
 	if ($ios eq "IOS" && /^((\s+)?\d+\s+\S+)\s+\d+.*(sflog$)/) {
 	    $_ = "$1" . sprintf("%43s", "") . "$3\n";
