@@ -860,7 +860,6 @@ if ($type eq "prefix" || $type eq "mbgp" ) {
 	}
     }
 } elsif ($type eq "run") {
-	$arg = "";
 	if ($#arg == -1) {
 		$arg = "brief";
 	} else {
