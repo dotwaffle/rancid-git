@@ -9,10 +9,42 @@ The user 'rancid' is automatically created.
 In /etc/rancid you can find rancid.conf and lg.conf (if rancid-cgi is
 installed) to configure them as you wish.
 
-in the example directory of rancid-cgi you can find an example of
-configuration to add to your apache's conf.d directory to enable the
-lg cgi view from localhost.
+rancid Looking Glass
+--------------------
 
+The looking glass is a basic web interface to gathering some common
+information from your routers, it is not an interface to browse the
+router config files rancid gathers, nor in any way interfaces with rancid.
+It does use rancid's cloginrc and router.db file format, as well as
+rancid's login scripts (clogin and friends), so you can configure lg
+access to your routers with:
+
+    cp /var/lib/rancid/.cloginrc /etc/rancid/cloginrc
+    chown www-data:www-data /etc/rancid/cloginrc
+    chmod 640 /etc/rancid/cloginrc
+
+    awk -F: '$2 ~ /cisco|juniper|foundry/ { print $0 }' /var/lib/rancid/*/router.db > /etc/rancid/router.db
+    chown www-data:www-data /etc/rancid/router.db
+    chmod 640 /etc/rancid/router.db
+
+In /usr/share/doc/rancid-cgi/examples/ you can find an apache2 config
+example to either copy to your apache's conf.d directory, or to
+include in a virtual host definition, which will enable the lg cgi view
+(allowed by default from localhost, add your own IP's as needed).
+
+There is also a script in the examples/ directory to copy rancid's
+configuration (accessible by the rancid user) to the looking glass's
+config files (accessible as www-data) - ie. basically run the above
+commands - which you can run manually or copy to /etc/cron.hourly/ to
+keep the looking glass config updated with rancid's config.
+
+The looking glass should be considered an internal administrative tool,
+it is not fit for open access from the Internet.  It would be advisable
+to protect access to it by IP (and passwords), and access it over SSL.
+
+
+Troubleshooting
+---------------
 
 ** a note from  Colin Whittaker 
 
@@ -21,6 +53,10 @@ NOPIPE=YES; export NOPIPE
 in /etc/rancid/rancid.conf 
 
 ** 
+
+
+Patch note
+----------
 
 A patch is applied to allow logging into a Cisco PIX:
 (http://www.shrubbery.net/pipermail/rancid-discuss/2005-August/001159.html)
