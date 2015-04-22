@@ -693,7 +693,7 @@ if ($type eq "prefix" || $type eq "mbgp" ) {
 } elsif ($type eq "vlan") {
 	if ($#arg == 1 && $arg[0] =~ /^id$/ && $arg[1] =~ /^\d{1,4}$/) {
 	    $arg = join(' ', @arg);
-	} elsif ($#arg == 0 && $arg[0] =~ /^br|mtu|pri|re|sum)/) {
+	} elsif ($#arg == 0 && $arg[0] =~ /^(br|mtu|pri|re|sum)/) {
 		$arg = "";
 		$_ = shift(@arg);
 		if (m/^br/) {
