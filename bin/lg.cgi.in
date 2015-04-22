@@ -534,6 +534,7 @@ if ($mfg =~ /cisco/i) {
 		v6_interface => "show ipv6 interface",
 		v6_summary => "show bgp ipv6 summary",
 		vlans => "show vlans",
+		vlan => "show vlan",
     );
 } elsif ($mfg =~ /foundry/i) {
     %mfgCmd = (
@@ -688,6 +689,26 @@ if ($type eq "prefix" || $type eq "mbgp" ) {
 	    $arg = join(' ', @arg);
 	} elsif ($#arg != -1) {
 	    &Error("Invalid argument for vlan ID (should be a number).");
+	}
+} elsif ($type eq "vlan") {
+	if ($#arg == 1 && $arg[0] =~ /^id$/ && $arg[1] =~ /^\d{1,4}$/) {
+	    $arg = join(' ', @arg);
+	} elsif ($#arg == 0 && $arg[0] =~ /^br|mtu|pri|re|sum)/) {
+		$arg = "";
+		$_ = shift(@arg);
+		if (m/^br/) {
+			$arg = "brief";
+		} elsif (m/^mtu/) {
+			$arg = "mtu";
+		} elsif (m/^pri/) {
+			$arg = "private-vlan";
+		} elsif (m/^re/) {
+			$arg = "remote-span";
+		} elsif (m/^sum/) {
+			$arg = "summary";
+		}
+	} elsif ($#arg != -1) {
+	    &Error("Invalid argument.\n");
 	}
 } elsif ($type eq "interface" || $type eq "v6_interface") {
 

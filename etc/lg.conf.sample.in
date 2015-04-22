@@ -130,6 +130,7 @@ $queries->{"interface"} = {
 	framerelay => "show frame-relay PVC [DLCI]",
 	interface => "show interface [interface]",
 	vlans => "show vlans [ [dot1q] vlan_ID ]",
+	vlan => "show vlan [ <option> | id <vlan_ID> ]",
 };
 #
 # Routing queries
