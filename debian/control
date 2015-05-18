@@ -3,15 +3,15 @@ Section: net
 Priority: optional
 Maintainer: Roland Rosenfeld <roland@debian.org>
 Build-Depends: debhelper (>= 9), expect, perl, openssh-client, cvs,
- inetutils-ping [!s390x] | iputils-ping [s390x] | ping, po-debconf, 
- exim4 | mail-transport-agent, telnet, automake
+ inetutils-ping [!s390x] | iputils-ping [s390x] | ping, po-debconf,
+ telnet, automake
 Standards-Version: 3.9.4
 Homepage: http://www.shrubbery.net/rancid/
 
 Package: rancid-git
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, ${perl:Depends}, expect, perl, 
- cvs | subversion | git, passwd, openssh-client | ssh, inetutils-ping | ping, 
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${perl:Depends}, expect, perl,
+ cvs | subversion | git, passwd, openssh-client | ssh, inetutils-ping | ping,
  debconf (>= 0.2.26) | debconf-2.0, adduser, exim4 | mail-transport-agent,
  libperl4-corelibs-perl | perl (<< 5.12.3-7)
 Suggests: diffstat
