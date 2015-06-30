@@ -90,6 +90,7 @@ install-data-local: all
 # documentation.
 auto_edit = sed \
 	-e 's,@bindir\@,$(bindir),g' \
+	-e 's,@sbindir\@,$(sbindir),g' \
 	-e 's,@prefix\@,$(prefix),g' \
 	-e 's,@localstatedir\@,$(localstatedir),g' \
 	-e 's,@sysconfdir\@,$(sysconfdir),g' \

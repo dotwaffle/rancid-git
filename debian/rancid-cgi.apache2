@@ -1,0 +1,26 @@
+# Minimal config to enable the RANCID based looking glass to function.
+# Do not run this wide open on the Internet!
+# Recommended that you configure this vhost with SSL and password protection.
+
+AddHandler cgi-script .cgi
+
+ScriptAlias /cgi-bin/ /usr/lib/cgi-bin/
+<Directory "/usr/lib/cgi-bin">
+	AllowOverride None
+	Options +ExecCGI -MultiViews +SymLinksIfOwnerMatch
+	Order allow,deny
+	Allow from all
+</Directory>
+
+Alias /lg/lgnotes.html /usr/share/doc/rancid-cgi/lgnotes.html
+
+Alias /lg /usr/lib/cgi-bin/lg
+<Directory "/usr/lib/cgi-bin/lg">
+	AllowOverride None
+	Options ExecCGI SymLinksIfOwnerMatch
+	order deny,allow
+	deny from all
+	# Add your IP address here:
+	allow from 127.0.0.1
+</Directory>
+

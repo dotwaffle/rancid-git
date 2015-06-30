@@ -1,0 +1,37 @@
+#!/bin/sh
+
+#
+# /etc/cron.hourly/rancid-cgi: update rancid-cgi config files from rancid configuration
+#
+
+# destination filenames to be created
+CLOGINRC=/etc/rancid/cloginrc
+ROUTERDB=/etc/rancid/router.db
+OWNER='www-data:www-data'
+
+# this is an awk regex to select devices from router.db for matching vendors
+VENDOR_REGEX='cisco|juniper|foundry'
+
+# config source
+RANCID_DIR=`awk -F: '$1 ~ /^rancid$/ { print $6 }' /etc/passwd`
+
+if [ ! -d ${RANCID_DIR} ]
+then
+    echo "Cannot determine rancid home directory, exiting." 2>&1
+    exit 1
+fi
+
+if [ -f ${RANCID_DIR}/.cloginrc ]
+then
+    cp ${RANCID_DIR}/.cloginrc ${CLOGINRC}
+    chown ${OWNER} ${CLOGINRC}
+    chmod 640 ${CLOGINRC}
+fi
+
+if (wc -l ${RANCID_DIR}/*/router.db 2>&1 >/dev/null)
+then
+    awk -F: "\$2 ~ /${VENDOR_REGEX}/ { print \$0 }" ${RANCID_DIR}/*/router.db > ${ROUTERDB}
+    chown ${OWNER} ${ROUTERDB}
+    chmod 640 ${ROUTERDB}
+fi
+
