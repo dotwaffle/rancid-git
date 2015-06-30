@@ -1,0 +1,9 @@
+/var/log/rancid/lg.log {
+	create 0640 www-data www-data
+	missingok
+	weekly
+	rotate 7
+	compress
+	delaycompress
+	notifempty
+}

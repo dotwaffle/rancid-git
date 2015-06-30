@@ -2852,7 +2852,6 @@ fi
 
 
 
-
 # make sure MAKE sets ${MAKE}
 # Extract the first word of "gmake", so it can be a program name with args.
 set dummy gmake; ac_word=$2
@@ -6057,6 +6056,10 @@ ac_config_files="$ac_config_files bin/nslogin bin/nsrancid"
 
 ac_config_files="$ac_config_files bin/nxrancid"
 
+ac_config_files="$ac_config_files bin/pflogin"
+
+ac_config_files="$ac_config_files bin/pfrancid"
+
 ac_config_files="$ac_config_files bin/prancid"
 
 ac_config_files="$ac_config_files bin/rancid_par"
@@ -6073,15 +6076,23 @@ ac_config_files="$ac_config_files bin/tlogin"
 
 ac_config_files="$ac_config_files bin/tntlogin bin/tntrancid"
 
+ac_config_files="$ac_config_files bin/telcorancid"
+
 ac_config_files="$ac_config_files bin/trancid"
 
+ac_config_files="$ac_config_files bin/ubnt-es-rancid"
+
 ac_config_files="$ac_config_files bin/ucsrancid"
+
+ac_config_files="$ac_config_files bin/urancid"
 
 ac_config_files="$ac_config_files bin/xrancid"
 
 ac_config_files="$ac_config_files bin/xrrancid"
 
 ac_config_files="$ac_config_files bin/zrancid"
+
+ac_config_files="$ac_config_files bin/zyrancid"
 
 ac_config_files="$ac_config_files share/rtrfilter"
 
@@ -6868,6 +6879,8 @@ do
     "bin/nslogin") CONFIG_FILES="$CONFIG_FILES bin/nslogin" ;;
     "bin/nsrancid") CONFIG_FILES="$CONFIG_FILES bin/nsrancid" ;;
     "bin/nxrancid") CONFIG_FILES="$CONFIG_FILES bin/nxrancid" ;;
+    "bin/pflogin") CONFIG_FILES="$CONFIG_FILES bin/pflogin" ;;
+    "bin/pfrancid") CONFIG_FILES="$CONFIG_FILES bin/pfrancid" ;;
     "bin/prancid") CONFIG_FILES="$CONFIG_FILES bin/prancid" ;;
     "bin/rancid_par") CONFIG_FILES="$CONFIG_FILES bin/rancid_par" ;;
     "bin/rivlogin") CONFIG_FILES="$CONFIG_FILES bin/rivlogin" ;;
@@ -6879,11 +6892,15 @@ do
     "bin/tlogin") CONFIG_FILES="$CONFIG_FILES bin/tlogin" ;;
     "bin/tntlogin") CONFIG_FILES="$CONFIG_FILES bin/tntlogin" ;;
     "bin/tntrancid") CONFIG_FILES="$CONFIG_FILES bin/tntrancid" ;;
+    "bin/telcorancid") CONFIG_FILES="$CONFIG_FILES bin/telcorancid" ;;
     "bin/trancid") CONFIG_FILES="$CONFIG_FILES bin/trancid" ;;
+    "bin/ubnt-es-rancid") CONFIG_FILES="$CONFIG_FILES bin/ubnt-es-rancid" ;;
     "bin/ucsrancid") CONFIG_FILES="$CONFIG_FILES bin/ucsrancid" ;;
+    "bin/urancid") CONFIG_FILES="$CONFIG_FILES bin/urancid" ;;
     "bin/xrancid") CONFIG_FILES="$CONFIG_FILES bin/xrancid" ;;
     "bin/xrrancid") CONFIG_FILES="$CONFIG_FILES bin/xrrancid" ;;
     "bin/zrancid") CONFIG_FILES="$CONFIG_FILES bin/zrancid" ;;
+    "bin/zyrancid") CONFIG_FILES="$CONFIG_FILES bin/zyrancid" ;;
     "share/rtrfilter") CONFIG_FILES="$CONFIG_FILES share/rtrfilter" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
@@ -7613,6 +7630,8 @@ $as_echo X"$file" |
     "bin/nslogin":F) chmod a+x $ac_file ;;
     "bin/nsrancid":F) chmod a+x $ac_file ;;
     "bin/nxrancid":F) chmod a+x $ac_file ;;
+    "bin/pflogin":F) chmod a+x $ac_file ;;
+    "bin/pfrancid":F) chmod a+x $ac_file ;;
     "bin/prancid":F) chmod a+x $ac_file ;;
     "bin/rancid_par":F) chmod a+x $ac_file ;;
     "bin/rivlogin":F) chmod a+x $ac_file ;;
@@ -7624,11 +7643,15 @@ $as_echo X"$file" |
     "bin/tlogin":F) chmod a+x $ac_file ;;
     "bin/tntlogin":F) chmod a+x $ac_file ;;
     "bin/tntrancid":F) chmod a+x $ac_file ;;
+    "bin/telcorancid":F) chmod a+x $ac_file ;;
     "bin/trancid":F) chmod a+x $ac_file ;;
+    "bin/ubnt-es-rancid":F) chmod a+x $ac_file ;;
     "bin/ucsrancid":F) chmod a+x $ac_file ;;
+    "bin/urancid":F) chmod a+x $ac_file ;;
     "bin/xrancid":F) chmod a+x $ac_file ;;
     "bin/xrrancid":F) chmod a+x $ac_file ;;
     "bin/zrancid":F) chmod a+x $ac_file ;;
+    "bin/zyrancid":F) chmod a+x $ac_file ;;
     "share/rtrfilter":F) chmod a+x $ac_file ;;
 
   esac

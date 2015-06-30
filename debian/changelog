@@ -9,5 +9,6 @@ rancid-git (2.3.9-0) UNRELEASED; urgency=low
   * Added support for pfSense (pfsense)
   * Added support for Ubiquiti EdgeSwitch (ubnt-es)
   * Added support for Ubiquiti AirOS radios and ToughSwitch (ubnt)
+  * Updated looking glass (rancid-cgi).
 
  -- Vincent Bernat <bernat@debian.org>  Mon, 18 Aug 2014 10:05:05 +0200

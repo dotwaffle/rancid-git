@@ -66,6 +66,7 @@ bin/rancid
 bin/rancid-cvs
 bin/rancid-fe
 bin/rancid-run
+bin/rancid_par
 bin/rivlogin
 bin/rivrancid
 bin/rrancid

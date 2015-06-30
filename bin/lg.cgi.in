@@ -270,7 +270,7 @@ sub DoCmd
     } elsif ($mfg =~ /juniper/i) {
 	open(CMD, "sh -c \"jlogin -f $cloginrc -c \'$cmd $arg\' $rtr\" 2>&1 |");
     } else {
-	open(CMD, "sh -c \"clogin -noenable -f $cloginrc -c \'$cmd $arg\' $rtr\" 2>&1 |");
+	open(CMD, "sh -c \"clogin -f $cloginrc -c \'$cmd $arg\' $rtr\" 2>&1 |");
     }
     while (<CMD>) {
 	tr/\015//d;
@@ -369,8 +369,6 @@ END
 
 # start the page and log the transaction...
 sub start_page {
-    my($mfg) = @_;
-    my($cmd);
 
     my($timestr) = strftime("%a %b %e %H:%M:%S %Y", gmtime);
     dolog(LOG_INFO, sprintf("%s %s %s %s\n",
@@ -381,21 +379,13 @@ sub start_page {
 	print $query->start_html(-title =>"LookingGlass form",
 						-style => {'src' => $LG_STYLE});
     } else {
-	print $query->start_html(-title =>"LookingGlass from");
+	print $query->start_html(-title =>"LookingGlass form");
     }
 
     $timestr = strftime("%a %b %e %H:%M:%S %Y %Z", gmtime);
 
     # add the company image, LG_IMAGE
     print $LG_IMAGE;
-
-    if ($mfg =~ /foundry/i) {
-	$cmd = $foundryCmd{$type};
-    } elsif ($mfg =~ /juniper/i) {
-	$cmd = $juniperCmd{$type};
-    } else {
-	$cmd = $ciscoCmd{$type};
-    }
 
     print <<HEAD ;
 	</b></font>
@@ -406,6 +396,10 @@ sub start_page {
 	<center>
 	<b>Date:</b> $timestr
 	<p>
+	<b>Router:</b> $router
+	<br>
+	<b>Mfg:</b> $mfg
+	<br>
 	<b>Query:</b> $cmd
 	<br>
 HEAD
@@ -533,11 +527,14 @@ if ($mfg =~ /cisco/i) {
 		route => "show ip route",
 		routemap => "show route-map",
 		rpf => "show ip rpf",
+		run => "show running-config",
 		summary => "show ip bgp summary",
 		trace => "traceroute",
 		v6_bgp => "show bgp ipv6",
 		v6_interface => "show ipv6 interface",
-		v6_summary => "show bgp ipv6 summary"
+		v6_summary => "show bgp ipv6 summary",
+		vlans => "show vlans",
+		vlan => "show vlan",
     );
 } elsif ($mfg =~ /foundry/i) {
     %mfgCmd = (
@@ -643,8 +640,25 @@ if (! defined($mfgCmd{$type})) {
 $cmd = $mfgCmd{$type};
 
 # handle each query/command type
-if ($type eq "prefix" || $type eq "mbgp" || $type eq "route" ) {
+if ($type eq "prefix" || $type eq "mbgp" ) {
     if ($arg[0] !~ /^\d+\.\d+\.\d+\.\d+$/) {
+	&Error("The IP address \"$arg[0]\" is not valid and lacking an " .
+				"address would over-burden our router.\n");
+    } elsif (defined($arg[1]) && $arg[1] !~ /^\d+\.\d+\.\d+\.\d+$/) {
+	&Error("The IP netmask \"$arg[1]\" is not valid.\n");
+    }
+    if ($mfg =~ /juniper/i && defined($arg[1])) {
+	$arg = $arg[0] . "/" . mask2len($arg[1]);
+    }
+} elsif ($type eq "route" ) {
+    if ($mfg =~ /cisco/ && $arg[0] =~ /(bgp|connected|dhcp|eigrp|isis|mobile|odr|ospf|rip|static|summary|supernets-only|track-table|update-queue)/ ) {
+        if ($arg[0] =~ /bgp/ && ! (defined($LG_BGP_RT) && $LG_BGP_RT)) {
+            &Error("Configuration does not allow showing all BGP routes, " .
+                "which can impact router performance.\n");
+        } else {
+            $arg = $arg[0];
+        }
+    } elsif ($arg[0] !~ /^\d+\.\d+\.\d+\.\d+$/) {
 	&Error("The IP address \"$arg[0]\" is not valid and lacking an " .
 				"address would over-burden our router.\n");
     } elsif (defined($arg[1]) && $arg[1] !~ /^\d+\.\d+\.\d+\.\d+$/) {
@@ -668,6 +682,34 @@ if ($type eq "prefix" || $type eq "mbgp" || $type eq "route" ) {
     } else {
 	undef($arg);
     }
+} elsif ($type eq "vlans") {
+	if ($#arg == 1 && $arg[0] =~ /^dot1q$/ && $arg[1] =~ /^\d{1,4}$/) {
+	    $arg = join(' ', @arg);
+	} elsif ($#arg == 0 && $arg[0] =~ /^\d{1,4}$/) {
+	    $arg = join(' ', @arg);
+	} elsif ($#arg != -1) {
+	    &Error("Invalid argument for vlan ID (should be a number).");
+	}
+} elsif ($type eq "vlan") {
+	if ($#arg == 1 && $arg[0] =~ /^id$/ && $arg[1] =~ /^\d{1,4}$/) {
+	    $arg = join(' ', @arg);
+	} elsif ($#arg == 0 && $arg[0] =~ /^(br|mtu|pri|re|sum)/) {
+		$arg = "";
+		$_ = shift(@arg);
+		if (m/^br/) {
+			$arg = "brief";
+		} elsif (m/^mtu/) {
+			$arg = "mtu";
+		} elsif (m/^pri/) {
+			$arg = "private-vlan";
+		} elsif (m/^re/) {
+			$arg = "remote-span";
+		} elsif (m/^sum/) {
+			$arg = "summary";
+		}
+	} elsif ($#arg != -1) {
+	    &Error("Invalid argument.\n");
+	}
 } elsif ($type eq "interface" || $type eq "v6_interface") {
 
 	# XXX: wtf is arg[1]?
@@ -838,6 +880,39 @@ if ($type eq "prefix" || $type eq "mbgp" || $type eq "route" ) {
 	    }
 	}
     }
+} elsif ($type eq "run") {
+	if ($#arg == -1) {
+		$arg = "brief";
+	} else {
+		$arg = "";
+		while ($_ = shift(@arg)) {
+		if (m/^br/) {
+			$arg .= " brief";
+		} elsif (m/^in/ && defined($arg[0]) && ($arg[0] =~ /^\D+\d+(\/\d+)*(\.\d+)?$/) ) {
+			$arg .= " interface " . shift(@arg);
+		} elsif (m/^li/) {
+			$arg .= " linenum";
+			if (defined($arg[0]) && ($arg[0] =~ /^br/)) {
+				$arg .= " brief";
+				shift(@arg);
+			} elsif (defined($arg[0]) && ($arg[0] =~ /^fu/)) {
+				$arg .= " full";
+				shift(@arg);
+			}
+		} elsif (m/^ma/) {
+			$arg .= " map-class";
+		} elsif (m/^po/) {
+			$arg .= " policy-map";
+		} elsif (m/^vc/) {
+			$arg .= " vc-class";
+		} elsif (m/^view/) {
+			$arg .= " view full";
+			shift(@arg);
+		} else {
+			&Error("Invalid argument.\n");
+		}
+		}
+	}
 } elsif ($type eq "damp" || $type eq "summary" || $type eq "mbgpsum") {
     undef($arg);
 }
