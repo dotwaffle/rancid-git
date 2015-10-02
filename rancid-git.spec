@@ -1,4 +1,4 @@
-%global commit 60b3cac8d222d3985080070436c57e63f43e9d22
+%global commit 89deb1cac7306c385c669a5a6b6744f6e08c054e
 %global shortcommit %(c=%{commit}; echo ${c:0:7})
 
 Name:    rancid-git
