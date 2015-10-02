@@ -6086,6 +6086,10 @@ ac_config_files="$ac_config_files bin/ucsrancid"
 
 ac_config_files="$ac_config_files bin/urancid"
 
+ac_config_files="$ac_config_files bin/vlogin"
+
+ac_config_files="$ac_config_files bin/vrancid"
+
 ac_config_files="$ac_config_files bin/xrancid"
 
 ac_config_files="$ac_config_files bin/xrrancid"
@@ -6897,6 +6901,8 @@ do
     "bin/ubnt-es-rancid") CONFIG_FILES="$CONFIG_FILES bin/ubnt-es-rancid" ;;
     "bin/ucsrancid") CONFIG_FILES="$CONFIG_FILES bin/ucsrancid" ;;
     "bin/urancid") CONFIG_FILES="$CONFIG_FILES bin/urancid" ;;
+    "bin/vrancid") CONFIG_FILES="$CONFIG_FILES bin/vrancid" ;;
+    "bin/vlogin") CONFIG_FILES="$CONFIG_FILES bin/vlogin" ;;
     "bin/xrancid") CONFIG_FILES="$CONFIG_FILES bin/xrancid" ;;
     "bin/xrrancid") CONFIG_FILES="$CONFIG_FILES bin/xrrancid" ;;
     "bin/zrancid") CONFIG_FILES="$CONFIG_FILES bin/zrancid" ;;
@@ -7648,6 +7654,8 @@ $as_echo X"$file" |
     "bin/ubnt-es-rancid":F) chmod a+x $ac_file ;;
     "bin/ucsrancid":F) chmod a+x $ac_file ;;
     "bin/urancid":F) chmod a+x $ac_file ;;
+    "bin/vlogin":F) chmod a+x $ac_file ;;
+    "bin/vrancid":F) chmod a+x $ac_file ;;
     "bin/xrancid":F) chmod a+x $ac_file ;;
     "bin/xrrancid":F) chmod a+x $ac_file ;;
     "bin/zrancid":F) chmod a+x $ac_file ;;
