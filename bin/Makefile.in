@@ -14,9 +14,9 @@
 
 @SET_MAKE@
 
-# 
+#
 #  The expect login scripts were based on Erik Sherk's gwtn, by permission.
-# 
+#
 #  The original looking glass software was written by Ed Kern, provided by
 #  permission and modified beyond recognition.
 
@@ -112,6 +112,7 @@ DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(srcdir)/tntrancid.in $(srcdir)/telcorancid.in \
 	$(srcdir)/trancid.in $(srcdir)/ubnt-es-rancid.in \
 	$(srcdir)/ucsrancid.in $(srcdir)/urancid.in \
+	$(srcdir)/vlogin.in $(srcdir)/vrancid.in \
 	$(srcdir)/xrancid.in $(srcdir)/xrrancid.in \
 	$(srcdir)/zrancid.in $(srcdir)/zyrancid.in \
 	$(top_srcdir)/depcomp
@@ -131,7 +132,7 @@ CONFIG_CLEAN_FILES = agmrancid alogin arancid arrancid avologin \
 	nxrancid pflogin pfrancid prancid rancid_par rivlogin \
 	rivrancid rrancid shellrancid shelllogin srancid tlogin \
 	tntlogin tntrancid telcorancid trancid ubnt-es-rancid \
-	ucsrancid urancid xrancid xrrancid zrancid zyrancid
+	ucsrancid urancid vlogin vrancid xrancid xrrancid zrancid zyrancid
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
@@ -173,11 +174,11 @@ am__v_P_1 = :
 AM_V_GEN = $(am__v_GEN_@AM_V@)
 am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
 am__v_GEN_0 = @echo "  GEN     " $@;
-am__v_GEN_1 = 
+am__v_GEN_1 =
 AM_V_at = $(am__v_at_@AM_V@)
 am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
 am__v_at_0 = @
-am__v_at_1 = 
+am__v_at_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -187,13 +188,13 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 AM_V_CC = $(am__v_CC_@AM_V@)
 am__v_CC_ = $(am__v_CC_@AM_DEFAULT_V@)
 am__v_CC_0 = @echo "  CC      " $@;
-am__v_CC_1 = 
+am__v_CC_1 =
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
-am__v_CCLD_1 = 
+am__v_CCLD_1 =
 SOURCES = $(hpuifilter_SOURCES)
 DIST_SOURCES = $(hpuifilter_SOURCES)
 am__can_run_installinfo = \
@@ -354,8 +355,8 @@ bin_SCRIPTS = agmrancid alogin arancid arrancid avologin avorancid \
 	nlogin nrancid nslogin nsrancid nxrancid rancid_par pflogin \
 	pfrancid prancid rancid rivlogin rivrancid rrancid srancid \
 	telcorancid tlogin tntlogin tntrancid trancid ubnt-es-rancid \
-	urancid ucsrancid xrancid xrrancid zrancid zyrancid dlogin \
-	drancid shelllogin shellrancid lg.cgi lgform.cgi rancid-cvs \
+	urancid ucsrancid vlogin vrancid xrancid xrrancid zrancid zyrancid \
+	dlogin drancid shelllogin shellrancid lg.cgi lgform.cgi rancid-cvs \
 	rancid-fe rancid-run control_rancid
 EXTRA_DIST = lg.cgi.in lgform.cgi.in rancid-cvs.in rancid-fe.in rancid-run.in \
 	control_rancid.in
@@ -546,6 +547,10 @@ ucsrancid: $(top_builddir)/config.status $(srcdir)/ucsrancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 urancid: $(top_builddir)/config.status $(srcdir)/urancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+vlogin: $(top_builddir)/config.status $(srcdir)/vlogin.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+vrancid: $(top_builddir)/config.status $(srcdir)/vrancid.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 xrancid: $(top_builddir)/config.status $(srcdir)/xrancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 xrrancid: $(top_builddir)/config.status $(srcdir)/xrrancid.in
@@ -597,7 +602,7 @@ uninstall-binPROGRAMS:
 clean-binPROGRAMS:
 	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
 
-hpuifilter$(EXEEXT): $(hpuifilter_OBJECTS) $(hpuifilter_DEPENDENCIES) $(EXTRA_hpuifilter_DEPENDENCIES) 
+hpuifilter$(EXEEXT): $(hpuifilter_OBJECTS) $(hpuifilter_DEPENDENCIES) $(EXTRA_hpuifilter_DEPENDENCIES)
 	@rm -f hpuifilter$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(hpuifilter_OBJECTS) $(hpuifilter_LDADD) $(LIBS)
 install-binSCRIPTS: $(bin_SCRIPTS)
