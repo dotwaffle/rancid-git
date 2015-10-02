@@ -9,40 +9,40 @@ clogin \- Cisco login script
 [\fB\-noenable\fP]
 [\fB\-dSV\fR]
 [\c
-.BI \-c\ 
+.BI \-c\
 command]
 [\c
-.BI \-E\ 
+.BI \-E\
 var=x]
 [\c
-.BI \-e\ 
+.BI \-e\
 enable-password]
 [\c
-.BI \-f\ 
+.BI \-f\
 cloginrc-file]
 [\c
-.BI \-p\ 
+.BI \-p\
 user-password]
 [\c
-.BI \-s\ 
+.BI \-s\
 script-file]
 [\c
-.BI \-t\ 
+.BI \-t\
 timeout]
 [\c
-.BI \-u\ 
+.BI \-u\
 username]
 [\c
-.BI \-v\ 
+.BI \-v\
 vty-password]
 [\c
-.BI \-w\ 
+.BI \-w\
 enable-username]
 [\c
-.BI \-x\ 
+.BI \-x\
 command-file]
 [\c
-.BI \-y\ 
+.BI \-y\
 ssh_cypher_type]
 router
 [router...]
@@ -57,6 +57,7 @@ There are complementary scripts for
 Alteon,
 Avocent (Cyclades),
 Bay Networks (nortel),
+Blade Network Technologies (BNT),
 ADC-kentrox EZ-T3 mux,
 Foundry,
 HP Procurve switches and Cisco AGMs,
@@ -73,6 +74,7 @@ named
 .B alogin,
 .B avologin,
 .B blogin,
+.B bntlogin,
 .B elogin,
 .B flogin,
 .B fnlogin,
@@ -255,7 +257,7 @@ to locate the
 configuration file.
 .El
 .SH FILES
-.ta \w'xHOME/xcloginrc  'u 
+.ta \w'xHOME/xcloginrc  'u
 \fI$HOME/.cloginrc\fR   Configuration file.
 .SH "SEE ALSO"
 .BR cloginrc (5),
