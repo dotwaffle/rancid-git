@@ -49,6 +49,7 @@ bin/
 
 	agmrancid.in	Version of rancid.in for Cisco Anomaly Guard Module (AGM)
 	arancid.in	Version of rancid.in for Alteon switches.
+	bntrancid.in Version of rancid.in for Blade Network Technologies (BNT)/HP BladeSystem switches.
 	brancid.in	Version of rancid.in for baynet/nortel routers.
 	cat5rancid.in	Version of rancid.in for Cisco Catalyst switches.
 	cssrancid.in	Version of rancid.in for Cisco CSS switches.
@@ -80,6 +81,7 @@ bin/
 
 	alogin.in	Version of clogin.in for Alteon switches.
 	blogin.in	Version of clogin.in for baynet/Nortel routers.
+	bntlogin.in 	Version of clogin.in for Blade Network Technologies (BNT)/HP BladeSystem switches.
 	elogin.in	Version of clogin.in for ADC EZ-T3 muxes.
 	flogin.in	Version of clogin.in for Foundry switches.  If foundry
 			cleaned-up their bloody UI, clogin should do the job.

@@ -39,7 +39,7 @@
 ## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 #  rancid-FE - front-end to rancid/jrancid/etc. for use with par.
 #
 # usage: rancid-fe <router>:<vendor>
@@ -55,7 +55,8 @@ $vendor =~ tr/[A-Z]/[a-z]/;
     'alteon'		=> 'arancid',
     'arista'		=> 'arrancid',
     'avocent'		=> 'avorancid',
-    'baynet'		=> 'brancid',
+    'baynet'        => 'brancid',
+    'bnt'		    => 'bntrancid',
     'brocade'		=> 'brocaderancid',
     'cat5'		=> 'cat5rancid',
     'cisco'		=> 'rancid',

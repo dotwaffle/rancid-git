@@ -39,9 +39,9 @@
 ## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 #  The expect login scripts were based on Erik Sherk's gwtn, by permission.
-# 
+#
 #  The original looking glass software was written by Ed Kern, provided by
 #  permission and modified beyond recognition.
 
@@ -50,7 +50,7 @@ AUTOMAKE_OPTIONS=foreign
 
 bin_PROGRAMS = hpuifilter
 bin_SCRIPTS = agmrancid alogin arancid arrancid avologin avorancid blogin \
-	brancid brocaderancid cat5rancid clogin control_rancid cssrancid \
+	brancid bntlogin bntrancid brocaderancid cat5rancid clogin control_rancid cssrancid \
 	elogin erancid f5rancid f10rancid flogin fnlogin fnrancid francid \
 	hlogin hrancid htlogin htrancid jerancid jlogin jrancid mrancid \
 	mrvlogin mrvrancid mtlogin mtrancid nlogin nrancid nslogin nsrancid \

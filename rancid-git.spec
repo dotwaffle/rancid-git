@@ -73,8 +73,7 @@ rm -rf %{buildroot}
 %pre
 getent group rancid >/dev/null || groupadd -r rancid
 getent passwd rancid >/dev/null || \
-useradd -r -g rancid -d %{_localstatedir}/rancid/ -s /bin/bash \
--k /etc/skel -m -c "RANCID" rancid
+useradd -r -g rancid -d %{_localstatedir}/rancid -s /bin/bash -k /etc/skel -m -c "RANCID" rancid
 exit 0
 
 %postun
