@@ -3,7 +3,7 @@
 
 Name:    rancid-git
 Version: 2.3.9
-Release: 1%{?dist}
+Release: 2%{?dist}
 Summary: Really Awesome New Cisco confIg Differ (w/ git support)
 
 Group:   Applications/Internet
@@ -121,6 +121,25 @@ fi
 
 
 %changelog
+* Fri Oct 02 2015 Sam Doran <github@samdoran.com> 2.3.9-2
+- Add BNT/HP Blade Switch support
+
+* Wed Mar 18 2015 Jesse Norell <jesse@kci.net> 2.3.9-1
+- Add Ubiquiti EdgeOS support
+
+* Wed Mar 04 2015 Jesse Norell <jesse@kci.net> 2.3.9-1
+- Add Telco Systems support
+- Add ZxXel switches suppor
+
+* Tue Feb 03 2015 Jesse Norell <jesse@kci.net> 2.3.9-1
+- Add pfSense support
+
+* Tue Feb 03 2015 Simone Caronni <negativo17@gmail.com> 2.3.9-1
+- Add VyOS support
+
+* Tue Apr 22 2014 Tore Anderson <tore@fud.no> 2.3.9-1
+- Add Cisco UCS support
+
 * Mon Apr 07 2014 Sam Doran <github@samdoran.com> 2.3.9-1
 - Check for VDOM in fnlogin before running commands
 
