@@ -50,7 +50,7 @@ AUTOMAKE_OPTIONS=foreign
 
 bin_PROGRAMS = hpuifilter
 bin_SCRIPTS = agmrancid alogin arancid arrancid avologin avorancid blogin \
-	brancid brocaderancid cat5rancid clogin control_rancid cssrancid \
+	brancid bntlogin bntrancid brocaderancid cat5rancid clogin control_rancid cssrancid \
 	elogin erancid f5rancid f10rancid flogin fnlogin fnrancid francid \
 	hlogin hrancid htlogin htrancid jerancid jlogin jrancid mrancid \
 	mrvlogin mrvrancid mtlogin mtrancid nlogin nrancid nslogin nsrancid \

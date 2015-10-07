@@ -90,6 +90,7 @@ DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(srcdir)/alogin.in $(srcdir)/arancid.in $(srcdir)/arrancid.in \
 	$(srcdir)/avologin.in $(srcdir)/avorancid.in \
 	$(srcdir)/blogin.in $(srcdir)/brancid.in \
+	$(srcdir)/bntlogin.in $(srcdir)/bntrancid.in \
 	$(srcdir)/brocaderancid.in $(srcdir)/cat5rancid.in \
 	$(srcdir)/clogin.in $(srcdir)/rancid.in $(srcdir)/cssrancid.in \
 	$(srcdir)/dlogin.in $(srcdir)/drancid.in $(srcdir)/elogin.in \
@@ -124,7 +125,7 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = $(top_builddir)/include/config.h
 CONFIG_CLEAN_FILES = agmrancid alogin arancid arrancid avologin \
-	avorancid blogin brancid brocaderancid cat5rancid clogin \
+	avorancid blogin brancid bntlogin bntrancid brocaderancid cat5rancid clogin \
 	rancid cssrancid dlogin drancid elogin erancid f5rancid \
 	f10rancid flogin francid fnlogin fnrancid hlogin hrancid \
 	htlogin htrancid jlogin jrancid jerancid mrancid mrvlogin \
@@ -348,7 +349,7 @@ top_srcdir = @top_srcdir@
 #AUTOMAKE_OPTIONS=foreign no-dependencies
 AUTOMAKE_OPTIONS = foreign
 bin_SCRIPTS = agmrancid alogin arancid arrancid avologin avorancid \
-	blogin brancid brocaderancid cat5rancid clogin control_rancid \
+	blogin brancid bntlogin bntrancid brocaderancid cat5rancid clogin control_rancid \
 	cssrancid elogin erancid f5rancid f10rancid flogin fnlogin \
 	fnrancid francid hlogin hrancid htlogin htrancid jerancid \
 	jlogin jrancid mrancid mrvlogin mrvrancid mtlogin mtrancid \
@@ -446,6 +447,10 @@ avorancid: $(top_builddir)/config.status $(srcdir)/avorancid.in
 blogin: $(top_builddir)/config.status $(srcdir)/blogin.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 brancid: $(top_builddir)/config.status $(srcdir)/brancid.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+bntlogin: $(top_builddir)/config.status $(srcdir)/bntlogin.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+bntrancid: $(top_builddir)/config.status $(srcdir)/bntrancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 brocaderancid: $(top_builddir)/config.status $(srcdir)/brocaderancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
