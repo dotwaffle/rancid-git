@@ -321,7 +321,7 @@ else
 	# cygwin using windows ping?
 	$PING_PATH -n 1 127.0.0.1 > /dev/null 2>&1
 	if test $? -eq 0 ; then
-	    LG_PING_CMD="$PING_PATH -n 1" 
+	    LG_PING_CMD="$PING_PATH -n 1"
 	else
             AC_MSG_ERROR([can't figure out how to pass count == 1 to $PING_PATH.])
 	    exit 1
@@ -506,6 +506,7 @@ AC_CONFIG_FILES(bin/trancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/ubnt-es-rancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/ucsrancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/urancid, [chmod a+x $ac_file])
+AC_CONFIG_FILES(bin/vlogin bin/vrancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/xrancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/xrrancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/zrancid, [chmod a+x $ac_file])

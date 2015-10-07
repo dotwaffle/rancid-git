@@ -39,9 +39,9 @@
 ## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 #  The expect login scripts were based on Erik Sherk's gwtn, by permission.
-# 
+#
 #  The original looking glass software was written by Ed Kern, provided by
 #  permission and modified beyond recognition.
 
@@ -60,7 +60,7 @@ man_nogen_MANS = agmrancid.1 alogin.1 arancid.1 arrancid.1 avologin.1 \
 		par.1 pflogin.1 pfrancid.1 prancid.1 rancid-cvs.1 rancid-run.1 rancid.1 \
 		rancid_intro.1 rivlogin.1 rivrancid.1 router.db.5 rrancid.1 \
 		srancid.1 telcorancid.1 tlogin.1 tntlogin.1 tntrancid.1 trancid.1 ubnt-es-rancid.1 \
-		urancid.1 xrancid.1 xrrancid.1 zrancid.1 zyrancid.1
+		urancid.1 vlogin.1 vrancid.1 xrancid.1 xrrancid.1 zrancid.1 zyrancid.1
 
 man_MANS = $(man_nogen_MANS) $(man_gen_MANS)
 

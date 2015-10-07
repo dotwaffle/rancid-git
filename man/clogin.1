@@ -9,40 +9,40 @@ clogin \- Cisco login script
 [\fB\-noenable\fP]
 [\fB\-dSV\fR]
 [\c
-.BI \-c\ 
+.BI \-c\
 command]
 [\c
-.BI \-E\ 
+.BI \-E\
 var=x]
 [\c
-.BI \-e\ 
+.BI \-e\
 enable-password]
 [\c
-.BI \-f\ 
+.BI \-f\
 cloginrc-file]
 [\c
-.BI \-p\ 
+.BI \-p\
 user-password]
 [\c
-.BI \-s\ 
+.BI \-s\
 script-file]
 [\c
-.BI \-t\ 
+.BI \-t\
 timeout]
 [\c
-.BI \-u\ 
+.BI \-u\
 username]
 [\c
-.BI \-v\ 
+.BI \-v\
 vty-password]
 [\c
-.BI \-w\ 
+.BI \-w\
 enable-username]
 [\c
-.BI \-x\ 
+.BI \-x\
 command-file]
 [\c
-.BI \-y\ 
+.BI \-y\
 ssh_cypher_type]
 router
 [router...]
@@ -68,7 +68,8 @@ Netscreen firewalls,
 Netscaler,
 Riverstone,
 Netopia,
-and Lucent TNT,
+Lucent TNT,
+and Vyatt/VyOS,
 named
 .B alogin,
 .B avologin,
@@ -85,6 +86,7 @@ named
 .B nslogin,
 .B rivlogin,
 .B tlogin,
+.B vlogin,
 and
 .B tntlogin,
 respectively.
@@ -255,7 +257,7 @@ to locate the
 configuration file.
 .El
 .SH FILES
-.ta \w'xHOME/xcloginrc  'u 
+.ta \w'xHOME/xcloginrc  'u
 \fI$HOME/.cloginrc\fR   Configuration file.
 .SH "SEE ALSO"
 .BR cloginrc (5),
