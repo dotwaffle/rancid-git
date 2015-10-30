@@ -3,7 +3,7 @@
 
 Name:    rancid-git
 Version: 2.3.9
-Release: 2%{?dist}
+Release: 3%{?dist}
 Summary: Really Awesome New Cisco confIg Differ (w/ git support)
 
 Group:   Applications/Internet
@@ -24,6 +24,7 @@ BuildRequires: perl
 BuildRequires: iputils
 BuildRequires: automake
 BuildRequires: libtool
+BuildRequires: make
 
 Obsoletes: rancid
 Provides: rancid
@@ -121,6 +122,9 @@ fi
 
 
 %changelog
+* Fri Oct 30 2015 John Siegrist <john@complects.com> 2.3.9-3
+- Add make as missing BuildRequires dependency
+
 * Fri Oct 02 2015 Sam Doran <github@samdoran.com> 2.3.9-2
 - Add BNT/HP Blade Switch support
 
