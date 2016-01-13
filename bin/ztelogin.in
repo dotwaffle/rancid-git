@@ -1,6 +1,20 @@
-#! /usr/bin/expect --
+#! @EXPECT_PATH@ --
+##
+## @PACKAGE@ @VERSION@
+## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
+## All rights reserved.
+##
+# ztelogin - ZTE ethernet switches by Alexandru Musat <manyax@manyax.net>
 #
-
+# Modified from clogin for use with ZTE 1/9/2016
+#
+# Most options are intuitive for logging into a Cisco router.
+# The default is to enable (thus -noenable).  Some folks have
+# setup tacacs to have a user login at priv-lvl = 15 (enabled)
+# so the -autoenable flag was added for this case (don't go through
+# the process of enabling and the prompt will be the "#" prompt.
+# The default username password is the same as the vty password.
+#
 # Usage line
 set usage "Usage: $argv0 \[-dSV\] \[-autoenable\] \[-noenable\] \[-c command\] \
 \[-Evar=x\] \[-e enable-password\] \[-f cloginrc-file\] \[-p user-password\] \

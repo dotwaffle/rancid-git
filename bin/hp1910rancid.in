@@ -1,8 +1,8 @@
-#! /usr/bin/perl
+#! @PERLV_PATH@
 ##
 ##
-## rancid 3.2
-## Copyright (c) 1997-2015 by Terrapin Communications, Inc.
+## @PACKAGE@ @VERSION@
+## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 # HP1910rancid - adapted for HP 1910 ethernet switches by Alexandru Musat <manyax@manyax.net>

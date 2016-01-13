@@ -1,10 +1,9 @@
-#! /usr/bin/perl
+#! @PERLV_PATH@
 ##
-## $Id: zyrancid,v 0.1 2015/03/03 14:38:27 root Exp $
+## $Id:
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (C) 2015 by Kentec Communications, Inc.
-## Portions Copyright (C) 1997-2004 by Terrapin Communications, Inc.
+## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This software may be freely copied, modified and redistributed
@@ -20,12 +19,13 @@
 ## Except where noted otherwise, rancid was written by and is maintained by
 ## Henry Kilmer, John Heasley, Andrew Partan, Pete Whiting, and Austin Schutz.
 ##
+# zterancid - ZTE ethernet switches by Alexandru Musat <manyax@manyax.net>
 #
-# zyrancid - adapted for ZyXel ethernet switches by Jesse Norell <jesse at kci.net>
+# Modified from zyrancid for use with ZTE 1/9/2016
 #
 #  RANCID - Really Awesome New Cisco confIg Differ
 #
-# usage: zyrancid [-d] [-l] [-f filename | $host]
+# usage: zterancid [-d] [-l] [-f filename | $host]
 #
 use Getopt::Std;
 getopts('dfl');
