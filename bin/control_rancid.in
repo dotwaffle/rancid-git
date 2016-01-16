@@ -308,7 +308,7 @@ if [ $RALL -ne 0 -o $RDOWN -ne 0 -o $RUP -ne 0 ] ; then
     if [ -s routers.mail ] ; then
 	(
 	  echo "To: $adminmailrcpt"
-	  echo "Subject: changes in $GROUP routers"
+	  echo "Subject: changes in $GROUP devices"
 	  echo "$MAILHEADERS" | awk '{L = "";LN = $0;while (LN ~ /\\n/) { I = index(LN,"\\n");L = L substr(LN,0,I-1) "\n";LN = substr(LN,I+2,length(LN)-I-1);}print L LN;}'
 	  echo ""
 	  cat routers.mail
@@ -370,7 +370,7 @@ for router in `cut -d: -f1 ../routers.up` ; do
            if [ $? -eq 0 ]; then
                touch $router
                cvs add -ko $router
-               echo "$RCSSYS added missing router $router"
+               echo "$RCSSYS added missing device $router"
            fi
            ;;
        svn )
@@ -378,7 +378,7 @@ for router in `cut -d: -f1 ../routers.up` ; do
            if [ $? -eq 0 ]; then
                touch $router
                svn add $router
-               echo "$RCSSYS added missing router $router"
+               echo "$RCSSYS added missing device $router"
            fi
            ;;
        git | git-remote )
@@ -388,9 +388,9 @@ for router in `cut -d: -f1 ../routers.up` ; do
                (
                    flock -x 200
                    git add $router
-                   git commit -m "added missing router $router"
+                   git commit -m "added missing device $router"
                ) 200>$BASEDIR/.lockfile
-               echo "$RCSSYS added missing router $router"
+               echo "$RCSSYS added missing device $router"
            fi
            ;;
     esac
@@ -404,13 +404,13 @@ for router in `find . \( -name \*.new -prune -o -name CVS -prune -o -name .cvsig
 	case $RCSSYS in
            cvs | svn )
                $RCSSYS delete $router
-               $RCSSYS commit -m "deleted router $router" $router
+               $RCSSYS commit -m "deleted device $router" $router
                ;;
            git | git-remote )
                (
                    flock -x 200
                    git rm $router
-                   git commit -m "deleted router $router"
+                   git commit -m "deleted device $router"
                ) 200>$BASEDIR/.lockfile
                ;;
     esac
@@ -489,12 +489,12 @@ do
 
     if [ -f $DIR/routers.up.missed ] ; then
 	echo "====================================="
-	echo "Getting missed routers: round $round."
+	echo "Getting missed devices: round $round."
 	@bindir@/rancid_par -q -n $PAR_COUNT -c "rancid-fe \{}" $DIR/routers.up.missed
 	rm -f $DIR/routers.up.missed
 	round=`expr $round + 1`
     else
-	echo "All routers sucessfully completed."
+	echo "All devices sucessfully completed."
 	round=`expr $pass + 1`
     fi
 done
@@ -1003,7 +1003,7 @@ if [ -s $DIR/routers.failed ] ; then
 	  echo "Subject: config fetcher problems - $GROUP"
 	  echo "$MAILHEADERS" | awk '{L = "";LN = $0;while (LN ~ /\\n/) { I = index(LN,"\\n");L = L substr(LN,0,I-1) "\n";LN = substr(LN,I+2,length(LN)-I-1);}print L LN;}'
 	  echo ""
-	  echo "The following routers have not been successfully contacted for"
+	  echo "The following devices have not been successfully contacted for"
 	  echo "more than $OLDTIME hours."
 
 	  cat $DIR/routers.failed
