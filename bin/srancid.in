@@ -49,6 +49,8 @@
 #
 # Code tested and working fine on these models:
 #
+#	DELL PowerConnect M8024 / M8024-k
+#	DELL PowerConnect M6348
 #	DELL PowerConnect 62xx
 #	DELL 34xx (partially; configuration is incomplete)
 #
@@ -174,6 +176,7 @@ sub sortbyipaddr {
 sub Dir {
     print STDERR "    In Dir: $_" if ($debug);
 
+    ProcessHistory("COMMENTS","keysort","D1","!Directory contents:\n");
     while (<INPUT>) {
 	s/^\s+\015//g;
 	tr/\015//d;
@@ -184,6 +187,7 @@ sub Dir {
 
 	ProcessHistory("COMMENTS","keysort","D1","! $_");
     }
+    ProcessHistory("COMMENTS","keysort","D1","! \n");
     return(0);
 }
 
@@ -197,6 +201,9 @@ sub ShowVer {
 	last if(/$prompt/);
 	# pager remnants like: ^H^H^H    ^H^H^H content
 	s/[\b]+\s*[\b]*//g;
+
+	# Remove Uptime
+	/ up time/i && next;
 
 	ProcessHistory("COMMENTS","keysort","B1","! $_");
     }
@@ -218,9 +225,12 @@ sub ShowSys {
 	/ up time/i && next;
 
 	# filter temperature sensor info for Dell 6428 stacks
-	/Temperature Sensors:/ && next;
+	/Temperature Sensors:/ &&
+		ProcessHistory("COMMENTS","keysort","C1","\n! $_") &&
+		next;
 	if (/Temperature \(Celsius\)/ &&
-	    ProcessHistory("COMMENTS","keysort","C1","! Unit\tStatus\n")) {
+		ProcessHistory("COMMENTS","keysort","C1","! Unit\tStatus\n") &&
+		ProcessHistory("COMMENTS","keysort","C1","! ----\t------\n")) {
 	    while (<INPUT>) {
 		s/^\s+\015//g;
 		tr/\015//d;
@@ -228,6 +238,26 @@ sub ShowSys {
 		ProcessHistory("COMMENTS","keysort","C1","! $1\t$2\n");
 		/^\s*$/ && last;
 	    }
+	} 
+	# Filter temperature sensor info for Dell M6348 and M8024 blade switches
+	#
+	# M6348 and M8024 sample lines:
+	#   Unit     Description       Temperature    Status
+	#                               (Celsius)
+	#   ----     -----------       -----------    ------
+	#   1        System            39             Good
+	#   2        System            39             Good
+	elsif (/Temperature/ &&
+		ProcessHistory("COMMENTS","keysort","C1","! Unit\tDescription\tStatus\n") &&
+		ProcessHistory("COMMENTS","keysort","C1","! ----\t-----------\t------\n")) {
+		while (<INPUT>) {
+			/\(celsius\)/i && next;
+			s/^\s+\015//g;
+			tr/\015//d;
+			/(\d+)\s+(\w+)\s+\d+\s+(.*)$/ &&
+			ProcessHistory("COMMENTS","keysort","C1","! $1\t$2\t\t$3\n");
+			/^\s*$/ && last;
+		}
 	}
 
 	/system description: (.*)/i &&
@@ -242,6 +272,7 @@ sub ShowSys {
 sub ShowVlan {
     print STDERR "    In ShowVlan: $_" if ($debug);
 
+	ProcessHistory("COMMENTS","keysort","D1","!VLAN definitions:\n");
     while (<INPUT>) {
 	s/^\s+\015//g;
 	tr/\015//d;
@@ -254,6 +285,7 @@ sub ShowVlan {
 	/ up time/i && next;
 	ProcessHistory("COMMENTS","keysort","D1","! $_");
     }
+	ProcessHistory("COMMENTS","keysort","D1","! \n");
     return(0);
 }
 
