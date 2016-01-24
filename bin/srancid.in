@@ -1,9 +1,9 @@
 #! @PERLV_PATH@
 ##
-## $Id: srancid.in 2279 2011-01-31 22:41:00Z heas $
+## $Id: srancid.in 3018 2015-01-11 05:51:49Z heas $
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) 1997-2008 by Terrapin Communications, Inc.
+## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
@@ -39,16 +39,23 @@
 ## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 # Pretty huge hack to take care of Dell (aka. SMC) Switch configs; started by
 # d_pfleger@juniper.net
 #
 #  RANCID - Really Awesome New Cisco confIg Differ
 #
-# usage: rancid [-dV] [-l] [-f filename | hostname]
+# usage: srancid [-dltCV] [-f filename | hostname]
+#
+# Code tested and working fine on these models:
+#
+#	DELL PowerConnect M8024 / M8024-k
+#	DELL PowerConnect M6348
+#	DELL PowerConnect 62xx
+#	DELL 34xx (partially; configuration is incomplete)
 #
 use Getopt::Std;
-getopts('dflV');
+getopts('dflt:CV');
 if ($opt_V) {
     print "@PACKAGE@ @VERSION@\n";
     exit(0);
@@ -169,6 +176,7 @@ sub sortbyipaddr {
 sub Dir {
     print STDERR "    In Dir: $_" if ($debug);
 
+    ProcessHistory("COMMENTS","keysort","D1","!Directory contents:\n");
     while (<INPUT>) {
 	s/^\s+\015//g;
 	tr/\015//d;
@@ -179,6 +187,7 @@ sub Dir {
 
 	ProcessHistory("COMMENTS","keysort","D1","! $_");
     }
+    ProcessHistory("COMMENTS","keysort","D1","! \n");
     return(0);
 }
 
@@ -192,6 +201,9 @@ sub ShowVer {
 	last if(/$prompt/);
 	# pager remnants like: ^H^H^H    ^H^H^H content
 	s/[\b]+\s*[\b]*//g;
+
+	# Remove Uptime
+	/ up time/i && next;
 
 	ProcessHistory("COMMENTS","keysort","B1","! $_");
     }
@@ -210,12 +222,15 @@ sub ShowSys {
 	s/[\b]+\s*[\b]*//g;
 
 	# Remove Uptime
-	/ Up time/ && next;
+	/ up time/i && next;
 
 	# filter temperature sensor info for Dell 6428 stacks
-	/Temperature Sensors:/ && next;
+	/Temperature Sensors:/ &&
+		ProcessHistory("COMMENTS","keysort","C1","\n! $_") &&
+		next;
 	if (/Temperature \(Celsius\)/ &&
-	    ProcessHistory("COMMENTS","keysort","C1","! Unit\tStatus\n")) {
+		ProcessHistory("COMMENTS","keysort","C1","! Unit\tStatus\n") &&
+		ProcessHistory("COMMENTS","keysort","C1","! ----\t------\n")) {
 	    while (<INPUT>) {
 		s/^\s+\015//g;
 		tr/\015//d;
@@ -223,6 +238,26 @@ sub ShowSys {
 		ProcessHistory("COMMENTS","keysort","C1","! $1\t$2\n");
 		/^\s*$/ && last;
 	    }
+	} 
+	# Filter temperature sensor info for Dell M6348 and M8024 blade switches
+	#
+	# M6348 and M8024 sample lines:
+	#   Unit     Description       Temperature    Status
+	#                               (Celsius)
+	#   ----     -----------       -----------    ------
+	#   1        System            39             Good
+	#   2        System            39             Good
+	elsif (/Temperature/ &&
+		ProcessHistory("COMMENTS","keysort","C1","! Unit\tDescription\tStatus\n") &&
+		ProcessHistory("COMMENTS","keysort","C1","! ----\t-----------\t------\n")) {
+		while (<INPUT>) {
+			/\(celsius\)/i && next;
+			s/^\s+\015//g;
+			tr/\015//d;
+			/(\d+)\s+(\w+)\s+\d+\s+(.*)$/ &&
+			ProcessHistory("COMMENTS","keysort","C1","! $1\t$2\t\t$3\n");
+			/^\s*$/ && last;
+		}
 	}
 
 	/system description: (.*)/i &&
@@ -237,6 +272,7 @@ sub ShowSys {
 sub ShowVlan {
     print STDERR "    In ShowVlan: $_" if ($debug);
 
+	ProcessHistory("COMMENTS","keysort","D1","!VLAN definitions:\n");
     while (<INPUT>) {
 	s/^\s+\015//g;
 	tr/\015//d;
@@ -246,9 +282,10 @@ sub ShowVlan {
 	s/[\b]+\s*[\b]*//g;
 
 	# Remove Uptime
-	/ Up time/ && next;
+	/ up time/i && next;
 	ProcessHistory("COMMENTS","keysort","D1","! $_");
     }
+	ProcessHistory("COMMENTS","keysort","D1","! \n");
     return(0);
 }
 
@@ -329,9 +366,6 @@ sub WriteTerm {
     return(1);
 }
 
-# dummy function
-sub DoNothing {print STDOUT;}
-
 # Main
 @commandtable = (
 	{'show system'			=> 'ShowSys'},
@@ -344,8 +378,9 @@ sub DoNothing {print STDOUT;}
 # commands to the subroutine and track commands that have been completed.
 @commands = map(keys(%$_), @commandtable);
 %commands = map(%$_, @commandtable);
+$commandcnt = scalar(keys %commands);
 
-$cisco_cmds=join(";",@commands);
+$commandstr=join(";",@commands);
 $cmds_regexp = join("|", map quotemeta($_), @commands);
 
 if (length($host) == 0) {
@@ -357,6 +392,10 @@ if (length($host) == 0) {
 	exit(1);
     }
 }
+if ($opt_C) {
+    print "hlogin -t $timeo -c\'$commandstr\' $host\n";
+    exit(0);
+}
 open(OUTPUT,">$host.new") || die "Can't open $host.new for writing: $!\n";
 select(OUTPUT);
 # make OUTPUT unbuffered if debugging
@@ -366,13 +405,13 @@ if ($file) {
     print STDERR "opening file $host\n" if ($debug);
     print STDOUT "opening file $host\n" if ($log);
     open(INPUT,"<$host") || die "open failed for $host: $!\n"; } else {
-    print STDERR "executing hlogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($debug);
-    print STDOUT "executing hlogin -t $timeo -c\"$cisco_cmds\" $host\n" if ($log);
+    print STDERR "executing hlogin -t $timeo -c\"$commandstr\" $host\n" if ($debug);
+    print STDOUT "executing hlogin -t $timeo -c\"$commandstr\" $host\n" if ($log);
     if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
-	system "hlogin -t $timeo -c \"$cisco_cmds\" $host </dev/null > $host.raw 2>&1" || die "hlogin failed for $host: $!\n";
+	system "hlogin -t $timeo -c \"$commandstr\" $host </dev/null > $host.raw 2>&1" || die "hlogin failed for $host: $!\n";
 	open(INPUT, "< $host.raw") || die "hlogin failed for $host: $!\n";
     } else {
-	open(INPUT,"hlogin -t $timeo -c \"$cisco_cmds\" $host </dev/null |") || die "hlogin failed for $host: $!\n";
+	open(INPUT,"hlogin -t $timeo -c \"$commandstr\" $host </dev/null |") || die "hlogin failed for $host: $!\n";
     }
 }
 
@@ -404,8 +443,8 @@ ProcessHistory("COMMENTS","keysort","D0","!\n");
 TOP: while(<INPUT>) {
     tr/\015//d;
     if (/^Error:/) {
-	print STDOUT ("$host dlogin error: $_");
-	print STDERR ("$host dlogin error: $_") if ($debug);
+	print STDOUT ("$host hlogin error: $_");
+	print STDERR ("$host hlogin error: $_") if ($debug);
 	last;
     }
     while (/#\s*($cmds_regexp)\s*$/) {
@@ -420,7 +459,7 @@ TOP: while(<INPUT>) {
 	    print STDERR "$host: found unexpected command - \"$cmd\"\n";
 	    last TOP;
 	}
-	$rval = &{$commands{$cmd}};
+	$rval = &{$commands{$cmd}}(*INPUT, *OUTPUT, $cmd);
 	delete($commands{$cmd});
 	if ($rval == -1) {
 	    last TOP;
@@ -440,7 +479,9 @@ if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
 
 # check for completeness
 if (scalar(%commands) || !$found_end) {
-    if (scalar(%commands)) {
+    if (scalar(keys %commands) eq $commandcnt) {
+	printf(STDERR "$host: missed cmd(s): all commands\n");
+    } elsif (scalar(%commands)) {
 	printf(STDOUT "$host: missed cmd(s): %s\n", join(',', keys(%commands)));
 	printf(STDERR "$host: missed cmd(s): %s\n", join(',', keys(%commands))) if ($debug);
     }
