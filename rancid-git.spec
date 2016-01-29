@@ -33,8 +33,14 @@ Requires: shadow-utils
 Requires: findutils
 Requires: expect >= 5.40
 Requires: perl
+Requires: perl-CGI
+Requires: perl-LockFile-Simple
+Requires: perl-MailTools
 Requires: iputils
 Requires: logrotate
+Requires: git
+Requires: python-pip
+Requires: diffstat
 
 %description
 RANCID monitors a router's (or more generally a device's) configuration,
