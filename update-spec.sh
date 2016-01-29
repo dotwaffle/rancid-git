@@ -47,7 +47,7 @@ update_version_in_spec() {
 }
 
 update_release_in_spec() {
-    perl -pi -e 's/(^Release: )(\d)+/$1$ENV{RELEASE}/g' $spec_file
+    perl -pi -e 's/(^Release: )(\d(\.)?)+(\d)?/$1$ENV{RELEASE}/g' $spec_file
 }
 
 create_archive() {
