@@ -45,7 +45,8 @@
 # usage: rancid [-dV] [-l] [-f filename | hostname]
 #
 use Getopt::Std;
-use Socket qw(AF_INET AF_INET6 inet_pton);
+use Socket qw(AF_INET);
+use Socket6 qw(AF_INET6 inet_pton);
 getopts('dflV');
 if ($opt_V) {
     print "@PACKAGE@ @VERSION@\n";
