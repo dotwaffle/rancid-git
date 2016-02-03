@@ -318,10 +318,10 @@ if [ $RALL -ne 0 -o $RDOWN -ne 0 -o $RUP -ne 0 ] ; then
 
     cd $DIR/configs
 
-    # Add new routers to the CVS structure.
+    # Add new devices to the CVS structure.
     for router in `comm -13 $DIR/routers.up $DIR/routers.up.new | cut -d: -f1`
     do
-	message="new router $router in group $GROUP"
+	message="new device $router in group $GROUP"
 	touch $router
 	case $RCSSYS in
 	    cvs )
@@ -538,9 +538,9 @@ do
 done
 
 if [ $alt_mailrcpt -eq 1 ] ; then
-    subject="router config diffs - courtesy of $mailrcpt $ALT_COMMIT"
+    subject="device config diffs - courtesy of $mailrcpt $ALT_COMMIT"
 else
-    subject="router config diffs $ALT_COMMIT"
+    subject="device config diffs $ALT_COMMIT"
 fi
 if [ "X$device" != "X" ] ; then
     message="updates of group $GROUP - courtesy of $mailrcpt $ALT_COMMIT"

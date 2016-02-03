@@ -1,9 +1,9 @@
-%global commit 89deb1cac7306c385c669a5a6b6744f6e08c054e
+%global commit cc801e15d45280624e192389e2e242c0bf961b87
 %global shortcommit %(c=%{commit}; echo ${c:0:7})
 
 Name:    rancid-git
 Version: 2.3.9
-Release: 3%{?dist}
+Release: 4.1%{?dist}
 Summary: Really Awesome New Cisco confIg Differ (w/ git support)
 
 Group:   Applications/Internet
@@ -33,8 +33,15 @@ Requires: shadow-utils
 Requires: findutils
 Requires: expect >= 5.40
 Requires: perl
+Requires: perl-CGI
+Requires: perl-LockFile-Simple
+Requires: perl-MailTools
 Requires: iputils
 Requires: logrotate
+Requires: git
+Requires: perl-Socket6
+Requires: python-pip
+Requires: diffstat
 
 %description
 RANCID monitors a router's (or more generally a device's) configuration,
@@ -122,6 +129,21 @@ fi
 
 
 %changelog
+* Wed Feb 03 2016 Sam Doran <github@samdoran.com> 2.3.9-4.1
+- Modify email subject and commit messages so they make more sense
+- Correct regexp for removing ASA/PIX keys
+
+* Tue Feb 02 2016 Sam Doran <github@samdoran.com> 2.3.9-4
+- Use inet_pton from Socket6 module to preserve CentOS 6 compatibility.
+  See https://bugzilla.redhat.com/show_bug.cgi?id=1224143 for details.
+
+* Wed Jan 20 2016 Frank Fegert <fra.nospam.nk@gmx.de> 2.3.9-4
+- Merged changes from upstream rancid (version 3.2).
+- Improved handling of Dell PowerConnect M-Series switch devices.
+
+* Mon Nov 16 2015 Ryan Chapman <rchapman@dataminr.com> 2.3.9-4
+- Improved ip address sorting (from upstream v3.2).
+
 * Fri Oct 30 2015 John Siegrist <john@complects.com> 2.3.9-3
 - Add make as missing BuildRequires dependency
 
