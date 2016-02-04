@@ -732,6 +732,8 @@ sub ShowFlash {
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	next if (/coredumpinfo\/coredump\.cfg$/);
 	next if (/\.dat$/);
+    next if (/Load for five secs/);
+    next if (/Time source is/);
 	return(1) if ($type =~ /^(12[40]|7)/);
 	return(1) if ($ios eq "XE");
 	return(1) if (/^\s*\^\s*$/);
@@ -986,6 +988,8 @@ sub ShowDebug {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
+    next if (/Load for five secs/);
+    next if (/Time source is/);
 	return(1) if (/Line has invalid autocommand /);
 	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
 	return(-1) if (/command authorization failed/i);
@@ -1407,6 +1411,8 @@ sub ShowInventory {
     while (<INPUT>) {
 	tr/\015//d;
 	return if (/^\s*\^$/);
+    next if (/Load for five secs/);
+    next if (/Time source is/);
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if (/Line has invalid autocommand /);
@@ -1609,6 +1615,8 @@ sub ShowVTP {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
+    next if (/Load for five secs/);
+    next if (/Time source is/);
 	return(1) if /^\s*\^\s*$/;
 	return(1) if (/Line has invalid autocommand /);
 	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
@@ -1835,6 +1843,8 @@ sub ShowVLAN {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
+    next if (/Load for five secs/);
+    next if (/Time source is/);
 	return(1) if /^\s*\^\s*$/;
 	return(1) if (/Line has invalid autocommand /);
 	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
