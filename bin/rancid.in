@@ -2221,14 +2221,18 @@ sub WriteTerm {
 	    }
 	    next;
 	}
-	if (/^(snmp-server community) (\S+)/) {
-	    if ($filter_commstr) {
-		ProcessHistory("SNMPSERVERCOMM","keysort","$_",
-			       "!$1 <removed>$'") && next;
-	    } else {
-		ProcessHistory("SNMPSERVERCOMM","keysort","$_","$_") && next;
-	    }
-	}
+    # For ASA version 8.x and higher, the format changed a little. It is
+    # 'snmp-server host {interface {hostname | ip_address}} [trap | poll]
+    # [community  0 | 8 community-string] [version {1 | 2c | 3 username}]
+    # [udp-port port] '
+    if (/^(snmp-server .*community) ([08] )?(\S+)/) {
+        if ($filter_commstr) {
+        ProcessHistory("SNMPSERVERCOMM","keysort","$_",
+                   "!$1 <removed>$'") && next;
+        } else {
+        ProcessHistory("SNMPSERVERCOMM","keysort","$_","$_") && next;
+        }
+    }
 	# prune tacacs/radius server keys
 	if (/^((tacacs|radius)-server\s(\w*[-\s(\s\S+])*\s?key) (\d )?\S+/
 	    && $filter_pwds >= 1) {
