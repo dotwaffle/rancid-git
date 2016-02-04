@@ -132,6 +132,7 @@ fi
 * Wed Feb 03 2016 Sam Doran <github@samdoran.com> 2.3.9-4.1
 - Modify email subject and commit messages so they make more sense
 - Correct regexp for removing ASA/PIX keys
+- Properly remove ASA community strings in ASA 8.x
 
 * Tue Feb 02 2016 Sam Doran <github@samdoran.com> 2.3.9-4
 - Use inet_pton from Socket6 module to preserve CentOS 6 compatibility.
