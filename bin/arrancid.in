@@ -41,7 +41,7 @@
 ## POSSIBILITY OF SUCH DAMAGE.
 #
 #  RANCID - Really Awesome New ConfIg Differ
-# 
+#
 # Rancid for Arista Networks' switches; cisco mode works but
 # Arista mode is better.
 # Initial version by Bill Fenner <fenner@aristanetworks.com>
@@ -706,6 +706,8 @@ TOP: while(<INPUT>) {
 	if (!defined($prompt)) {
 	    $prompt = ($_ =~ /^([^#]+#)/)[0];
 	    $prompt =~ s/([][}{)(\\])/\\$1/g;
+        # "time in prompt" hack:
+        $prompt =~ s/\d+:\d+:\d+/\\d+:\\d+:\\d+/;
 	    print STDERR ("PROMPT MATCH: $prompt\n") if ($debug);
 	}
 	print STDERR ("HIT COMMAND:$_") if ($debug);
