@@ -2,21 +2,41 @@ Source: rancid-git
 Section: net
 Priority: optional
 Maintainer: Roland Rosenfeld <roland@debian.org>
-Build-Depends: debhelper (>= 9), expect, perl, automake, autoconf
-Standards-Version: 3.9.4
+Build-Depends: automake,
+               autotools-dev,
+               cvs,
+               debhelper (>= 9),
+               dh-autoreconf,
+               exim4 | mail-transport-agent,
+               expect,
+               iputils-ping | ping,
+               openssh-client,
+               perl,
+               po-debconf,
+               telnet
+Standards-Version: 3.9.6
 Homepage: http://www.shrubbery.net/rancid/
 
 Package: rancid-git
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, ${perl:Depends}, expect, perl,
- cvs | subversion | git, passwd, openssh-client | ssh, inetutils-ping | ping,
- debconf (>= 0.2.26) | debconf-2.0, adduser, exim4 | mail-transport-agent,
- libperl4-corelibs-perl | perl (<< 5.12.3-7)
+Depends: adduser,
+         cvs | subversion | git,
+         debconf (>= 0.2.26) | debconf-2.0,
+         exim4 | mail-transport-agent,
+         expect,
+         iputils-ping | ping,
+         libperl4-corelibs-perl | perl (<< 5.12.3-7),
+         openssh-client | ssh,
+         passwd,
+         perl,
+         ${misc:Depends},
+         ${perl:Depends},
+         ${shlibs:Depends}
 Suggests: diffstat
-Provides: rancid-core, rancid-util, rancid
+Provides: rancid, rancid-core, rancid-util
 Replaces: rancid-core (<< 2.3.5), rancid-util (<< 2.3.5)
 Breaks: rancid-core (<< 2.3.5), rancid-util (<< 2.3.5)
-Conflicts: rancid, par
+Conflicts: par, rancid
 Description: Really Awesome New Cisco confIg Differ
  This is a popular ISP toolkit, based on expect and shell scripts,
  for managing router configurations.
@@ -27,7 +47,7 @@ Description: Really Awesome New Cisco confIg Differ
 
 Package: rancid-cgi
 Architecture: all
-Depends: ${misc:Depends}, ${perl:Depends}, rancid-git, liblockfile-simple-perl
+Depends: liblockfile-simple-perl, rancid-git, ${misc:Depends}, ${perl:Depends}
 Suggests: apache2 | httpd-cgi
 Description: looking glass CGI for rancid
  This is a popular ISP toolkit, based on expect and shell scripts,
