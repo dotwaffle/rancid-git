@@ -96,7 +96,8 @@ $vendor =~ tr/[A-Z]/[a-z]/;
     'ubnt-es'	=> 'ubnt-es-rancid',
     'vyos'            => 'vrancid',
     'zebra'		=> 'zrancid',
-    'zyxel'		=> 'zyrancid'
+    'zyxel'		=> 'zyrancid',
+    'h3c'		=> 'h3crancid'
 );
 
 if ($vendortable{$vendor} eq "") {
