@@ -1,0 +1,562 @@
+#! /usr/bin/perl
+##
+## $Id: $
+##
+## @PACKAGE@ @VERSION@
+## Copyright (c) 1997-2009 by Terrapin Communications, Inc.
+## All rights reserved.
+##
+## This code is derived from software contributed to and maintained by
+## Terrapin Communications, Inc. by Henry Kilmer, John Heasley, Andrew Partan,
+## Pete Whiting, Austin Schutz, and Andrew Fort.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted provided that the following conditions
+## are met:
+## 1. Redistributions of source code must retain the above copyright
+##    notice, this list of conditions and the following disclaimer.
+## 2. Redistributions in binary form must reproduce the above copyright
+##    notice, this list of conditions and the following disclaimer in the
+##    documentation and/or other materials provided with the distribution.
+## 3. All advertising materials mentioning features or use of this software
+##    must display the following acknowledgement:
+##        This product includes software developed by Terrapin Communications,
+##        Inc. and its contributors for RANCID.
+## 4. Neither the name of Terrapin Communications, Inc. nor the names of its
+##    contributors may be used to endorse or promote products derived from
+##    this software without specific prior written permission.
+## 5. It is requested that non-binding fixes and modifications be contributed
+##    back to Terrapin Communications, Inc.
+##
+## THIS SOFTWARE IS PROVIDED BY Terrapin Communications, INC. AND CONTRIBUTORS
+## ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+## TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+## PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COMPANY OR CONTRIBUTORS
+## BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+## CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+## SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+## INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+## POSSIBILITY OF SUCH DAMAGE.
+#
+#  RANCID - Really Awesome New Cisco confIg Differ
+#
+
+#
+# h3crancid
+#
+# h3clogin/h3crancid covers the following product ranges:
+#
+#  * 3Com SuperStack 4 (post-joint venture with Huawei)
+#  * H3C
+#  * HP Networking ('A' & some 'E' portfolio, post 2010 3Com acquitision)
+#
+# They may also work with some Huawei equipment.
+#
+# https://sites.google.com/site/jrbinks/code/rancid/h3c
+#
+
+#
+# Usage: h3crancid [-dV] [-l] [-f filename | hostname]
+#
+
+# Notable changes from standard *rancid programs:
+#
+# * abstracted to path to the 'tail' utility
+# * altered "cisco_cmds" to be "device_cmds"
+# * define and use $logincmd
+#
+
+# TODO:
+#
+# It may be useful to pull common subroutines like the sorting ones into
+# a library for use by all the *rancid programs.
+#
+
+############################################################################
+# END-USER TWEAKS
+
+# The login program to use.  If no path is given, $PATH is searched:
+#my $logincmd = "h3clogin99";
+my $logincmd = "h3clogin";
+#my $logincmd = "/usr/local/libexec/h3clogin";
+#
+# Enable display of the FIB:
+my $display_fib = 1;
+#
+# Enable display of the routing table:
+# (no-op)
+#my $display_iproutes = 1;
+
+# END OF END-USER TWEAKS
+#############################################################################
+
+use Getopt::Std;
+getopts('dflV');
+if ($opt_V) {
+    print "@PACKAGE@ @VERSION@\n";
+    exit(0);
+}
+$log = $opt_l;
+$debug = $opt_d;
+$file = $opt_f;
+$host = $ARGV[0];
+$clean_run = 0;
+$found_end = 0;
+#$timeo = 90;			# login command timeout in seconds
+$timeo = 20;			# login command timeout in seconds
+
+my $TAIL = "/usr/bin/tail";
+
+my(@commandtable, %commands, @commands);# command lists
+my($aclsort) = ("ipsort");		# ACL sorting mode
+my($filter_commstr);			# SNMP community string filtering
+my($filter_pwds);			# password filtering mode
+
+# This routine is used to print out the router configuration
+sub ProcessHistory {
+    my($new_hist_tag,$new_command,$command_string,@string)=(@_);
+    if((($new_hist_tag ne $hist_tag) || ($new_command ne $command))
+       && defined %history) {
+    print eval "$command \%history";
+    undef %history;
+    }
+    if (($new_hist_tag) && ($new_command) && ($command_string)) {
+    if ($history{$command_string}) {
+        $history{$command_string} = "$history{$command_string}@string";
+    } else {
+        $history{$command_string} = "@string";
+    }
+    } elsif (($new_hist_tag) && ($new_command)) {
+    $history{++$#history} = "@string";
+    } else {
+    print "@string";
+    }
+    $hist_tag = $new_hist_tag;
+    $command = $new_command;
+    1;
+}
+
+sub numerically { $a <=> $b; }
+
+# This is a sort routine that will sort numerically on the
+# keys of a hash as if it were a normal array.
+sub keynsort {
+    local(%lines)=@_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $key (sort numerically keys(%lines)) {
+    $sorted_lines[$i] = $lines{$key};
+    $i++;
+    }
+    @sorted_lines;
+}
+
+# This is a sort routine that will sort on the
+# keys of a hash as if it were a normal array.
+sub keysort {
+    local(%lines)=@_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $key (sort keys(%lines)) {
+    $sorted_lines[$i] = $lines{$key};
+    $i++;
+    }
+    @sorted_lines;
+}
+
+# This is a sort routine that will sort on the
+# values of a hash as if it were a normal array.
+sub valsort{
+    local(%lines)=@_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $key (sort values %lines) {
+        $sorted_lines[$i] = $key;
+        $i++;
+    }
+    @sorted_lines;
+}
+
+# This is a numerical sort routine (ascending).
+sub numsort {
+    local(%lines)=@_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $num (sort {$a <=> $b} keys %lines) {
+    $sorted_lines[$i] = $lines{$num};
+    $i++;
+    }
+    @sorted_lines;
+}
+
+# This is a sort routine that will sort on the
+# ip address when the ip address is anywhere in
+# the strings.
+sub ipsort {
+    local(%lines)=@_;
+    local($i) = 0;
+    local(@sorted_lines);
+    foreach $addr (sort sortbyipaddr keys %lines) {
+    $sorted_lines[$i] = $lines{$addr};
+    $i++;
+    }
+    @sorted_lines;
+}
+
+# These two routines will sort based upon IP addresses
+sub ipaddrval {
+    my(@a) = ($_[0] =~ m#^(\d+)\.(\d+)\.(\d+)\.(\d+)$#);
+    $a[3]+256*($a[2]+256*($a[1]+256*$a[0]));
+}
+sub sortbyipaddr {
+    &ipaddrval($a) <=> &ipaddrval($b);
+}
+
+sub filter_lines {
+    my ($l) = (@_);
+#    print STDERR "    In filterlines: $l\n" if ($debug);
+
+    # Filter out some ANSI crud as a result of us not being able to turn
+    # off per-session terminal paging:
+    # h3c:
+    #s/^\033\[42D +\033\[42D(.+)$/$1/;
+    # hwlogin+mods:
+    #s/\033\133\064\062\104\s*\033\133\064\062\104//g;
+    $l =~ s/\033\133\064\062\104\s+\033\133\064\062\104//g;
+    $l =~ s/\033\133\061\066\104\s+\033\133\061\066\104//g;
+    $l =~ s/\033\133\064\062\104//g;
+    $l =~ s/\033\133\061\062\104//g;
+    # Probably not needed:
+    $l =~ s/\s*---- More ----\s*//;
+#    print STDERR "out: $l\n" if ($debug);
+    return $l;
+}
+
+sub DisplayFib {
+    ## We should probably guarantee that the FIB is sorted properly
+    print STDERR "    In DisplayFib: $_" if ($debug);
+
+    return(1) if $display_fib == 0;
+    chomp;
+
+    # Display the command we're processing in the output:
+    s/^[\[<].*?[\]>]\a?\s?(.*)/\'$1\':/g;
+    ProcessHistory("COMMENTS","keysort","A0","! $_\n!\n");
+
+    while (<INPUT>) {
+        tr/\015//d;
+        last if(/^$prompt/);
+        chomp;
+        # skip blank lines
+        return(1) if /^\s+\^$/;
+        $_ = filter_lines($_);
+
+        # make this a subroutine:
+        return(1) if /% Too many parameters found at '\^' position/;
+        return(1) if /% Unrecognized command found at '\^' position/;
+        return(1) if /% Wrong parameter found at '\^' position/;
+        return(1) if /% Wrong device .+/;
+
+        # Chop out some detail that changes over time:
+        s/(\s+)TimeStamp\s+/$1/;
+        s/(\s+)t\[\d+\]\s+/$1/;
+
+        ProcessHistory("COMMENTS","ipsort","A0","! $_\n");
+        #ProcessHistory("COMMENTS","keysort","A0","! $_\n");
+    }
+    ProcessHistory("COMMENTS","keysort","A0","! \n");
+    return(0);
+}
+
+
+# This routine processes general output of "display" commands
+sub CommentOutput {
+    print STDERR "    In CommentOutput: $_" if ($debug);
+
+    chomp;
+
+    # Display the command we're processing in the output:
+    s/^[\[<].*?[\]>]\a?\s?(.*)/\'$1\':/g;
+    ProcessHistory("","","","! $_\n!\n");
+
+    # eat the header line
+#    $junk = <INPUT>;
+    # now just copy it mostly verbatim to the history file
+    while (<INPUT>) {
+        tr/\015//d;
+
+        # If we find the prompt, we're done
+        #last if(/^<.*>/);
+        last if(/^$prompt/);
+        chomp;
+
+        # skip blank lines
+        return(1) if /^\s+\^$/;
+
+        $_ = filter_lines($_);
+
+    # Filter out some ANSI crud as a result of us not being able to turn
+    # off per-session terminal paging:
+    # h3c:
+    #s/^\033\[42D +\033\[42D(.+)$/$1/;
+    # hwlogin+mods:
+        #s/\033\133\064\062\104\s*\033\133\064\062\104//g;
+#    s/\033\133\064\062\104\s+\033\133\064\062\104//g;
+#    s/\033\133\061\066\104\s+\033\133\061\066\104//g;
+    #s/\033\133\064\062\104//g;
+    # Probably not needed:
+#        s/\s*---- More ----\s*//;
+
+        # make this a subroutine:
+        # Some commands are not supported on some models or versions
+        # of code.  These lines simply remove the associated error
+        # messages:
+        return(1) if /% Too many parameters found at '\^' position/;
+        return(1) if /% Unrecognized command found at '\^' position/;
+        return(1) if /% Wrong parameter found at '\^' position/;
+        return(1) if /% Wrong device .+/;
+
+        # Parts of the output of some commands changes over time, but we don't
+        # want these changes to trigger a rancid notification, so we
+        # filter them out:
+
+        # This is part of one line, just cut it out:
+        s/\s+Current AccessNum:.+$//;
+
+        if (/^(PSE Total Power Consumption|PSE Available Power|PSE Peak Value|PSE Average Value).+$/) {
+            next;
+        }
+
+        s/(.*)uptime.*days*.*hours*.*minutes*(.*)/$1 $2/;
+
+        ProcessHistory("","","","! $_\n");
+    }
+
+    ProcessHistory("","","","! \n");
+    return(0);
+}
+
+## This routine processes a "display current"
+sub DisplayCurrent {
+    print STDERR "    In DisplayCurrent: $_" if ($debug);
+
+    while (<INPUT>) {
+    tr/\015//d;
+    last if(/^$prompt/);
+
+        $_ = filter_lines($_);
+
+    # Filter out some ANSI crud as a result of us not being able to turn
+    # off per-session terminal paging:
+    # h3c:
+    #s/^\033\[42D +\033\[42D(.+)$/$1/;
+    # hwlogin+mods:
+    #s/\033\133\064\062\104\s*\033\133\064\062\104//g;
+#    s/\033\133\064\062\104\s+\033\133\064\062\104//g;
+#    s/\033\133\061\066\104\s+\033\133\061\066\104//g;
+#    s/\033\133\064\062\104//g;
+    # Probably not needed:
+#        s/\s*---- More ----\s*//;
+
+    # Filter out some sensitive data:
+    if (/^( ?snmp-agent community (read|write) )(\S+)/ &&
+    	$filter_commstr == 0) {
+        ProcessHistory("","","","!$1<removed>$'");
+        next;
+    }
+
+    ProcessHistory("","","","$_");
+
+    # end of config
+	
+    if (/^return/) {
+        $found_end = 1;
+        return(0);
+    }
+    }
+    return(0);
+}
+
+# dummy function
+sub DoNothing {print STDOUT;}
+
+# Main
+## Not all commands are supported on all models and code versions
+## Not all of these should necessarily be included
+@commandtable = (
+    {'display version'			=> 'CommentOutput'},
+    {'display boot-loader'		=> 'CommentOutput'},
+    {'dir /all unit1>flash:/'		=> 'CommentOutput'},
+    {'dir /all unit2>flash:/'		=> 'CommentOutput'},
+    {'dir /all unit3>flash:/'		=> 'CommentOutput'},
+    {'dir /all unit4>flash:/'		=> 'CommentOutput'},
+    {'dir /all unit5>flash:/'		=> 'CommentOutput'},
+    {'dir /all unit6>flash:/'		=> 'CommentOutput'},
+    {'dir /all unit7>flash:/'		=> 'CommentOutput'},
+    {'dir /all unit8>flash:/'		=> 'CommentOutput'},
+    {'display device'			=> 'CommentOutput'},
+    {'display device manuinfo'		=> 'CommentOutput'},
+    {'display irf'			=> 'CommentOutput'},
+    {'display xrn-fabric'		=> 'CommentOutput'},
+    {'display ftm topology-database'	=> 'CommentOutput'},
+    {'display fan'			=> 'CommentOutput'},
+    {'display power'			=> 'CommentOutput'},
+    {'display poe powersupply'		=> 'CommentOutput'},
+    {'display poe temperature-protection'	=> 'CommentOutput'},
+    {'display cluster'			=> 'CommentOutput'},
+    {'display domain'			=> 'CommentOutput'},
+    {'display local-user'		=> 'CommentOutput'},
+    {'display password-control'		=> 'CommentOutput'},
+    {'display password-control super'	=> 'CommentOutput'},
+    {'display ssh server status'	=> 'CommentOutput'},
+    {'display fib'			=> 'DisplayFib'},
+    {'display vlan all'			=> 'CommentOutput'},
+    {'display ip routing-table'		=> 'CommentOutput'},
+    {'display lacp sys'			=> 'CommentOutput'},
+    {'display link-aggregation summary'	=> 'CommentOutput'},
+    {'display link-aggregation verbose'	=> 'CommentOutput'},
+    {'display mirror all'		=> 'CommentOutput'},
+    {'display current-configuration'	=> 'DisplayCurrent'},
+);
+
+# Use an array to preserve the order of the commands and a hash for mapping
+# commands to the subroutine and track commands that have been completed.
+@commands = map(keys(%$_), @commandtable);
+%commands = map(%$_, @commandtable);
+
+$device_cmds=join(";",@commands);
+$cmds_regexp=join("|",@commands);
+
+if (length($host) == 0) {
+    if ($file) {
+        print(STDERR "Too few arguments: file name required\n");
+        exit(1);
+    } else {
+        print(STDERR "Too few arguments: host name required\n");
+        exit(1);
+    }
+}
+open(OUTPUT,">$host.new") || die "Can't open $host.new for writing: $!\n";
+select(OUTPUT);
+# make OUTPUT unbuffered if debugging
+if ($debug) { $| = 1; }
+
+if ($file) {
+    print STDERR "opening file $host\n" if ($debug);
+    print STDOUT "opening file $host\n" if ($log);
+    open(INPUT,"<$host") || die "open failed for $host: $!\n";
+} else {
+    print STDERR "executing $logincmd -t $timeo -c\"$device_cmds\" $host\n" if ($debug);
+    print STDOUT "executing $logincmd -t $timeo -c\"$device_cmds\" $host\n" if ($log);
+    if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
+#	system "$logincmd -noenable -t $timeo -c \"$device_cmds\" $host </dev/null > $host.raw 2>&1" || die "$logincmd failed for $host: $!\n";
+#    system "$logincmd -t $timeo -c \"$device_cmds\" $host </dev/null > $host.raw 2>&1" || die "$logincmd failed for $host: $!\n";
+    system "$logincmd -t $timeo -c \"$device_cmds\" $host </dev/null > $host.raw 2>&1" || die "$logincmd failed for $host: $!\n";
+    open(INPUT, "< $host.raw") || die "$logincmd failed for $host: $!\n";
+    } else {
+#	open(INPUT,"$logincmd -noenable -t $timeo -c \"$device_cmds\" $host </dev/null |") || die "$logincmd failed for $host: $!\n";
+    open(INPUT,"$logincmd -t $timeo -c \"$device_cmds\" $host </dev/null |") || die "$logincmd failed for $host: $!\n";
+    }
+}
+
+# determine ACL sorting mode
+if ($ENV{"ACLSORT"} =~ /no/i) {
+    $aclsort = "";
+}
+# determine community string filtering mode
+if (defined($ENV{"NOCOMMSTR"}) &&
+    ($ENV{"NOCOMMSTR"} =~ /yes/i || $ENV{"NOCOMMSTR"} =~ /^$/)) {
+    $filter_commstr = 1;
+} else {
+    $filter_commstr = 0;
+}
+# determine password filtering mode
+if ($ENV{"FILTER_PWDS"} =~ /no/i) {
+    $filter_pwds = 0;
+} elsif ($ENV{"FILTER_PWDS"} =~ /all/i) {
+    $filter_pwds = 2;
+} else {
+    $filter_pwds = 1;
+}
+
+ProcessHistory("","","","!RANCID-CONTENT-TYPE: h3c\n!\n");
+#ProcessHistory("COMMENTS","keysort","B0","!\n");
+#ProcessHistory("COMMENTS","keysort","D0","!\n");
+#ProcessHistory("COMMENTS","keysort","F0","!\n");
+#ProcessHistory("COMMENTS","keysort","G0","!\n");
+TOP: while(<INPUT>) {
+    tr/\015//d;
+# h3c:
+# Look for the command at the end of the output
+#    if (/\#exit$/) {
+#    if (/\#quit$/) {
+# h3c:
+     if (/[\]>]\a?\s*quit/) {
+#    if (/^[\[<].*[\]>]\a?\s?quit/) {
+      $clean_run=1;
+      last;
+    }
+    if (/^Error:/) {
+    print STDOUT ("$host $logincmd error: $_");
+    print STDERR ("$host $logincmd error: $_") if ($debug);
+    $clean_run=0;
+    last;
+    }
+#    while (/#\s*($cmds_regexp)\s*$/) {
+# h3c:
+    while (/[\]>]\a?\s*($cmds_regexp)\s*$/) {
+#    while (/^[\[<].*[\]>]\a?\s*($cmds_regexp)\s*$/) {
+    $cmd = $1;
+    if (!defined($prompt)) {
+    # h3c:
+    # Extract the prompt: look for something not [ or < at the start
+    # of the line, until either ] or > is reached:
+        #$prompt = ($_ =~ /^([^#]+#)/)[0];
+        #$prompt =~ s/([][}{)(\\])/\\$1/g;
+        #$prompt = ($_ =~ /^([^\]>]+[\]>]\007?)/)[0]; 
+        $prompt = ($_ =~ /^([^\]>]+[\]>]\a?)/)[0]; 
+        $prompt =~ s/([][}{)(\\])/\\$1/g;
+	print STDERR ("PROMPT MATCH: $prompt\n") if ($debug);
+    }
+    print STDERR ("HIT COMMAND:$_") if ($debug);
+    if (! defined($commands{$cmd})) {
+        print STDERR "$host: found unexpected command - \"$cmd\"\n";
+        $clean_run = 0;
+        last TOP;
+    }
+    $rval = &{$commands{$cmd}};
+    delete($commands{$cmd});
+    if ($rval == -1) {
+        $clean_run = 0;
+        last TOP;
+    }
+    }
+}
+print STDOUT "Done $logincmd: $_\n" if ($log);
+# Flush History
+ProcessHistory("","","","");
+# Cleanup
+close(INPUT);
+close(OUTPUT);
+
+if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
+    unlink("$host.raw") if (! $debug);
+}
+
+printf(STDOUT "$host: clean_run=$clean_run found_end=$found_end\n") if ($debug);
+
+# check for completeness
+if (scalar(%commands) || !$clean_run || !$found_end) {
+    if (scalar(%commands)) {
+    printf(STDOUT "$host: missed cmd(s): %s\n", join(',', keys(%commands)));
+    printf(STDERR "$host: missed cmd(s): %s\n", join(',', keys(%commands))) if ($debug);
+    }
+    if (!$clean_run || !$found_end) {
+    print STDOUT "$host: End of run not found\n";
+    print STDERR "$host: End of run not found\n" if ($debug);
+    system("$TAIL -1 $host.new");
+    }
+    unlink "$host.new" if (! $debug);
+}
