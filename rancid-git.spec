@@ -3,7 +3,7 @@
 
 Name:    rancid-git
 Version: 2.3.9
-Release: 4.1%{?dist}
+Release: 4.2%{?dist}
 Summary: Really Awesome New Cisco confIg Differ (w/ git support)
 
 Group:   Applications/Internet
@@ -129,6 +129,10 @@ fi
 
 
 %changelog
+* Thu Feb 18 2016 Sam Doran <github@samdoran.com> 2.3.9-4.2
+- Account for date in prompt when processing Arista configs (from upstream 3.2)
+- Improve processing of Nexus devices (from upstream 3.3)
+
 * Wed Feb 03 2016 Sam Doran <github@samdoran.com> 2.3.9-4.1
 - Modify email subject and commit messages so they make more sense
 - Correct regexp for removing ASA/PIX keys
