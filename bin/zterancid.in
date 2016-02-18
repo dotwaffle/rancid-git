@@ -40,7 +40,8 @@ $found_env = 0;
 $found_diag = 0;
 $timeo = 90;            # clogin timeout in seconds
 $clogin_pgm= $ENV{'RANCID_CLOGIN'} || "ztelogin";
-$prompt = '.*>';
+###If tac_plus is enable the prompt will be #
+$prompt = "[#>]";
 delete $ENV{'TERM'};
 
 my(%filter_pwds);       # password filtering mode
@@ -278,7 +279,8 @@ TOP: while(<INPUT>) {
     while (/($prompt)\s*($cmds_regexp)/) {
     $cmd = $2;
     if (!defined($actual_prompt)) {
-        $actual_prompt = ($_ =~ /^([^>]+>)/)[0];
+	#To match the prompt for TAC_pluS)
+        $actual_prompt = ($_ =~ /^([^#>]+[#|>])/)[0];
         $actual_prompt =~ s/([][+.*}{)(\\])/\\$1/g;
         print STDERR ("PROMPT MATCH: $actual_prompt\n") if ($debug);
         $prompt = $actual_prompt;
