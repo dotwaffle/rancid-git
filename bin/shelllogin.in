@@ -615,7 +615,7 @@ proc do_enable { enauser enapasswd } {
     # Set bash answer in english
     send "export LANG=C\r"
     expect {
-     "$" { set prompt "$" }
+     "#" { set prompt "#" }
      -re "error" { send_user "\nError: check your appliance\n"
      		   return 1
 		 }
@@ -623,6 +623,7 @@ proc do_enable { enauser enapasswd } {
     send "su -\r"
     expect {
 
+	-re "$u_prompt"	{ send -- "$enauser\r"; exp_continue}
 	-re "$e_prompt"	{ send -- "$enapasswd\r"; exp_continue}
 	"#"		{ set prompt "#" }
 	-re "(denied|Sorry|Incorrect)"	{
@@ -868,7 +869,7 @@ foreach router [lrange $argv $i end] {
 	} else {
 	    set autoenable 0
 	    set enable $avenable
-	    set prompt "(:~$ | \$)"
+	    set prompt ":~> "
 	}
     }
 
