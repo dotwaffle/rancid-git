@@ -252,21 +252,21 @@ sub ShowVersionBuild {
     print STDERR "    In ShowVersionBuild: $_" if ($debug);
 
     while (<INPUT>) {
-    tr/\015//d;
-    last if (/^$prompt/);
-    next if (/^(\s*|\s*$cmd\s*)$/);
-    return(1) if /Line has invalid autocommand /;
-    return(1) if /(Invalid input detected|Type help or )/;
-    return(1) if (/\% Invalid command at /);
-    return(1) if (/No token match at /);    # 1000v
-    return(-1) if (/\% Permission denied/);
-    return(-1) if (/command authorization failed/i);
+        tr/\015//d;
+        last if (/^$prompt/);
+        next if (/^(\s*|\s*$cmd\s*)$/);
+        return(1) if /Line has invalid autocommand /;
+        return(1) if /(Invalid input detected|Type help or )/;
+        return(1) if (/\% Invalid command at /);
+        return(1) if (/No token match at /);    # 1000v
+        return(-1) if (/\% Permission denied/);
+        return(-1) if (/command authorization failed/i);
 
-    /^Built By / && ProcessHistory("COMMENTS","","", "!Build: $_");
-    /^On Date / && ProcessHistory("COMMENTS","","", "!Build: $_");
-    /^From Tree / && ProcessHistory("COMMENTS","","", "!Build: $_");
-    /^Base Tag / && ProcessHistory("COMMENTS","","", "!Build: $_");
-    /^Release for / && ProcessHistory("COMMENTS","","", "!Build: $_");
+        /^Built By / && ProcessHistory("COMMENTS","","", "!Build: $_");
+        /^On Date / && ProcessHistory("COMMENTS","","", "!Build: $_");
+        /^From Tree / && ProcessHistory("COMMENTS","","", "!Build: $_");
+        /^Base Tag / && ProcessHistory("COMMENTS","","", "!Build: $_");
+        /^Release for / && ProcessHistory("COMMENTS","","", "!Build: $_");
     }
     ProcessHistory("COMMENTS","","","!\n");
     return(0);
@@ -277,18 +277,18 @@ sub ShowLicense {
     print STDERR "    In ShowLicense: $_" if ($debug);
 
     while (<INPUT>) {
-    tr/\015//d;
-    last if (/^$prompt/);
-    next if (/^(\s*|\s*$cmd\s*)$/);
-    return(1) if /(Invalid input detected|Type help or )/;
-    return(1) if (/\% Invalid command at /);
-    return(1) if (/No token match at /);    # 1000v
-    return(-1) if (/\% Permission denied/);
-    return(-1) if (/command authorization failed/i);
+        tr/\015//d;
+        last if (/^$prompt/);
+        next if (/^(\s*|\s*$cmd\s*)$/);
+        return(1) if /(Invalid input detected|Type help or )/;
+        return(1) if (/\% Invalid command at /);
+        return(1) if (/No token match at /);    # 1000v
+        return(-1) if (/\% Permission denied/);
+        return(-1) if (/command authorization failed/i);
 
-    /^-+$/ && next;     # Skip lines of all dashes.
-    s/ Grace .+$/ Grace/;   # Drop anything after Grace.
-    ProcessHistory("COMMENTS","","", "!LIC: $_");
+        /^-+$/ && next;     # Skip lines of all dashes.
+        s/ Grace .+$/ Grace/;   # Drop anything after Grace.
+        ProcessHistory("COMMENTS","","", "!LIC: $_");
     }
     ProcessHistory("COMMENTS","","","!\n");
     return(0);
@@ -299,18 +299,18 @@ sub ShowRedundancy {
     print STDERR "    In ShowRedundancy: $_" if ($debug);
 
     while (<INPUT>) {
-    tr/\015//d;
-    last if (/^$prompt/);
-    next if (/^(\s*|\s*$cmd\s*)$/);
-    return(1) if /Line has invalid autocommand /;
-    return(1) if /(Invalid input detected|Type help or )/;
-    return(1) if (/\% Invalid command at /);
-    return(1) if (/No token match at /);    # 1000v
-    return(-1) if (/\% Permission denied/);
-    return(-1) if (/command authorization failed/i);
+        tr/\015//d;
+        last if (/^$prompt/);
+        next if (/^(\s*|\s*$cmd\s*)$/);
+        return(1) if /Line has invalid autocommand /;
+        return(1) if /(Invalid input detected|Type help or )/;
+        return(1) if (/\% Invalid command at /);
+        return(1) if (/No token match at /);    # 1000v
+        return(-1) if (/\% Permission denied/);
+        return(-1) if (/command authorization failed/i);
 
-    s/ +$//;    # Drop trailing ' '
-    ProcessHistory("COMMENTS","","","!Red: $_");
+        s/ +$//;    # Drop trailing ' '
+        ProcessHistory("COMMENTS","","","!Red: $_");
     }
     ProcessHistory("COMMENTS","","","!\n");
     return(0);
@@ -321,31 +321,31 @@ sub ShowEnv {
     print STDERR "    In ShowEnv: $_" if ($debug);
 
     while (<INPUT>) {
-    tr/\015//d;
-    last if (/^$prompt/);
-    next if (/^(\s*|\s*$cmd\s*)$/);
-    next if (/^\s*\^\s*$/);
-    return(1) if /Line has invalid autocommand /;
-    return(1) if /(Invalid input detected|Type help or )/;
-    return(1) if (/\% Invalid command at /);
-    return(1) if (/No token match at /);    # 1000v
-    return(-1) if (/\% Permission denied/);
-    return(-1) if (/command authorization failed/i);
+        tr/\015//d;
+        last if (/^$prompt/);
+        next if (/^(\s*|\s*$cmd\s*)$/);
+        next if (/^\s*\^\s*$/);
+        return(1) if /Line has invalid autocommand /;
+        return(1) if /(Invalid input detected|Type help or )/;
+        return(1) if (/\% Invalid command at /);
+        return(1) if (/No token match at /);    # 1000v
+        return(-1) if (/\% Permission denied/);
+        return(-1) if (/command authorization failed/i);
 
-    s/ +$//;    # Drop trailing ' '
-    next if (/Fan Zone Speed:/);
-    if (/(control temperature|monitor temperature)/i) {
-        ProcessHistory("COMMENTS","","","!Env: $_");
-        while (<$INPUT>) {
-        if (/(.*\s+\d+\s+\d+\s+)(\d+)(.*$)/) {
-            $_ = sprintf("%s%-". length($2)."s%s\n", $1, "", $3);
+        s/ +$//;    # Drop trailing ' '
+        next if (/Fan Zone Speed:/);
+        if (/(control temperature|monitor temperature)/i) {
+            ProcessHistory("COMMENTS","","","!Env: $_");
+            while (<$INPUT>) {
+            if (/(.*\s+\d+\s+\d+\s+)(\d+)(.*$)/) {
+                $_ = sprintf("%s%-". length($2)."s%s\n", $1, "", $3);
+            }
+            ProcessHistory("COMMENTS","","","!Env: $_");
+            last if (/^\s*$/);
+            }
+            next;
         }
         ProcessHistory("COMMENTS","","","!Env: $_");
-        last if (/^\s*$/);
-        }
-        next;
-    }
-    ProcessHistory("COMMENTS","","","!Env: $_");
     }
     ProcessHistory("COMMENTS","","","!\n");
     return(0);
@@ -402,70 +402,70 @@ sub ShowEnvPower {
     print STDERR "    In ShowEnvPower: $_" if ($debug);
 
     while (<INPUT>) {
-    tr/\015//d;
-    last if (/^$prompt/);
-    next if (/^(\s*|\s*$cmd\s*)$/);
-    next if (/^\s*\^\s*$/);
-    return(1) if /Line has invalid autocommand /;
-    return(1) if /(Invalid input detected|Type help or )/;
-    return(1) if (/\% Invalid command at /);
-    return(1) if (/No token match at /);    # 1000v
-    return(-1) if (/\% Permission denied/);
-    return(-1) if (/command authorization failed/i);
+        tr/\015//d;
+        last if (/^$prompt/);
+        next if (/^(\s*|\s*$cmd\s*)$/);
+        next if (/^\s*\^\s*$/);
+        return(1) if /Line has invalid autocommand /;
+        return(1) if /(Invalid input detected|Type help or )/;
+        return(1) if (/\% Invalid command at /);
+        return(1) if (/No token match at /);    # 1000v
+        return(-1) if (/\% Permission denied/);
+        return(-1) if (/command authorization failed/i);
 
-    # Filter Actual Output/Draw.
-    #Power                              Actual        Total
-    #Supply    Model                    Output     Capacity    Status
-    #                                 (Watts )     (Watts )
-    #-------  -------------------  -----------  -----------  --------------
-    #1        ------------                 0 W          0 W     Absent
-    #3                                   749 W       5480 W     Ok
-    #                                  Actual        Power
-    #Module    Model                     Draw    Allocated    Status
-    #                                 (Watts )     (Watts )
-    #-------  -------------------  -----------  -----------  --------------
-    #2        NURBURGRING                N/A          573 W    Powered-Up
-    #fan1                                N/A          720 W    Powered-Up
-    #
-    # ELSE
-    #
-    # nexus# sh environment power
-    # Power Supply:
-    # Voltage: 12 Volts
-    # Power                             Actual      Actual        Total
-    # Supply    Model                   Output      Input      Capacity    Status
-    #                                 (Watts )    (Watts )     (Watts )
-    # -------  -------------------  ----------  ----------  ----------
-    # --------------
-    # 1        N9K-PAC-650W-B             65 W        76 W       649 W     Ok
-    # 2        N9K-PAC-650W-B             70 W        84 W       649 W     Ok
-    #
-    #
-    # Power Usage Summary:
-    # --------------------
-    # Power Supply redundancy mode (configured)                PS-Redundant
-    # Power Supply redundancy mode (operational)               PS-Redundant
-    #
-    # Total Power Capacity (based on configured mode)             649.92 W
-    # Total Grid-A (first half of PS slots) Power Capacity        649.92 W
-    # Total Grid-B (second half of PS slots) Power Capacity       649.92 W
-    # Total Power of all Inputs (cumulative)                     1299.84 W
-    # Total Power Output (actual draw)                            136.00 W
-    # Total Power Input (actual draw)                             161.00 W
-    # Total Power Allocated (budget)                                N/A
-    # Total Power Available for additional modules                  N/A
-    #
-    # nexus#
-    if ( /(.* +)(\d+ W)( +\d+ W.*)/) {
-        $_ = sprintf("%s%-". length($2)."s%s\n", $1, "", $3);
-    } elsif ( /(.* +)(\d+ W)( +\d+ W.*)/) {
-        $_ = sprintf("%s%-". length($2)."s%s\n", $1, "", $3);
-    }
+        # Filter Actual Output/Draw.
+        #Power                              Actual        Total
+        #Supply    Model                    Output     Capacity    Status
+        #                                 (Watts )     (Watts )
+        #-------  -------------------  -----------  -----------  --------------
+        #1        ------------                 0 W          0 W     Absent
+        #3                                   749 W       5480 W     Ok
+        #                                  Actual        Power
+        #Module    Model                     Draw    Allocated    Status
+        #                                 (Watts )     (Watts )
+        #-------  -------------------  -----------  -----------  --------------
+        #2        NURBURGRING                N/A          573 W    Powered-Up
+        #fan1                                N/A          720 W    Powered-Up
+        #
+        # ELSE
+        #
+        # nexus# sh environment power
+        # Power Supply:
+        # Voltage: 12 Volts
+        # Power                             Actual      Actual        Total
+        # Supply    Model                   Output      Input      Capacity    Status
+        #                                 (Watts )    (Watts )     (Watts )
+        # -------  -------------------  ----------  ----------  ----------
+        # --------------
+        # 1        N9K-PAC-650W-B             65 W        76 W       649 W     Ok
+        # 2        N9K-PAC-650W-B             70 W        84 W       649 W     Ok
+        #
+        #
+        # Power Usage Summary:
+        # --------------------
+        # Power Supply redundancy mode (configured)                PS-Redundant
+        # Power Supply redundancy mode (operational)               PS-Redundant
+        #
+        # Total Power Capacity (based on configured mode)             649.92 W
+        # Total Grid-A (first half of PS slots) Power Capacity        649.92 W
+        # Total Grid-B (second half of PS slots) Power Capacity       649.92 W
+        # Total Power of all Inputs (cumulative)                     1299.84 W
+        # Total Power Output (actual draw)                            136.00 W
+        # Total Power Input (actual draw)                             161.00 W
+        # Total Power Allocated (budget)                                N/A
+        # Total Power Available for additional modules                  N/A
+        #
+        # nexus#
+        if ( /(.* +)(\d+ W)( +\d+ W.*)/) {
+            $_ = sprintf("%s%-". length($2)."s%s\n", $1, "", $3);
+        } elsif ( /(.* +)(\d+ W)( +\d+ W.*)/) {
+            $_ = sprintf("%s%-". length($2)."s%s\n", $1, "", $3);
+        }
 
-    /actual draw/ && next;  # Drop changing total power output.
+        /actual draw/ && next;  # Drop changing total power output.
 
-    s/ +$//;    # Drop trailing ' '
-    ProcessHistory("COMMENTS","","","!Env: $_");
+        s/ +$//;    # Drop trailing ' '
+        ProcessHistory("COMMENTS","","","!Env: $_");
     }
     ProcessHistory("COMMENTS","","","!\n");
     return(0);
@@ -476,20 +476,20 @@ sub ShowBoot {
     print STDERR "    In ShowBoot: $_" if ($debug);
 
     while (<INPUT>) {
-    tr/\015//d;
-    last if (/^$prompt/);
-    next if (/^(\s*|\s*$cmd\s*)$/);
-    return(1) if /^\s*\^\s*$/;
-    return(1) if /Line has invalid autocommand /;
-    return(1) if /(Invalid input detected|Type help or )/;
-    return(1) if /Ambiguous command/i;
-    return(-1) if (/\% Invalid command at /);
-    return(-1) if (/No token match at /);   # 1000v
-    return(-1) if (/\% Permission denied/);
-    return(-1) if (/command authorization failed/i);
+        tr/\015//d;
+        last if (/^$prompt/);
+        next if (/^(\s*|\s*$cmd\s*)$/);
+        return(1) if /^\s*\^\s*$/;
+        return(1) if /Line has invalid autocommand /;
+        return(1) if /(Invalid input detected|Type help or )/;
+        return(1) if /Ambiguous command/i;
+        return(-1) if (/\% Invalid command at /);
+        return(-1) if (/No token match at /);   # 1000v
+        return(-1) if (/\% Permission denied/);
+        return(-1) if (/command authorization failed/i);
 
-    s/ variable = / = /;
-    ProcessHistory("COMMENTS","","","!Variable: $_");
+        s/ variable = / = /;
+        ProcessHistory("COMMENTS","","","!Variable: $_");
     }
     ProcessHistory("COMMENTS","","","!\n");
     return(0);
@@ -502,51 +502,51 @@ sub DirSlotN {
     my($dev) = (/\s([^\s]+):/);
 
     while (<INPUT>) {
-    tr/\015//d;
-    last if (/^$prompt/);
-    next if (/^(\s*|\s*$cmd\s*)$/);
-    return(1) if /^\s*\^\s*$/;
-    return(1) if /Line has invalid autocommand /;
-    return(1) if /(Invalid input detected|Type help or )/;
-    return(1) if (/\% Invalid command at /);
-    return(1) if /(No such device|Error Sending Request)/i;
-    return(1) if /\%Error: No such file or directory/;
-    return(1) if /No such file or directory/;
-    return(1) if /No space information available/;
-    return(1) if / is either not present or not formatted/;
-    return(-1) if /\%Error calling/;
-    return(-1) if /(: device being squeezed|ATA_Status time out)/i; # busy
-    return(-1) if (/\% Permission denied/);
-    return(-1) if (/command authorization failed/i);
-    return(1) if /(Open device \S+ failed|Error opening \S+:)/;
+        tr/\015//d;
+        last if (/^$prompt/);
+        next if (/^(\s*|\s*$cmd\s*)$/);
+        return(1) if /^\s*\^\s*$/;
+        return(1) if /Line has invalid autocommand /;
+        return(1) if /(Invalid input detected|Type help or )/;
+        return(1) if (/\% Invalid command at /);
+        return(1) if /(No such device|Error Sending Request)/i;
+        return(1) if /\%Error: No such file or directory/;
+        return(1) if /No such file or directory/;
+        return(1) if /No space information available/;
+        return(1) if / is either not present or not formatted/;
+        return(-1) if /\%Error calling/;
+        return(-1) if /(: device being squeezed|ATA_Status time out)/i; # busy
+        return(-1) if (/\% Permission denied/);
+        return(-1) if (/command authorization failed/i);
+        return(1) if /(Open device \S+ failed|Error opening \S+:)/;
 
-    # Drop ee.log
-    /\s+ee\.log(?:\..*)?$/ && next;
+        # Drop ee.log
+        /\s+ee\.log(?:\..*)?$/ && next;
 
-    # Drop accounting.log
-    /\s+accounting\.log$/ && next;
+        # Drop accounting.log
+        /\s+accounting\.log$/ && next;
 
-    next if (/BufferMonitor-1HourData/);
-    if (/ log\/$/) {
-        # change
-        #         8192    Jan 08 14:05:05 2015  log/
-        # to
-        #                                       log/
-        if (/(\s*\d+\s+)(\S+ \d+\s+\d+:\d+:\d+ \d+)(.*)/) {
-        my($a, $dt, $rem) = ($1, $2, $3);
-        my($dtl) = length($dt);
-        my($fmt) = "%s%-". $dtl ."s%s\n";
-        $_ = sprintf($fmt, $a, "", $rem);
+        next if (/BufferMonitor-1HourData/);
+        if (/ log\/$/) {
+            # change
+            #         8192    Jan 08 14:05:05 2015  log/
+            # to
+            #                                       log/
+            if (/(\s*\d+\s+)(\S+ \d+\s+\d+:\d+:\d+ \d+)(.*)/) {
+            my($a, $dt, $rem) = ($1, $2, $3);
+            my($dtl) = length($dt);
+            my($fmt) = "%s%-". $dtl ."s%s\n";
+            $_ = sprintf($fmt, $a, "", $rem);
+            }
         }
-    }
 
-    if (/^\s*(\d+) bytes /) {
-        next if $dev eq 'logflash';
-        my($tmp) = int($1 / (1024 * 1024));
-        s/$1 bytes /$tmp MB /;
-    }
+        if (/^\s*(\d+) bytes /) {
+            next if $dev eq 'logflash';
+            my($tmp) = int($1 / (1024 * 1024));
+            s/$1 bytes /$tmp MB /;
+        }
 
-    ProcessHistory("COMMENTS","","","!Flash: $dev: $_");
+        ProcessHistory("COMMENTS","","","!Flash: $dev: $_");
     }
     ProcessHistory("COMMENTS","","","!\n");
     return(0);
@@ -557,20 +557,20 @@ sub ShowModule {
     print STDERR "    In ShowModule: $_" if ($debug);
 
     while (<INPUT>) {
-    tr/\015//d;
-    return if (/^\s*\^$/);
-    last if (/online diag status/i);
-    last if (/^$prompt/);
-    next if (/^\s*$cmd\s*$/);
-    return(1) if (/\% Invalid command at /);
-    return(1) if (/\% Invalid number at /);
-    return(-1) if (/\% Permission denied/);
-    return(-1) if (/command authorization failed/i);
+        tr/\015//d;
+        return if (/^\s*\^$/);
+        last if (/online diag status/i);
+        last if (/^$prompt/);
+        next if (/^\s*$cmd\s*$/);
+        return(1) if (/\% Invalid command at /);
+        return(1) if (/\% Invalid number at /);
+        return(-1) if (/\% Permission denied/);
+        return(-1) if (/command authorization failed/i);
 
-    s/(.*) \*$/$1/; # Drop a trailing '*'
-    /^\* this terminal session/ && next;
-    s/ +$//;    # Drop trailing ' '
-    ProcessHistory("COMMENTS","","","!Mod: $_");
+        s/(.*) \*$/$1/; # Drop a trailing '*'
+        /^\* this terminal session/ && next;
+        s/ +$//;    # Drop trailing ' '
+        ProcessHistory("COMMENTS","","","!Mod: $_");
     }
     ProcessHistory("COMMENTS","","","!\n");
 
@@ -582,43 +582,43 @@ sub ShowInventory {
     print STDERR "    In ShowInventory: $_" if ($debug);
 
     while (<INPUT>) {
-    tr/\015//d;
-    return if (/^\s*\^$/);
-    last if (/^$prompt/);
-    next if (/^(\s*|\s*$cmd\s*)$/);
-    return(1) if /Line has invalid autocommand /;
-    return(1) if /(Invalid input detected|Type help or )/;
-    return(1) if (/\% Invalid command at /);
-    return(-1) if (/No token match at /);   # 1000v
-    return(-1) if (/\% Permission denied/);
-    return(-1) if (/command authorization failed/i);
-
-    if (/^(NAME: "[^"]*",)\s+(DESCR: "[^"]+")/) {
-        ProcessHistory("COMMENTS","","", sprintf("!%-30s %s\n", $1, $2));
-        next;
-    }
-    # split PID/VID/SN line
-    if (/^PID: (\S*)\s*,\s+VID: (\S*)\s*,\s+SN: (\S*)\s*$/) {
-        my($entries) = "";
-        $entries .= "!PID: $1\n" if ($1);
-        $entries .= "!VID: $2\n" if ($2);
-        $entries .= "!SN: $3\n" if ($3);
-        ProcessHistory("COMMENTS","","", "$entries");
-        next;
-    }
-    # split broken PID/VID/SN lines.
-    if (/^PID: (\S*)\s*,\s+VID: (\S*)\s*$/) {
-        my($entries) = "";
-        $entries .= "!PID: $1\n" if ($1);
-        $entries .= "!VID: $2\n" if ($2);
-        <INPUT>;
         tr/\015//d;
-        /^\s*,\s+SN: (\S*)\s*$/;
-        $entries .= "!SN: $1\n" if ($1);
-        ProcessHistory("COMMENTS","","", "$entries");
-        next;
-    }
-    ProcessHistory("COMMENTS","","","!$_");
+        return if (/^\s*\^$/);
+        last if (/^$prompt/);
+        next if (/^(\s*|\s*$cmd\s*)$/);
+        return(1) if /Line has invalid autocommand /;
+        return(1) if /(Invalid input detected|Type help or )/;
+        return(1) if (/\% Invalid command at /);
+        return(-1) if (/No token match at /);   # 1000v
+        return(-1) if (/\% Permission denied/);
+        return(-1) if (/command authorization failed/i);
+
+        if (/^(NAME: "[^"]*",)\s+(DESCR: "[^"]+")/) {
+            ProcessHistory("COMMENTS","","", sprintf("!%-30s %s\n", $1, $2));
+            next;
+        }
+        # split PID/VID/SN line
+        if (/^PID: (\S*)\s*,\s+VID: (\S*)\s*,\s+SN: (\S*)\s*$/) {
+            my($entries) = "";
+            $entries .= "!PID: $1\n" if ($1);
+            $entries .= "!VID: $2\n" if ($2);
+            $entries .= "!SN: $3\n" if ($3);
+            ProcessHistory("COMMENTS","","", "$entries");
+            next;
+        }
+        # split broken PID/VID/SN lines.
+        if (/^PID: (\S*)\s*,\s+VID: (\S*)\s*$/) {
+            my($entries) = "";
+            $entries .= "!PID: $1\n" if ($1);
+            $entries .= "!VID: $2\n" if ($2);
+            <INPUT>;
+            tr/\015//d;
+            /^\s*,\s+SN: (\S*)\s*$/;
+            $entries .= "!SN: $1\n" if ($1);
+            ProcessHistory("COMMENTS","","", "$entries");
+            next;
+        }
+        ProcessHistory("COMMENTS","","","!$_");
     }
     ProcessHistory("COMMENTS","","","!\n");
 
@@ -662,27 +662,27 @@ sub ShowVTP {
     print STDERR "    In ShowVTP: $_" if ($debug);
 
     while (<INPUT>) {
-    tr/\015//d;
-    last if (/^$prompt/);
-    next if (/^(\s*|\s*$cmd\s*)$/);
-    return(1) if /^\s*\^\s*$/;
-    return(1) if /Line has invalid autocommand /;
-    return(1) if /(Invalid input detected|Type help or )/;
-    return(1) if (/\% Invalid command at /);
-    return(1) if (/No token match at /);    # 1000v
-    return(-1) if (/\% Permission denied/);
-    return(-1) if (/command authorization failed/i);
-    next if (/^Configuration last modified by/);
-    # the pager can not be disabled per-session on the PIX
-    if (/^(<-+ More -+>)/) {
-        my($len) = length($1);
-        s/^$1\s{$len}//;
-    }
+        tr/\015//d;
+        last if (/^$prompt/);
+        next if (/^(\s*|\s*$cmd\s*)$/);
+        return(1) if /^\s*\^\s*$/;
+        return(1) if /Line has invalid autocommand /;
+        return(1) if /(Invalid input detected|Type help or )/;
+        return(1) if (/\% Invalid command at /);
+        return(1) if (/No token match at /);    # 1000v
+        return(-1) if (/\% Permission denied/);
+        return(-1) if (/command authorization failed/i);
+        next if (/^Configuration last modified by/);
+        # the pager can not be disabled per-session on the PIX
+        if (/^(<-+ More -+>)/) {
+            my($len) = length($1);
+            s/^$1\s{$len}//;
+        }
 
-    if (/^VTP Operating Mode\s+:\s+(Transparent|Server)/) {
-        $DO_SHOW_VLAN = 1;
-    }
-    ProcessHistory("COMMENTS","","","!VTP: $_");
+        if (/^VTP Operating Mode\s+:\s+(Transparent|Server)/) {
+            $DO_SHOW_VLAN = 1;
+        }
+        ProcessHistory("COMMENTS","","","!VTP: $_");
     }
     ProcessHistory("COMMENTS","","","!\n");
     return(0);
@@ -695,51 +695,51 @@ sub ShowInterface {
     my $interface;
 
     while (<INPUT>) {
-    tr/\015//d;
-    last if (/^$prompt/);
-    next if (/^(\s*|\s*$cmd\s*)$/);
-    return(1) if /^\s*\^\s*$/;
-    return(1) if /Line has invalid autocommand /;
-    return(1) if /(Invalid input detected|Type help or )/;
-    return(-1) if (/\% Invalid command at /);
-    return(-1) if (/No token match at /);   # 1000v
-    return(1) if /Ambiguous command/i;
-    return(-1) if (/\% Permission denied/);
-    return(-1) if (/command authorization failed/i);
-    # the pager can not be disabled per-session on the PIX
-    if (/^(<-+ More -+>)/) {
-        my($len) = length($1);
-        s/^$1\s{$len}//;
-    }
-    if (/^([\w\/\.\-]+) is ([\w\s]+)(?:\s\(.*\))?/) {
-        ProcessHistory("INT","keysort",$interface->{'name'},"!Interface: " . PrintInterface($interface) . "\n") if (defined $interface);
-        $interface = {
-        name => $1,
-        operState => $2,
-        };
-        # Trim trailing spaces
-        $interface->{'operState'} =~ s/\s+$//;
-        next;
-    }
-        if (/^admin state is ([\w\s]+),/) {
-        $interface->{'adminState'} = $1;
-            chomp($interface->{'adminState'});
+        tr/\015//d;
+        last if (/^$prompt/);
+        next if (/^(\s*|\s*$cmd\s*)$/);
+        return(1) if /^\s*\^\s*$/;
+        return(1) if /Line has invalid autocommand /;
+        return(1) if /(Invalid input detected|Type help or )/;
+        return(-1) if (/\% Invalid command at /);
+        return(-1) if (/No token match at /);   # 1000v
+        return(1) if /Ambiguous command/i;
+        return(-1) if (/\% Permission denied/);
+        return(-1) if (/command authorization failed/i);
+        # the pager can not be disabled per-session on the PIX
+        if (/^(<-+ More -+>)/) {
+            my($len) = length($1);
+            s/^$1\s{$len}//;
+        }
+        if (/^([\w\/\.\-]+) is ([\w\s]+)(?:\s\(.*\))?/) {
+            ProcessHistory("INT","keysort",$interface->{'name'},"!Interface: " . PrintInterface($interface) . "\n") if (defined $interface);
+            $interface = {
+            name => $1,
+            operState => $2,
+            };
+            # Trim trailing spaces
+            $interface->{'operState'} =~ s/\s+$//;
             next;
         }
-    if (/^\s+Description: (.+)/) {
-        $interface->{'description'} = $1;
-        chomp($interface->{'description'});
-        next;
-    }
-    if (/^\s+Hardware is ([\w\s]+), address is ([0-9a-f\.]+)/) {
-        $interface->{'type'} = $1;
-        $interface->{'mac'} = $2;
-        next;
-    }
-    if (/^\s+MTU (\d+) bytes/) {
-        $interface->{'mtu'} = $1;
-        next;
-    }
+            if (/^admin state is ([\w\s]+),/) {
+            $interface->{'adminState'} = $1;
+                chomp($interface->{'adminState'});
+                next;
+            }
+        if (/^\s+Description: (.+)/) {
+            $interface->{'description'} = $1;
+            chomp($interface->{'description'});
+            next;
+        }
+        if (/^\s+Hardware is ([\w\s]+), address is ([0-9a-f\.]+)/) {
+            $interface->{'type'} = $1;
+            $interface->{'mac'} = $2;
+            next;
+        }
+        if (/^\s+MTU (\d+) bytes/) {
+            $interface->{'mtu'} = $1;
+            next;
+        }
     }
     ProcessHistory("INT","keysort",$interface->{'name'},"!Interface: " . PrintInterface($interface) . "\n") if (defined $interface);
     return(0);
@@ -766,30 +766,30 @@ sub ShowIPInterface {
     my $interface;
 
     while (<INPUT>) {
-    tr/\015//d;
-    last if (/^$prompt/);
-    next if (/^(\s*|\s*$cmd\s*)$/);
-    return(1) if /^\s*\^\s*$/;
-    return(1) if /Line has invalid autocommand /;
-    return(1) if /(Invalid input detected|Type help or )/;
-    return(1) if (/\% Invalid command at /);
-    return(1) if (/No token match at /);    # 1000v
-    return(1) if /Ambiguous command/i;
-    return(-1) if (/\% Permission denied/);
-    return(-1) if (/command authorization failed/i);
-    # the pager can not be disabled per-session on the PIX
-    if (/^(<-+ More -+>)/) {
-        my($len) = length($1);
-        s/^$1\s{$len}//;
-    }
-    if (/^([\w\/\.\-]+), Interface status:/) {
-        $interface = $1;
-        next;
-    }
-    if (/^\s+IP address: (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/) {
-        ProcessHistory("IP","ipsort",$1,"!IPv4 Address: $1 on $interface\n") if (defined $interface);
-        next;
-    }
+        tr/\015//d;
+        last if (/^$prompt/);
+        next if (/^(\s*|\s*$cmd\s*)$/);
+        return(1) if /^\s*\^\s*$/;
+        return(1) if /Line has invalid autocommand /;
+        return(1) if /(Invalid input detected|Type help or )/;
+        return(1) if (/\% Invalid command at /);
+        return(1) if (/No token match at /);    # 1000v
+        return(1) if /Ambiguous command/i;
+        return(-1) if (/\% Permission denied/);
+        return(-1) if (/command authorization failed/i);
+        # the pager can not be disabled per-session on the PIX
+        if (/^(<-+ More -+>)/) {
+            my($len) = length($1);
+            s/^$1\s{$len}//;
+        }
+        if (/^([\w\/\.\-]+), Interface status:/) {
+            $interface = $1;
+            next;
+        }
+        if (/^\s+IP address: (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/) {
+            ProcessHistory("IP","ipsort",$1,"!IPv4 Address: $1 on $interface\n") if (defined $interface);
+            next;
+        }
     }
     return(0);
 }
@@ -801,29 +801,29 @@ sub ShowIPv6Interface {
     my $interface;
 
     while (<INPUT>) {
-    tr/\015//d;
-    last if (/^$prompt/);
-    next if (/^(\s*|\s*$cmd\s*)$/);
-    return(1) if /^\s*\^\s*$/;
-    return(1) if /Line has invalid autocommand /;
-    return(1) if /(Invalid input detected|Type help or )/;
-    return(1) if (/\% Invalid command at /);
-    return(1) if (/No token match at /);    # 1000v
-    return(1) if /Ambiguous command/i;
-    return(-1) if (/\% Permission denied/);
-    return(-1) if (/command authorization failed/i);
-    # the pager can not be disabled per-session on the PIX
-    if (/^(<-+ More -+>)/) {
-        my($len) = length($1);
-        s/^$1\s{$len}//;
-    }
-    if (/^([\w\/\.\-]+), Interface status:/) {
-        $interface = $1;
-        next;
-    }
-    if (/^\s+IPv6 address:\s+([0-9a-f:]+)/) {
-            ProcessHistory("IPv6","ipsort",$1,"!IPv6 Address: $1 on $interface\n") if (defined $interface);
-    }
+        tr/\015//d;
+        last if (/^$prompt/);
+        next if (/^(\s*|\s*$cmd\s*)$/);
+        return(1) if /^\s*\^\s*$/;
+        return(1) if /Line has invalid autocommand /;
+        return(1) if /(Invalid input detected|Type help or )/;
+        return(1) if (/\% Invalid command at /);
+        return(1) if (/No token match at /);    # 1000v
+        return(1) if /Ambiguous command/i;
+        return(-1) if (/\% Permission denied/);
+        return(-1) if (/command authorization failed/i);
+        # the pager can not be disabled per-session on the PIX
+        if (/^(<-+ More -+>)/) {
+            my($len) = length($1);
+            s/^$1\s{$len}//;
+        }
+        if (/^([\w\/\.\-]+), Interface status:/) {
+            $interface = $1;
+            next;
+        }
+        if (/^\s+IPv6 address:\s+([0-9a-f:]+)/) {
+                ProcessHistory("IPv6","ipsort",$1,"!IPv6 Address: $1 on $interface\n") if (defined $interface);
+        }
     }
     return(0);
 }
@@ -918,24 +918,24 @@ sub ShowDebug {
     my($lines) = 0;
 
     while (<INPUT>) {
-    tr/\015//d;
-    last if (/^$prompt/);
-    next if (/^(\s*|\s*$cmd\s*)$/);
-    return(1) if /Line has invalid autocommand /;
-    return(1) if /(Invalid input detected|Type help or )/;
-    return(-1) if (/\% Invalid command at /);
-    return(-1) if (/No token match at /);   # 1000v
-    return(-1) if (/command authorization failed/i);
-    return(-1) if (/could not retrieve info/i);
-    # XXX return(-1) if (/\% Permission denied/);
-    # NX 5000 bug? "show debug" generates
-    # "Permission denied" when using command authorization. -Per-Olof Olsson
-    next if (/\% Permission denied/);
+        tr/\015//d;
+        last if (/^$prompt/);
+        next if (/^(\s*|\s*$cmd\s*)$/);
+        return(1) if /Line has invalid autocommand /;
+        return(1) if /(Invalid input detected|Type help or )/;
+        return(-1) if (/\% Invalid command at /);
+        return(-1) if (/No token match at /);   # 1000v
+        return(-1) if (/command authorization failed/i);
+        return(-1) if (/could not retrieve info/i);
+        # XXX return(-1) if (/\% Permission denied/);
+        # NX 5000 bug? "show debug" generates
+        # "Permission denied" when using command authorization. -Per-Olof Olsson
+        next if (/\% Permission denied/);
 
-    /^No matching debug flags set$/ && next;
-    /^No debug flags set$/ && next;
-    ProcessHistory("COMMENTS","","","!DEBUG: $_");
-    $lines++;
+        /^No matching debug flags set$/ && next;
+        /^No debug flags set$/ && next;
+        ProcessHistory("COMMENTS","","","!DEBUG: $_");
+        $lines++;
     }
     if ($lines) {
     ProcessHistory("COMMENTS","","","!\n");
@@ -948,18 +948,18 @@ sub ShowCores {
     print STDERR "    In ShowCores: $_" if ($debug);
 
     while (<INPUT>) {
-    tr/\015//d;
-    last if (/^$prompt/);
-    next if (/^(\s*|\s*$cmd\s*)$/);
-    return(1) if (/^\s*\^\s*$/);
-    return(1) if /Line has invalid autocommand /;
-    return(1) if /(Invalid input detected|Type help or )/;
-    return(1) if (/\% Invalid command at /);
-    return(1) if (/No token match at /);    # 1000v
-    return(-1) if (/\% Permission denied/);
-    return(-1) if (/command authorization failed/i);
+        tr/\015//d;
+        last if (/^$prompt/);
+        next if (/^(\s*|\s*$cmd\s*)$/);
+        return(1) if (/^\s*\^\s*$/);
+        return(1) if /Line has invalid autocommand /;
+        return(1) if /(Invalid input detected|Type help or )/;
+        return(1) if (/\% Invalid command at /);
+        return(1) if (/No token match at /);    # 1000v
+        return(-1) if (/\% Permission denied/);
+        return(-1) if (/command authorization failed/i);
 
-    ProcessHistory("COMMENTS","","","!CORES: $_");
+        ProcessHistory("COMMENTS","","","!CORES: $_");
     }
     ProcessHistory("COMMENTS","","","!\n");
     return(0);
@@ -970,18 +970,18 @@ sub ShowFex {
     print STDERR "    In ShowFex: $_" if ($debug);
 
     while (<INPUT>) {
-    tr/\015//d;
-    last if (/^$prompt/);
-    next if (/^(\s*|\s*$cmd\s*)$/);
-    return(1) if (/^\s*\^\s*$/);
-    return(1) if /Line has invalid autocommand /;
-    return(1) if /(Invalid input detected|Type help or )/;
-    return(1) if (/\% Invalid command at /);
-    return(1) if (/% Invalid number at /);  # 1000v
-    return(-1) if (/\% Permission denied/);
-    return(-1) if (/command authorization failed/i);
+        tr/\015//d;
+        last if (/^$prompt/);
+        next if (/^(\s*|\s*$cmd\s*)$/);
+        return(1) if (/^\s*\^\s*$/);
+        return(1) if /Line has invalid autocommand /;
+        return(1) if /(Invalid input detected|Type help or )/;
+        return(1) if (/\% Invalid command at /);
+        return(1) if (/% Invalid number at /);  # 1000v
+        return(-1) if (/\% Permission denied/);
+        return(-1) if (/command authorization failed/i);
 
-    ProcessHistory("COMMENTS","","","!FEX: $_");
+        ProcessHistory("COMMENTS","","","!FEX: $_");
     }
     ProcessHistory("COMMENTS","","","!\n");
     return(0);
@@ -992,17 +992,17 @@ sub ShowProcLog {
     print STDERR "    In ShowProcLog: $_" if ($debug);
 
     while (<INPUT>) {
-    tr/\015//d;
-    last if (/^$prompt/);
-    next if (/^(\s*|\s*$cmd\s*)$/);
-    return(1) if /Line has invalid autocommand /;
-    return(1) if /(Invalid input detected|Type help or )/;
-    return(1) if (/\% Invalid command at /);
-    return(-1) if (/No token match at /);   # 1000v
-    return(-1) if (/\% Permission denied/);
-    return(-1) if (/command authorization failed/i);
+        tr/\015//d;
+        last if (/^$prompt/);
+        next if (/^(\s*|\s*$cmd\s*)$/);
+        return(1) if /Line has invalid autocommand /;
+        return(1) if /(Invalid input detected|Type help or )/;
+        return(1) if (/\% Invalid command at /);
+        return(-1) if (/No token match at /);   # 1000v
+        return(-1) if (/\% Permission denied/);
+        return(-1) if (/command authorization failed/i);
 
-    ProcessHistory("COMMENTS","","","!PROC_LOGS: $_");
+        ProcessHistory("COMMENTS","","","!PROC_LOGS: $_");
     }
     ProcessHistory("COMMENTS","","","!\n");
     return(0);
@@ -1014,106 +1014,106 @@ sub WriteTerm {
     my($lineauto,$comment,$linecnt) = (0,0,0);
 
     while (<INPUT>) {
-    tr/\015//d;
-    last if (/^$prompt/);
-    return(1) if /Line has invalid autocommand /;
-    return(1) if (/(Invalid input detected|Type help or )/i);
-    return(-1) if (/\% Invalid command at /);
-    return(-1) if (/No token match at /);   # 1000v
-    return(-1) if (/\% Permission denied/);
-    return(-1) if (/command authorization failed/i);
-    return(0) if ($found_end);      # Only do this routine once
+        tr/\015//d;
+        last if (/^$prompt/);
+        return(1) if /Line has invalid autocommand /;
+        return(1) if (/(Invalid input detected|Type help or )/i);
+        return(-1) if (/\% Invalid command at /);
+        return(-1) if (/No token match at /);   # 1000v
+        return(-1) if (/\% Permission denied/);
+        return(-1) if (/command authorization failed/i);
+        return(0) if ($found_end);      # Only do this routine once
 
-    $linecnt++;
-    $lineauto = 0 if (/^[^ ]/);
+        $linecnt++;
+        $lineauto = 0 if (/^[^ ]/);
 
-    # Dog gone Cool matches to process the rest of the config
-    /^!Command: show running-config/ && next; # kill this junk
-    /^!Time: / && next; # kill this junk
+        # Dog gone Cool matches to process the rest of the config
+        /^!Command: show running-config/ && next; # kill this junk
+        /^!Time: / && next; # kill this junk
 
-    # Sort username and delete passwords.
-    if (/^username (\S+) password (\d) (\S+)(\s.*)$/) {
-        if ($filter_pwds >= 2) {
-        ProcessHistory("USER","keysort","$1",
-                   "!username $1 password <removed>$4\n");
-        } elsif ($filter_pwds >= 1 && $2 ne "5") {
-        ProcessHistory("USER","keysort","$1",
-                   "!username $1 password <removed>$4\n");
-        } else {
-        ProcessHistory("USER","keysort","$1","$_");
+        # Sort username and delete passwords.
+        if (/^username (\S+) password (\d) (\S+)(\s.*)$/) {
+            if ($filter_pwds >= 2) {
+            ProcessHistory("USER","keysort","$1",
+                       "!username $1 password <removed>$4\n");
+            } elsif ($filter_pwds >= 1 && $2 ne "5") {
+            ProcessHistory("USER","keysort","$1",
+                       "!username $1 password <removed>$4\n");
+            } else {
+            ProcessHistory("USER","keysort","$1","$_");
+            }
+            next;
         }
-        next;
-    }
-    # Sort any other username info.
-    /^username (\S+) .*$/ &&
-        ProcessHistory("USER","keysort","$1","$_") && next;
-    if (/^\s*(.*?neighbor \S*) password / && $filter_pwds >= 1) {
-        ProcessHistory("","","","! $1 password <removed>\n");
-        next;
-    }
-    # Why was this commented out? It shows up in the raw text...
-    if (/^(snmp-server community) (\S+)/) {
-        if ($filter_commstr) {
-        ProcessHistory("SNMPSERVERCOMM","keysort","$_",
-                   "!$1 <removed>$'") && next;
-        } else {
-        ProcessHistory("SNMPSERVERCOMM","keysort","$_","$_") && next;
+        # Sort any other username info.
+        /^username (\S+) .*$/ &&
+            ProcessHistory("USER","keysort","$1","$_") && next;
+        if (/^\s*(.*?neighbor \S*) password / && $filter_pwds >= 1) {
+            ProcessHistory("","","","! $1 password <removed>\n");
+            next;
         }
-    }
+        # Why was this commented out? It shows up in the raw text...
+        if (/^(snmp-server community) (\S+)/) {
+            if ($filter_commstr) {
+            ProcessHistory("SNMPSERVERCOMM","keysort","$_",
+                       "!$1 <removed>$'") && next;
+            } else {
+            ProcessHistory("SNMPSERVERCOMM","keysort","$_","$_") && next;
+            }
+        }
 
-    # Sort snmp user and delete passwords.
-    if (/^snmp-server user (\S+) (\S+) auth md5 (\S+) priv (\S+) localizedkey$/) {
-        if ($filter_pwds >= 2) {
-        ProcessHistory("SNMP-USER","keysort","$1",
-                   "!snmp-server user $1 $2 auth md5 <removed> priv <removed> localizedkey\n");
-        } else {
-        ProcessHistory("SNMP-USER","keysort","$1","$_");
+        # Sort snmp user and delete passwords.
+        if (/^snmp-server user (\S+) (\S+) auth md5 (\S+) priv (\S+) localizedkey$/) {
+            if ($filter_pwds >= 2) {
+            ProcessHistory("SNMP-USER","keysort","$1",
+                       "!snmp-server user $1 $2 auth md5 <removed> priv <removed> localizedkey\n");
+            } else {
+            ProcessHistory("SNMP-USER","keysort","$1","$_");
+            }
+            next;
         }
-        next;
-    }
-    # Sort any other snmp user info.
-    /^snmp-server user (\S+) .*$/ &&
-        ProcessHistory("SNMP-USER","keysort","$1","$_") && next;
-    # Delete bgp passwords.
-    if (/^(\s*)password (\d) (\S+)(\s.*)?$/) {
-        if ($filter_pwds >= 2) {
-        ProcessHistory("","","","!$1password <removed>$4");
-        } elsif ($filter_pwds >= 1 && $2 ne "5") {
-        ProcessHistory("","","","!$1password <removed>$4");
-        } else {
+        # Sort any other snmp user info.
+        /^snmp-server user (\S+) .*$/ &&
+            ProcessHistory("SNMP-USER","keysort","$1","$_") && next;
+        # Delete bgp passwords.
+        if (/^(\s*)password (\d) (\S+)(\s.*)?$/) {
+            if ($filter_pwds >= 2) {
+            ProcessHistory("","","","!$1password <removed>$4");
+            } elsif ($filter_pwds >= 1 && $2 ne "5") {
+            ProcessHistory("","","","!$1password <removed>$4");
+            } else {
+            ProcessHistory("","","","$_");
+            }
+            next;
+        }
+
+        # prune tacacs/radius server keys:
+        # tacacs-server host 196.23.0.13 key 7 "xxxxxxx" port 50 timeout 10
+        if (/^((tacacs|radius)-server.*?\bkey\b.*?) ".*?"(.*)/
+            && $filter_pwds >= 1) {
+            ProcessHistory("","","","!$1 <removed>$3\n"); next;
+        }
+
+        # order cli alias names
+        /^cli alias name (\S+) .*$/ &&
+            ProcessHistory("CLI-ALIAS","keysort","$1","$_") && next;
+        # order snmp-server enable trap statements
+        /^snmp-server enable traps (.*)$/ &&
+            ProcessHistory("SNMP-TRAPS","keysort","$1","$_") && next;
+
+        # catch anything that wasnt matched above.
         ProcessHistory("","","","$_");
+        # end of config.  the ": " game is for the PIX
+        if (/^(: +)?end$/) {
+            $found_end = 1;
+            return(0);
         }
-        next;
-    }
-
-    # prune tacacs/radius server keys:
-    # tacacs-server host 196.23.0.13 key 7 "xxxxxxx" port 50 timeout 10
-    if (/^((tacacs|radius)-server.*?\bkey\b.*?) ".*?"(.*)/
-        && $filter_pwds >= 1) {
-        ProcessHistory("","","","!$1 <removed>$3\n"); next;
-    }
-
-    # order cli alias names
-    /^cli alias name (\S+) .*$/ &&
-        ProcessHistory("CLI-ALIAS","keysort","$1","$_") && next;
-    # order snmp-server enable trap statements
-    /^snmp-server enable traps (.*)$/ &&
-        ProcessHistory("SNMP-TRAPS","keysort","$1","$_") && next;
-
-    # catch anything that wasnt matched above.
-    ProcessHistory("","","","$_");
-    # end of config.  the ": " game is for the PIX
-    if (/^(: +)?end$/) {
-        $found_end = 1;
-        return(0);
-    }
     }
     # The ContentEngine lacks a definitive "end of config" marker.  If we
     # know that it is NXOS and we have seen at least 5 lines
     # of write term output, we can be reasonably sure that we got the config.
     if (($type eq "NXOS") && $linecnt > 5) {
-    $found_end = 1;
-    return(0);
+        $found_end = 1;
+        return(0);
     }
 
     return(0);
@@ -1124,10 +1124,10 @@ sub RunCommand {
     print STDERR "    In RunCommand: $_" if ($debug);
 
     while (<INPUT>) {
-    tr/\015//d;
-    last if (/^$prompt/);
-    return(1) if /Line has invalid autocommand /;
-    return(1) if (/(Invalid input detected|Type help or )/i);
+        tr/\015//d;
+        last if (/^$prompt/);
+        return(1) if /Line has invalid autocommand /;
+        return(1) if (/(Invalid input detected|Type help or )/i);
     }
     return(0);
 }
