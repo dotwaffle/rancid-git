@@ -81,6 +81,7 @@ bin/trancid
 bin/ubnt-es-rancid
 bin/ucsrancid
 bin/urancid
+bin/vdxrancid
 bin/xrancid
 bin/xrrancid
 bin/zrancid

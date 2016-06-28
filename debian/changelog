@@ -1,3 +1,11 @@
+rancid-git (2.3.9-5) unstable; urgency=low
+
+  [ Darryl Ross ]
+  * Unofficial package.
+  * Added support for Brocade VDX (brocadevdx)
+
+ -- Darryl Ross <darryl@afoyi.com>  Tue, 28 Jun 2016 23:00:00 +1000
+
 rancid-git (2.3.9-4) unstable; urgency=low
 
   [ Vincent Bernat ]
