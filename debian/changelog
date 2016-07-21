@@ -1,3 +1,9 @@
+rancid-git (2.3.9-5) unstable; urgency=low
+    [ Egor Miadzvedzeu ]
+    * Unofficial package
+    * Added Huawei config
+
+ -- Egor Miadzvedzeu <egor.miadzvedzeu@tatacommunications.com>  Thu, 21 Jul 2016 15:38:26 -0400
 rancid-git (2.3.9-4) unstable; urgency=low
 
   [ Vincent Bernat ]
