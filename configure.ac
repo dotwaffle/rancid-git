@@ -9,7 +9,7 @@ VERSION=`sed -n 's/.*version.*"\(.*\)".*/\1/p' $srcdir/include/version.h.in|tr -
 PACKAGE=`sed -n 's/.*package.*"\(.*\)".*/\1/p' $srcdir/include/version.h.in|tr -d ' '`
 AC_SUBST(VERSION)
 AC_SUBST(PACKAGE)
-COPYYEARS="1997-2011"
+COPYYEARS="1997-2016"
 AC_SUBST(COPYYEARS)
 
 AM_INIT_AUTOMAKE($PACKAGE, $VERSION, rancid@shrubbery.net)
