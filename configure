@@ -6098,6 +6098,10 @@ ac_config_files="$ac_config_files bin/zrancid"
 
 ac_config_files="$ac_config_files bin/zyrancid"
 
+ac_config_files="$ac_config_files bin/h3clogin"
+
+ac_config_files="$ac_config_files bin/h3crancid"
+
 ac_config_files="$ac_config_files share/rtrfilter"
 
 
@@ -6909,6 +6913,8 @@ do
     "bin/xrrancid") CONFIG_FILES="$CONFIG_FILES bin/xrrancid" ;;
     "bin/zrancid") CONFIG_FILES="$CONFIG_FILES bin/zrancid" ;;
     "bin/zyrancid") CONFIG_FILES="$CONFIG_FILES bin/zyrancid" ;;
+    "bin/h3clogin") CONFIG_FILES="$CONFIG_FILES bin/h3clogin" ;;
+    "bin/h3crancid") CONFIG_FILES="$CONFIG_FILES bin/h3crancid" ;;
     "share/rtrfilter") CONFIG_FILES="$CONFIG_FILES share/rtrfilter" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
@@ -7662,6 +7668,8 @@ $as_echo X"$file" |
     "bin/xrrancid":F) chmod a+x $ac_file ;;
     "bin/zrancid":F) chmod a+x $ac_file ;;
     "bin/zyrancid":F) chmod a+x $ac_file ;;
+    "bin/h3clogin":F) chmod a+x $ac_file ;;
+    "bin/h3crancid":F) chmod a+x $ac_file ;;
     "share/rtrfilter":F) chmod a+x $ac_file ;;
 
   esac

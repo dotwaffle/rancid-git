@@ -116,6 +116,7 @@ DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(srcdir)/vlogin.in $(srcdir)/vrancid.in \
 	$(srcdir)/xrancid.in $(srcdir)/xrrancid.in \
 	$(srcdir)/zrancid.in $(srcdir)/zyrancid.in \
+	$(srcdir)/h3clogin.in $(srcdir)/h3crancid.in \
 	$(top_srcdir)/depcomp
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/acinclude.m4 \
@@ -133,7 +134,8 @@ CONFIG_CLEAN_FILES = agmrancid alogin arancid arrancid avologin \
 	nxrancid pflogin pfrancid prancid rancid_par rivlogin \
 	rivrancid rrancid shellrancid shelllogin srancid tlogin \
 	tntlogin tntrancid telcorancid trancid ubnt-es-rancid \
-	ucsrancid urancid vlogin vrancid xrancid xrrancid zrancid zyrancid
+	ucsrancid urancid vlogin vrancid xrancid xrrancid zrancid zyrancid \
+	h3clogin h3crancid
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
@@ -358,7 +360,7 @@ bin_SCRIPTS = agmrancid alogin arancid arrancid avologin avorancid \
 	telcorancid tlogin tntlogin tntrancid trancid ubnt-es-rancid \
 	urancid ucsrancid vlogin vrancid xrancid xrrancid zrancid zyrancid \
 	dlogin drancid shelllogin shellrancid lg.cgi lgform.cgi rancid-cvs \
-	rancid-fe rancid-run control_rancid
+	rancid-fe rancid-run control_rancid h3clogin h3crancid
 EXTRA_DIST = lg.cgi.in lgform.cgi.in rancid-cvs.in rancid-fe.in rancid-run.in \
 	control_rancid.in
 
@@ -563,6 +565,10 @@ xrrancid: $(top_builddir)/config.status $(srcdir)/xrrancid.in
 zrancid: $(top_builddir)/config.status $(srcdir)/zrancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 zyrancid: $(top_builddir)/config.status $(srcdir)/zyrancid.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+h3clogin: $(top_builddir)/config.status $(srcdir)/h3clogin.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+h3crancid: $(top_builddir)/config.status $(srcdir)/h3crancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 install-binPROGRAMS: $(bin_PROGRAMS)
 	@$(NORMAL_INSTALL)
