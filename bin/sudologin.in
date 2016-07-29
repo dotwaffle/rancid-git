@@ -54,7 +54,8 @@
 # the process of enabling and the prompt will be the "#" prompt.
 # The default username password is the same as the vty password.
 #
-
+#changed script to run with sudo Alexandru Musat <manyax@manyax.net>
+#
 # Usage line
 set usage "Usage: $argv0 \[-dSV\] \[-autoenable\] \[-noenable\] \[-c command\] \
 \[-Evar=x\] \[-e enable-password\] \[-f cloginrc-file\] \[-p user-password\] \
@@ -615,15 +616,14 @@ proc do_enable { enauser enapasswd } {
     # Set bash answer in english
     send "export LANG=C\r"
     expect {
-     "#" { set prompt "#" }
-     -re "error" { send_user "\nError: check your appliance\n"
-     		   return 1
-		 }
+     "$" { set prompt "$" }
+   -re "error" { send_user "\nError: check your appliance\n"
+    	return 1
+        }
     }
-    send "su -\r"
-    expect {
 
-	-re "$u_prompt"	{ send -- "$enauser\r"; exp_continue}
+    send "sudo -i\r"
+    expect {
 	-re "$e_prompt"	{ send -- "$enapasswd\r"; exp_continue}
 	"#"		{ set prompt "#" }
 	-re "(denied|Sorry|Incorrect)"	{
@@ -869,7 +869,7 @@ foreach router [lrange $argv $i end] {
 	} else {
 	    set autoenable 0
 	    set enable $avenable
-	    set prompt ":~> "
+	    set prompt "(:~$ | \$)"
 	}
     }
 
@@ -938,7 +938,7 @@ foreach router [lrange $argv $i end] {
     }
     set e_prompt [find enableprompt $router]
     if { "$e_prompt" == "" } {
-	set e_prompt "\[Pp]assword:"
+	set e_prompt "\password for $ruser:"
     } else {
 	set e_prompt [join [lindex $e_prompt 0] ""]
     }
