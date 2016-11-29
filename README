@@ -141,7 +141,9 @@ cvs.  The package is not included, but can be found here:
 
 Quick Installation Guide (an example):
 
-1) ./configure [--prefix=<basedir>]
+1) autoreconf -fmi
+
+2) ./configure [--prefix=<basedir>]
    By default, rancid will be installed under /usr/local/rancid (the default
    "prefix").  This can be overridden with the --prefix option.  E.g.:
 
@@ -163,18 +165,18 @@ Quick Installation Guide (an example):
 
    See ./configure --help for other configure options.
 
-2) make install
+3) make install
 
-3) Modify <sysconfdir>/rancid.conf (e.g.: <basedir>/etc/rancid.conf).  The
+4) Modify <sysconfdir>/rancid.conf (e.g.: <basedir>/etc/rancid.conf).  The
    variable LIST_OF_GROUPS is a space delimited list of router "groups".
    E.g.:
 	LIST_OF_GROUPS="backbone aggregation switches"
 
-4) Put .cloginrc in the home directory of the user who will run rancid.
+5) Put .cloginrc in the home directory of the user who will run rancid.
    .cloginrc must be not be readable/writable/executable by "others",
    i.e.: .cloginrc must be mode 0600 or 0640.
 
-5) Modify .cloginrc.
+6) Modify .cloginrc.
 
    Test to make sure that you can log into every router.
 
@@ -185,7 +187,7 @@ Quick Installation Guide (an example):
    for examples and good starting point.  Also take a look at the cloginrc
    manual page, 'man -M <basedir>/man cloginrc'.
 
-6) Modify /etc/aliases
+7) Modify /etc/aliases
    Rancid sends the diffs and other administrative emails to rancid-<GROUP>
    and problems to rancid-admin-<GROUP>, where <GROUP> is the "GROUP" of
    routers.  This way you can separate your backbone routers from your
@@ -207,14 +209,14 @@ Quick Installation Guide (an example):
    option is not used, the value of --enable-mail-plus is assumed.  That is,
    the addresses will be "rancid+", if it is specified.
 
-7) Run rancid-cvs.
+8) Run rancid-cvs.
    This creates all of the necessary directories and config files for
    each of the groups in LIST_OF_GROUPS and imports them into version control
    (CVS, Subversion or Git).  This will also be run each time a new group is
    added.  Do not create the directories or version control repository manually,
    allow rancid-cvs to do it.  Also see 'man -M <basedir>/man rancid-cvs'.
 
-8) For each "group", modify the router.db file in the group directory.
+9) For each "group", modify the router.db file in the group directory.
    The file is of the form "router:mfg:state" where "router" is
    the name (we use FQDN) of the router, mfg is the manufacturer
    from the set of (cat5|cisco|juniper) (see router.db.5 for a complete
@@ -233,11 +235,11 @@ Quick Installation Guide (an example):
 
     NOTE: If using git-remote, see README.git before running bin/rancid-run
 
-9) For first-time users or new installations, run bin/rancid-run (with no
+10) For first-time users or new installations, run bin/rancid-run (with no
    arguments) and check the resulting log file(s) (in logs/*) for errors.
    Repeat until there are no errors.
 
-10) Put rancid-run in cron to be called however often you want it to
+11) Put rancid-run in cron to be called however often you want it to
    run for each group (rancid-run [<GROUP>]).  If you run it less
    often than once/hour, check the setting of OLDTIME in etc/rancid.conf.
    E.g.:
@@ -246,7 +248,7 @@ Quick Installation Guide (an example):
 	# clean out config differ logs
 	50 23 * * * /usr/bin/find <localstatedir>/logs -type f -mtime +2 -exec rm {} \;
 
-11) Note: If you are using any of these programs (other than
+12) Note: If you are using any of these programs (other than
     rancid-run) out of cron, make sure that you set your $PATH
     correctly so that they work.  E.g.: if you are using clogin,
     it can call id, telnet, ssh, and/or rsh.
@@ -256,7 +258,7 @@ Quick Installation Guide (an example):
 
 	50 23 * * * . <sysconfdir>/rancid.conf; clogin -c 'sh vers' router
 
-12) Send any bugs, suggestions or updates to rancid@shrubbery.net.
+13) Send any bugs, suggestions or updates to rancid@shrubbery.net.
     See the web page at http://www.shrubbery.net/rancid.  We have
     created the standard mailing lists for those interested;
     rancid-announce@shrubbery.net and rancid-discuss@shrubbery.net.
