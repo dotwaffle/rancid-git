@@ -173,6 +173,7 @@ do
 		echo "$GROUP/routers.deleted" >> .gitignore
 		echo "$GROUP/routers.single" >> .gitignore
 		echo "$GROUP/routers.up.missed" >> .gitignore
+		echo "$GROUP/routers.missed" >> .gitignore
 		echo "$GROUP/routers.failed" >> .gitignore
 		(
 		    flock -x 200
