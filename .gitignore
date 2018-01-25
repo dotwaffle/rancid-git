@@ -28,6 +28,8 @@ bin/cat5rancid
 bin/clogin
 bin/control_rancid
 bin/cssrancid
+bin/csblogin
+bin/csbrancid
 bin/dlogin
 bin/drancid
 bin/elogin

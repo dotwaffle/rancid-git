@@ -1,8 +1,8 @@
-#!/usr/bin/perl
+#! @PERLV_PATH@
 ##
 ## $Id: csbrancid,v 1.4 2009-06-06 14:04:25 bjorn Exp $
 ##
-## rancid 2.3.2a8
+## @PACKAGE@ @VERSION@
 ## Copyright (c) 1997-2007 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
@@ -44,12 +44,12 @@
 #
 #  RANCID - Really Awesome New Cisco confIg Differ
 #
-# usage: rancid [-dV] [-l] [-f filename | hostname]
+# usage: csbrancid [-dV] [-l] [-f filename | hostname]
 #
 use Getopt::Std;
 getopts('dflV');
 if ($opt_V) {
-    print "rancid 2.3.2a8\n";
+    print "@PACKAGE@ @VERSION@\n";
     exit(0);
 }
 $log = $opt_l;
