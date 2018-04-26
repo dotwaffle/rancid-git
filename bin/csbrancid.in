@@ -186,6 +186,9 @@ sub ShowSystem {
 
 sub ShowSystemSections {
     $_ = $_[0];
+
+    print STDERR "    In ShowSystemSections: $_" if ($debug);
+
     my $skip_section = 0;
     while () {
 	# delete rare characters
@@ -218,6 +221,11 @@ sub ShowSystemSections {
 
 sub ShowSystemLines {
     $_ = $_[0];
+
+    tr/\015//d;
+
+    print STDERR "    In ShowSystemLines: $_" if ($debug);
+
     my $skip = 0;
     while () {
 	# delete rare characters
@@ -345,8 +353,8 @@ sub DoNothing {print STDOUT;}
 
 # Main
 @commandtable = (
-    {'show system'			=> 'ShowSystem'},
-    {'show version'			=> 'ShowVersion'},
+    {'show system'		=> 'ShowSystem'},
+    {'show version'		=> 'ShowVersion'},
     {'show startup-config'	=> 'ShowStartupConfig'}
 );
 # Use an array to preserve the order of the commands and a hash for mapping
@@ -407,9 +415,9 @@ if ($ENV{"FILTER_PWDS"} =~ /no/i) {
 }
 
 ProcessHistory("","","","!RANCID-CONTENT-TYPE: cisco-sb\n!\n");
-ProcessHistory("COMMENTS","keysort","B0","!\n");	# show version
-ProcessHistory("COMMENTS","keysort","C0","!\n");	# show package
-ProcessHistory("COMMENTS","keysort","D0","!\n");	# show hardware
+ProcessHistory("COMMENTS","keysort","B0","!\n");	# show system
+ProcessHistory("COMMENTS","keysort","C0","!\n");	# show version
+ProcessHistory("COMMENTS","keysort","D0","!\n");	# show startup-config
 ProcessHistory("COMMENTS","keysort","Z0","!\n");
 $clean_run=1;
 TOP: while(<INPUT>) {
