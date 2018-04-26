@@ -441,6 +441,10 @@ proc login { router user passwd enapasswd cmethod cyphertype identfile} {
 				  exp_continue
 				}
 
+	    -re "Your password has exceeded the maximum lifetime\..*\nDo you want to change it now \\\(Y\/N\\\).*\?" {
+	        send "N\r"
+	        send_user "\nPassword on host $router has exceeded the maximum lifetime and should be changed.\n"
+	        exp_continue }
 	    -re "$prompt"		{ break; }
 	    denied	{ send_user "\nError: Check your password for $router\n"
 	                  catch {close}; catch {wait}; return 1
