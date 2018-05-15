@@ -53,6 +53,7 @@ bin/
 	brancid.in	Version of rancid.in for baynet/nortel routers.
 	cat5rancid.in	Version of rancid.in for Cisco Catalyst switches.
 	cssrancid.in	Version of rancid.in for Cisco CSS switches.
+	csbrancid.in	Version of rancid.in for Cisco Small Business switches.
 	erancid.in	Version of rancid.in for ADC EZ-T3 muxes.
 	f10rancid.in	Version of rancid.in for Force10 routers.
 	f5rancid.in	Version of rancid.in for F5 BigIPs.
@@ -82,6 +83,7 @@ bin/
 	alogin.in	Version of clogin.in for Alteon switches.
 	blogin.in	Version of clogin.in for baynet/Nortel routers.
 	bntlogin.in 	Version of clogin.in for Blade Network Technologies (BNT)/HP BladeSystem switches.
+	csblogin.in	Version of clogin.in for Cisco Small Business switches.
 	elogin.in	Version of clogin.in for ADC EZ-T3 muxes.
 	flogin.in	Version of clogin.in for Foundry switches.  If foundry
 			cleaned-up their bloody UI, clogin should do the job.

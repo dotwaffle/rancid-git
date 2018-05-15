@@ -1,14 +1,55 @@
-#! /usr/bin/expect --
+#! @EXPECT_PATH@ --
 ##
+## $Id: csblogin,v 1.3 2010-01-28 13:12:00 bjorn Exp $
 ##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) 1997-2009 by Terrapin Communications, Inc.
-## Copyright (c) 2015 by Marco Agostani
+## Copyright (c) 1997-2007 by Terrapin Communications, Inc.
 ## All rights reserved.
 ##
+## This code is derived from software contributed to and maintained by
+## Terrapin Communications, Inc. by Henry Kilmer, John Heasley, Andrew Partan,
+## Pete Whiting, Austin Schutz, and Andrew Fort.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted provided that the following conditions
+## are met:
+## 1. Redistributions of source code must retain the above copyright
+##    notice, this list of conditions and the following disclaimer.
+## 2. Redistributions in binary form must reproduce the above copyright
+##    notice, this list of conditions and the following disclaimer in the
+##    documentation and/or other materials provided with the distribution.
+## 3. All advertising materials mentioning features or use of this software
+##    must display the following acknowledgement:
+##        This product includes software developed by Terrapin Communications,
+##        Inc. and its contributors for RANCID.
+## 4. Neither the name of Terrapin Communications, Inc. nor the names of its
+##    contributors may be used to endorse or promote products derived from
+##    this software without specific prior written permission.
+## 5. It is requested that non-binding fixes and modifications be contributed
+##    back to Terrapin Communications, Inc.
+##
+## THIS SOFTWARE IS PROVIDED BY Terrapin Communications, INC. AND CONTRIBUTORS
+## ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+## TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+## PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COMPANY OR CONTRIBUTORS
+## BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+## CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+## SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+## INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+## POSSIBILITY OF SUCH DAMAGE.
+# 
+#  The expect login scripts were based on Erik Sherk's gwtn, by permission.
+#
+# csblogin - Cisco/Linksys "Small Business" switch login
+#
+# Most options are intuitive for logging into a Cisco router.
+# The default username password is the same as the vty password.
+#
 
 # Usage line
-set usage "Usage: $argv0 \[-dSV\] \[-c command\] \[-Evar=x\] \
+set usage "Usage: $argv0 \[-dV\] \[-c command\] \[-Evar=x\] \
 \[-f cloginrc-file\] \[-p user-password\] \[-r passphrase\] \[-s script-file\] \
 \[-u username\] \[-t timeout\] \[-x command-file\] \[-y ssh_cypher_type\] \
 router \[router...\]\n"
@@ -26,10 +67,6 @@ set avenable 1
 # The default is to look in the password file to find the passwords.  This
 # tracks if we receive them on the command line.
 set do_passwd 1
-# Save config, if prompted
-set do_saveconfig 1
-# Sometimes routers take awhile to answer (the default is 10 sec)
-set timeoutdflt 120
 
 # Find the user in the ENV, or use the unix userid.
 if {[ info exists env(CISCO_USER) ]} {
@@ -52,6 +89,9 @@ if {[ info exists env(CLOGINRC) ]} {
     set password_file $env(CLOGINRC)
 }
 
+# Sometimes routers take awhile to answer (the default is 10 sec)
+set timeout 120
+
 # Process the command line
 for {set i 0} {$i < $argc} {incr i} {
     set arg [lindex $argv $i]
@@ -69,7 +109,8 @@ for {set i 0} {$i < $argc} {incr i} {
 	} -d* {
 	    exp_internal 1
 	# Environment variable to pass to -s scripts
-	} -E* {
+	} -E*
+	{
 	    if {[ regexp .\[E\](.+)=(.+) $arg ignore varname varvalue]} {
 		set E$varname $varvalue
 	    } else {
@@ -77,33 +118,34 @@ for {set i 0} {$i < $argc} {incr i} {
 		exit 1
 	    }
 	# alternate cloginrc file
-	} -f* {
+	} -f* -
+	-F* {
 	    if {! [ regexp .\[fF\](.+) $arg ignore password_file]} {
 		incr i
 		set password_file [ lindex $argv $i ]
 	    }
 	# user Password
-	} -p* {
+	} -p* -
+	-P* {
 	    if {! [  regexp .\[pP\](.+) $arg ignore userpasswd]} {
 		incr i
 		set userpasswd [ lindex $argv $i ]
 	    }
 	    set do_passwd 0
-	# ssh passphrase
-	} -r* {
-	    if {! [  regexp .\[rR\](.+) $arg ignore passphrase]} {
-		incr i
-		set avpassphrase [ lindex $argv $i ]
-	    }
-	# VTY Password
-	} -v* {
-	    # ignore -v
 	# Version string
 	} -V* {
 	    send_user "@PACKAGE@ @VERSION@\n"
 	    exit 0
+	# passphrase
+	} -r* -
+	-R* {
+	    if {! [  regexp .\[rR\](.+) $arg ignore passphrase]} {
+		incr i
+		set avpassphrase [ lindex $argv $i ]
+	    }
 	# Expect script to run.
-	} -s* {
+	} -s* -
+	-S* {
 	    if {! [  regexp .\[sS\](.+) $arg ignore sfile]} {
 		incr i
 		set sfile [ lindex $argv $i ]
@@ -113,23 +155,23 @@ for {set i 0} {$i < $argc} {incr i} {
 		exit 1
 	    }
 	    set do_script 1
-	# save config on exit
-	} -S* {
-	    set do_saveconfig 1
 	# Timeout
-	} -t* {
+	} -t* -
+	-T* {
 	    if {! [ regexp .\[tT\](.+) $arg ignore timeout]} {
 		incr i
-		set timeoutdflt [ lindex $argv $i ]
+		set timeout [ lindex $argv $i ]
 	    }
 	# Username
-	} -u* {
+	} -u* -
+	-U* {
 	    if {! [  regexp .\[uU\](.+) $arg ignore user]} {
 		incr i
 		set username [ lindex $argv $i ]
 	    }
 	# command file
-	} -x* {
+	} -x* -
+	-X* {
 	    if {! [  regexp .\[xX\](.+) $arg ignore cmd_file]} {
 		incr i
 		set cmd_file [ lindex $argv $i ]
@@ -143,7 +185,8 @@ for {set i 0} {$i < $argc} {incr i} {
             set command [join [split $cmd_text \n] \;]
             set do_command 1
 	# 'ssh -c' cypher type
-	} -y* {
+	} -y* -
+	-Y* {
 	    if {! [  regexp .\[yY\](.+) $arg ignore cypher]} {
 		incr i
 		set cypher [ lindex $argv $i ]
@@ -165,7 +208,7 @@ if { $i == $argc } {
 # Only be quiet if we are running a script (it can log its output
 # on its own)
 if { $do_script } {
-    log_user 1
+    log_user 0
 } else {
     log_user 1
 }
@@ -241,10 +284,11 @@ proc source_password_file { password_file } {
 
 # Log into the router.
 # returns: 0 on success, 1 on failure
-proc login { router user passwd cmethod cyphertype identfile} {
+proc login { router user passwd enapasswd cmethod cyphertype identfile} {
     global spawn_id in_proc do_command do_script passphrase prompt
     global sshcmd
     set in_proc 1
+    set enabled 0
 
     # try each of the connection methods in $cmethod until one is successful
     set progs [llength $cmethod]
@@ -261,22 +305,35 @@ proc login { router user passwd cmethod cyphertype identfile} {
 		send_user "\nError: telnet failed: $reason\n"
 		return 1
 	    }
-	} elseif ![string compare $prog "ssh"] {
+	} elseif [string match "ssh*" $prog] {
 	    # ssh to the router & try to login with or without an identfile.
 	    # We use two calls to spawn since spawn does not seem to parse
 	    # spaces correctly.
-	    regexp {ssh(:([^[:space:]]+))*} $prog methcmd suffix port
-	    set cmd [join [lindex $sshcmd 0] " "]
-	    if {"$port" != ""} {
-		set cmd "$cmd -p $port"
-	    }
-	    if {"$identfile" != ""} {
-		set cmd "$cmd -i $identfile"
-	    }
-	        set retval [ catch {eval spawn [split "$cmd -c $cyphertype -x -l $user $router" { }]} reason ]
-	    if { $retval } {
-		send_user "\nError: $sshcmd failed: $reason\n"
-		return 1
+	    regexp {ssh(:([^[:space:]]+))*} $prog command suffix port
+	    if {"$port" == ""} {
+		    if {$identfile != ""} {
+			if [ catch {spawn $sshcmd -c $cyphertype -x -l $user -i $identfile $router} reason ] {
+			    send_user "\nError: failed to $sshcmd: $reason\n"
+			    return 1
+			}
+		    } else {
+			if [ catch {spawn $sshcmd -c $cyphertype -x -l $user $router} reason ] {
+			    send_user "\nError: failed to $sshcmd: $reason\n"
+			    return 1
+			}
+		    }
+	    } else {
+		    if {$identfile != ""} {
+			if [ catch {spawn $sshcmd -p $port -c $cyphertype -x -l $user -i $identfile $router} reason ] {
+			    send_user "\nError: failed to $sshcmd: $reason\n"
+			    return 1
+			}
+		    } else {
+			if [ catch {spawn $sshcmd -p $port -c $cyphertype -x -l $user $router} reason ] {
+			    send_user "\nError: failed to $sshcmd: $reason\n"
+			    return 1
+			}
+		    }
 	    }
 	} elseif ![string compare $prog "rsh"] {
 	    send_error "\nError: unsupported method: rsh\n"
@@ -335,35 +392,64 @@ proc login { router user passwd cmethod cyphertype identfile} {
 		catch {close}; catch {wait};
 		send_user "\nError: Unknown host\n"; wait; return 1
 	    }
-	    "Login incorrect" {
+	    "Bad user name or password" {
 			  send_user "\nError: Check your password for $router\n"
 			  catch {close}; catch {wait}; return 1
 			}
 	    -re "Enter passphrase.*: " {
 		# sleep briefly to allow time for stty -echo
 		sleep 1
-		send -- "$passphrase\r"
+		send "$passphrase\r"
 		exp_continue }
 	    -re "(Host key not found |The authenticity of host .* be established).*\(yes\/no\)\?" {
 		send "yes\r"
 		send_user "\nHost $router added to the list of known hosts.\n"
 		exp_continue }
-	    -re "HOST IDENTIFICATION HAS CHANGED.* \(yes\/no\)\?" {
+	    -re "HOST IDENTIFICATION HAS CHANGED.* \(yes\/no\)\?"	{
 		send "no\r"
 		send_user "\nError: The host key for $router has changed.  Update the SSH known_hosts file accordingly.\n"
 		return 1 }
-	    -re "Offending key for .* \(yes\/no\)\?" {
+	    -re "Offending key for .* \(yes\/no\)\?"   {
 		send "no\r"
 		send_user "\nError: host key mismatch for $router.  Update the SSH known_hosts file accordingly.\n"
 		return 1 }
-	    -re "(Username|\[\r\n]login):"	{
-						  send -- "$user\r"
-						  exp_continue
-	    					}
-	    "\[Pp]assword:"			{
-						  sleep 1; send -- "$passwd\r"
-						  exp_continue
-						}
+		-re "Your password has exceeded the maximum lifetime\..*\nDo you want to change it now \\\(Y\/N\\\).*\?" {
+			  send "N"
+			  send_user "\nPassword on host $router has exceeded the maximum lifetime and should be changed.\n"
+			  exp_continue
+			}
+	    "Login Screen"	{
+				  send "$user\t$passwd\r"
+				  exp_continue
+	    			}
+	    "Switch Main Menu"	{
+				  # send Ctrl+Z
+				  sleep 1; send "send \032"
+				  exp_continue
+				}
+	    ">"			{
+				  send "enable\r"
+				  set enabled 1
+				  exp_continue
+				}
+	    -re "User Name:$"	{
+	    	       		  send "$user\r"
+				  exp_continue
+				}
+	    -re "Password: ?$"	{
+				  sleep 1
+				  if {$enabled == 1} {
+					send -- "$enapasswd\r"
+				  } else {
+					send -- "$passwd\r"
+				  }
+				  exp_continue
+				}
+
+	    -re "Your password has exceeded the maximum lifetime\..*\nDo you want to change it now \\\(Y\/N\\\).*\?" {
+	        send "N\r"
+	        send_user "\nPassword on host $router has exceeded the maximum lifetime and should be changed.\n"
+	        exp_continue }
 	    -re "$prompt"		{ break; }
 	    denied	{ send_user "\nError: Check your password for $router\n"
 	                  catch {close}; catch {wait}; return 1
@@ -371,16 +457,6 @@ proc login { router user passwd cmethod cyphertype identfile} {
 	}
     }
 
-    # we are logged in, now figure out the full prompt
-    send "\r"
-    expect {
-	-re "(\r\n|\n)"		{ exp_continue; }
-	-re "^\[^ ]+$prompt"	{ 
-				  set prompt $expect_out(0,string);
-				  regsub ">" $prompt "\[#>]" prompt;
-				}
-    }
-    
     set in_proc 0
     return 0
 }
@@ -390,20 +466,31 @@ proc run_commands { prompt command } {
     global in_proc
     set in_proc 1
 
-    send "set terminal length 0\r"
+    send "terminal datadump\r"
+    expect -re $prompt	{}
 
-    set commands [split $command \;]
-    set num_commands [llength $commands]
-    for {set i 0} {$i < $num_commands} { incr i} {
-	send "[lindex $commands $i]\r"
-	
+    # Is this a multi-command?
+    if [ string match "*\;*" "$command" ] {
+	set commands [split $command \;]
+	set num_commands [llength $commands]
+
+	for {set i 0} {$i < $num_commands} { incr i} {
+	    send "[lindex $commands $i]\r"
+	    expect {
+		-re "^\[^\n\r *]*$prompt *$"	{}
+		-re "^\[^\n\r]*$prompt."	{ exp_continue }
+		-re "\[\r\n]+"			{ exp_continue }
+            }
+	}
+    } else {
+	send "$command\r"
 	expect {
-	    -re "^\[^\n\r *]*$prompt"	{}
-	    -re "^\[^\n\r]*$prompt $"	{ exp_continue }
-	    -re "(\r\n|\n)"		{ exp_continue }
+		-re "^\[^\n\r *]*$prompt *$"	{}
+		-re "^\[^\n\r]*$prompt."	{ exp_continue }
+		-re "\[\r\n]+"			{ exp_continue }
 	}
     }
-    send "exit\r"
+    send "exit\r\n"
     expect {
 	"\n"					{ exp_continue }
 	timeout					{ catch {close}; catch {wait};
@@ -423,13 +510,8 @@ set exitval 0
 foreach router [lrange $argv $i end] {
     set router [string tolower $router]
     send_user "$router\n"
-    # device timeout
-    set timeout [find timeout $router]
-    if { [llength $timeout] == 0 } {
-	set timeout $timeoutdflt
-    }
 
-    set prompt "\[:>]"
+    set prompt "#"
 
     # Figure out username
     if {[info exists username]} {
@@ -453,6 +535,17 @@ foreach router [lrange $argv $i end] {
 	  continue
         }
       }
+    }
+
+    # Look for enable password
+    if { ! [info exists enapasswd] } {
+	set pswd [find password $router]
+	if { [llength $pswd] > 1 } {
+	    set enapasswd [join [lindex $pswd 1] ""]
+	}
+    }
+    if { ! [string length "$enapasswd"]} {
+	set enapasswd $passwd
     }
 
     # Figure out identity file to use
@@ -486,7 +579,7 @@ foreach router [lrange $argv $i end] {
     if { "$sshcmd" == "" } { set sshcmd {ssh} }
 
     # Login to the router
-    if {[login $router $loginname $passwd $cmethod $cyphertype $identfile]} {
+    if {[login $router $loginname $passwd $enapasswd $cmethod $cyphertype $identfile]} {
 	incr exitval
 	continue
     }
@@ -497,8 +590,8 @@ foreach router [lrange $argv $i end] {
 	    continue
 	}
     } elseif { $do_script } {
-	send "set terminal length 0\r"
-	expect -re $prompt {}
+	send "terminal datadump\r"
+	expect -re $prompt	{}
 	source $sfile
 	catch {close};
     } else {

@@ -3,6 +3,10 @@ rancid-git (2.3.9-5) unstable; urgency=low
     * Unofficial package
     * Added Huawei config
 
+    [ Jesse Norell ]
+    * Added support for Cisco Small Business switches (cisco-sb)
+
+
  -- Egor Miadzvedzeu <egor.miadzvedzeu@tatacommunications.com>  Thu, 21 Jul 2016 15:38:26 -0400
 rancid-git (2.3.9-4) unstable; urgency=low
 

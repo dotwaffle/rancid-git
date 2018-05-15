@@ -93,6 +93,7 @@ DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(srcdir)/bntlogin.in $(srcdir)/bntrancid.in \
 	$(srcdir)/brocaderancid.in $(srcdir)/cat5rancid.in \
 	$(srcdir)/clogin.in $(srcdir)/rancid.in $(srcdir)/cssrancid.in \
+	$(srcdir)/csblogin.in $(srcdir)/csbrancid.in \
 	$(srcdir)/dlogin.in $(srcdir)/drancid.in $(srcdir)/elogin.in \
 	$(srcdir)/erancid.in $(srcdir)/f5rancid.in \
 	$(srcdir)/f10rancid.in $(srcdir)/flogin.in \
@@ -127,7 +128,7 @@ mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = $(top_builddir)/include/config.h
 CONFIG_CLEAN_FILES = agmrancid alogin arancid arrancid avologin \
 	avorancid blogin brancid bntlogin bntrancid brocaderancid cat5rancid clogin \
-	rancid cssrancid dlogin drancid elogin erancid f5rancid \
+	rancid csblogin csbrancid cssrancid dlogin drancid elogin erancid f5rancid \
 	f10rancid flogin francid fnlogin fnrancid hlogin hrancid \
 	htlogin htrancid jlogin jrancid jerancid mrancid mrvlogin \
 	mrvrancid mtrancid mtlogin nlogin nrancid nslogin nsrancid \
@@ -352,7 +353,7 @@ top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = foreign
 bin_SCRIPTS = agmrancid alogin arancid arrancid avologin avorancid \
 	blogin brancid bntlogin bntrancid brocaderancid cat5rancid clogin control_rancid \
-	cssrancid elogin erancid f5rancid f10rancid flogin fnlogin \
+	csblogin csbrancid cssrancid elogin erancid f5rancid f10rancid flogin fnlogin \
 	fnrancid francid hlogin hrancid htlogin htrancid jerancid \
 	jlogin jrancid mrancid mrvlogin mrvrancid mtlogin mtrancid \
 	nlogin nrancid nslogin nsrancid nxrancid rancid_par pflogin \
@@ -461,6 +462,10 @@ cat5rancid: $(top_builddir)/config.status $(srcdir)/cat5rancid.in
 clogin: $(top_builddir)/config.status $(srcdir)/clogin.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 rancid: $(top_builddir)/config.status $(srcdir)/rancid.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+csblogin: $(top_builddir)/config.status $(srcdir)/csblogin.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+csbrancid: $(top_builddir)/config.status $(srcdir)/csbrancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 cssrancid: $(top_builddir)/config.status $(srcdir)/cssrancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@

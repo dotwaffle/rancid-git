@@ -151,26 +151,37 @@ sub ShowConfiguration {
 	}
 	next if (/^system (shutdown message from|going down )/i);
 	next if (/^\{(master|backup)(:\d+)?\}/);
+	next if (/^Uptime:\s+/);
 	$lines++;
 
 	/^database header mismatch: / && return(-1);
 	/^version .*;\d+$/ && return(-1);
 
+	if (/^Must be an admin user to run this command\.$/i) {
+	    print STDERR "    In ShowConfiguration: $_" if ($debug);
+	}
+
 	s/ # SECRET-DATA$//;
 	s/ ## SECRET-DATA$//;
 	# filter snmp community, when in snmp { stanza }
-	/^snmp/ && $snmp++;
+	/^(\s*)snmp/ && $snmp++;
 	/^}/ && ($snmp = 0);
 	if ($snmp && /^(\s*)(community|trap-group) [^ ;]+(\s?[;{])$/) {
 		if ($filter_commstr) {
 		    $_ = "$1$2 \"<removed>\"$3\n";
 		}
 	}
+	# community name can contain spaces if quoted
+	if (/^(set service snmp community )(\"[^\"]+\"|\'[^\']+\'|[^ ]+)/) {
+		if ($filter_commstr) {
+		    $_ = "$1\"<removed>\"$'";
+		}
+	}
 	if (/(\s*authentication-key )[^ ;]+/ && $filter_pwds >= 1) {
 	    ProcessHistory("","","","#$1<removed>$'");
 	    next;
 	}
-	if (/(\s*md5 \d+ key )[^ ;]+/ && $filter_pwds >= 1) {
+	if (/(\s*md5( \d+ |-)key )[^ ;]+/ && $filter_pwds >= 1) {
 	    ProcessHistory("","","","#$1<removed>$'");
 	    next;
 	}
@@ -187,16 +198,28 @@ sub ShowConfiguration {
 	    ProcessHistory("","","","#$1<removed>$'");
 	    next;
 	}
-	if (/(\s+encrypted-password )[^ ;]+/ && $filter_pwds >= 2) {
-	    ProcessHistory("","","","#$1<removed>$'");
+	if (/^(.+encrypted-password )(\"[^\"]+\"|\'[^\']+\'|[^ ]+)/ && $filter_pwds >= 2) {
+	    ProcessHistory("","","","! $1\"<removed>\"$'\n");
+	    next;
+	}
+	if (/^(.+plaintext-password )(\"[^\"]+\"|\'[^\']+\'|[^ ]+)/ && $filter_pwds >= 1) {
+	    ProcessHistory("","","","! $1\"<removed>\"$'\n");
 	    next;
 	}
 	if (/(\s+ssh-(rsa|dsa) )\"/ && $filter_pwds >= 2) {
-	    ProcessHistory("","","","#$1<removed>;\n");
+	    ProcessHistory("","","","! $1<removed>\n");
 	    next;
 	}
 	if (/^(\s+(pre-shared-|)key (ascii-text|hexadecimal) )[^ ;]+/ && $filter_pwds >= 1) {
-	    ProcessHistory("","","","#$1<removed>$'");
+	    ProcessHistory("","","","! $1<removed>$'");
+	    next;
+	}
+	if (/^(.* public-keys .+ key ).+/ && $filter_pwds >= 1) {
+	    ProcessHistory("","","","! $1<removed>\n");
+	    next;
+	}
+	if (/^(set protocols bgp .+ neighbor (\S*) password )/ && $filter_pwds >= 1) {
+	    ProcessHistory("","","","! $1 <removed>\n");
 	    next;
 	}
 	ProcessHistory("","","","$_");
@@ -220,7 +243,7 @@ sub DoNothing {print STDOUT;}
 
 # Main
 @commandtable = (
-	{'show version | grep -v Uptime'    => 'ShowConfiguration'},
+	{'show version'                 => 'ShowConfiguration'},
         {'show configuration'           => 'ShowConfiguration'},
         {'show configuration commands'  => 'ShowConfiguration'},
 );
