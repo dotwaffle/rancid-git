@@ -10,6 +10,10 @@ debian/rancid-util/
 debian/rancid.postrm.debhelper
 debian/rancid/
 debian/rancid-git/
+debian/.debhelper/
+debian/autoreconf.after
+debian/autoreconf.before
+debian/debhelper-build-stamp
 Makefile
 aclocal.m4
 autom4te.cache/
@@ -22,6 +26,8 @@ bin/arrancid
 bin/avologin
 bin/avorancid
 bin/blogin
+bin/bntlogin
+bin/bntrancid
 bin/brancid
 bin/brocaderancid
 bin/cat5rancid
@@ -39,6 +45,8 @@ bin/f5rancid
 bin/flogin
 bin/fnrancid
 bin/francid
+bin/h3clogin
+bin/h3crancid
 bin/hlogin
 bin/hpuifilter
 bin/hpuifilter.o
@@ -83,6 +91,8 @@ bin/trancid
 bin/ubnt-es-rancid
 bin/ucsrancid
 bin/urancid
+bin/vlogin
+bin/vrancid
 bin/xrancid
 bin/xrrancid
 bin/zrancid
@@ -104,5 +114,5 @@ share/rancid-cvspurge
 share/rtrfilter
 bin/fnlogin
 include/version.h
-
+include/config.h.in~
 
